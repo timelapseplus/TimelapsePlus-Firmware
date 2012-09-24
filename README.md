@@ -9,6 +9,7 @@ Requirements
 
 avr-gcc  
 dfu-programmer  
+libusb  
 
 
 Building
