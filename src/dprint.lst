@@ -1,0 +1,153 @@
+   1               		.file	"dprint.c"
+   2               	__SREG__ = 0x3f
+   3               	__SP_H__ = 0x3e
+   4               	__SP_L__ = 0x3d
+   5               	__CCP__  = 0x34
+   6               	__tmp_reg__ = 0
+   7               	__zero_reg__ = 1
+  15               	.Ltext0:
+  16               		.section	.text.phex1,"ax",@progbits
+  17               	.global	phex1
+  19               	phex1:
+  20               	.LFB3:
+  21               	.LSM0:
+  22               	.LVL0:
+  23               	/* prologue: function */
+  24               	/* frame size = 0 */
+  25 0000 982F      		mov r25,r24
+  26               	.LSM1:
+  27 0002 8A30      		cpi r24,lo8(10)
+  28 0004 00F0      		brlo .L2
+  29 0006 87E3      		ldi r24,lo8(55)
+  30               	.LVL1:
+  31 0008 00C0      		rjmp .L3
+  32               	.LVL2:
+  33               	.L2:
+  34 000a 80E3      		ldi r24,lo8(48)
+  35               	.LVL3:
+  36               	.L3:
+  37 000c 890F      		add r24,r25
+  38 000e 0E94 0000 		call usb_debug_putchar
+  39               	.LVL4:
+  40               	/* epilogue start */
+  41               	.LSM2:
+  42 0012 0895      		ret
+  43               	.LFE3:
+  45               		.section	.text.phex,"ax",@progbits
+  46               	.global	phex
+  48               	phex:
+  49               	.LFB4:
+  50               	.LSM3:
+  51               	.LVL5:
+  52 0000 1F93      		push r17
+  53               	/* prologue: function */
+  54               	/* frame size = 0 */
+  55 0002 182F      		mov r17,r24
+  56               	.LSM4:
+  57 0004 8295      		swap r24
+  58               	.LVL6:
+  59 0006 8F70      		andi r24,lo8(15)
+  60 0008 0E94 0000 		call phex1
+  61               	.LSM5:
+  62 000c 812F      		mov r24,r17
+  63 000e 8F70      		andi r24,lo8(15)
+  64 0010 0E94 0000 		call phex1
+  65               	/* epilogue start */
+  66               	.LSM6:
+  67 0014 1F91      		pop r17
+  68               	.LVL7:
+  69 0016 0895      		ret
+  70               	.LFE4:
+  72               		.section	.text.phex16,"ax",@progbits
+  73               	.global	phex16
+  75               	phex16:
+  76               	.LFB5:
+  77               	.LSM7:
+  78               	.LVL8:
+  79 0000 1F93      		push r17
+  80               	/* prologue: function */
+  81               	/* frame size = 0 */
+  82 0002 182F      		mov r17,r24
+  83               	.LSM8:
+  84 0004 892F      		mov r24,r25
+  85               	.LVL9:
+  86 0006 0E94 0000 		call phex
+  87               	.LVL10:
+  88               	.LSM9:
+  89 000a 812F      		mov r24,r17
+  90 000c 0E94 0000 		call phex
+  91               	/* epilogue start */
+  92               	.LSM10:
+  93 0010 1F91      		pop r17
+  94               	.LVL11:
+  95 0012 0895      		ret
+  96               	.LFE5:
+  98               		.section	.text.print_P,"ax",@progbits
+  99               	.global	print_P
+ 101               	print_P:
+ 102               	.LFB2:
+ 103               	.LSM11:
+ 104               	.LVL12:
+ 105 0000 1F93      		push r17
+ 106 0002 CF93      		push r28
+ 107 0004 DF93      		push r29
+ 108               	/* prologue: function */
+ 109               	/* frame size = 0 */
+ 110 0006 EC01      		movw r28,r24
+ 111               	.LVL13:
+ 112               	.L12:
+ 113               	.LSM12:
+ 114 0008 FE01      		movw r30,r28
+ 115               	.LVL14:
+ 116               	.LBB2:
+ 117               	.LSM13:
+ 118 000a 2196      		adiw r28,1
+ 119               	/* #APP */
+ 120               	 ;  36 "src/dprint.c" 1
+ 121 000c 1491      		lpm r17, Z
+ 122               		
+ 123               	 ;  0 "" 2
+ 124               	/* #NOAPP */
+ 125               	.LBE2:
+ 126               	.LSM14:
+ 127 000e 1123      		tst r17
+ 128 0010 01F0      		breq .L13
+ 129               	.LSM15:
+ 130 0012 1A30      		cpi r17,lo8(10)
+ 131 0014 01F4      		brne .L11
+ 132 0016 8DE0      		ldi r24,lo8(13)
+ 133 0018 0E94 0000 		call usb_debug_putchar
+ 134               	.LVL15:
+ 135               	.L11:
+ 136               	.LSM16:
+ 137 001c 812F      		mov r24,r17
+ 138 001e 0E94 0000 		call usb_debug_putchar
+ 139               	.LVL16:
+ 140 0022 00C0      		rjmp .L12
+ 141               	.LVL17:
+ 142               	.L13:
+ 143               	/* epilogue start */
+ 144               	.LSM17:
+ 145 0024 DF91      		pop r29
+ 146 0026 CF91      		pop r28
+ 147               	.LVL18:
+ 148 0028 1F91      		pop r17
+ 149               	.LVL19:
+ 150 002a 0895      		ret
+ 151               	.LFE2:
+ 201               	.Letext0:
+DEFINED SYMBOLS
+                            *ABS*:00000000 dprint.c
+/var/folders/z6/vpmk4_yd42j_9xbv3n5kw3wc0000gn/T//cc9HjDIH.s:2      *ABS*:0000003f __SREG__
+/var/folders/z6/vpmk4_yd42j_9xbv3n5kw3wc0000gn/T//cc9HjDIH.s:3      *ABS*:0000003e __SP_H__
+/var/folders/z6/vpmk4_yd42j_9xbv3n5kw3wc0000gn/T//cc9HjDIH.s:4      *ABS*:0000003d __SP_L__
+/var/folders/z6/vpmk4_yd42j_9xbv3n5kw3wc0000gn/T//cc9HjDIH.s:5      *ABS*:00000034 __CCP__
+/var/folders/z6/vpmk4_yd42j_9xbv3n5kw3wc0000gn/T//cc9HjDIH.s:6      *ABS*:00000000 __tmp_reg__
+/var/folders/z6/vpmk4_yd42j_9xbv3n5kw3wc0000gn/T//cc9HjDIH.s:7      *ABS*:00000001 __zero_reg__
+/var/folders/z6/vpmk4_yd42j_9xbv3n5kw3wc0000gn/T//cc9HjDIH.s:19     .text.phex1:00000000 phex1
+/var/folders/z6/vpmk4_yd42j_9xbv3n5kw3wc0000gn/T//cc9HjDIH.s:48     .text.phex:00000000 phex
+/var/folders/z6/vpmk4_yd42j_9xbv3n5kw3wc0000gn/T//cc9HjDIH.s:75     .text.phex16:00000000 phex16
+/var/folders/z6/vpmk4_yd42j_9xbv3n5kw3wc0000gn/T//cc9HjDIH.s:101    .text.print_P:00000000 print_P
+
+UNDEFINED SYMBOLS
+usb_debug_putchar
