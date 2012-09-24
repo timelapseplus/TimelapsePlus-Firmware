@@ -12,7 +12,7 @@ dfu-programmer
 libusb  
 
 
-Building
+Building/Programming
 --------
 
 First, connect the Timelapse+ device via USB and boot in DFU mode (hold top two buttons and press the down button, red light will blink).  Then, run the following two commands in the project folder:
