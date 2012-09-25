@@ -17,7 +17,7 @@ struct light_reading {
 void hardware_init(void);
 int hardware_freeMemory(void);
 unsigned int hardware_readLight(uint8_t r);
-void* hardware_readLightAll(void);
+void hardware_readLightAll(void *result);
 uint16_t hardware_analogRead(uint8_t ch);
 void hardware_off(void);
 char hardware_flashlight(char on);

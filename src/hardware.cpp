@@ -151,13 +151,12 @@ unsigned int hardware_readLight(uint8_t r)
   return light;
 }
 
-void* hardware_readLightAll()
+void hardware_readLightAll(void *result)
 {
-  light_reading res;
-  res.level1 = hardware_readLight(0);
-  res.level2 = hardware_readLight(1);
-  res.level3 = hardware_readLight(2);
-  return &res;
+  light_reading *res = (light_reading *) result;
+  res->level1 = hardware_readLight(0);
+  res->level2 = hardware_readLight(1);
+  res->level3 = hardware_readLight(2);
 }
 
 uint8_t battery_read() // Returns 0-100 //

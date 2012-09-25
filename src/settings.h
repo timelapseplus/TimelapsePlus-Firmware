@@ -1,4 +1,4 @@
-#define VERSION 20120923
+#define VERSION 20120925
 
 
 struct settings

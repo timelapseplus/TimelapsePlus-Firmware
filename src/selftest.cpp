@@ -191,8 +191,11 @@ int8_t run_tests()
 	wdt_reset();
 	if(pass)
 	{
-		termPrintStr("Testing BlueTooth\n");
-		pass &= test_assert(bt.version() == 3);
+		if(bt.present)
+		{
+			termPrintStr("Testing BlueTooth\n");
+			pass &= test_assert(bt.version() == 3);
+		}
 	}
 	wdt_reset();
 	if(pass)
@@ -293,6 +296,15 @@ int8_t run_tests()
 		lcd.update();
 		pass &= test_assert(button.waitfor(DOWN_KEY));
 	}
+	wdt_reset();
+	if(pass)
+	{
+		if(!bt.present)
+		{
+			termPrintStr("NO BLUETOOTH\n  CONFIRM\n");
+			pass &= test_assert(button.waitfor(DOWN_KEY));
+		}
+	}
 	return pass;
 }
 
@@ -300,7 +312,7 @@ light_reading light_test_results[120] EEMEM;
 
 void lightTest()
 {
-	light_reading* result;
+	light_reading result;
 
 	termInit();
 
@@ -312,15 +324,15 @@ void lightTest()
 
 	clock.tare();
 
-	for(i = 0; i < 120; i++) 
+	for(i = 0; i < 120; i++)
 	{
 		timer.half();
 		_delay_ms(500);
 		timer.full();
 		_delay_ms(50);
 		timer.off();
-		result = (light_reading *) hardware_readLightAll();
-  		eeprom_write_block((const void *) result, &light_test_results[i], sizeof(light_reading));
+		hardware_readLightAll(&result);
+  		eeprom_write_block((const void *) &result, &light_test_results[i], sizeof(light_reading));
   		termPrintStr("Photo ");
   		termPrintByte(i+1);
   		termPrintStr(" of 120\n");

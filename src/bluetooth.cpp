@@ -170,7 +170,12 @@ uint8_t BT::send(char *data)
   if(!(BT_RTS))
   {
     Serial_SendByte('A');
-    while(!(BT_RTS));
+    char i = 0;
+    while(!(BT_RTS))
+    {
+      if(++i > 250) break;
+      _delay_ms(1);
+    }
   }
 
   if(BT_RTS)

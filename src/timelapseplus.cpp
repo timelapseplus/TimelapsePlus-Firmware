@@ -531,7 +531,7 @@ volatile char sysInfo(char key, char first)
     lcd.writeStringTiny(80 - l, 6 + SY, text);
     lcd.writeStringTiny(3, 6 + SY, "Model:");
 
-    if(val > 0) text = "BTLE"; else text = "KS99";
+    if(val > 1) text = "BTLE"; else text = "KS99";
     l = lcd.measureStringTiny(text);
     lcd.writeStringTiny(80 - l, 12 + SY, text);
     lcd.writeStringTiny(3, 12 + SY, "Edition:");
@@ -553,7 +553,7 @@ volatile char sysInfo(char key, char first)
       version /= 10;
     }
 
-    if(val > 0)
+    if(val > 1)
     {
       int_to_str(val, buf);
       text = buf;

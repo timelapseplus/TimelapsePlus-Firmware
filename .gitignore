@@ -13,3 +13,11 @@
 
 *.sublime-*
 .DS_Store
+
+*.lst
+*.eep
+*.elf
+*.lss
+*.map
+*.sym
+.dep
