@@ -1,8 +1,8 @@
 #ifndef	HARDWARE_H
 #define HARDWARE_H
 
-//#include "hardware_map_20120329.h"
-#include "hardware_map_20120703.h"
+#include "hardware_map_20120329.h"
+//#include "hardware_map_20120703.h"
 
 #ifdef __cplusplus
 extern "C" {	

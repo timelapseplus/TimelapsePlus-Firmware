@@ -510,7 +510,67 @@ volatile char sysStatus(char key, char first)
 
   if(key == FL_KEY || key == LEFT_KEY) return FN_CANCEL; else return FN_CONTINUE;
 }
+/*
+volatile char timerStatus(char key, char first)
+{
+  if(first)
+  {
+  }
 
+  lcd.cls();
+
+  char buf[6];
+  uint16_t val;
+
+//
+//06 Time remaining
+//12 Time to next photo
+//18 Next bulb
+//24 Status
+//30 Battery %
+
+
+  val = clock.seconds;
+  int_to_str(val, buf);
+  text = buf;
+  l = lcd.measureStringTiny(text);
+  lcd.writeStringTiny(80 - l, 6 + SY, text);
+  lcd.writeStringTiny(3, 6 + SY, "Time Left:");
+
+  val = clock.seconds;
+  int_to_str(val, buf);
+  text = buf;
+  l = lcd.measureStringTiny(text);
+  lcd.writeStringTiny(80 - l, 12 + SY, text);
+  lcd.writeStringTiny(3, 12 + SY, "Next Photo:");
+
+  val = clock.seconds;
+  int_to_str(val, buf);
+  text = buf;
+  l = lcd.measureStringTiny(text);
+  lcd.writeStringTiny(80 - l, 18 + SY, text);
+  lcd.writeStringTiny(3, 18 + SY, "Next Exp:");
+
+  text = "Waiting";
+  l = lcd.measureStringTiny(text);
+  lcd.writeStringTiny(80 - l, 24 + SY, text);
+  lcd.writeStringTiny(3, 24 + SY, "Status:");
+
+  val = (uint16_t) battery_read();
+  int_to_str(val, buf);
+  text = buf;
+  l = lcd.measureStringTiny(text);
+  lcd.writeStringTiny(80 - l, 30 + SY, text);
+  lcd.writeStringTiny(3, 30 + SY, "Battery Level:");
+
+  menu.setTitle("Running");
+  menu.setBar("OPTIONS", "LIVE EDIT");
+  lcd.update();
+  _delay_ms(10);
+
+  if(key == FL_KEY || key == LEFT_KEY) return FN_CANCEL; else return FN_CONTINUE;
+}
+*/
 volatile char sysInfo(char key, char first)
 {
   if(first)

@@ -2,7 +2,7 @@
 ; AVR bitmap - size 84x48 pixels, black/white image
 ------------------------------------------------------------------------------*/ 
 #include <avr/pgmspace.h>
-unsigned char PROGMEM Logo[]=
+const unsigned char PROGMEM Logo[]=
 
 
   {
