@@ -19,7 +19,6 @@
 
 extern Clock clock;
 
-
 MENU::MENU()
 {
     hx1 = 0;
@@ -45,68 +44,90 @@ char MENU::run()
         }
     }
 
-    if(state == ST_CONT)
+    switch(state)
     {
-        if(key == UP_KEY) up();
-        if(key == DOWN_KEY) down();
-        if(key == RIGHT_KEY) click();
-        if(key == LEFT_KEY) back();
-    } else if(state == ST_MENU)
-    {
-        first = 1;
-        init(menu);
-        lcd->update();
-    } else if(state == ST_EDIT)
-    {
-        ret = editNumber(key, var, name, desc, type, first);
-        first = 0;
-        if(ret != FN_CONTINUE) state = ST_MENU;
-    } else if(state == ST_TEXT)
-    {
-        ret = editNumber(key, var, name, desc, type, first);
-        first = 0;
-        if(ret != FN_CONTINUE) state = ST_MENU;
-    } else if(state == ST_LIST)
-    {
-        ret = editSelect(key, bvar, list, name, first);
-        first = 0;
-        if(ret != FN_CONTINUE)
-        {
-            if(ret == FN_SAVE && func_short)
-            {
-                (*func_short)();
-            }
-            state = ST_MENU;
-        }
-    } else if(state == ST_EEPR)
-    {
-        if(first)
-        {
-            eeprom_read_block(&e_val, var, 2);
-        }
-        ret = editNumber(key, &e_val, name, desc, type, first);
-        first = 0;
-        if(ret != FN_CONTINUE)
-        {
-            if(ret == FN_SAVE)
-            {
-                unsigned int tmp;
-                eeprom_read_block(&tmp, var, 2);
-                if(tmp != e_val) eeprom_write_block(&e_val, var, 2);
-            }
-            state = ST_MENU;
-        }
-    } else if(state == ST_FUNC)
-    {
-        ret = (*func)(key, first);
-        first = 0;
-        if(ret != FN_CONTINUE)
-        {
-            state = ST_MENU;
-        }
+       case ST_CONT:
+           switch(key)
+           {
+              case UP_KEY:
+                  up();
+                  break;
+
+              case DOWN_KEY:
+                  down();
+                  break;
+
+              case RIGHT_KEY:
+                  click();
+                  break;
+
+              case LEFT_KEY:
+                  back();
+                  break;
+           }
+           break;
+
+       case ST_MENU:
+           first = 1;
+           init(menu);
+           lcd->update();
+           break;
+
+       case ST_EDIT:
+           ret = editNumber(key, var, name, desc, type, first);
+           first = 0;
+           if(ret != FN_CONTINUE) state = ST_MENU;
+           break;
+
+       case ST_TEXT:
+           ret = editNumber(key, var, name, desc, type, first);
+           first = 0;
+           if(ret != FN_CONTINUE) state = ST_MENU;
+
+       case ST_LIST:
+           ret = editSelect(key, bvar, list, name, first);
+           first = 0;
+           if(ret != FN_CONTINUE)
+           {
+               if(ret == FN_SAVE && func_short)
+               {
+                   (*func_short)();
+               }
+               state = ST_MENU;
+           }
+           break;
+
+       case ST_EEPR:
+           if(first)
+           {
+               eeprom_read_block(&e_val, var, 2);
+           }
+           ret = editNumber(key, &e_val, name, desc, type, first);
+           first = 0;
+           if(ret != FN_CONTINUE)
+           {
+               if(ret == FN_SAVE)
+               {
+                   unsigned int tmp;
+                   eeprom_read_block(&tmp, var, 2);
+                   if(tmp != e_val) eeprom_write_block(&e_val, var, 2);
+               }
+               state = ST_MENU;
+           }
+           break;
+
+       case ST_FUNC:
+           ret = (*func)(key, first);
+           first = 0;
+           if(ret != FN_CONTINUE)
+           {
+               state = ST_MENU;
+           }
+           break;
     }
 
     if(state != ST_CONT) key = 0;
+
     return key;
 }
 
@@ -184,7 +205,9 @@ void MENU::init(menu_item *newmenu)
     }
     i++;
     select(menuSelected);
+
     char str[MENU_NAME_LEN];
+
     if(pgm_read_byte(&menu[i].name[1]) != ' ')
     {
         strcpy_P(str, (const char*)&menu[i].name[1]);
@@ -192,9 +215,11 @@ void MENU::init(menu_item *newmenu)
     {
         menuName(str);
     }
+
     setTitle(str);
     ch = pgm_read_byte(&menu[i].type);
     handlerFunction = 0;
+
     if(ch == 'B' || ch == 'F')
     {
         char l[10], r[10];
@@ -473,58 +498,63 @@ char MENU::editNumber(char key, unsigned int *n, char *name, char *unit, char mo
 
         // Number -> Chars //
         for(i = 0; i < 5; i++) d[i] = 0;
-        if(mode == 'F')
-        {
-            // seconds //
-            c = m % 600;
-            m -= (unsigned int)c; m /= 600;
-            d[0] = c % 10;
-            c -= d[0]; c /= 10;
-            d[1] = c % 10;
-            c -= d[1]; c /= 10;
-            d[2] = c;
 
-            // minutes //
-            c = m % 600;
-            d[3] = c % 10;
-            c -= d[3]; c /= 10;
-            d[4] = c;
-        } else if(mode == 'T')
+        switch(mode)
         {
-            // seconds //
-            c = m % 60;
-            m -= (unsigned int)c; m /= 60;
-            d[0] = c % 10;
-            c -= d[0]; c /= 10;
-            d[1] = c;
+           case 'F':
+               // seconds //
+               c = m % 600;
+               m -= (unsigned int)c; m /= 600;
+               d[0] = c % 10;
+               c -= d[0]; c /= 10;
+               d[1] = c % 10;
+               c -= d[1]; c /= 10;
+               d[2] = c;
 
-            // minutes //
-            c = m % 60;
-            m -= (unsigned int)c; m /= 60;
-            d[2] = c % 10;
-            c -= d[2]; c /= 10;
-            d[3] = c;
+               // minutes //
+               c = m % 600;
+               d[3] = c % 10;
+               c -= d[3]; c /= 10;
+               d[4] = c;
+               break;
 
-            // hours //
-            c = m % 60;
-            m -= (unsigned int)c; m /= 60;
-            d[4] = c % 10;
-        } else
-        {
-            l = 0;
-            while (m > 0)
-            {
-                c = m % 10;
-                m -= (unsigned int)c; m /= 10;
-                d[l] = c;
-                l++;
-            }
+           case 'T':
+               // seconds //
+               c = m % 60;
+               m -= (unsigned int)c; m /= 60;
+               d[0] = c % 10;
+               c -= d[0]; c /= 10;
+               d[1] = c;
+
+               // minutes //
+               c = m % 60;
+               m -= (unsigned int)c; m /= 60;
+               d[2] = c % 10;
+               c -= d[2]; c /= 10;
+               d[3] = c;
+
+               // hours //
+               c = m % 60;
+               m -= (unsigned int)c; m /= 60;
+               d[4] = c % 10;
+               break;
+
+           default:
+               l = 0;
+               while (m > 0)
+               {
+                   c = m % 10;
+                   m -= (unsigned int)c; m /= 10;
+                   d[l] = c;
+                   l++;
+               }
+               break;
         }
 
         l = 5; // Number of editable digits //
         i = 0;
     }
-
+    
     if(key != FL_KEY && key != FR_KEY)
     {
 
@@ -534,94 +564,114 @@ char MENU::editNumber(char key, unsigned int *n, char *name, char *unit, char mo
         {
             lcd->writeCharBig(68 - x * 16, 5, d[x] + '0');
         }
-
-        if(mode == 'F') // Float (4.1) //
+        
+        switch(mode)
         {
-            lcd->drawBox(68 - 2 * 16 - 3, 12, 68 - 2 * 16 - 2, 14); // Colon (:) //
-            lcd->drawBox(68 - 2 * 16 - 3, 20, 68 - 2 * 16 - 2, 22);
-
-            lcd->drawBox(68 - 0 * 16 - 3, 24, 68 - 0 * 16 - 2, 26); // Decimal Point (.) //
-        } else if(mode == 'T') // Time //
-        {
-            lcd->drawBox(68 - 1 * 16 - 3, 12, 68 - 1 * 16 - 2, 14); // Colon (:) //
-            lcd->drawBox(68 - 1 * 16 - 3, 20, 68 - 1 * 16 - 2, 22);
-            lcd->drawBox(68 - 3 * 16 - 3, 12, 68 - 3 * 16 - 2, 14);
-            lcd->drawBox(68 - 3 * 16 - 3, 20, 68 - 3 * 16 - 2, 22);
+           case 'F': // Float (4.1) //
+                lcd->drawBox(68 - 2 * 16 - 3, 12, 68 - 2 * 16 - 2, 14); // Colon (:) //
+                lcd->drawBox(68 - 2 * 16 - 3, 20, 68 - 2 * 16 - 2, 22);
+    
+                lcd->drawBox(68 - 0 * 16 - 3, 24, 68 - 0 * 16 - 2, 26); // Decimal Point (.) //
+                break;
+                
+           case 'T': // Time //
+                lcd->drawBox(68 - 1 * 16 - 3, 12, 68 - 1 * 16 - 2, 14); // Colon (:) //
+                lcd->drawBox(68 - 1 * 16 - 3, 20, 68 - 1 * 16 - 2, 22);
+                lcd->drawBox(68 - 3 * 16 - 3, 12, 68 - 3 * 16 - 2, 14);
+                lcd->drawBox(68 - 3 * 16 - 3, 20, 68 - 3 * 16 - 2, 22);
+                break;
         }
 
         lcd->drawHighlight(68 - (i * 16) - 1, 8, 68 - (i * 16) + 12, 28);
 
-        if(mode == 'F')
+        switch(mode)
         {
-            if(i == 2 || i == 4) t = 5;
-            else t = 9;
-        } else
-        {
-            if((mode == 'T') && i % 2) t = 5;
-            else if((!(mode == 'T')) && i == 4) t = 5;
-            else t = 9;
+           case 'F':
+               if(i == 2 || i == 4) t = 5;
+               else t = 9;
+               break;
+               
+           case 'T':
+               if(i % 2) t = 5;
+               break;
+               
+           default:
+               if(i == 4) t = 5;
+               else t = 9;
+               break;
         }
 
         lcd->update();
+
         if(key != 0)
         {
-            if(key == RIGHT_KEY)
+            switch(key)
             {
-                lcd->drawHighlight(68 - (i * 16) - 1, 8, 68 - (i * 16) + 12, 28);
-                if(i > 0) i--;
-                else i = l - 1;
-            }
-            if(key == LEFT_KEY)
-            {
-                lcd->drawHighlight(68 - (i * 16) - 1, 8, 68 - (i * 16) + 12, 28);
-                if(i < l - 1) i++;
-                else i = 0;
-            }
-            if(key == DOWN_KEY)
-            {
-                if(d[i] > 0) d[i]--;
-                else d[i] = t;
-            }
-            if(key == UP_KEY)
-            {
-                if(d[i] < t) d[i]++;
-                else d[i] = 0;
+               case RIGHT_KEY:
+                    lcd->drawHighlight(68 - (i * 16) - 1, 8, 68 - (i * 16) + 12, 28);
+                    if(i > 0) i--;
+                    else i = l - 1;
+                    break;
+                    
+               case LEFT_KEY:
+                   lcd->drawHighlight(68 - (i * 16) - 1, 8, 68 - (i * 16) + 12, 28);
+                   if(i < l - 1) i++;
+                   else i = 0;
+                   break;
+                   
+               case DOWN_KEY:
+                   if(d[i] > 0) d[i]--;
+                   else d[i] = t;
+                   break;
+                   
+               case UP_KEY:
+                   if(d[i] < t) d[i]++;
+                   else d[i] = 0;
+                   break;
             }
         }
     } else
     {
         m = 0;
-        if(mode == 'F')
+        
+        switch(mode)
         {
-            m += (d[4] * 10 + d[3]) * 600; // minutes
-            m += d[2] * 100 + d[1] * 10 + d[0]; // seconds
-        } else if(mode == 'T')
-        {
-            m += d[4] * 3600;  // hours
-            m += (d[3] * 10 + d[2]) * 60; // minutes
-            m += d[1] * 10 + d[0]; // seconds
-        } else
-        {
-            m = d[4];
-            m *= 10;
-            m += d[3];
-            m *= 10;
-            m += d[2];
-            m *= 10;
-            m += d[1];
-            m *= 10;
-            m += d[0];
+           case 'F':
+                m += (d[4] * 10 + d[3]) * 600; // minutes
+                m += d[2] * 100 + d[1] * 10 + d[0]; // seconds
+                break;
+            
+           case 'T':
+               m += d[4] * 3600;  // hours
+               m += (d[3] * 10 + d[2]) * 60; // minutes
+               m += d[1] * 10 + d[0]; // seconds
+               break;
+               
+           default:
+                m = d[4];
+                m *= 10;
+                m += d[3];
+                m *= 10;
+                m += d[2];
+                m *= 10;
+                m += d[1];
+                m *= 10;
+                m += d[0];
+                break;
         }
 
-        if(key == FR_KEY)
+        switch(key)
         {
-            message(TEXT("Saved"), 1);
-            _delay_ms(500);
-            *n = m; // Save new Value if not cancelled //
-            ret = FN_SAVE;
-        } else if(key == FL_KEY)
-        {
-            ret = FN_CANCEL;
+           case FR_KEY:
+                message(TEXT("Saved"), 1);
+                _delay_ms(500);
+                *n = m; // Save new Value if not cancelled //
+                ret = FN_SAVE;
+                break;
+                
+           case FL_KEY:
+               ret = FN_CANCEL;
+               break;
         }
     }
 
@@ -804,31 +854,33 @@ char MENU::editText(char key, char text[MENU_NAME_LEN], char *name, char first)
         lcd->drawBox(0, 11, 82, 25);
     }
 
-    if(key == LEFT_KEY)
+    switch(key)
     {
-        if(i > 0) i--;
-        else i = MENU_NAME_LEN - 3;
-        first = 1;
-    }
-    if(key == RIGHT_KEY)
-    {
-        if(i < MENU_NAME_LEN - 3) i++;
-        else i = 0;
-        first = 1;
-    }
-    if(key == DOWN_KEY)
-    {
-        if(text[i] > 'Z') text[i] = 'A' - 1;
-        if(text[i] >= 'A') text[i]--;
-        else text[i] = 'Z';
-        first = 1;
-    }
-    if(key == UP_KEY)
-    {
-        if(text[i] < 'A') text[i] = 'Z' + 1;
-        if(text[i] <= 'Z') text[i]++;
-        else text[i] = 'A';
-        first = 1;
+       case LEFT_KEY:
+           if(i > 0) i--;
+           else i = MENU_NAME_LEN - 3;
+           first = 1;
+           break;
+           
+       case RIGHT_KEY:
+           if(i < MENU_NAME_LEN - 3) i++;
+           else i = 0;
+           first = 1;
+           break;
+           
+       case DOWN_KEY:
+           if(text[i] > 'Z') text[i] = 'A' - 1;
+           if(text[i] >= 'A') text[i]--;
+           else text[i] = 'Z';
+           first = 1;
+           break;
+           
+       case UP_KEY:
+            if(text[i] < 'A') text[i] = 'Z' + 1;
+            if(text[i] <= 'Z') text[i]++;
+            else text[i] = 'A';
+            first = 1;
+            break;
     }
 
     if(first)
@@ -845,13 +897,13 @@ char MENU::editText(char key, char text[MENU_NAME_LEN], char *name, char first)
         lcd->update();
     }
 
-    if(key == FL_KEY)
+    switch(key)
     {
-        return FN_CANCEL;
-    }
-    if(key == FR_KEY)
-    {
-        return FN_SAVE;
+       case FL_KEY:
+           return FN_CANCEL;
+           
+       case FR_KEY:
+       return FN_SAVE;
     }
 
     return FN_CONTINUE;
