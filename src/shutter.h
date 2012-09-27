@@ -47,32 +47,32 @@
 
 struct program
 {
-  char Name[12];            // 12 bytes
-  unsigned int Delay;       // 2 bytes
-  unsigned int Photos;      // 2 bytes
-  unsigned int Gap;         // 2 bytes
-  unsigned int Exps;        // 2 bytes
-  unsigned int Mode;        // 2 bytes
-  unsigned int Exp;         // 2 bytes
-  unsigned int Bracket;     // 2 bytes
-  unsigned int Bulb[10];    // 20 bytes
-  unsigned int Key[10];     // 20 bytes
-  unsigned int Keyframes;   // 2 bytes
+    char Name[12];            // 12 bytes
+    unsigned int Delay;       // 2 bytes
+    unsigned int Photos;      // 2 bytes
+    unsigned int Gap;         // 2 bytes
+    unsigned int Exps;        // 2 bytes
+    unsigned int Mode;        // 2 bytes
+    unsigned int Exp;         // 2 bytes
+    unsigned int Bracket;     // 2 bytes
+    unsigned int Bulb[10];    // 20 bytes
+    unsigned int Key[10];     // 20 bytes
+    unsigned int Keyframes;   // 2 bytes
 };
 
 struct qprogram
 {
-  char running; 
-  unsigned int Delay;
-  unsigned int Gap;
-  unsigned int Photos;
+    char running;
+    unsigned int Delay;
+    unsigned int Gap;
+    unsigned int Photos;
 };
 
-extern program stored[MAX_STORED] EEMEM;
+extern program stored[MAX_STORED]EEMEM;
 
 class shutter
 {
-  public:
+public:
     shutter();
     void begin(void);
     char run(void);
@@ -93,7 +93,7 @@ class shutter
     volatile int8_t currentId;
     volatile uint16_t length; // in Seconds
 
-  private:
+private:
     volatile char bulb;
     volatile char cable_connected; // 1 = cable connected, 0 = disconnected
     double test;

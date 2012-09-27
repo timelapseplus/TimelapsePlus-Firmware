@@ -17,10 +17,10 @@ float curve(float p0, float p1, float p2, float p3, float t)
     float t3 = t2 * t;
 
     float ret = (float)
-                        ((2.0 * p1) +
-                        (p2 - p0) * t +
-                        (2.0 * p0 - 5.0 * p1 + 4.0 * p2 - p3) * t2 +
-                        ((3.0 * p1) - p0 - 3.0 * p2 + p3) * t3) / 2.0;
+       ((2.0 * p1) +
+        (p2 - p0) * t +
+        (2.0 * p0 - 5.0 * p1 + 4.0 * p2 - p3) * t2 +
+        ((3.0 * p1) - p0 - 3.0 * p2 + p3) * t3) / 2.0;
 
     return ret;
 }

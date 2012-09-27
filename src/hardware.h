@@ -8,13 +8,15 @@
 #include "hardware_map_20120703.h"
 
 #ifdef __cplusplus
-extern "C" {	
+extern "C"
+{
 #endif
 
-struct light_reading {
-  int level1;
-  int level2;
-  int level3;
+struct light_reading
+{
+    int level1;
+    int level2;
+    int level3;
 };
 
 void hardware_init(void);
@@ -34,7 +36,7 @@ char battery_status(void);
 void chargingScreen(void);
 
 #ifdef __cplusplus
-}	
+}
 #endif
 
 /* MACROS */

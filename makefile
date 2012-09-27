@@ -197,7 +197,6 @@ EXTRAINCDIRS = $(LUFA_PATH)/
 #     gnu99 = c99 plus GCC extensions
 CSTANDARD = -std=c99
 
-
 # Place -D or -U options here for C sources
 CDEFS  = -DF_CPU=$(F_CPU)UL
 CDEFS += -DF_USB=$(F_USB)UL
@@ -267,6 +266,7 @@ CPPFLAGS += -fshort-enums
 CPPFLAGS += -fno-exceptions
 CPPFLAGS += -Wall
 CPPFLAGS += -Wundef
+CPPFLAGS += -Werror
 #CPPFLAGS += -mshort-calls
 #CPPFLAGS += -fno-unit-at-a-time
 #CPPFLAGS += -Wstrict-prototypes
@@ -344,7 +344,8 @@ EXTMEMOPTS =
 #    -Map:      create map file
 #    --cref:    add cross reference to  map file
 LDFLAGS  = -Wl,-Map=$(TARGET).map,--cref
-LDFLAGS += -Wl,--relax
+# this was causing avr-ld 2.22 to crash on a Mac. Commented out due to finding on web indicating the --relax option was causing the crash
+#LDFLAGS += -Wl,--relax
 LDFLAGS += -Wl,--gc-sections
 LDFLAGS += $(EXTMEMOPTS)
 LDFLAGS += $(patsubst %,-L%,$(EXTRALIBDIRS))

@@ -16,29 +16,29 @@
 
 struct menu_item  // 20 bytes total
 {
-  char name[MENU_NAME_LEN];  // 13 bytes
-  char type;         // 1 byte
-  void *function;    // 2 bytes
-  void *description; // 2 bytes
-  void *condition;   // 2 bytes
+    char name[MENU_NAME_LEN];  // 13 bytes
+    char type;         // 1 byte
+    void *function;    // 2 bytes
+    void *description; // 2 bytes
+    void *condition;   // 2 bytes
 };
 
 struct settings_item  // 14 bytes total
 {
-  char name[MENU_NAME_LEN];  // 13 bytes
-  char value;                // 1 byte
-  void *description;         // 2 bytes
+    char name[MENU_NAME_LEN];  // 13 bytes
+    char value;                // 1 byte
+    void *description;         // 2 bytes
 };
 
 struct menu_stack  // 16 bytes total
 {
-  char index; // 1 byte
-  void *menu;     // 2 bytes
+    char index; // 1 byte
+    void *menu;     // 2 bytes
 };
 
 class MENU
 {
-  public:
+public:
     MENU();
     LCD *lcd;
     Button *button;
@@ -59,22 +59,22 @@ class MENU
     char *menuName(char *str);
     char message(char *m, char first);
     void push();
-    
-  private:
+
+private:
     void menu_push(void *menu_addr, char selection);
     menu_stack menu_pop();
     char checkScroll();
-    char getIndex(menu_item * cmenu, char selected);
-    char getSelected(menu_item * cmenu, char index);
+    uint8_t getIndex(menu_item *cmenu, uint8_t selected);
+    uint8_t getSelected(menu_item *cmenu, uint8_t index);
 
     menu_stack stack[MENU_STACK_SIZE]; // stack for nested menus
-    char stack_counter;
+    uint8_t stack_counter;
     char menuSelected;
     char menuScroll;
     unsigned char hx1, hy1, hx2, hy2;
     char menuSize;
     menu_item *menu;
-    
+
     char state;
     unsigned char type;
     unsigned int *var;

@@ -47,88 +47,85 @@
  */
 uint8_t ProcessConfigurationDescriptor(void)
 {
-	uint8_t  ConfigDescriptorData[512];
-	void*    CurrConfigLocation = ConfigDescriptorData;
-	uint16_t CurrConfigBytesRem;
+    uint8_t ConfigDescriptorData[512];
+    void *CurrConfigLocation = ConfigDescriptorData;
+    uint16_t CurrConfigBytesRem;
 
-	USB_Descriptor_Interface_t* StillImageInterface = NULL;
-	USB_Descriptor_Endpoint_t*  DataINEndpoint      = NULL;
-	USB_Descriptor_Endpoint_t*  DataOUTEndpoint     = NULL;
-	USB_Descriptor_Endpoint_t*  EventsEndpoint      = NULL;
+    USB_Descriptor_Interface_t *StillImageInterface = NULL;
+    USB_Descriptor_Endpoint_t *DataINEndpoint = NULL;
+    USB_Descriptor_Endpoint_t *DataOUTEndpoint = NULL;
+    USB_Descriptor_Endpoint_t *EventsEndpoint = NULL;
 
-	/* Retrieve the entire configuration descriptor into the allocated buffer */
-	switch (USB_Host_GetDeviceConfigDescriptor(1, &CurrConfigBytesRem, ConfigDescriptorData, sizeof(ConfigDescriptorData)))
-	{
-		case HOST_GETCONFIG_Successful:
-			break;
-		case HOST_GETCONFIG_InvalidData:
-			return InvalidConfigDataReturned;
-		case HOST_GETCONFIG_BuffOverflow:
-			return DescriptorTooLarge;
-		default:
-			return ControlError;
-	}
+    /* Retrieve the entire configuration descriptor into the allocated buffer */
+    switch(USB_Host_GetDeviceConfigDescriptor(1, &CurrConfigBytesRem, ConfigDescriptorData, sizeof(ConfigDescriptorData)))
+    {
+    case HOST_GETCONFIG_Successful:
+        break;
+    case HOST_GETCONFIG_InvalidData:
+        return InvalidConfigDataReturned;
+    case HOST_GETCONFIG_BuffOverflow:
+        return DescriptorTooLarge;
+    default:
+        return ControlError;
+    }
 
-	while (!(DataINEndpoint) || !(DataOUTEndpoint))
-	{
-		/* See if we've found a likely compatible interface, and if there is an endpoint within that interface */
-		if (!(StillImageInterface) ||
-		    USB_GetNextDescriptorComp(&CurrConfigBytesRem, &CurrConfigLocation,
-		                              DComp_NextStillImageInterfaceDataEndpoint) != DESCRIPTOR_SEARCH_COMP_Found)
-		{
-			/* Get the next Still Image interface from the configuration descriptor */
-			if (USB_GetNextDescriptorComp(&CurrConfigBytesRem, &CurrConfigLocation,
-										  DComp_NextStillImageInterface) != DESCRIPTOR_SEARCH_COMP_Found)
-			{
-				/* Descriptor not found, error out */
-				return NoCompatibleInterfaceFound;
-			}
+    while (!(DataINEndpoint) || !(DataOUTEndpoint))
+    {
+        /* See if we've found a likely compatible interface, and if there is an endpoint within that interface */
+        if(!(StillImageInterface) ||
+           USB_GetNextDescriptorComp(&CurrConfigBytesRem, &CurrConfigLocation,
+                                     DComp_NextStillImageInterfaceDataEndpoint) != DESCRIPTOR_SEARCH_COMP_Found)
+        {
+            /* Get the next Still Image interface from the configuration descriptor */
+            if(USB_GetNextDescriptorComp(&CurrConfigBytesRem, &CurrConfigLocation,
+                                         DComp_NextStillImageInterface) != DESCRIPTOR_SEARCH_COMP_Found)
+            {
+                /* Descriptor not found, error out */
+                return NoCompatibleInterfaceFound;
+            }
 
-			/* Save the interface in case we need to refer back to it later */
-			StillImageInterface = DESCRIPTOR_PCAST(CurrConfigLocation, USB_Descriptor_Interface_t);
+            /* Save the interface in case we need to refer back to it later */
+            StillImageInterface = DESCRIPTOR_PCAST(CurrConfigLocation, USB_Descriptor_Interface_t);
 
-			/* Clear any found endpoints */
-			DataINEndpoint  = NULL;
-			DataOUTEndpoint = NULL;
-			EventsEndpoint  = NULL;
+            /* Clear any found endpoints */
+            DataINEndpoint = NULL;
+            DataOUTEndpoint = NULL;
+            EventsEndpoint = NULL;
 
-			/* Skip the remainder of the loop as we have not found an endpoint yet */
-			continue;
-		}
+            /* Skip the remainder of the loop as we have not found an endpoint yet */
+            continue;
+        }
 
-		/* Retrieve the endpoint address from the endpoint descriptor */
-		USB_Descriptor_Endpoint_t* EndpointData = DESCRIPTOR_PCAST(CurrConfigLocation, USB_Descriptor_Endpoint_t);
+        /* Retrieve the endpoint address from the endpoint descriptor */
+        USB_Descriptor_Endpoint_t *EndpointData = DESCRIPTOR_PCAST(CurrConfigLocation, USB_Descriptor_Endpoint_t);
 
-		/* If the endpoint is a IN type endpoint */
-		if ((EndpointData->EndpointAddress & ENDPOINT_DIR_MASK) == ENDPOINT_DIR_IN)
-		{
-			/* Check if the found endpoint is a interrupt or bulk type descriptor */
-			if ((EndpointData->Attributes & EP_TYPE_MASK) == EP_TYPE_INTERRUPT)
-			  EventsEndpoint = EndpointData;
-			else
-			  DataINEndpoint = EndpointData;
-		}
-		else
-		{
-			DataOUTEndpoint = EndpointData;
-		}
-	}
+        /* If the endpoint is a IN type endpoint */
+        if((EndpointData->EndpointAddress & ENDPOINT_DIR_MASK) == ENDPOINT_DIR_IN)
+        {
+            /* Check if the found endpoint is a interrupt or bulk type descriptor */
+            if((EndpointData->Attributes & EP_TYPE_MASK) == EP_TYPE_INTERRUPT) EventsEndpoint = EndpointData;
+            else DataINEndpoint = EndpointData;
+        } else
+        {
+            DataOUTEndpoint = EndpointData;
+        }
+    }
 
-	/* Configure the Still Image data IN pipe */
-	Pipe_ConfigurePipe(SIMAGE_DATA_IN_PIPE, EP_TYPE_BULK, PIPE_TOKEN_IN,
-	                   DataINEndpoint->EndpointAddress, DataINEndpoint->EndpointSize, PIPE_BANK_SINGLE);
+    /* Configure the Still Image data IN pipe */
+    Pipe_ConfigurePipe(SIMAGE_DATA_IN_PIPE, EP_TYPE_BULK, PIPE_TOKEN_IN,
+                       DataINEndpoint->EndpointAddress, DataINEndpoint->EndpointSize, PIPE_BANK_SINGLE);
 
-	/* Configure the Still Image data OUT pipe */
-	Pipe_ConfigurePipe(SIMAGE_DATA_OUT_PIPE, EP_TYPE_BULK, PIPE_TOKEN_OUT,
-					   DataOUTEndpoint->EndpointAddress, DataOUTEndpoint->EndpointSize, PIPE_BANK_SINGLE);
+    /* Configure the Still Image data OUT pipe */
+    Pipe_ConfigurePipe(SIMAGE_DATA_OUT_PIPE, EP_TYPE_BULK, PIPE_TOKEN_OUT,
+                       DataOUTEndpoint->EndpointAddress, DataOUTEndpoint->EndpointSize, PIPE_BANK_SINGLE);
 
-	/* Configure the Still Image events pipe */
-	Pipe_ConfigurePipe(SIMAGE_EVENTS_PIPE, EP_TYPE_INTERRUPT, PIPE_TOKEN_IN,
-					   EventsEndpoint->EndpointAddress, EventsEndpoint->EndpointSize, PIPE_BANK_SINGLE);
-	Pipe_SetInterruptPeriod(EventsEndpoint->PollingIntervalMS);
+    /* Configure the Still Image events pipe */
+    Pipe_ConfigurePipe(SIMAGE_EVENTS_PIPE, EP_TYPE_INTERRUPT, PIPE_TOKEN_IN,
+                       EventsEndpoint->EndpointAddress, EventsEndpoint->EndpointSize, PIPE_BANK_SINGLE);
+    Pipe_SetInterruptPeriod(EventsEndpoint->PollingIntervalMS);
 
-	/* Valid data found, return success */
-	return SuccessfulConfigRead;
+    /* Valid data found, return success */
+    return SuccessfulConfigRead;
 }
 
 /** Descriptor comparator function. This comparator function is can be called while processing an attached USB device's
@@ -139,24 +136,24 @@ uint8_t ProcessConfigurationDescriptor(void)
  *
  *  \return A value from the DSEARCH_Return_ErrorCodes_t enum
  */
-uint8_t DComp_NextStillImageInterface(void* CurrentDescriptor)
+uint8_t DComp_NextStillImageInterface(void *CurrentDescriptor)
 {
-	USB_Descriptor_Header_t* Header = DESCRIPTOR_PCAST(CurrentDescriptor, USB_Descriptor_Header_t);
+    USB_Descriptor_Header_t *Header = DESCRIPTOR_PCAST(CurrentDescriptor, USB_Descriptor_Header_t);
 
-	if (Header->Type == DTYPE_Interface)
-	{
-		USB_Descriptor_Interface_t* Interface = DESCRIPTOR_PCAST(CurrentDescriptor, USB_Descriptor_Interface_t);
+    if(Header->Type == DTYPE_Interface)
+    {
+        USB_Descriptor_Interface_t *Interface = DESCRIPTOR_PCAST(CurrentDescriptor, USB_Descriptor_Interface_t);
 
-		/* Check the descriptor class, subclass and protocol, break out if correct interface found */
-		if ((Interface->Class    == SI_CSCP_StillImageClass)    &&
-		    (Interface->SubClass == SI_CSCP_StillImageSubclass) &&
-		    (Interface->Protocol == SI_CSCP_BulkOnlyProtocol))
-		{
-			return DESCRIPTOR_SEARCH_Found;
-		}
-	}
+        /* Check the descriptor class, subclass and protocol, break out if correct interface found */
+        if((Interface->Class == SI_CSCP_StillImageClass) &&
+           (Interface->SubClass == SI_CSCP_StillImageSubclass) &&
+           (Interface->Protocol == SI_CSCP_BulkOnlyProtocol))
+        {
+            return DESCRIPTOR_SEARCH_Found;
+        }
+    }
 
-	return DESCRIPTOR_SEARCH_NotFound;
+    return DESCRIPTOR_SEARCH_NotFound;
 }
 
 /** Descriptor comparator function. This comparator function is can be called while processing an attached USB device's
@@ -168,26 +165,25 @@ uint8_t DComp_NextStillImageInterface(void* CurrentDescriptor)
  *
  *  \return A value from the DSEARCH_Return_ErrorCodes_t enum
  */
-uint8_t DComp_NextStillImageInterfaceDataEndpoint(void* CurrentDescriptor)
+uint8_t DComp_NextStillImageInterfaceDataEndpoint(void *CurrentDescriptor)
 {
-	USB_Descriptor_Header_t* Header = DESCRIPTOR_PCAST(CurrentDescriptor, USB_Descriptor_Header_t);
+    USB_Descriptor_Header_t *Header = DESCRIPTOR_PCAST(CurrentDescriptor, USB_Descriptor_Header_t);
 
-	if (Header->Type == DTYPE_Endpoint)
-	{
-		USB_Descriptor_Endpoint_t* Endpoint = DESCRIPTOR_PCAST(CurrentDescriptor, USB_Descriptor_Endpoint_t);
+    if(Header->Type == DTYPE_Endpoint)
+    {
+        USB_Descriptor_Endpoint_t *Endpoint = DESCRIPTOR_PCAST(CurrentDescriptor, USB_Descriptor_Endpoint_t);
 
-		/* Check the endpoint type, break out if correct BULK or INTERRUPT type endpoint found */
-		if (((Endpoint->Attributes & EP_TYPE_MASK) == EP_TYPE_BULK) ||
-		    ((Endpoint->Attributes & EP_TYPE_MASK) == EP_TYPE_INTERRUPT))
-		{
-			return DESCRIPTOR_SEARCH_Found;
-		}
-	}
-	else if (Header->Type == DTYPE_Interface)
-	{
-		return DESCRIPTOR_SEARCH_Fail;
-	}
+        /* Check the endpoint type, break out if correct BULK or INTERRUPT type endpoint found */
+        if(((Endpoint->Attributes & EP_TYPE_MASK) == EP_TYPE_BULK) ||
+           ((Endpoint->Attributes & EP_TYPE_MASK) == EP_TYPE_INTERRUPT))
+        {
+            return DESCRIPTOR_SEARCH_Found;
+        }
+    } else if(Header->Type == DTYPE_Interface)
+    {
+        return DESCRIPTOR_SEARCH_Fail;
+    }
 
-	return DESCRIPTOR_SEARCH_NotFound;
+    return DESCRIPTOR_SEARCH_NotFound;
 }
 

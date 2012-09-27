@@ -20,486 +20,483 @@ LCD::LCD()
 
 void LCD::setPixel(unsigned char x, unsigned char y)
 {
-  if(x <= LCD_WIDTH - 1 && y <= LCD_HEIGHT - 1) 
-    screen[x][y>>3] |= 1 << (y % 8);
+    if(x <= LCD_WIDTH - 1 && y <= LCD_HEIGHT - 1) screen[x][y >> 3] |= 1 << (y % 8);
 }
 
 void LCD::clearPixel(unsigned char x, unsigned char y)
 {
-  if(x <= LCD_WIDTH - 1 && y <= LCD_HEIGHT - 1) 
-    screen[x][y>>3] &= ~(1 << (y % 8));
+    if(x <= LCD_WIDTH - 1 && y <= LCD_HEIGHT - 1) screen[x][y >> 3] &= ~(1 << (y % 8));
 }
 
 void LCD::xorPixel(unsigned char x, unsigned char y)
 {
-  if(getPixel(x, y))
-  {
-    clearPixel(x, y);
-  }
-  else
-  {
-    setPixel(x, y);
-  }
+    if(getPixel(x, y))
+    {
+        clearPixel(x, y);
+    } else
+    {
+        setPixel(x, y);
+    }
 }
 
 unsigned char LCD::getPixel(unsigned char x, unsigned char y)
 {
-  if(screen[x][y>>3] & (1 << (y % 8))) return 1; 
-  else return 0;
+    if(screen[x][y >> 3] & (1 << (y % 8))) return 1;
+    else return 0;
 }
 
 void LCD::writeString(unsigned char x, unsigned char y, char *s)
 {
-  while(*(s) != 0)
-  {
-    writeChar(x, y, *s);
-    x += 6;
-    s++;
-  }
+    while (*(s) != 0)
+    {
+        writeChar(x, y, *s);
+        x += 6;
+        s++;
+    }
 }
 
 void LCD::writeUint(unsigned char x, unsigned char y, unsigned int n)
 {
 
-  if(n > 9) x += 6;
-  if(n > 99) x += 6;
-  if(n > 999) x += 6;
-  if(n > 9999) x += 6;
-
-  do {
-    writeChar(x, y, '0' + (n % 10));
-    n -= n % 10;
-    n /= 10;
-    x -= 6;
-  } while(n > 0);  
-  
-}
-
-unsigned char LCD::writeNumber(unsigned char x, unsigned char y, unsigned int n, unsigned char mode, unsigned char justification)
-{
-  if(justification == 'R')
-  {
-    x -= 6;
-  }
-  else
-  {
     if(n > 9) x += 6;
     if(n > 99) x += 6;
     if(n > 999) x += 6;
     if(n > 9999) x += 6;
-  }
 
-  justification = 0;
-
-  if(mode == 'U') // Unsigned int //
-  {
-    do {
-      writeChar(x, y, '0' + (n % 10));
-      n -= n % 10;
-      n /= 10;
-      x -= 6;
-      justification++;
-    } while(n > 0);
-  }
-  else if(mode == 'T') // Time (hh:mm:ss) //
-  {
-    char b, p;
-    unsigned int c;
-
-    // seconds //
-    c = n % 60;
-    n -= c; n /= 60;
-    b = c % 10;
-    writeChar(x, y, '0' + b); x -= 6; justification++;
-    c -= b; c /= 10;
-    b = c; if(b) p = justification;
-    writeChar(x, y, '0' + b); x -= 6; justification++;
-      
-    writeChar(x, y, ':'); x -= 6; justification++;
-    p = justification;
-
-    // minutes //
-    c = n % 60;
-    n -= c; n /= 60;
-    b = c % 10; if(b) p = justification;
-    writeChar(x, y, '0' + b); x -= 6; justification++;
-    c -= b; c /= 10;
-    b = c; if(b) p = justification;
-    writeChar(x, y, '0' + b); x -= 6; justification++;
-      
-    writeChar(x, y, ':'); x -= 6; justification++;
-
-    // hours //
-    c = n % 60;
-    n -= c; n /= 60;
-    b = c % 10; if(b) p = justification;
-    writeChar(x, y, '0' + b); x -= 6; justification++;
-    if(p)
+    do
     {
-      eraseBox(x, y, x + (justification - p) * 6, y + 7);
-      justification -= p;
+        writeChar(x, y, '0' + (n % 10));
+        n -= n % 10;
+        n /= 10;
+        x -= 6;
     }
-  }
-  else if(mode == 'F') // Fractional time (mm:ss.s) //
-  {
-    char b, p;
-    unsigned int c;
+    while (n > 0);
 
-    // seconds //
-    c = n % 600;
-    n -= c; n /= 600;
-    b = c % 10;
-    writeChar(x, y, '0' + b); x -= 6; justification++;
+}
 
-    writeChar(x, y, '.'); x -= 6; justification++;
-    p = justification;
-
-    c -= b; c /= 10;
-    b = c % 10; if(b) p = justification;
-    writeChar(x, y, '0' + b); x -= 6; justification++;
-    
-    c -= b; c /= 10;
-    b = c; if(b) p = justification;
-    writeChar(x, y, '0' + b); x -= 6; justification++;
-
-    writeChar(x, y, ':'); x -= 6; justification++;
-      
-    // minutes //
-    c = n % 600;
-    b = c % 10; if(b) p = justification;
-    writeChar(x, y, '0' + b); x -= 6; justification++;
-    
-    c -= b; c /= 10;
-    b = c; if(b) p = justification;
-    writeChar(x, y, '0' + b); x -= 6; justification++;
-    if(p)
+unsigned char LCD::writeNumber(unsigned char x, unsigned char y, unsigned int n, unsigned char mode, unsigned char justification)
+{
+    if(justification == 'R')
     {
-      eraseBox(x, y, x + (justification - p) * 6, y + 7);
-      justification -= p;
+        x -= 6;
+    } else
+    {
+        if(n > 9) x += 6;
+        if(n > 99) x += 6;
+        if(n > 999) x += 6;
+        if(n > 9999) x += 6;
     }
-  }  
-  
-  return justification; // number of chars printed //
+
+    justification = 0;
+
+    if(mode == 'U') // Unsigned int //
+    {
+        do
+        {
+            writeChar(x, y, '0' + (n % 10));
+            n -= n % 10;
+            n /= 10;
+            x -= 6;
+            justification++;
+        }
+        while (n > 0);
+    } else if(mode == 'T') // Time (hh:mm:ss) //
+    {
+        char b, p;
+        unsigned int c;
+
+        // seconds //
+        c = n % 60;
+        n -= c; n /= 60;
+        b = c % 10;
+        writeChar(x, y, '0' + b); x -= 6; justification++;
+        c -= b; c /= 10;
+        b = c; if(b) p = justification;
+        writeChar(x, y, '0' + b); x -= 6; justification++;
+
+        writeChar(x, y, ':'); x -= 6; justification++;
+        p = justification;
+
+        // minutes //
+        c = n % 60;
+        n -= c; n /= 60;
+        b = c % 10; if(b) p = justification;
+        writeChar(x, y, '0' + b); x -= 6; justification++;
+        c -= b; c /= 10;
+        b = c; if(b) p = justification;
+        writeChar(x, y, '0' + b); x -= 6; justification++;
+
+        writeChar(x, y, ':'); x -= 6; justification++;
+
+        // hours //
+        c = n % 60;
+        n -= c; n /= 60;
+        b = c % 10; if(b) p = justification;
+        writeChar(x, y, '0' + b); x -= 6; justification++;
+        if(p)
+        {
+            eraseBox(x, y, x + (justification - p) * 6, y + 7);
+            justification -= p;
+        }
+    } else if(mode == 'F') // Fractional time (mm:ss.s) //
+    {
+        char b, p;
+        unsigned int c;
+
+        // seconds //
+        c = n % 600;
+        n -= c; n /= 600;
+        b = c % 10;
+        writeChar(x, y, '0' + b); x -= 6; justification++;
+
+        writeChar(x, y, '.'); x -= 6; justification++;
+        p = justification;
+
+        c -= b; c /= 10;
+        b = c % 10; if(b) p = justification;
+        writeChar(x, y, '0' + b); x -= 6; justification++;
+
+        c -= b; c /= 10;
+        b = c; if(b) p = justification;
+        writeChar(x, y, '0' + b); x -= 6; justification++;
+
+        writeChar(x, y, ':'); x -= 6; justification++;
+
+        // minutes //
+        c = n % 600;
+        b = c % 10; if(b) p = justification;
+        writeChar(x, y, '0' + b); x -= 6; justification++;
+
+        c -= b; c /= 10;
+        b = c; if(b) p = justification;
+        writeChar(x, y, '0' + b); x -= 6; justification++;
+        if(p)
+        {
+            eraseBox(x, y, x + (justification - p) * 6, y + 7);
+            justification -= p;
+        }
+    }
+
+    return justification; // number of chars printed //
 }
 
 void LCD::writeStringBig(unsigned char x, unsigned char y, char *s)
 {
-  while(*(s) != 0)
-  {
-    writeCharBig(x, y, *s);
-    x += 16;
-    s++;
-  }
+    while (*(s) != 0)
+    {
+        writeCharBig(x, y, *s);
+        x += 16;
+        s++;
+    }
 }
 
 void LCD::writeStringTiny(unsigned char x, unsigned char y, char *s)
 {
-  while(*(s) != 0)
-  {
-    x += writeCharTiny(x, y, *s) + 1;
-    s++;
-  }
+    while (*(s) != 0)
+    {
+        x += writeCharTiny(x, y, *s) + 1;
+        s++;
+    }
 }
 
 char LCD::measureStringTiny(char *s)
 {
-  unsigned char *pFont;
-  pFont = (unsigned char *)font4_5;  
-  char l = 0, c;
-  
-  while(*s != 0)
-  {
-    if(*s == ' ')
+    unsigned char *pFont;
+    pFont = (unsigned char*)font4_5;
+    char l = 0, c;
+
+    while (*s != 0)
     {
-      l += 2;
+        if(*s == ' ')
+        {
+            l += 2;
+        } else if(*s == '.')
+        {
+            l += 0;
+        } else if(*s >= '0' && *s <= '9')
+        {
+            l += 3;
+        } else
+        {
+            c = *s;
+            if(c > 90) c -= 32;
+            c -= 'A';
+            l += pgm_read_byte(pFont + c * 6) + 1;
+        }
+        s++;
     }
-    else if(*s == '.')
-    {
-      l += 0;
-    }
-    else if(*s >= '0' && *s <= '9')
-    {
-      l += 3;
-    }
-    else
-    {
-      c = *s;
-      if(c > 90) c -= 32;
-      c -= 'A';
-      l += pgm_read_byte(pFont+c*6) + 1;
-    }
-    s++;
-  }
-  return l;
+    return l;
 }
 
 unsigned char LCD::writeCharTiny(unsigned char x, unsigned char y, unsigned char c)
 {
-  unsigned char line, b, len;
-  unsigned char *pFont;
-  unsigned char ch;
+    uint8_t line, b, len;
+    uint8_t *pFont;
+    uint8_t ch;
 
-  pFont = (unsigned char *)font4_5;
-  if(c == ' ') return 2;
-  if(c == '.') return 0;
+    pFont = (unsigned char*)font4_5;
+    if(c == ' ') return 2;
+    if(c == '.') return 0;
 
-  if(c >= '0' && c <= '9')
-  {
-    c = (c - '0') + ('Z' - 'A') + 1;
-  }
-  else
-  {
-    if(c > 90) c -= 32;
-    c -= 'A';
-    if(c > 'Z') return 0;
-  }
-
-  len = pgm_read_byte(pFont+c*6+line);
-  for (line=0; line<len; line++)
-  {
-    ch = pgm_read_byte(pFont+c*6+line+1);
-    for(b = 0; b < 5; b++)
+    if(c >= '0' && c <= '9')
     {
-      if(ch & 1<<b) setPixel(x + line, y + b);
+        c = (c - '0') + ('Z' - 'A') + 1;
+    } else
+    {
+        if(c > 90) c -= 32;
+        c -= 'A';
+        if(c > 'Z') return 0;
     }
-  }
-  return len;
+
+    line = 0; // todo BUG -- line used here but not initialized. Setting it to 0 for now - John
+    
+    len = pgm_read_byte(pFont + c * 6 + line);
+    for(line = 0; line < len; line++)
+    {
+        ch = pgm_read_byte(pFont + c * 6 + line + 1);
+        for(b = 0; b < 5; b++)
+        {
+            if(ch & 1 << b) setPixel(x + line, y + b);
+        }
+    }
+    return len;
 }
 
 void LCD::writeChar(unsigned char x, unsigned char y, unsigned char c)
 {
-  unsigned char line, b;
-  unsigned char *pFont;
-  unsigned char ch;
+    unsigned char line, b;
+    unsigned char *pFont;
+    unsigned char ch;
 
-  pFont = (unsigned char *)font6_8;
-  c -= 32;
+    pFont = (unsigned char*)font6_8;
+    c -= 32;
 
-  for (line=0; line<6; line++)
-  {
-    ch = pgm_read_byte(pFont+c*6+line);
-    for(b = 0; b < 8; b++)
+    for(line = 0; line < 6; line++)
     {
-      if(ch & 1<<b) setPixel(x + line, y + b);
+        ch = pgm_read_byte(pFont + c * 6 + line);
+        for(b = 0; b < 8; b++)
+        {
+            if(ch & 1 << b) setPixel(x + line, y + b);
+        }
     }
-  }
 }
 
 /* write char in big font */
-void LCD::writeCharBig(unsigned char x,unsigned char y, unsigned char c)
+void LCD::writeCharBig(unsigned char x, unsigned char y, unsigned char c)
 {
-  unsigned char i, j, b;
-  unsigned char *pFont;
-  unsigned char ch_dat;
+    unsigned char i, j, b;
+    unsigned char *pFont;
+    unsigned char ch_dat;
 
-  pFont = (unsigned char *) big_number;
+    pFont = (unsigned char*)big_number;
 
-  if(c == '.')
-    c = 10;
-  else if (c == '+')
-    c = 11;
-  else if (c == '-')
-    c = 12;
-  else
-    c = c & 0x0f;
+    if(c == '.') c = 10;
+    else if(c == '+') c = 11;
+    else if(c == '-') c = 12;
+    else c = c & 0x0f;
 
 
-  for(i=0;i<3;i++)
-  {	
-    for(j=0; j<16; j++){
-      ch_dat =  pgm_read_byte(pFont+c*48 + (i)*16 +(j));
-      for(b = 0; b < 8; b++)
-      {
-        if(ch_dat & 1<<b) setPixel(x + j, y + i * 8 + b);
-      }
+    for(i = 0; i < 3; i++)
+    {
+        for(j = 0; j < 16; j++)
+        {
+            ch_dat = pgm_read_byte(pFont + c * 48 + (i) * 16 + (j));
+            for(b = 0; b < 8; b++)
+            {
+                if(ch_dat & 1 << b) setPixel(x + j, y + i * 8 + b);
+            }
+        }
     }
-  } 
 }
 
 void LCD::drawBox(unsigned char x1, unsigned char y1, unsigned char x2, unsigned char y2)
 {
-  drawLine(x1, y1, x2,  y1);
-  drawLine(x2, y1, x2,  y2);
-  drawLine(x1, y1, x1,  y2);
-  drawLine(x1, y2, x2,  y2);
+    drawLine(x1, y1, x2, y1);
+    drawLine(x2, y1, x2, y2);
+    drawLine(x1, y1, x1, y2);
+    drawLine(x1, y2, x2, y2);
 }
 
-void LCD::pixel(unsigned char x, unsigned char y, char color)
+void LCD::pixel(unsigned char x, unsigned char y, int8_t color)
 {
-  switch(color)
-  {
+    switch(color)
+    {
     case 1:
-      setPixel(x, y); 
-      break;
+        setPixel(x, y);
+        break;
     case 0:
-      clearPixel(x, y); 
-      break;
+        clearPixel(x, y);
+        break;
     case -1:
-      xorPixel(x, y); 
-      break;
-  }
+        xorPixel(x, y);
+        break;
+    }
 }
-  
+
 void LCD::drawLine(unsigned char x1, unsigned char y1, unsigned char x2, unsigned char y2)
 {
-  char n, sgndeltax, sgndeltay, deltaxabs, deltayabs, x, y; 
+    char n, sgndeltax, sgndeltay, deltaxabs, deltayabs, x, y;
 
-  x2 = x2 - x1; 
-  y2 = y2 - y1; 
-  deltaxabs = abs(x2); 
-  deltayabs = abs(y2); 
-  sgndeltax = sgn(x2); 
-  sgndeltay = sgn(y2);
-  x = deltayabs >> 1; 
-  y = deltaxabs >> 1; 
+    x2 = x2 - x1;
+    y2 = y2 - y1;
+    deltaxabs = abs(x2);
+    deltayabs = abs(y2);
+    sgndeltax = sgn(x2);
+    sgndeltay = sgn(y2);
+    x = deltayabs >> 1;
+    y = deltaxabs >> 1;
 
-  setPixel(x1, y1); 
+    setPixel(x1, y1);
 
-  if(deltaxabs >= deltayabs){ 
-    for(n = 0; n < deltaxabs; n++){ 
-      y += deltayabs; 
-      if(y >= deltaxabs){ 
-        y -= deltaxabs; 
-        y1 += sgndeltay; 
-      } 
-      x1 += sgndeltax; 
-      setPixel(x1, y1); 
-    } 
-  }
-  else{ 
-    for(n = 0; n < deltayabs; n++){ 
-      x += deltaxabs; 
-      if(x >= deltayabs){ 
-        x -= deltayabs; 
-        x1 += sgndeltax; 
-      } 
-      y1 += sgndeltay; 
-      setPixel(x1, y1); 
-    } 
-  } 
+    if(deltaxabs >= deltayabs)
+    {
+        for(n = 0; n < deltaxabs; n++)
+        {
+            y += deltayabs;
+            if(y >= deltaxabs)
+            {
+                y -= deltaxabs;
+                y1 += sgndeltay;
+            }
+            x1 += sgndeltax;
+            setPixel(x1, y1);
+        }
+    } else
+    {
+        for(n = 0; n < deltayabs; n++)
+        {
+            x += deltaxabs;
+            if(x >= deltayabs)
+            {
+                x -= deltayabs;
+                x1 += sgndeltax;
+            }
+            y1 += sgndeltay;
+            setPixel(x1, y1);
+        }
+    }
 }
 
 char LCD::sgn(char x)
 {
-  if (x > 0) return 1;
-  if (x < 0) return -1;
-  return 0;
+    if(x > 0) return 1;
+    if(x < 0) return -1;
+    return 0;
 }
 
 void LCD::drawHighlight(unsigned char x1, unsigned char y1, unsigned char x2, unsigned char y2)
 {
-  unsigned char i, j;
-  for(j = x1; j <= x2; j++)
-  {
-    for(i = y1; i <= y2; i++)
+    unsigned char i, j;
+    for(j = x1; j <= x2; j++)
     {
-      xorPixel(j, i);
+        for(i = y1; i <= y2; i++)
+        {
+            xorPixel(j, i);
+        }
     }
-  }
 }
 
 void LCD::eraseBox(unsigned char x1, unsigned char y1, unsigned char x2, unsigned char y2)
 {
-  unsigned char i, j;
-  for(j = x1; j <= x2; j++)
-  {
-    for(i = y1; i <= y2; i++)
+    unsigned char i, j;
+    for(j = x1; j <= x2; j++)
     {
-      clearPixel(j, i);
+        for(i = y1; i <= y2; i++)
+        {
+            clearPixel(j, i);
+        }
     }
-  }
 }
 
 void LCD::drawBMP(unsigned char x, unsigned char y, unsigned char *pBMP)
 {
-  unsigned char i, j, y2, b, w, h;
-  unsigned char ch_dat;
+    unsigned char i, j, y2, b, w, h;
+    unsigned char ch_dat;
 
-  w = pgm_read_byte(pBMP++);
-  h = pgm_read_byte(pBMP++);
+    w = pgm_read_byte(pBMP++);
+    h = pgm_read_byte(pBMP++);
 
-  if(x == 0 && y == 0 && w == LCD_WIDTH && h == LCD_HEIGHT)
-  {
-    for(y = 0; y < (LCD_HEIGHT>>3); y++)
+    if(x == 0 && y == 0 && w == LCD_WIDTH && h == LCD_HEIGHT)
     {
-      for(x = 0; x < LCD_WIDTH; x++)
-      {
-        screen[x][y] = pgm_read_byte(pBMP++);
-      }
-    }
-  }
-  else
-  {
-    for(j = 0; j < (h>>3); j++)
-    {
-      for(i = 0; i < w; i++)
-      {
-        ch_dat =  pgm_read_byte(pBMP++);
-        for(b = 0; b < 8; b++)
+        for(y = 0; y < (LCD_HEIGHT >> 3); y++)
         {
-          y2 = y + (j * 8) + b;
-          if(y2 <= h + y)
-          {
-            if(ch_dat & 1<<b) setPixel(x + i, y2); else clearPixel(x + i, y2);
-          }
+            for(x = 0; x < LCD_WIDTH; x++)
+            {
+                screen[x][y] = pgm_read_byte(pBMP++);
+            }
         }
-      }
+    } else
+    {
+        for(j = 0; j < (h >> 3); j++)
+        {
+            for(i = 0; i < w; i++)
+            {
+                ch_dat = pgm_read_byte(pBMP++);
+                for(b = 0; b < 8; b++)
+                {
+                    y2 = y + (j * 8) + b;
+                    if(y2 <= h + y)
+                    {
+                        if(ch_dat & 1 << b) setPixel(x + i, y2);
+                        else clearPixel(x + i, y2);
+                    }
+                }
+            }
+        }
     }
-  }
 }
 
 void LCD::drawCircle(unsigned char x, unsigned char y, unsigned char r)
 {
-  char x1, y1, p;
+    char x1, y1, p;
 
-  setPixel(x - r, y);
-  setPixel(x, y - r);
-  setPixel(x + r, y);
-  setPixel(x, y + r);
+    setPixel(x - r, y);
+    setPixel(x, y - r);
+    setPixel(x + r, y);
+    setPixel(x, y + r);
 
-  x1 = 0; y1 = r; p = 3 - (2 * r);
-  while(x1 <= y1)
-  {
-    x1 = x1 + 1;
-    if(p < 0)
+    x1 = 0; y1 = r; p = 3 - (2 * r);
+    while (x1 <= y1)
     {
-      p = p + (4 * x1) + 6;
+        x1 = x1 + 1;
+        if(p < 0)
+        {
+            p = p + (4 * x1) + 6;
+        } else
+        {
+            y1 = y1 - 1;
+            p = p + (4 * (x1 - y1)) + 10;
+        }
+        setPixel(x + x1, y + y1);
+        setPixel(x - x1, y - y1);
+        setPixel(x + x1, y - y1);
+        setPixel(x - x1, y + y1);
+        setPixel(x + y1, y + x1);
+        setPixel(x - y1, y - x1);
+        setPixel(x + y1, y - x1);
+        setPixel(x - y1, y + x1);
     }
-    else
-    {
-      y1 = y1 - 1;
-      p = p + (4 * (x1 - y1)) + 10;
-    }
-    setPixel(x + x1, y + y1);
-    setPixel(x - x1, y - y1);
-    setPixel(x + x1, y - y1);
-    setPixel(x - x1, y + y1);
-    setPixel(x + y1, y + x1);
-    setPixel(x - y1, y - x1);
-    setPixel(x + y1, y - x1);
-    setPixel(x - y1, y + x1);
-  }
 }
 
 unsigned char LCD::swapBits(unsigned char b)
 {
-  unsigned long l;
-  l = (unsigned long) b;
-  l = ((l * 0x0802 & 0x22110) | (l * 0x8020 & 0x88440)) * 0x10101 >> 16;
-  b = (unsigned char) l;
-  return b;
+    unsigned long l;
+    l = (unsigned long)b;
+    l = ((l * 0x0802 & 0x22110) | (l * 0x8020 & 0x88440)) * 0x10101 >> 16;
+    b = (unsigned char)l;
+    return b;
 }
 
 void LCD::cls()
 {
-  unsigned char i, j;
-  for(j = 0; j < 6; j++)
-  {
-    for(i = 0; i < 84; i++)
+    unsigned char i, j;
+    for(j = 0; j < 6; j++)
     {
-      screen[i][j] = 0;
+        for(i = 0; i < 84; i++)
+        {
+            screen[i][j] = 0;
+        }
     }
-  }	
 }
 
 /*void LCD::flash(char *message, unsigned int duration)
@@ -510,28 +507,28 @@ void LCD::cls()
 
 void LCD::update()
 {
-  char i, j, b;
-  setXY(0,0);
+    uint8_t i, j, b;
+    setXY(0, 0);
 #ifdef LCD_UPSIDEDOWN
-  for(j = (LCD_HEIGHT>>3) - 1; j >= 0; j--)
-  {
-    for(i = LCD_WIDTH - 1; i >= 0; i--)
+    for(j = (LCD_HEIGHT >> 3) - 1; j >= 0; j--)
     {
-      b = swapBits(screen[i][j]);
+        for(i = LCD_WIDTH - 1; i >= 0; i--)
+        {
+            b = swapBits(screen[i][j]);
 //      if(invert) b = ~b;
-      writeByte(b, 1);
+            writeByte(b, 1);
+        }
     }
-  }	
 #else
-  for(j = 0; j < (LCD_HEIGHT>>3); j++)
-  {
-    for(i = 0; i < LCD_WIDTH; i++)
+    for(j = 0; j < (LCD_HEIGHT >> 3); j++)
     {
-      b = screen[i][j];
+        for(i = 0; i < LCD_WIDTH; i++)
+        {
+            b = screen[i][j];
 //      if(invert) b = ~b;
-      writeByte(b, 1);
+            writeByte(b, 1);
+        }
     }
-  }	
 #endif
 }
 
@@ -541,133 +538,126 @@ void LCD::update()
 
 void LCD::init(void)
 {
-  // LCD_RST = 0;
-  setOut(SPI_CS);
-  setOut(SPI_MOSI);
-  setOut(SPI_SCK);
-  setOut(LCD_VCC);
-  setOut(LCD_BL);
-  setOut(LCD_BL_DIM);
-  setOut(LCD_DC);
-  setOut(LCD_RST);
+    // LCD_RST = 0;
+    setOut(SPI_CS);
+    setOut(SPI_MOSI);
+    setOut(SPI_SCK);
+    setOut(LCD_VCC);
+    setOut(LCD_BL);
+    setOut(LCD_BL_DIM);
+    setOut(LCD_DC);
+    setOut(LCD_RST);
 
-  #ifdef LCD_RED
-  setOut(LCD_RED);
-  #endif
+#ifdef LCD_RED
+    setOut(LCD_RED);
+#endif
 
-  setHigh(LCD_VCC);
+    setHigh(LCD_VCC);
 
-  color(blRed);
+    color(blRed);
 
-  _delay_us(10);
+    _delay_us(10);
 
-  setLow(LCD_RST);
+    setLow(LCD_RST);
 
-  _delay_us(1);
+    _delay_us(1);
 
-  setHigh(LCD_RST);
+    setHigh(LCD_RST);
 
-  SPCR = 0x51;   // enable SPI master, fosc/16 = 1MH
+    SPCR = 0x51;   // enable SPI master, fosc/16 = 1MH
 
-  writeByte(0x21, 0);	
-  writeByte(0xc0, 0);	
-  writeByte(0x06, 0);	
-  writeByte(0x13, 0);	
-  writeByte(0x20, 0);	
-  clear();	        
-  writeByte(0x0c, 0);
-  backlight(255);
+    writeByte(0x21, 0);
+    writeByte(0xc0, 0);
+    writeByte(0x06, 0);
+    writeByte(0x13, 0);
+    writeByte(0x20, 0);
+    clear();
+    writeByte(0x0c, 0);
+    backlight(255);
 }
 
 void LCD::writeByte(unsigned char dat, unsigned char dat_type)
 {
-  setLow(SPI_CS);
-  if (dat_type == 0)
-    setLow(LCD_DC);
-  else
-    setHigh(LCD_DC);
+    setLow(SPI_CS);
+    if(dat_type == 0) setLow(LCD_DC);
+    else setHigh(LCD_DC);
 
-  SPDR = dat;			
+    SPDR = dat;
 
-  while ((SPSR & 0x80) == 0);   
+    while ((SPSR & 0x80) == 0);
 
-  setHigh(SPI_CS);
+    setHigh(SPI_CS);
 
 }
 
 void LCD::setXY(unsigned char X, unsigned char Y)
 {
-  writeByte(0x40 | Y, 0);		// column
-  writeByte(0x80 | X, 0);          // row
+    writeByte(0x40 | Y, 0);       // column
+    writeByte(0x80 | X, 0);          // row
 }
 
 void LCD::clear(void)
 {
-  unsigned int i;
+    unsigned int i;
 
-  writeByte(0x0c, 0);			
-  writeByte(0x80, 0);			
+    writeByte(0x0c, 0);
+    writeByte(0x80, 0);
 
-  for (i=0; i<504; i++)
-    writeByte(0, 1);			
+    for(i = 0; i < 504; i++) writeByte(0, 1);
 }
 
 void LCD::off()
 {
-  setLow(SPI_CS);
-  setLow(SPI_MOSI);
-  setLow(SPI_SCK);
-  setLow(LCD_VCC);
-  setLow(LCD_BL);
-  setLow(LCD_DC);
-  setLow(LCD_RST);
-  #ifdef LCD_RED
-  setLow(LCD_RED);
-  #endif
+    setLow(SPI_CS);
+    setLow(SPI_MOSI);
+    setLow(SPI_SCK);
+    setLow(LCD_VCC);
+    setLow(LCD_BL);
+    setLow(LCD_DC);
+    setLow(LCD_RST);
+#ifdef LCD_RED
+    setLow(LCD_RED);
+#endif
 }
 
 void LCD::color(int8_t red)
 {
-  #ifndef LCD_RED
+#ifndef LCD_RED
     if(red == 1)
     {
-      blRed = 1;
-      setLow(LCD_BL);
-      setHigh(LCD_BL_DIM);
-    }
-    else if(red == -1)
+        blRed = 1;
+        setLow(LCD_BL);
+        setHigh(LCD_BL_DIM);
+    } else if(red == -1)
     {
-      setLow(LCD_BL);
-      setLow(LCD_BL_DIM);
-    }
-    else
+        setLow(LCD_BL);
+        setLow(LCD_BL_DIM);
+    } else
     {
-      blRed = 0;
-      setHigh(LCD_BL);
-      setLow(LCD_BL_DIM);
+        blRed = 0;
+        setHigh(LCD_BL);
+        setLow(LCD_BL_DIM);
     }
-  #else
+#else
     if(red == 1)
     {
-      blRed = 1;
-      setLow(LCD_BL);
-      setHigh(LCD_RED);
-      setLow(LCD_BL_DIM);
-    }
-    else if(red == -1)
+        blRed = 1;
+        setLow(LCD_BL);
+        setHigh(LCD_RED);
+        setLow(LCD_BL_DIM);
+    } else if(red == -1)
     {
-      setLow(LCD_BL);
-      setLow(LCD_RED);
-      setLow(LCD_BL_DIM);
-    }
-    else
+        setLow(LCD_BL);
+        setLow(LCD_RED);
+        setLow(LCD_BL_DIM);
+    } else
     {
-      blRed = 0;
-      setHigh(LCD_BL);
-      setLow(LCD_RED);
-      setLow(LCD_BL_DIM);
+        blRed = 0;
+        setHigh(LCD_BL);
+        setLow(LCD_RED);
+        setLow(LCD_BL_DIM);
     }
-  #endif
+#endif
 }
 
 void LCD::backlight(unsigned char amount)
@@ -691,13 +681,14 @@ void LCD::backlight(unsigned char amount)
   }
   //analogWrite(LCD_BL_DIM, amount);
 */
-  blVal = amount;
-  if(amount > 0) color(blRed); else color(-1);
+    blVal = amount;
+    if(amount > 0) color(blRed);
+    else color(-1);
 }
 
 unsigned char LCD::getBacklight()
 {
-  return blVal;
+    return blVal;
 }
 
 

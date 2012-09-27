@@ -36,49 +36,50 @@
 #ifndef _STILL_IMAGE_HOST_H_
 #define _STILL_IMAGE_HOST_H_
 
-	/* Includes: */
-		#include <avr/io.h>
-		#include <avr/wdt.h>
-		#include <avr/power.h>
-		#include <avr/interrupt.h>
-		#include <stdio.h>
+/* Includes: */
+#include <avr/io.h>
+#include <avr/wdt.h>
+#include <avr/power.h>
+#include <avr/interrupt.h>
+#include <stdio.h>
 
-		#include "SIConfigDescriptor.h"
-		#include "hardware.h"
+#include "SIConfigDescriptor.h"
+#include "hardware.h"
 
-		#include "Lib/StillImageCommands.h"
+#include "Lib/StillImageCommands.h"
 
-		#include <LUFA/Drivers/Misc/TerminalCodes.h>
-		#include <LUFA/Drivers/USB/USB.h>
-		#include <LUFA/Drivers/Peripheral/Serial.h>
+#include <LUFA/Drivers/Misc/TerminalCodes.h>
+#include <LUFA/Drivers/USB/USB.h>
+#include <LUFA/Drivers/Peripheral/Serial.h>
 
 #ifdef __cplusplus
-extern "C" {	
+extern "C"
+{
 #endif
 
-	/* Function Prototypes: */
-		void Camera_Enable(void);
-		void Camera_Disable(void);
-		void Camera_Open(void);
-		void Camera_Close(void);
-		void Camera_Task(void);
-		void Camera_GetModel(void);
-		void Camera_Capture(void);
-		void Camera_SetProperty(uint32_t param, uint32_t val);
+/* Function Prototypes: */
+void Camera_Enable(void);
+void Camera_Disable(void);
+void Camera_Open(void);
+void Camera_Close(void);
+void Camera_Task(void);
+void Camera_GetModel(void);
+void Camera_Capture(void);
+void Camera_SetProperty(uint32_t param, uint32_t val);
 
-		void EVENT_USB_Host_HostError(const uint8_t ErrorCode);
-		void EVENT_USB_Host_DeviceAttached(void);
-		void EVENT_USB_Host_DeviceUnattached(void);
-		void EVENT_USB_Host_DeviceEnumerationFailed(const uint8_t ErrorCode,
-		                                            const uint8_t SubErrorCode);
-		void EVENT_USB_Host_DeviceEnumerationComplete(void);
+void EVENT_USB_Host_HostError(const uint8_t ErrorCode);
+void EVENT_USB_Host_DeviceAttached(void);
+void EVENT_USB_Host_DeviceUnattached(void);
+void EVENT_USB_Host_DeviceEnumerationFailed(const uint8_t ErrorCode,
+                                            const uint8_t SubErrorCode);
+void EVENT_USB_Host_DeviceEnumerationComplete(void);
 
-		void UnicodeToASCII(uint8_t* UnicodeString,
-		                    char* Buffer);
-		void ShowCommandError(uint8_t ErrorCode,
-		                      bool ResponseCodeError);
+void UnicodeToASCII(uint8_t *UnicodeString,
+                    char *Buffer);
+void ShowCommandError(uint8_t ErrorCode,
+                      bool ResponseCodeError);
 #ifdef __cplusplus
-}	
+}
 #endif
 
 #endif

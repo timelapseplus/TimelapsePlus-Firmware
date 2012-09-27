@@ -36,30 +36,30 @@
 #ifndef _STILL_IMAGE_COMMANDS_H_
 #define _STILL_IMAGE_COMMANDS_H_
 
-	/* Includes: */
-		#include <LUFA/Drivers/USB/USB.h>
+/* Includes: */
+#include <LUFA/Drivers/USB/USB.h>
 
-		#include "PIMACodes.h"
-		#include "../camera.h"
+#include "PIMACodes.h"
+#include "../camera.h"
 
-	/* Macros: */
-		/** Timeout period between the issuing of a command to a device, and the reception of the first packet. */
-		#define COMMAND_DATA_TIMEOUT_MS        10000
+/* Macros: */
+/** Timeout period between the issuing of a command to a device, and the reception of the first packet. */
+#define COMMAND_DATA_TIMEOUT_MS        10000
 
-	/* External Variables: */
-		extern PIMA_Container_t PIMA_SendBlock;
-		extern PIMA_Container_t PIMA_ReceivedBlock;
-		extern PIMA_Container_t PIMA_EventBlock;
+/* External Variables: */
+extern PIMA_Container_t PIMA_SendBlock;
+extern PIMA_Container_t PIMA_ReceivedBlock;
+extern PIMA_Container_t PIMA_EventBlock;
 
-	/* Function Prototypes: */
-		void    SImage_SendBlockHeader(void);
-		uint8_t SImage_ReceiveBlockHeader(void);
-		uint8_t SImage_ReceiveEventHeader(void);
-		uint8_t SImage_SendData(void* const Buffer,
-		                        const uint16_t Bytes);
-		uint8_t SImage_ReadData(void* const Buffer,
-		                        const uint16_t Bytes);
-		bool    SImage_IsEventReceived(void);
+/* Function Prototypes: */
+void SImage_SendBlockHeader(void);
+uint8_t SImage_ReceiveBlockHeader(void);
+uint8_t SImage_ReceiveEventHeader(void);
+uint8_t SImage_SendData(void *const Buffer,
+                        const uint16_t Bytes);
+uint8_t SImage_ReadData(void *const Buffer,
+                        const uint16_t Bytes);
+bool SImage_IsEventReceived(void);
 
 #endif
 

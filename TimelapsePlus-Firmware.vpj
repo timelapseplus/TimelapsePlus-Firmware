@@ -1,0 +1,97 @@
+<!DOCTYPE Project SYSTEM "http://www.slickedit.com/dtd/vse/10.0/vpj.dtd">
+<Project
+	Version="10.0"
+	VendorName="SlickEdit"
+	TemplateName="Makefile"
+	WorkingDir="."
+	BuildSystem=""
+	BuildMakeFile="makefile">
+	<Config
+		Name="Release"
+		Type="Makefile"
+		OutputFile="timelapseplus"
+		CompilerConfigName="">
+		<Menu>
+			<Target
+				Name="Compile"
+				MenuCaption="&amp;Compile"
+				CaptureOutputWith="ProcessBuffer"
+				SaveOption="SaveCurrent"
+				RunFromDir="%rw">
+				<Exec/>
+			</Target>
+			<Target
+				Name="Build"
+				MenuCaption="&amp;Build"
+				CaptureOutputWith="ProcessBuffer"
+				SaveOption="SaveWorkspaceFiles"
+				RunFromDir="%rw">
+				<Exec CmdLine="make -f makefile all"/>
+			</Target>
+			<Target
+				Name="Rebuild"
+				MenuCaption="&amp;Rebuild"
+				CaptureOutputWith="ProcessBuffer"
+				SaveOption="SaveWorkspaceFiles"
+				RunFromDir="%rw">
+				<Exec CmdLine="make -f makefile clean all"/>
+			</Target>
+			<Target
+				Name="Debug"
+				MenuCaption="&amp;Debug"
+				SaveOption="SaveNone"
+				RunFromDir="%rw">
+				<Exec/>
+			</Target>
+			<Target
+				Name="Execute"
+				MenuCaption="E&amp;xecute"
+				SaveOption="SaveNone"
+				RunFromDir="%rw">
+				<Exec CmdLine='"TimelapsePlus-Firmware.exe"'/>
+			</Target>
+		</Menu>
+	</Config>
+	<Files>
+		<Folder
+			Name="Source Files"
+			Filters="*.c;*.C;*.cc;*.cpp;*.cp;*.cxx;*.c++;*.prg;*.pas;*.dpr;*.asm;*.s;*.bas;*.java;*.cs;*.sc;*.e;*.cob;*.html;*.rc;*.tcl;*.py;*.pl;*.d;*.m;*.mm">
+			<F N="src/5110LCD.cpp"/>
+			<F N="src/bluetooth.cpp"/>
+			<F N="src/button.cpp"/>
+			<F N="src/camera.c"/>
+			<F N="src/clock.cpp"/>
+			<F N="src/debug.cpp"/>
+			<F N="src/Descriptors.c"/>
+			<F N="src/hardware.cpp"/>
+			<F N="src/IR.cpp"/>
+			<F N="src/LCD_Term.cpp"/>
+			<F N="src/math.cpp"/>
+			<F N="src/Menu.cpp"/>
+			<F N="src/selftest.cpp"/>
+			<F N="src/settings.cpp"/>
+			<F N="src/shutter.cpp"/>
+			<F N="src/SIConfigDescriptor.c"/>
+			<F N="src/Lib/StillImageCommands.c"/>
+			<F N="src/timelapseplus.cpp"/>
+			<F N="src/TWI_Master.c"/>
+			<F N="src/VirtualSerial.c"/>
+		</Folder>
+		<Folder
+			Name="Header Files"
+			Filters="*.h;*.H;*.hh;*.hpp;*.hxx;*.inc;*.sh;*.cpy;*.if"/>
+		<Folder
+			Name="Resource Files"
+			Filters="*.ico;*.cur;*.dlg"/>
+		<Folder
+			Name="Bitmaps"
+			Filters="*.bmp"/>
+		<Folder
+			Name="Other Files"
+			Filters="">
+			<F
+				N="makefile"
+				Type="Makefile"/>
+		</Folder>
+	</Files>
+</Project>

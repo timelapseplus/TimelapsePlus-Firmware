@@ -17,14 +17,15 @@
 
 /* Function Prototypes: */
 #ifdef __cplusplus
-extern "C" {	
+extern "C"
+{
 #endif
 void EVENT_USB_Device_Connect(void);
 void EVENT_USB_Device_Disconnect(void);
 void EVENT_USB_Device_ConfigurationChanged(void);
 void EVENT_USB_Device_ControlRequest(void);
 
-void VirtualSerial_Reset();
+void VirtualSerial_Reset(void);
 void VirtualSerial_Task(void);
 void VirtualSerial_PutChar(char c);
 char VirtualSerial_CharWaiting(void);

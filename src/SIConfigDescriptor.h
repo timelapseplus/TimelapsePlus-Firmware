@@ -36,37 +36,37 @@
 #ifndef _CONFIGDESCRIPTOR_H_
 #define _CONFIGDESCRIPTOR_H_
 
-	/* Includes: */
-		#include <LUFA/Drivers/USB/USB.h>
+/* Includes: */
+#include <LUFA/Drivers/USB/USB.h>
 
-		#include "camera.h"
+#include "camera.h"
 
-	/* Macros: */
-		/** Pipe number of the Still Image data IN pipe. */
-		#define SIMAGE_DATA_IN_PIPE            1
+/* Macros: */
+/** Pipe number of the Still Image data IN pipe. */
+#define SIMAGE_DATA_IN_PIPE            1
 
-		/** Pipe number of the Still Image data OUT pipe. */
-		#define SIMAGE_DATA_OUT_PIPE           2
+/** Pipe number of the Still Image data OUT pipe. */
+#define SIMAGE_DATA_OUT_PIPE           2
 
-		/** Pipe number of the Still Image events pipe. */
-		#define SIMAGE_EVENTS_PIPE             3
+/** Pipe number of the Still Image events pipe. */
+#define SIMAGE_EVENTS_PIPE             3
 
-	/* Enums: */
-		/** Enum for the possible return codes of the \ref ProcessConfigurationDescriptor() function. */
-		enum StillImageHost_GetConfigDescriptorDataCodes_t
-		{
-			SuccessfulConfigRead            = 0, /**< Configuration Descriptor was processed successfully */
-			ControlError                    = 1, /**< A control request to the device failed to complete successfully */
-			DescriptorTooLarge              = 2, /**< The device's Configuration Descriptor is too large to process */
-			InvalidConfigDataReturned       = 3, /**< The device returned an invalid Configuration Descriptor */
-			NoCompatibleInterfaceFound      = 4, /**< A compatible interface with the required endpoints was not found */
-		};
+/* Enums: */
+/** Enum for the possible return codes of the \ref ProcessConfigurationDescriptor() function. */
+enum StillImageHost_GetConfigDescriptorDataCodes_t
+{
+    SuccessfulConfigRead = 0, /**< Configuration Descriptor was processed successfully */
+    ControlError = 1, /**< A control request to the device failed to complete successfully */
+    DescriptorTooLarge = 2, /**< The device's Configuration Descriptor is too large to process */
+    InvalidConfigDataReturned = 3, /**< The device returned an invalid Configuration Descriptor */
+    NoCompatibleInterfaceFound = 4, /**< A compatible interface with the required endpoints was not found */
+};
 
-	/* Function Prototypes: */
-		uint8_t ProcessConfigurationDescriptor(void);
+/* Function Prototypes: */
+uint8_t ProcessConfigurationDescriptor(void);
 
-		uint8_t DComp_NextStillImageInterface(void* CurrentDescriptor);
-		uint8_t DComp_NextStillImageInterfaceDataEndpoint(void* CurrentDescriptor);
+uint8_t DComp_NextStillImageInterface(void *CurrentDescriptor);
+uint8_t DComp_NextStillImageInterfaceDataEndpoint(void *CurrentDescriptor);
 
 #endif
 

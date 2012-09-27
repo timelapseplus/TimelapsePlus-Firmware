@@ -1,0 +1,6 @@
+// Defines and types for Timelapse+
+
+#define TEXT(thestring)     const_cast<char *>(thestring)               // use this macro for strings that should eventually be localized
+#define BLANK_STR           const_cast<char *>("")
+#define STR(thestring)      const_cast<char *>(thestring)               // use this macro for strings that should not be localized (debug code for example)
+

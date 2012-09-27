@@ -35,8 +35,9 @@
 #define OLYMPUS 4
 #define PENTAX 5
 
-class IR {
-  public:
+class IR
+{
+public:
     IR();
     void shutterNow();
     void shutterDelayed();
@@ -45,7 +46,7 @@ class IR {
 
     char make;
 
-  private:
+private:
     void high(unsigned int time, int freq);
 };
 

@@ -1,4 +1,4 @@
-#define BT_NAME 
+#define BT_NAME
 #define BT_DATA_SIZE 64
 
 #define BT_INIT_IO setIn(BT_RTS_PIN); setHigh(BT_RTS_PIN); setHigh(BT_CTS_PIN); setOut(BT_CTS_PIN)
@@ -9,7 +9,7 @@
 
 class BT
 {
-  public:
+public:
     BT(void);
     uint8_t init(void);
     uint8_t sleep(void);
@@ -25,7 +25,7 @@ class BT
 
     char data[BT_DATA_SIZE];
 
-  private:
+private:
     uint8_t checkOK(void);
     uint8_t btPower;
 };

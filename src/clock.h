@@ -3,9 +3,9 @@
 
 class Clock
 {
-  public:
+public:
     Clock();
-    
+
     void init();
     void disable();
     volatile void count();
@@ -22,7 +22,7 @@ class Clock
     uint32_t Ms();
     char sleepOk;
 
-  private:
+private:
     char sleepWasOk;
     uint16_t light_time;
     uint16_t sleep_time;

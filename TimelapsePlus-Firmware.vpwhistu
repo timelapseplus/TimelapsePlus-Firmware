@@ -1,0 +1,20 @@
+[Global]
+CurrentProject=TimelapsePlus-Firmware.vpj
+[ActiveConfig]
+TimelapsePlus-Firmware.vpj=Release
+[State]
+SCREEN: 1920 1200 0 22 1920 1108 0 0 M 0 0 0 0 1520 687 0
+CWD: ../TimelapsePlus-Firmware
+FILEHIST: 9
+../projects/Floodgate/Floodgate.xcodeproj/project.pbxproj
+../../cleanopenwith.sh
+/usr/local/Cellar/avr-libc/1.8.0/avr/include/avr/builtins.h
+/usr/local/Cellar/avr-gcc/4.7.0/avr/include/util/delay.h
+/usr/local/Cellar/avr-gcc/4.7.0/avr/include/avr/builtins.h
+src/Menu.cpp
+src/Menu.h
+src/timelapseplus.cpp
+src/5110LCD.cpp
+TBCLASS: 0 0
+[ProjectDates]
+TimelapsePlus-Firmware.vpj=20120927034406000

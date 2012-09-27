@@ -18,14 +18,15 @@
 #define TWI_BUFFER_SIZE 18   // Slave Address + Memory start address + 16 data bytes (message size)
 
 #define TWI_TWBR            0x0C        // TWI Bit rate Register setting.
-                                        // See Application note for detailed 
-                                        // information on setting this value.
+// See Application note for detailed
+// information on setting this value.
 // Not used defines!
 //#define TWI_TWPS          0x00        // This driver presumes prescaler = 00
 
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
 /****************************************************************************
@@ -35,9 +36,9 @@ extern "C" {
 union TWI_statusReg                       // Status byte holding flags.
 {
     unsigned char all;
-        unsigned char lastTransOK:1; 
-		    unsigned char memRead:1;
-        unsigned char unusedBits:6;
+    unsigned char lastTransOK:1;
+    unsigned char memRead:1;
+    unsigned char unusedBits:6;
 };
 
 extern union TWI_statusReg TWI_statusReg;
@@ -45,12 +46,12 @@ extern union TWI_statusReg TWI_statusReg;
 /****************************************************************************
   Function definitions
 ****************************************************************************/
-void TWI_Master_Initialise( void );
-unsigned char TWI_Transceiver_Busy( void );
-unsigned char TWI_Get_State_Info( void );
-void TWI_Start_Random_Read( unsigned char * , unsigned char );
-void TWI_Start_Read_Write( unsigned char * , unsigned char );
-unsigned char TWI_Read_Data_From_Buffer( unsigned char *, unsigned char );
+void TWI_Master_Initialise(void);
+unsigned char TWI_Transceiver_Busy(void);
+unsigned char TWI_Get_State_Info(void);
+void TWI_Start_Random_Read(unsigned char*, unsigned char);
+void TWI_Start_Read_Write(unsigned char*, unsigned char);
+unsigned char TWI_Read_Data_From_Buffer(unsigned char*, unsigned char);
 
 /****************************************************************************
   Bit and byte definitions
@@ -65,18 +66,18 @@ unsigned char TWI_Read_Data_From_Buffer( unsigned char *, unsigned char );
   TWI State codes
   Note: 3 lsbs are for prescale value and should be masked out. (12/2 -jkl)
 ****************************************************************************/
-// General TWI Master staus codes                      
-#define TWI_START                  0x08  // START has been transmitted  
+// General TWI Master staus codes
+#define TWI_START                  0x08  // START has been transmitted
 #define TWI_REP_START              0x10  // Repeated START has been transmitted
 #define TWI_ARB_LOST               0x38  // Arbitration lost
 
-// TWI Master Transmitter staus codes                      
+// TWI Master Transmitter staus codes
 #define TWI_MTX_ADR_ACK            0x18  // SLA+W has been tramsmitted and ACK received
-#define TWI_MTX_ADR_NACK           0x20  // SLA+W has been tramsmitted and NACK received 
+#define TWI_MTX_ADR_NACK           0x20  // SLA+W has been tramsmitted and NACK received
 #define TWI_MTX_DATA_ACK           0x28  // Data byte has been tramsmitted and ACK received
-#define TWI_MTX_DATA_NACK          0x30  // Data byte has been tramsmitted and NACK received 
+#define TWI_MTX_DATA_NACK          0x30  // Data byte has been tramsmitted and NACK received
 
-// TWI Master Receiver staus codes  
+// TWI Master Receiver staus codes
 #define TWI_MRX_ADR_ACK            0x40  // SLA+R has been tramsmitted and ACK received
 #define TWI_MRX_ADR_NACK           0x48  // SLA+R has been tramsmitted and NACK received
 #define TWI_MRX_DATA_ACK           0x50  // Data byte has been received and ACK tramsmitted
