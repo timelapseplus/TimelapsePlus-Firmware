@@ -497,6 +497,30 @@ volatile char viewSeconds(char key, char first)
 
 /******************************************************************
  *
+ *   getChargingStatus
+ *
+ *
+ ******************************************************************/
+
+char* getChargingStatus()
+{
+    switch(battery_status())
+    {
+       case 1:
+           return TEXT("Charging");
+
+       case 2:
+           return TEXT("Charged");
+
+       case 0:
+           return TEXT("Unplugged");
+    }
+    
+   return TEXT("ERROR");
+}
+
+/******************************************************************
+ *
  *   batteryStatus
  *
  *
@@ -508,10 +532,11 @@ volatile char batteryStatus(char key, char first)
     uint16_t batt_low = 500;
 
     unsigned int batt_level = battery_read_raw();
-    char stat = battery_status();
 
 #define BATT_LINES 36
 
+    char stat = battery_status();
+    
     uint8_t lines = ((batt_level - batt_low) * BATT_LINES) / (batt_high - batt_low);
 
     if(lines > BATT_LINES - 1 && stat == 1) 
@@ -524,28 +549,11 @@ volatile char batteryStatus(char key, char first)
 
     char *text;
     
-    switch(stat)
-    {
-       case 1:
-           text = TEXT("Charging");
-           break;
-
-       case 2:
-           text = TEXT("Charged");
-           break;
-
-       case 0:
-           text = TEXT("Unplugged");
-           break;
-           
-       default:
-           text = TEXT("ERROR");
-           break;
-    }
+    text = getChargingStatus();
 
     char l = lcd.measureStringTiny(text) / 2;
 
-    if(stat) 
+    if(battery_status()) 
         lcd.writeStringTiny(41 - l, 31, text);
 
     // Draw Battery Outline //
@@ -583,32 +591,14 @@ volatile char batteryStatus(char key, char first)
 
 volatile char sysStatus(char key, char first)
 {
+    char *text;
+
     if(first)
     {}
 
     lcd.cls();
-    char stat = battery_status();
-    char *text;
     
-    
-    switch(stat)
-    {
-       case 1:
-           text = TEXT("Charging");
-           break;
-
-       case 2:
-           text = TEXT("Charged");
-           break;
-
-       case 0:
-           text = TEXT("Unplugged");
-           break;
-           
-       default:
-           text = TEXT("ERROR");
-           break;
-    }
+    text = getChargingStatus();
 
     char l = lcd.measureStringTiny(text);
     
