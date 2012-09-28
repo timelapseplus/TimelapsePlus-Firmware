@@ -75,6 +75,13 @@ IR ir = IR();
 #include "Menu_Map.h"
 
 
+/******************************************************************
+ *
+ *   setup
+ *
+ *
+ ******************************************************************/
+
 void setup()
 {
     wdt_reset();
@@ -83,6 +90,7 @@ void setup()
 
     _setIn(4, E);
     _setHigh(4, E);
+
     if(battery_status() == 0 && getPin(BUTTON_FL_PIN)) // Looks like it's connected to the programmer
     {
         lcd.init();
@@ -118,9 +126,17 @@ void setup()
     bt.sleep();
 }
 
+/******************************************************************
+ *
+ *   main
+ *
+ *
+ ******************************************************************/
+
 int main()
 {
     char key;
+
     setup();
 
     //eeprom_write_byte((uint8_t *) &system_tested, 0x01);
@@ -132,10 +148,13 @@ int main()
             eeprom_write_byte((uint8_t*)&system_tested, 0x01);
         }
         wdt_enable(WDTO_8S);
+
         for(;;) ;
     }
 
-    if(battery_status() > 0) hardware_off(); // If it was just plugged in, show the charging screen
+    if(battery_status() > 0) 
+        hardware_off(); // If it was just plugged in, show the charging screen
+    
     timer.current.Keyframes = 1;
     uint16_t count = 0;
 
@@ -151,7 +170,8 @@ int main()
             USB_Disable();
             hardware_USB_SetHostMode();
             Camera_Enable();
-        } else if((!hardware_USB_HostConnected && !connectUSBcamera) && hardware_USB_InHostMode)
+        } 
+        else if((!hardware_USB_HostConnected && !connectUSBcamera) && hardware_USB_InHostMode)
         {
             Camera_Disable();
             hardware_USB_SetDeviceMode();
@@ -161,7 +181,8 @@ int main()
         if(hardware_USB_InHostMode)
         {
             Camera_Task();
-        } else
+        } 
+        else
         {
             VirtualSerial_Task();
         }
@@ -184,30 +205,35 @@ int main()
         if(VirtualSerial_CharWaiting()) // Process USB Commands from PC
         {
             char c = VirtualSerial_GetChar();
-            if(c == '$')
+
+            switch(c)
             {
-                hardware_bootloader();
-            }
-            if(c == 'V') // prints version backward
-            {
-                uint32_t version = VERSION;
-                char c;
-                while (version)
-                {
-                    c = (char)(version % 10);
-                    debug((char)(c + '0'));
-                    version -= (uint32_t)c;
-                    version /= 10;
-                }
-                debug_nl();
-            }
-            if(c == 'T')
-            {
-                debug('E');
-            }
-            if(c == 'L')
-            {
-                readLightTest();
+               case '$':
+                   hardware_bootloader();
+                   break;
+            
+               case 'V': // prints version backward
+                   {
+                       uint32_t version = VERSION;
+                       char c;
+                       while(version)
+                       {
+                           c = (char)(version % 10);
+                           debug((char)(c + '0'));
+                           version -= (uint32_t)c;
+                           version /= 10;
+                       }
+                       debug_nl();
+                       break;
+                   }
+                   
+               case 'T':
+                   debug('E');
+                   break;
+                   
+               case 'L':
+                   readLightTest();
+                   break;
             }
         }
 
@@ -219,7 +245,8 @@ int main()
             if(hardware_flashlightIsOn())
             {
                 hardware_flashlight(0);
-            } else
+            } 
+            else
             {
                 hardware_flashlight(1);
             }
@@ -230,8 +257,12 @@ int main()
     }
 }
 
-
-
+/******************************************************************
+ *
+ *   IRTest
+ *
+ *
+ ******************************************************************/
 
 volatile char IRtest(char key, char first)
 {
@@ -242,17 +273,30 @@ volatile char IRtest(char key, char first)
         menu.setBar(TEXT("Delayed"), TEXT("Trigger"));
         lcd.update();
     }
-    if(key == FL_KEY)
+    
+    switch(key)
     {
-        ir.shutterDelayed();
-    } else if(key == FR_KEY)
-    {
-        ir.shutterNow();
+       case FL_KEY:
+           ir.shutterDelayed();
+           break;
+           
+       case FR_KEY:
+           ir.shutterNow();
+           break;
+           
+       case LEFT_KEY:
+           return FN_CANCEL;
     }
 
-    if(key == LEFT_KEY) return FN_CANCEL;
-    else return FN_CONTINUE;
+    return FN_CONTINUE;
 }
+
+/******************************************************************
+ *
+ *   shutterTest
+ *
+ *
+ ******************************************************************/
 
 volatile char shutterTest(char key, char first)
 {
@@ -267,6 +311,7 @@ volatile char shutterTest(char key, char first)
         menu.setBar(TEXT("Half"), TEXT("Full"));
         lcd.update();
     }
+    
     if(key == FL_KEY && status != 1)
     {
         status = 1;
@@ -274,14 +319,16 @@ volatile char shutterTest(char key, char first)
         lcd.writeString(20, 18, TEXT("(HALF)"));
         timer.half();
         lcd.update();
-    } else if(key == FR_KEY && status != 2)
+    } 
+    else if(key == FR_KEY && status != 2)
     {
         status = 2;
         lcd.eraseBox(20, 18, 20 + 6 * 6, 26);
         lcd.writeString(20, 18, TEXT("(FULL)"));
         timer.full();
         lcd.update();
-    } else if(key != 0)
+    } 
+    else if(key != 0)
     {
         status = 0;
         lcd.eraseBox(20, 18, 20 + 6 * 6, 26);
@@ -297,7 +344,8 @@ volatile char shutterTest(char key, char first)
             lcd.writeStringTiny(6, 28, TEXT("Cable Connected"));
             lcd.update();
         }
-    } else
+    } 
+    else
     {
         if(cable == 1)
         {
@@ -307,9 +355,18 @@ volatile char shutterTest(char key, char first)
         }
     }
 
-    if(key == LEFT_KEY) return FN_CANCEL;
-    else return FN_CONTINUE;
+    if(key == LEFT_KEY) 
+        return FN_CANCEL;
+
+    return FN_CONTINUE;
 }
+
+/******************************************************************
+ *
+ *   shutterLagTest
+ *
+ *
+ ******************************************************************/
 
 volatile char shutterLagTest(char key, char first)
 {
@@ -324,6 +381,7 @@ volatile char shutterLagTest(char key, char first)
         menu.setBar(TEXT("Test 1"), TEXT("Test 2 "));
         lcd.update();
     }
+    
     if(key == FL_KEY || key == FR_KEY)
     {
         lcd.eraseBox(10, 18, 80, 38);
@@ -355,6 +413,7 @@ volatile char shutterLagTest(char key, char first)
 
         SHUTTER_CLOSE;
         clock.tare();
+
         while (AUX_INPUT)
         {
             if(clock.eventMs() > 1000) break;
@@ -368,15 +427,25 @@ volatile char shutterLagTest(char key, char first)
         lcd.update();
     }
 
-    if(key == LEFT_KEY) return FN_CANCEL;
-    else return FN_CONTINUE;
+    if(key == LEFT_KEY) 
+        return FN_CANCEL;
+
+    return FN_CONTINUE;
 }
+
+/******************************************************************
+ *
+ *   memoryFree
+ *
+ *
+ ******************************************************************/
 
 volatile char memoryFree(char key, char first)
 {
     if(first)
     {
         unsigned int mem = hardware_freeMemory();
+        
         lcd.cls();
         lcd.writeString(1, 18, TEXT("Free RAM:"));
         /*char x =*/lcd.writeNumber(55, 18, mem, 'U', 'L');
@@ -385,9 +454,19 @@ volatile char memoryFree(char key, char first)
         menu.setBar(TEXT("RETURN"), BLANK_STR);
         lcd.update();
     }
-    if(key == FL_KEY) return FN_CANCEL;
-    else return FN_CONTINUE;
+    
+    if(key == FL_KEY) 
+        return FN_CANCEL;
+
+    return FN_CONTINUE;
 }
+
+/******************************************************************
+ *
+ *   viewSeconds
+ *
+ *
+ ******************************************************************/
 
 volatile char viewSeconds(char key, char first)
 {
@@ -398,13 +477,30 @@ volatile char viewSeconds(char key, char first)
         menu.setTitle(TEXT("Clock"));
         menu.setBar(TEXT("TARE"), TEXT("RETURN"));
     }
+    
     lcd.eraseBox(36, 18, 83, 18 + 8);
     /*char x =*/ lcd.writeNumber(83, 18, clock.Seconds(), 'F', 'R');
     lcd.update();
-    if(key == FL_KEY) clock.tare();
-    if(key == FR_KEY) return FN_CANCEL;
-    else return FN_CONTINUE;
+    
+    switch(key)
+    {
+       case FL_KEY:
+           clock.tare();
+           break;
+
+       case FR_KEY:
+           return FN_CANCEL;
+    }
+    
+    return FN_CONTINUE;
 }
+
+/******************************************************************
+ *
+ *   batteryStatus
+ *
+ *
+ ******************************************************************/
 
 volatile char batteryStatus(char key, char first)
 {
@@ -418,18 +514,39 @@ volatile char batteryStatus(char key, char first)
 
     uint8_t lines = ((batt_level - batt_low) * BATT_LINES) / (batt_high - batt_low);
 
-    if(lines > BATT_LINES - 1 && stat == 1) lines = BATT_LINES - 1;
-    if(lines > BATT_LINES || stat == 2) lines = BATT_LINES;
+    if(lines > BATT_LINES - 1 && stat == 1) 
+        lines = BATT_LINES - 1;
+    
+    if(lines > BATT_LINES || stat == 2) 
+        lines = BATT_LINES;
 
     lcd.cls();
 
     char *text;
-    if(stat == 1) text = TEXT("Charging");
-    if(stat == 2) text = TEXT("Charged");
-    if(stat == 0) text = TEXT("Unplugged");
+    
+    switch(stat)
+    {
+       case 1:
+           text = TEXT("Charging");
+           break;
+
+       case 2:
+           text = TEXT("Charged");
+           break;
+
+       case 0:
+           text = TEXT("Unplugged");
+           break;
+           
+       default:
+           text = TEXT("ERROR");
+           break;
+    }
 
     char l = lcd.measureStringTiny(text) / 2;
-    if(stat) lcd.writeStringTiny(41 - l, 31, text);
+
+    if(stat) 
+        lcd.writeStringTiny(41 - l, 31, text);
 
     // Draw Battery Outline //
     lcd.drawLine(20, 15, 60, 15);
@@ -448,11 +565,21 @@ volatile char batteryStatus(char key, char first)
     menu.setTitle(TEXT("Battery Status"));
     menu.setBar(TEXT("RETURN"), BLANK_STR);
     lcd.update();
-    if(key == FL_KEY) return FN_CANCEL;
-    else return FN_CONTINUE;
+    
+    if(key == FL_KEY) 
+        return FN_CANCEL;
+
+    return FN_CONTINUE;
 }
 
 #define SY 2
+
+/******************************************************************
+ *
+ *   sysStatus
+ *
+ *
+ ******************************************************************/
 
 volatile char sysStatus(char key, char first)
 {
@@ -462,12 +589,29 @@ volatile char sysStatus(char key, char first)
     lcd.cls();
     char stat = battery_status();
     char *text;
-    if(stat == 1) text = TEXT("Charging");
-    if(stat == 2) text = TEXT("Charged");
-    if(stat == 0) text = TEXT("Unplugged");
+    
+    
+    switch(stat)
+    {
+       case 1:
+           text = TEXT("Charging");
+           break;
 
+       case 2:
+           text = TEXT("Charged");
+           break;
+
+       case 0:
+           text = TEXT("Unplugged");
+           break;
+           
+       default:
+           text = TEXT("ERROR");
+           break;
+    }
 
     char l = lcd.measureStringTiny(text);
+    
     lcd.writeStringTiny(80 - l, 6 + SY, text);
     lcd.writeStringTiny(3, 6 + SY, TEXT("USB:"));
 
@@ -507,8 +651,10 @@ volatile char sysStatus(char key, char first)
     lcd.update();
     _delay_ms(10);
 
-    if(key == FL_KEY || key == LEFT_KEY) return FN_CANCEL;
-    else return FN_CONTINUE;
+    if(key == FL_KEY || key == LEFT_KEY) 
+        return FN_CANCEL;
+
+    return FN_CONTINUE;
 }
 /*
 volatile char timerStatus(char key, char first)
@@ -571,12 +717,19 @@ volatile char timerStatus(char key, char first)
   if(key == FL_KEY || key == LEFT_KEY) return FN_CANCEL; else return FN_CONTINUE;
 }
 */
+
+/******************************************************************
+ *
+ *   sysInfo
+ *
+ *
+ ******************************************************************/
+
 volatile char sysInfo(char key, char first)
 {
     if(first)
     {
         lcd.cls();
-
 
         char l;
         char *text;
@@ -591,16 +744,22 @@ volatile char sysInfo(char key, char first)
         lcd.writeStringTiny(80 - l, 6 + SY, text);
         lcd.writeStringTiny(3, 6 + SY, TEXT("Model:"));
 
-        if(val > 1) text = TEXT("BTLE");
-        else text = TEXT("KS99");
+        if(val > 1) 
+            text = TEXT("BTLE");
+        else 
+            text = TEXT("KS99");
+        
         l = lcd.measureStringTiny(text);
         lcd.writeStringTiny(80 - l, 12 + SY, text);
         lcd.writeStringTiny(3, 12 + SY, TEXT("Edition:"));
 
         lcd.writeStringTiny(3, 18 + SY, TEXT("Firmware:"));
         uint32_t version = VERSION;
+
         char c;
+
         l = 0;
+
         while (version)
         {
             c = (char)(version % 10);
@@ -623,15 +782,23 @@ volatile char sysInfo(char key, char first)
             lcd.writeStringTiny(3, 30 + SY, TEXT("BT FW Version:"));
         }
 
-
         menu.setTitle(TEXT("System Info"));
         menu.setBar(TEXT("RETURN"), BLANK_STR);
         lcd.update();
     }
 
-    if(key == FL_KEY || key == LEFT_KEY) return FN_CANCEL;
-    else return FN_CONTINUE;
+    if(key == FL_KEY || key == LEFT_KEY) 
+        return FN_CANCEL;
+
+    return FN_CONTINUE;
 }
+
+/******************************************************************
+ *
+ *   lightMeter
+ *
+ *
+ ******************************************************************/
 
 volatile char lightMeter(char key, char first)
 {
@@ -648,14 +815,17 @@ volatile char lightMeter(char key, char first)
         lcd.cls();
 
         menu.setTitle(TEXT("Light Meter"));
+        
         if(key == FR_KEY)
         {
             held = 1;
             menu.setBar(TEXT("RETURN"), TEXT("RUN"));
-        } else
+        } 
+        else
         {
             menu.setBar(TEXT("RETURN"), TEXT("PAUSE"));
         }
+        
         char buf[6], l;
         uint16_t val;
         char *text;
@@ -681,87 +851,95 @@ volatile char lightMeter(char key, char first)
         lcd.writeStringTiny(80 - l, 24 + SY, text);
         lcd.writeStringTiny(3, 24 + SY, TEXT("Level 3:"));
 
-
         lcd.update();
         _delay_ms(10);
-    } else
+    } 
+    else
     {
-        if(key == FR_KEY) held = 0;
+        if(key == FR_KEY) 
+            held = 0;
     }
+    
     if(key == FL_KEY)
     {
         lcd.backlight(255);
         return FN_CANCEL;
-    } else
-    {
-        return FN_CONTINUE;
-    }
+    } 
+
+    return FN_CONTINUE;
 }
 
+/******************************************************************
+ *
+ *   int_to_str
+ *
+ *
+ ******************************************************************/
 
 void int_to_str(uint16_t n, char buf[6])
 {
-    uint8_t b;
-    if(n < 10)
+	char digits[6];
+
+    // If it is zero just set and forget
+	if(n == 0)
+	{
+		buf[0] = '0';
+		buf[1] = 0;
+	}
+    
+    // Value too high for this code
+    if(n > 99999)
     {
-        buf[0] = '0' + n;
-        buf[1] = 0;
-    } else if(n < 100)
-    {
-        b = (uint8_t)n % 10;
-        n -= b; n /= 10;
-        buf[1] = '0' + b;
-        b = (uint8_t)n % 10;
-        n -= b; n /= 10;
-        buf[0] = '0' + b;
+        buf[0] = '!';
+        buf[1] = '!';
         buf[2] = 0;
-    } else if(n < 1000)
-    {
-        b = (uint8_t)n % 10;
-        n -= b; n /= 10;
-        buf[2] = '0' + b;
-        b = (uint8_t)n % 10;
-        n -= b; n /= 10;
-        buf[1] = '0' + b;
-        b = (uint8_t)n % 10;
-        buf[0] = '0' + b;
-        buf[3] = 0;
-    } else if(n < 10000)
-    {
-        b = (uint8_t)n % 10;
-        n -= b; n /= 10;
-        buf[3] = '0' + b;
-        b = (uint8_t)n % 10;
-        n -= b; n /= 10;
-        buf[2] = '0' + b;
-        b = (uint8_t)n % 10;
-        n -= b; n /= 10;
-        buf[1] = '0' + b;
-        b = (uint8_t)n % 10;
-        buf[0] = '0' + b;
-        buf[4] = 0;
-    } else
-    {
-        b = (uint8_t)n % 10;
-        n -= b; n /= 10;
-        buf[4] = '0' + b;
-        b = (uint8_t)n % 10;
-        n -= b; n /= 10;
-        buf[3] = '0' + b;
-        b = (uint8_t)n % 10;
-        n -= b; n /= 10;
-        buf[2] = '0' + b;
-        b = (uint8_t)n % 10;
-        n -= b; n /= 10;
-        buf[1] = '0' + b;
-        b = (uint8_t)n % 10;
-        n -= b; n /= 10;
-        buf[0] = '0' + b;
-        buf[5] = 0;
+        return;
     }
 
+	// calculate the digits for 5 places    
+	digits[0] = n / 10000;
+	n -= digits[0] * 10000;
+	digits[1] = n / 1000;
+	n -= digits[1] * 1000;
+	digits[2] = n / 100;
+	n -= digits[2] * 100;
+	digits[3] = n / 10;
+	n -= digits[3] * 10;
+	digits[4] = n;
+	digits[5] = 0;
+
+	// convert digits to ASCII range
+	digits[0] += '0';
+	digits[1] += '0';
+	digits[2] += '0';
+	digits[3] += '0';
+	digits[4] += '0';
+    
+    uint8_t idx = 0;
+    uint8_t bufidx = 0;
+
+    // skip leading zeros
+    while(idx < 5 && digits[idx] == '0') 
+        idx++;
+    
+    // Copy all the remaining digits to buf    
+    while(idx < 5)
+    {
+        buf[bufidx++] = digits[idx++];
+    }
+
+    // null terminate buf
+    buf[bufidx] = 0;
+    
     return;
 }
+
+/******************************************************************
+ *
+ *   notYet
+ *
+ *
+ ******************************************************************/
 
 volatile char notYet(char key, char first)
 {
@@ -776,9 +954,18 @@ volatile char notYet(char key, char first)
         menu.setBar(TEXT("RETURN"), BLANK_STR);
         lcd.update();
     }
-    if(key) return FN_CANCEL;
-    else return FN_CONTINUE;
+    if(key) 
+        return FN_CANCEL;
+    
+    return FN_CONTINUE;
 }
+
+/******************************************************************
+ *
+ *   usbPlug
+ *
+ *
+ ******************************************************************/
 
 volatile char usbPlug(char key, char first)
 {
@@ -798,7 +985,8 @@ volatile char usbPlug(char key, char first)
             menu.setBar(TEXT("RETURN"), BLANK_STR);
             lcd.update();
             connectUSBcamera = 1;
-        } else
+        } 
+        else
         {
             lcd.cls();
             lcd.writeString(3, 7, TEXT("Plug camera  "));
@@ -811,120 +999,201 @@ volatile char usbPlug(char key, char first)
             connectUSBcamera = 1;
         }
     }
+    
     if(key)
     {
-        if(!Camera_Connected) connectUSBcamera = 0;
+        if(!Camera_Connected) 
+            connectUSBcamera = 0;
         return FN_CANCEL;
-    } else
+    } 
+    else
     {
         return FN_CONTINUE;
     }
 }
 
+/******************************************************************
+ *
+ *   runHandler
+ *
+ *
+ ******************************************************************/
+
 volatile char runHandler(char key, char first)
 {
     static char pressed;
+    
     if(first)
     {
         pressed = key;
         key = 0;
     }
+
     if(pressed == FR_KEY)
     {
         menu.message(TEXT("Timer Started"), first);
         _delay_ms(800);
         timer.begin();
+        
         return FN_CANCEL;
-    } else
-    {
-        menu.push();
-        menu.select(0);
-        menu.init((menu_item*)menu_options);
-        lcd.update();
-        return FN_CANCEL;
-    }
+    } 
+
+    menu.push();
+    menu.select(0);
+    menu.init((menu_item*)menu_options);
+    lcd.update();
+    
+    return FN_CANCEL;
 }
+
+/******************************************************************
+ *
+ *   runHandlerQuick
+ *
+ *
+ ******************************************************************/
 
 volatile char runHandlerQuick(char key, char first)
 {
     if(first)
     {
-        if(key != FR_KEY) return FN_CANCEL;
+        if(key != FR_KEY) 
+            return FN_CANCEL;
+        
         key = 0;
     }
+    
     return notYet(key, first);
 }
 
+/******************************************************************
+ *
+ *   timerStop
+ *
+ *
+ ******************************************************************/
+
 volatile char timerStop(char key, char first)
 {
-    if(first) timer.running = 0;
+    if(first) 
+        timer.running = 0;
+    
     if(menu.message(TEXT("Stopped"), first))
     {
         menu.back();
         return FN_CANCEL;
-    } else
-    {
-        return FN_CONTINUE;
     }
+    
+    return FN_CONTINUE;
 }
+
+/******************************************************************
+ *
+ *   menuBack
+ *
+ *
+ ******************************************************************/
 
 volatile char menuBack(char key, char first)
 {
-    if(key == FL_KEY) menu.back();
+    if(key == FL_KEY) 
+        menu.back();
+    
     return FN_CANCEL;
 }
 
+/******************************************************************
+ *
+ *   timerSaveDefault
+ *
+ *
+ ******************************************************************/
+
 volatile char timerSaveDefault(char key, char first)
 {
-    if(first) timer.save(0);
+    if(first) 
+        timer.save(0);
+    
     if(menu.message(TEXT("Saved"), first))
     {
         menu.back();
         return FN_CANCEL;
-    } else
-    {
-        return FN_CONTINUE;
     }
+    
+    return FN_CONTINUE;
 }
+
+/******************************************************************
+ *
+ *   timerSaveCurrent
+ *
+ *
+ ******************************************************************/
 
 volatile char timerSaveCurrent(char key, char first)
 {
-    if(first) timer.save(timer.currentId);
+    if(first) 
+        timer.save(timer.currentId);
+    
     if(menu.message(TEXT("Saved"), first))
     {
         menu.back();
         return FN_CANCEL;
-    } else
-    {
-        return FN_CONTINUE;
     }
+    
+    return FN_CONTINUE;
 }
+
+/******************************************************************
+ *
+ *   timerRevert
+ *
+ *
+ ******************************************************************/
 
 volatile char timerRevert(char key, char first)
 {
-    if(first) timer.load(timer.currentId);
+    if(first) 
+        timer.load(timer.currentId);
+    
     if(menu.message(TEXT("Reverted"), first))
     {
         menu.back();
         return FN_CANCEL;
-    } else
-    {
-        return FN_CONTINUE;
     }
+
+    return FN_CONTINUE;
 }
+
+/******************************************************************
+ *
+ *   shutter_addKeyframe
+ *
+ *
+ ******************************************************************/
 
 volatile char shutter_addKeyframe(char key, char first)
 {
     if(timer.current.Keyframes < MAX_KEYFRAMES)
     {
-        if(timer.current.Keyframes < 1) timer.current.Keyframes = 1;
+        if(timer.current.Keyframes < 1) 
+            timer.current.Keyframes = 1;
+        
         timer.current.Key[timer.current.Keyframes] = timer.current.Key[timer.current.Keyframes - 1] + 3600;
         timer.current.Bulb[timer.current.Keyframes + 1] = timer.current.Bulb[timer.current.Keyframes];
         timer.current.Keyframes++;
     }
+    
     menu.back();
     return FN_CANCEL;
 }
+
+/******************************************************************
+ *
+ *   shutter_removeKeyframe
+ *
+ *
+ ******************************************************************/
 
 volatile char shutter_removeKeyframe(char key, char first)
 {
@@ -932,18 +1201,29 @@ volatile char shutter_removeKeyframe(char key, char first)
     {
         timer.current.Keyframes--;
     }
+    
     menu.back();
     menu.select(0);
+    
     return FN_CANCEL;
 }
+
+/******************************************************************
+ *
+ *   shutter_saveAs
+ *
+ *
+ ******************************************************************/
 
 volatile char shutter_saveAs(char key, char first)
 {
     static char name[MENU_NAME_LEN - 1];
     static char newId;
+    
     if(first)
     {
         newId = timer.nextId();
+        
         if(newId < 0)
         {
             menu.message(TEXT("No Space"), 1);
@@ -951,7 +1231,9 @@ volatile char shutter_saveAs(char key, char first)
             return FN_CANCEL;
         }
     }
+    
     char ret = menu.editText(key, name, TEXT("Save As"), first);
+
     if(ret == FN_SAVE)
     {
         name[MENU_NAME_LEN - 2] = 0;
@@ -961,8 +1243,16 @@ volatile char shutter_saveAs(char key, char first)
         _delay_ms(200);
         menu.back();
     }
+    
     return ret;
 }
+
+/******************************************************************
+ *
+ *   shutter_load
+ *
+ *
+ ******************************************************************/
 
 volatile char shutter_load(char key, char first)
 {
@@ -984,8 +1274,8 @@ volatile char shutter_load(char key, char first)
     {
         menuSelected--;
         update = 1;
-    }
-    if(key == DOWN_KEY && menuSelected < menuSize - 1)
+        
+    } else if(key == DOWN_KEY && menuSelected < menuSize - 1)
     {
         menuSelected++;
         update = 1;
@@ -995,22 +1285,33 @@ volatile char shutter_load(char key, char first)
     {
         lcd.cls();
 
-        if(menuSelected > 2) menuScroll = menuSelected - 2;
+        if(menuSelected > 2) 
+            menuScroll = menuSelected - 2;
+        
         menuSize = 0;
         char i = 0;
+        
         for(char x = 1; x < MAX_STORED; x++)
         {
             i++;
             ch = eeprom_read_byte((uint8_t*)&stored[i - 1].Name[0]);
-            if(ch == 0 || ch == 255) continue;
+
+            if(ch == 0 || ch == 255) 
+                continue;
+
             for(c = 0; c < MENU_NAME_LEN - 1; c++) // Write settings item text //
             {
                 if(i >= menuScroll && i <= menuScroll + 4)
                 {
                     ch = eeprom_read_byte((uint8_t*)&stored[i - 1].Name[c]);
-                    if(ch < 'A' || ch > 'Z') ch = ' ';
+
+                    if(ch < 'A' || ch > 'Z') 
+                        ch = ' ';
+
                     lcd.writeChar(3 + c * 6, 8 + 9 * (menuSize - menuScroll), ch);
-                    if(menuSize == menuSelected) itemSelected = i - 1;
+
+                    if(menuSize == menuSelected) 
+                        itemSelected = i - 1;
                 }
             }
             menuSize++;
@@ -1027,29 +1328,36 @@ volatile char shutter_load(char key, char first)
         lcd.update();
     }
 
-    if(key == FL_KEY || key == LEFT_KEY)
+    switch(key)
     {
-        return FN_CANCEL;
-    } else if(key == FR_KEY || key == RIGHT_KEY)
-    {
-        timer.load(itemSelected);
-        menu.message(TEXT("Loaded"), 1);
-        _delay_ms(200);
-        menu.back();
-        menu.select(0);
-        return FN_SAVE;
-    } else
-    {
-        return FN_CONTINUE;
+       case FL_KEY:
+       case LEFT_KEY:
+           return FN_CANCEL;
+           
+       case FR_KEY:
+       case RIGHT_KEY:
+            timer.load(itemSelected);
+            menu.message(TEXT("Loaded"), 1);
+            _delay_ms(200);
+            menu.back();
+            menu.select(0);
+            return FN_SAVE;
     }
+
+    return FN_CONTINUE;
 }
 
-// Timer2 interrupt routine - called every millisecond //
+/******************************************************************
+ *
+ *   ISR
+ * 
+ *   Timer2 interrupt routine - called every millisecond
+ *
+ ******************************************************************/
 
 ISR(TIMER2_COMPA_vect)
 {
     clock.count();
     button.poll();
 }
-
 

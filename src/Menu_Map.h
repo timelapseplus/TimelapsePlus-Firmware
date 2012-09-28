@@ -1,3 +1,12 @@
+/*
+ *  Menu_Map.h
+ *  Timelapse+
+ *
+ *  Created by Elijah Parker
+ *  Copyright 2012 Timelapse+
+ *  Licensed under GPLv3
+ *
+ */
 
 const char STR_TIME[]PROGMEM = "hh:mm:ss";
 const char STR_PHOTOS[]PROGMEM = "0 for inf.";
@@ -209,3 +218,4 @@ const menu_item menu_main[]PROGMEM =
     { "Settings    ", 'M', (void*)menu_settings, 0, 0 },
     { "\0           ", 'V', 0, 0, 0 }
 };
+

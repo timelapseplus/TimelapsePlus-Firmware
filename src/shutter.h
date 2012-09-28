@@ -6,6 +6,7 @@
  *  Copyright 2010 __MyCompanyName__. All rights reserved.
  *
  */
+ 
 #ifndef shutter_h
 #define shutter_h
 

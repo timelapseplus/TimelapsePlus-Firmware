@@ -7,6 +7,7 @@
  *  Licensed under GPLv3
  *
  */
+ 
 #include <avr/eeprom.h>
 #include <string.h>
 #include "settings.h"
@@ -21,25 +22,56 @@ extern LCD lcd;
 extern IR ir;
 extern shutter timer;
 
+/******************************************************************
+ *
+ *   settings_save
+ *
+ *
+ ******************************************************************/
+
 void settings_save()
 {
     eeprom_write_block((const void*)&conf, &conf_eep, sizeof(settings));
 }
+
+/******************************************************************
+ *
+ *   settings_load
+ *
+ *
+ ******************************************************************/
+
 void settings_load()
 {
     eeprom_read_block((void*)&conf, &conf_eep, sizeof(settings));
     lcd.color(conf.lcdColor);
     ir.make = conf.cameraMake;
 }
+
+/******************************************************************
+ *
+ *   settings_update
+ *
+ *
+ ******************************************************************/
+
 void settings_update()
 {
     eeprom_write_block((const void*)&conf, &conf_eep, sizeof(settings));
     settings_load();
 }
 
+/******************************************************************
+ *
+ *   settings_init
+ *
+ *
+ ******************************************************************/
+
 void settings_init()
 {
     settings_load();
+    
     if(eeprom_read_byte((const uint8_t*)&conf_eep) == 255 || conf.version != VERSION)
     {
         timer.setDefault();
@@ -56,5 +88,7 @@ void settings_init()
         conf.flashlightOffTime = 3;
         settings_save();
     }
+    
     settings_load();
 }
+

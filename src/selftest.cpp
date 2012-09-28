@@ -7,6 +7,7 @@
  *	Licensed under GPLv3
  *
  */
+
 #include <avr/pgmspace.h>
 #include <avr/sleep.h>
 #include <avr/io.h>
@@ -42,6 +43,12 @@ extern Button button;
 extern BT bt;
 extern IR ir;
 
+/******************************************************************
+ *
+ *   test
+ *
+ *
+ ******************************************************************/
 
 int8_t test()
 {
@@ -76,98 +83,104 @@ int8_t test()
 
         if(VirtualSerial_CharWaiting())
         {
-            char c = VirtualSerial_GetChar();
-            if(c == 'P')
+            switch(VirtualSerial_GetChar())
             {
-                termPrintStr(STR("Passed All Tests\n"));
-                VirtualSerial_Reset();
-                return 1;
-            }
-            if(c == 'E')
-            {
+               case 'P':
+                   termPrintStr(STR("Passed All Tests\n"));
+                   VirtualSerial_Reset();
+                   return 1;
+
+               case 'E':
 //				failed = 1;		// set but never referenced
-                termPrintStr(STR("Tests Failed\n"));
-                for(;;) ;
-            }
-            if(c == 'R')
-            {
-                lcd.color(1);
-                termPrintStr(STR("LCD BL RED\n"));
-            }
-            if(c == 'W')
-            {
-                lcd.color(0);
-                termPrintStr(STR("LCD BL WHITE\n"));
-            }
-            if(c == 'D')
-            {
-                for(char i = 0; i < 48; i++)
-                {
-                    lcd.drawLine(0, i, 83, i);
-                }
-                lcd.update();
-            }
-            if(c == 'c')
-            {
-                lcd.cls();
-                lcd.update();
-            }
-            if(c == 'T')
-            {
-                debug('E');
-                termPrintStr(STR("USB Connected\n"));
-            }
-            if(c == 'O')
-            {
-                timer.off();
-                termPrintStr(STR("Shutter Closed\n"));
-            }
-            if(c == 'F')
-            {
-                timer.full();
-                termPrintStr(STR("Shutter Full\n"));
-            }
-            if(c == 'H')
-            {
-                timer.half();
-                termPrintStr(STR("Shutter Half\n"));
-            }
-            if(c == 'C')
-            {
-                if(timer.cableIsConnected()) debug('1');
-                else debug('0');
-            }
-            if(c == 'S')
-            {
-                if(run_tests())
-                {
-                    debug('1');
-                    termPrintStr(STR("Passed All Tests\n"));
-                    VirtualSerial_Reset();
-                    return 1;
-                } else
-                {
-                    debug('0');
-                    termPrintStr(STR("Failed Tests\n"));
-                    VirtualSerial_Reset();
-                    return 0;
-                }
-            }
-            if(c == 'B')
-            {
-                termPrintStr(STR("Checking charger\n"));
-                debug((char)battery_status());
-            }
-            if(c == 'X') // RESET USB
-            {
-                VirtualSerial_Reset();
+                   termPrintStr(STR("Tests Failed\n"));
+                   for(;;) ;
+                   break;
+
+               case 'R':
+                   lcd.color(1);
+                   termPrintStr(STR("LCD BL RED\n"));
+                   break;
+
+               case 'W':
+                   lcd.color(0);
+                   termPrintStr(STR("LCD BL WHITE\n"));
+                   break;
+
+               case 'D':
+                   for(char i = 0; i < 48; i++)
+                   {
+                       lcd.drawLine(0, i, 83, i);
+                   }
+                   lcd.update();
+                   break;
+
+               case 'c':
+                   lcd.cls();
+                   lcd.update();
+                   break;
+
+               case 'T':
+                   debug('E');
+                   termPrintStr(STR("USB Connected\n"));
+                   break;
+
+               case 'O':
+                   timer.off();
+                   termPrintStr(STR("Shutter Closed\n"));
+                   break;
+
+               case 'F':
+                   timer.full();
+                   termPrintStr(STR("Shutter Full\n"));
+                   break;
+
+               case 'H':
+                   timer.half();
+                   termPrintStr(STR("Shutter Half\n"));
+                   break;
+
+               case 'C':
+                   if(timer.cableIsConnected()) debug('1');
+                   else debug('0');
+                   break;
+
+               case 'S':
+
+                   if(run_tests())
+                   {
+                       debug('1');
+                       termPrintStr(STR("Passed All Tests\n"));
+                       VirtualSerial_Reset();
+                       return 1;
+                   } else
+                   {
+                       debug('0');
+                       termPrintStr(STR("Failed Tests\n"));
+                       VirtualSerial_Reset();
+                       return 0;
+                   }
+                   break;
+
+               case 'B':
+                   termPrintStr(STR("Checking charger\n"));
+                   debug((char)battery_status());
+                   break;
+
+               case 'X': // RESET USB
+                   VirtualSerial_Reset();
+                   break;
             }
         }
     }
     return 0;
 }
 
-
+/******************************************************************
+ *
+ *   test_assert
+ *
+ *
+ ******************************************************************/
 
 int8_t test_assert(char test_case)
 {
@@ -182,12 +195,19 @@ int8_t test_assert(char test_case)
     }
 }
 
+/******************************************************************
+ *
+ *   run_tests
+ *
+ *
+ ******************************************************************/
 
 int8_t run_tests()
 {
     int8_t pass = 1;
 
     wdt_reset();
+    
     if(pass)
     {
         if(bt.present)
@@ -196,14 +216,18 @@ int8_t run_tests()
             pass &= test_assert(bt.version() == 3);
         }
     }
+    
     wdt_reset();
+    
     if(pass)
     {
         termPrintStr(STR("Testing Battery\n"));
         pass &= test_assert(battery_read_raw() > 400);
         pass &= test_assert(battery_status() > 0);
     }
+    
     wdt_reset();
+    
     if(pass)
     {
         termPrintStr(STR("Testing Timer\n"));
@@ -212,7 +236,9 @@ int8_t run_tests()
         uint32_t ms = clock.eventMs();
         pass &= test_assert(ms >= 90 && ms <= 110);
     }
+    
     wdt_reset();
+    
     if(pass)
     {
         termPrintStr(STR("Testing Shutter\n"));
@@ -220,65 +246,86 @@ int8_t run_tests()
         ENABLE_MIRROR;
         ENABLE_AUX_INPUT;
         uint8_t i = 0;      // this was uninitialized. I set it to 0 -- John
+        
         while (i < 30)
         {
             wdt_reset();
             _delay_ms(100);
-            if(AUX_INPUT) break;
+
+            if(AUX_INPUT) 
+                break;
         }
         pass &= test_assert(AUX_INPUT);
     }
+    
     wdt_reset();
+    
     if(pass)
     {
         termPrintStr(STR("Press top l key\n"));
         pass &= test_assert(button.waitfor(FL_KEY));
     }
+    
     wdt_reset();
+    
     if(pass)
     {
         termPrintStr(STR("Press top r key\n"));
         pass &= test_assert(button.waitfor(FR_KEY));
     }
+    
     wdt_reset();
+    
     if(pass)
     {
         termPrintStr(STR("Press left key\n"));
         pass &= test_assert(button.waitfor(LEFT_KEY));
     }
+    
     wdt_reset();
+    
     if(pass)
     {
         termPrintStr(STR("Press right key\n"));
         pass &= test_assert(button.waitfor(RIGHT_KEY));
     }
+    
     wdt_reset();
+    
     if(pass)
     {
         termPrintStr(STR("Press up key\n"));
         pass &= test_assert(button.waitfor(UP_KEY));
     }
+    
     wdt_reset();
+    
     if(pass)
     {
         termPrintStr(STR("Press down key\n"));
         pass &= test_assert(button.waitfor(DOWN_KEY));
     }
+    
     wdt_reset();
+    
     if(pass)
     {
         lcd.color(1);
         termPrintStr(STR("LCD BL RED\n"));
         pass &= test_assert(button.waitfor(DOWN_KEY));
     }
+    
     wdt_reset();
+    
     if(pass)
     {
         lcd.color(0);
         termPrintStr(STR("LCD BL WHITE\n"));
         pass &= test_assert(button.waitfor(DOWN_KEY));
     }
+    
     wdt_reset();
+    
     if(pass)
     {
         for(char i = 0; i < 48; i++)
@@ -288,14 +335,18 @@ int8_t run_tests()
         lcd.update();
         pass &= test_assert(button.waitfor(DOWN_KEY));
     }
+    
     wdt_reset();
+    
     if(pass)
     {
         lcd.cls();
         lcd.update();
         pass &= test_assert(button.waitfor(DOWN_KEY));
     }
+    
     wdt_reset();
+    
     if(pass)
     {
         if(!bt.present)
@@ -304,10 +355,18 @@ int8_t run_tests()
             pass &= test_assert(button.waitfor(DOWN_KEY));
         }
     }
+    
     return pass;
 }
 
 light_reading light_test_results[120]EEMEM;
+
+/******************************************************************
+ *
+ *   lightTest
+ *
+ *
+ ******************************************************************/
 
 void lightTest()
 {
@@ -335,11 +394,20 @@ void lightTest()
         termPrintStr(TEXT("Photo "));
         termPrintByte(i + 1);
         termPrintStr(TEXT(" of 120\n"));
+        
         while (clock.eventMs() < 120000) wdt_reset();
+
         clock.tare();
     }
     termPrintStr(TEXT("\nDone!\n"));
 }
+
+/******************************************************************
+ *
+ *   readLightTest
+ *
+ *
+ ******************************************************************/
 
 void readLightTest()
 {
@@ -370,7 +438,8 @@ void readLightTest()
 
         VirtualSerial_Task();
         wdt_reset();
-
     }
+    
     termPrintStr(STR("\nDone!\n"));
 }
+

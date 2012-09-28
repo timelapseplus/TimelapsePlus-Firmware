@@ -1,3 +1,12 @@
+/*
+ *  timelapseplus.h
+ *  Timelapse+
+ *
+ *  Created by Elijah Parker
+ *  Copyright 2012 Timelapse+
+ *  Licensed under GPLv3
+ *
+ */
 
 volatile char timerRevert(char key, char first);
 volatile char timerSaveCurrent(char key, char first);

@@ -39,7 +39,6 @@ extern IR ir;
 
 extern settings conf;
 
-
 extern Clock clock;
 volatile unsigned char state;
 const uint16_t settings_warn_time = 0;
@@ -49,15 +48,31 @@ char shutter_state; // used only for momentary toggle mode //
 
 program stored[MAX_STORED]EEMEM;
 
+/******************************************************************
+ *
+ *   shutter::
+ *
+ *
+ ******************************************************************/
+
 shutter::shutter()
 {
-    if(eeprom_read_byte((const uint8_t*)&stored[0].Name[0]) == 255) setDefault();
+    if(eeprom_read_byte((const uint8_t*)&stored[0].Name[0]) == 255) 
+        setDefault();
+    
     load(0); // Default Program //
     ENABLE_MIRROR;
     ENABLE_SHUTTER;
     CHECK_CABLE;
     shutter_state = 0;
 }
+
+/******************************************************************
+ *
+ *   shutter::setDefault
+ *
+ *
+ ******************************************************************/
 
 void shutter::setDefault()
 {
@@ -80,9 +95,18 @@ void shutter::setDefault()
     save(0);
 }
 
+/******************************************************************
+ *
+ *   shutter::off
+ *
+ *
+ ******************************************************************/
+
 void shutter::off(void)
 {
-    if(conf.devMode) hardware_flashlight(0);
+    if(conf.devMode) 
+        hardware_flashlight(0);
+    
     if(cable_connected == 0)
     {
         if(bulb && shutter_state)
@@ -90,11 +114,13 @@ void shutter::off(void)
             ir.shutterNow();
         }
         shutter_state = 0;
-    } else if(conf.bulbMode == 0)
+    } 
+    else if(conf.bulbMode == 0)
     {
         SHUTTER_CLOSE;
         MIRROR_DOWN; _delay_ms(50); CHECK_CABLE;
-    } else if(conf.bulbMode == 1 && shutter_state == 1)
+    } 
+    else if(conf.bulbMode == 1 && shutter_state == 1)
     {
         SHUTTER_CLOSE;
         MIRROR_DOWN; _delay_ms(50); CHECK_CABLE;
@@ -104,9 +130,18 @@ void shutter::off(void)
     }
 }
 
+/******************************************************************
+ *
+ *   shutter::half
+ *
+ *
+ ******************************************************************/
+
 void shutter::half(void)
 {
-    if(conf.devMode) hardware_flashlight(0);
+    if(conf.devMode) 
+        hardware_flashlight(0);
+    
     if(cable_connected == 0)
     {
         if(bulb && shutter_state)
@@ -115,26 +150,41 @@ void shutter::half(void)
             ir.shutterNow();
         }
         shutter_state = 0;
-    } else
+    } 
+    else
     {
         SHUTTER_CLOSE;
         MIRROR_UP;
     }
 }
 
+/******************************************************************
+ *
+ *   shutter::full
+ *
+ *
+ ******************************************************************/
+
 void shutter::full(void)
 {
-    if(conf.devMode) hardware_flashlight(1);
+    if(conf.devMode) 
+        hardware_flashlight(1);
+    
     if(cable_connected == 0)
     {
-        if(bulb) shutter_state = 1;
-        else shutter_state = 0;
+        if(bulb) 
+            shutter_state = 1;
+        else 
+            shutter_state = 0;
+        
         ir.shutterNow();
-    } else if(conf.bulbMode == 0)
+    } 
+    else if(conf.bulbMode == 0)
     {
         MIRROR_UP;
         SHUTTER_OPEN;
-    } else if(conf.bulbMode == 1 && shutter_state == 0)
+    } 
+    else if(conf.bulbMode == 1 && shutter_state == 0)
     {
         MIRROR_UP;
         SHUTTER_OPEN;
@@ -143,6 +193,13 @@ void shutter::full(void)
         half();
     }
 }
+
+/******************************************************************
+ *
+ *   shutter::cableIsConnected
+ *
+ *
+ ******************************************************************/
 
 char shutter::cableIsConnected(void)
 {
@@ -153,17 +210,38 @@ char shutter::cableIsConnected(void)
     return cable_connected;
 }
 
+/******************************************************************
+ *
+ *   shutter::save
+ *
+ *
+ ******************************************************************/
+
 void shutter::save(char id)
 {
     eeprom_write_block((const void*)&current, &stored[(uint8_t)id], sizeof(program));
     currentId = id;
 }
 
+/******************************************************************
+ *
+ *   shutter::load
+ *
+ *
+ ******************************************************************/
+
 void shutter::load(char id)
 {
     eeprom_read_block((void*)&current, &stored[(uint8_t)id], sizeof(program));
     currentId = id;
 }
+
+/******************************************************************
+ *
+ *   shutter::nextId
+ *
+ *
+ ******************************************************************/
 
 int8_t shutter::nextId(void)
 {
@@ -179,10 +257,24 @@ int8_t shutter::nextId(void)
     return id;
 }
 
+/******************************************************************
+ *
+ *   shutter::begin
+ *
+ *
+ ******************************************************************/
+
 void shutter::begin()
 {
     running = 1;
 }
+
+/******************************************************************
+ *
+ *   shutter::run
+ *
+ *
+ ******************************************************************/
 
 char shutter::run()
 {
@@ -194,10 +286,13 @@ char shutter::run()
     {
         CHECK_CABLE;
     }
+    
     if(!running)
     {
-        if(enter) cancel = 1;
-        else return 0;
+        if(enter) 
+            cancel = 1;
+        else 
+            return 0;
     }
 
 //	uint16_t value;
@@ -237,13 +332,15 @@ char shutter::run()
             clock.reset();
             last_photo_ms = 0;
             run_state = RUN_PHOTO;
-        } else
+        } 
+        else
         {
             if(((unsigned long)clock.event_ms / 1000) + settings_mirror_up_time >= current.Delay)
             {
                 // Mirror Up //
                 half();
             }
+
             if((settings_warn_time > 0) && (((unsigned long)clock.event_ms / 1000) + settings_warn_time >= current.Delay))
             {
                 // Flash Light //
@@ -251,6 +348,7 @@ char shutter::run()
             }
         }
     }
+
     if(run_state == RUN_PHOTO)
     {
 #ifdef DEBUG
@@ -264,12 +362,12 @@ char shutter::run()
             old_state = run_state;
         }
 #endif
-
         if(current.Exp > 0 || (current.Mode & RAMP))
         {
             clock.tare();
             run_state = RUN_BULB;
-        } else
+        } 
+        else
         {
             exps++;
             bulb = false;
@@ -281,6 +379,7 @@ char shutter::run()
             run_state = RUN_NEXT;
         }
     }
+    
     if(run_state == RUN_BULB)
     {
 #ifdef DEBUG
@@ -299,10 +398,12 @@ char shutter::run()
         full();
         static uint8_t calc = true;
         static uint16_t bulb_length, exp;
+
         if(calc)
         {
             calc = false;
             exp = current.Exp * 100;
+
             if(current.Mode & RAMP)
             {
                 float key1, key2, key3, key4;
@@ -325,11 +426,13 @@ char shutter::run()
                 if(found)
                 {
                     exp = (uint16_t)curve(key1, key2, key3, key4, ((float)clock.Seconds() - (i > 1 ? (float)current.Key[i - 2] : 0.0)) / ((float)current.Key[i - 1] - (i > 1 ? (float)current.Key[i - 2] : 0.0)));
-                } else
+                } 
+                else
                 {
                     exp = current.Bulb[current.Keyframes] * 100;
                 }
                 bulb_length = exp;
+
                 if(conf.devMode)
                 {
                     debug(STR("Seconds: "));
@@ -337,10 +440,13 @@ char shutter::run()
                     debug_nl();
                     debug(STR("Ramp: "));
                     debug(bulb_length);
+
                     if(found) debug(STR(" (calculated)"));
+                    
                     debug_nl();
                 }
             }
+
             if(current.Mode & HDR)
             {
                 uint16_t tmp = exps - (current.Exps >> 1);
@@ -349,20 +455,24 @@ char shutter::run()
                 if(conf.devMode)
                 {
                     debug(STR("exps - (current.Exps >> 1): "));
+
                     if(tmp < 32768)
                     {
                         debug(tmp);
-                    } else
+                    } 
+                    else
                     {
                         debug(STR("-"));
                         debug(0 - tmp);
                     }
+                    
                     debug_nl();
                     debug(STR("Bulb: "));
                     debug(bulb_length);
                     debug_nl();
                 }
             }
+            
             if((current.Mode & (HDR | RAMP)) == 0)
             {
                 if(conf.devMode)
@@ -373,16 +483,20 @@ char shutter::run()
                 bulb_length = exp;
             }
         }
+        
         if(((unsigned long)clock.eventMs()) >= bulb_length)
         {
             calc = true;
             exps++;
             off();
             _delay_ms(50);
+
             if(current.Gap <= settings_mirror_up_time) half(); // Mirror Up //
+
             run_state = RUN_NEXT;
         }
     }
+    
     if(run_state == RUN_NEXT)
     {
 #ifdef DEBUG
@@ -403,17 +517,20 @@ char shutter::run()
             photos++;
             clock.tare();
             run_state = RUN_GAP;
-        } else
+        } 
+        else
         {
             _delay_ms(conf.cameraFPS * 10);
             clock.tare();
             run_state = RUN_PHOTO;
         }
+        
         if(photos >= current.Photos || (((current.Mode & TIMELAPSE) == 0) && photos >= 1))
         {
             run_state = RUN_END;
         }
     }
+    
     if(run_state == RUN_GAP)
     {
 #ifdef DEBUG
@@ -428,12 +545,14 @@ char shutter::run()
         }
 #endif
         uint32_t cms = clock.Ms();
+
         if((cms - last_photo_ms) >= current.Gap * 100)
         {
             last_photo_ms = cms;
             clock.tare();
             run_state = RUN_PHOTO;
-        } else
+        } 
+        else
         {
             if((cms - last_photo_ms) + (uint32_t)settings_mirror_up_time * 1000 >= current.Gap * 100)
             {
@@ -448,6 +567,7 @@ char shutter::run()
 */
         }
     }
+    
     if(run_state == RUN_END)
     {
 #ifdef DEBUG
@@ -465,12 +585,11 @@ char shutter::run()
         enter = 0;
         running = 0;
         off();
+
         return DONE;
     }
 
     /////////////////////////////////////////
-
-
 
     if(cancel)
     {
