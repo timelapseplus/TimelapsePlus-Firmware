@@ -47,7 +47,8 @@ public:
     char make;
 
 private:
-    void high(unsigned int time, int freq);
+    void high40(unsigned int time);
+    void high38(unsigned int time);
 };
 
 #endif

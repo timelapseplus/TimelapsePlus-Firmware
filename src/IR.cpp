@@ -35,16 +35,30 @@ IR::IR()
     setHigh(IR_PIN);
 }
 
-void IR::high(unsigned int time, int freq)
+void IR::high40(unsigned int time)
 {
     uint16_t count = 0;
     cli();
-    while (count <= (time / 1000) / (1 / freq))
+    while (count <= time / (1000 / 40))
     {
         setLow(IR_PIN);
-        _delay_us((1000 / freq / 2));
+        _delay_us((1000 / 40 / 2));
         setHigh(IR_PIN);
-        _delay_us((1000 / freq / 2));
+        _delay_us((1000 / 40 / 2));
+    }
+    sei();
+}
+
+void IR::high38(unsigned int time)
+{
+    uint16_t count = 0;
+    cli();
+    while (count <= time / (1000 / 38))
+    {
+        setLow(IR_PIN);
+        _delay_us((1000 / 38 / 2));
+        setHigh(IR_PIN);
+        _delay_us((1000 / 38 / 2));
     }
     sei();
 }
@@ -74,22 +88,22 @@ void IR::shutterNow()
 
     if(make == NIKON || make == ALL)
     {
-        high(2000, 40);
+        high40(2000);
         _delay_ms(27.830);
-        high(390, 40);
+        high40(390);
         _delay_ms(1.580);
-        high(410, 40);
+        high40(410);
         _delay_ms(3.580);
-        high(400, 40);
+        high40(400);
     }
 
     if(make == PENTAX || make == ALL)
     {
-        high(13000, 38);
+        high38(13000);
         _delay_ms(3);
         for(int i = 0; i < 7; i++)
         {
-            high(1000, 38);
+            high38(1000);
             _delay_ms(1);
         };
     }
@@ -98,19 +112,19 @@ void IR::shutterNow()
     {
         bool _seq[] = {
             0, 1, 1, 0, 0, 0, 0, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1 };
-        high(8972, 40);
+        high40(8972);
         _delay_ms(4.384);
-        high(624, 40);
+        high40(624);
         for(uint8_t i = 0; i < sizeof(_seq); i++)
         {
             if(_seq[i] == 0)
             {
                 _delay_us(488);
-                high(600, 40);
+                high40(600);
             } else
             {
                 _delay_ms(1.6);
-                high(600, 40);
+                high40(600);
             }
         };
     }
@@ -119,17 +133,17 @@ void IR::shutterNow()
     {
         bool _seq[] = {
             0, 0, 1, 0, 1, 1, 0, 0, 0, 1, 0, 1, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1 };
-        high(3750, 38);
+        high38(3750);
         _delay_ms(1.890);
         for(uint8_t i = 0; i < sizeof(_seq); i++)
         {
             if(_seq[i] == 0)
             {
-                high(456, 38);
+                high38(456);
                 _delay_us(487);
             } else
             {
-                high(456, 38);
+                high38(456);
                 _delay_ms(1.430);
             }
         };
@@ -141,17 +155,17 @@ void IR::shutterNow()
             1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1 };
         for(int j = 0; j < 3; j++)
         {
-            high(2320, 40);
+            high40(2320);
             _delay_us(650);
             for(uint8_t i = 0; i < sizeof(_seq); i++)
             {
                 if(_seq[i] == 0)
                 {
-                    high(575, 40);
+                    high40(575);
                     _delay_us(650);
                 } else
                 {
-                    high(1175, 40);
+                    high40(1175);
                     _delay_us(650);
                 }
             }
@@ -188,17 +202,17 @@ void IR::shutterDelayed()
     {
         bool _seqDelayed[] = {
             0, 0, 1, 0, 1, 1, 0, 0, 0, 1, 0, 1, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 };
-        high(3750, 38);
+        high38(3750);
         _delay_ms(1.890);
         for(uint8_t i = 0; i < sizeof(_seqDelayed); i++)
         {
             if(_seqDelayed[i] == 0)
             {
-                high(456, 38);
+                high38(456);
                 _delay_us(487);
             } else
             {
-                high(456, 38);
+                high38(456);
                 _delay_ms(1.430);
             }
         };
@@ -210,16 +224,16 @@ void IR::shutterDelayed()
             1, 1, 1, 0, 1, 1, 0, 0, 1, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1 };
         for(uint8_t j = 0; j < 3; j++)
         {
-            high(2320, 40);
+            high40(2320);
             _delay_us(650);
             for(uint8_t i = 0; i < sizeof(_seqDelayed); i++)
             {
                 if(_seqDelayed[i] == 0)
                 {
-                    high(575, 40);
+                    high40(575);
                 } else
                 {
-                    high(1175, 40);
+                    high40(1175);
                 }
                 _delay_us(650);
             }
@@ -234,9 +248,9 @@ void IR::zoomIn(unsigned int pct)
     {
         bool _seq[] = {
             0, 1, 1, 0, 0, 0, 0, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1 };
-        high(9000, 40);
+        high40(9000);
         _delay_ms(4.500);
-        high(500, 40);
+        high40(500);
         for(uint8_t i = 0; i < sizeof(_seq); i++)
         {
             if(_seq[i] == 0)
@@ -246,16 +260,16 @@ void IR::zoomIn(unsigned int pct)
             {
                 _delay_ms(1.500);
             }
-            high(500, 40);
+            high40(500);
         };
         _delay_ms(40);
         if(pct > 100) pct = 100;
         pct = (pct * 52) / 100 + 1;
         for(uint8_t i = 1; i < pct; i++)
         {
-            high(9000, 40);
+            high40(9000);
             _delay_ms(2);
-            high(500, 40);
+            high40(500);
             _delay_ms(96);
         }
     }
@@ -267,9 +281,9 @@ void IR::zoomOut(unsigned int pct)
     {
         bool _seq[] =
         { 0, 1, 1, 0, 0, 0, 0, 1, 1, 1, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 1, 1, 1 };
-        high(9000, 40);
+        high40(9000);
         _delay_ms(4.500);
-        high(500, 40);
+        high40(500);
         for(uint8_t i = 0; i < sizeof(_seq); i++)
         {
             if(_seq[i] == 0)
@@ -279,16 +293,16 @@ void IR::zoomOut(unsigned int pct)
             {
                 _delay_ms(1.500);
             }
-            high(500, 40);
+            high40(500);
         };
         _delay_ms(40);
         if(pct > 100) pct = 100;
         pct = (pct * 70) / 100 + 1;
         for(uint8_t i = 1; i < pct; i++)
         {
-            high(9000, 40);
+            high40(9000);
             _delay_ms(2);
-            high(500, 40);
+            high40(500);
             _delay_ms(96);
         }
     }

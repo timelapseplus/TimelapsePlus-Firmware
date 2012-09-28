@@ -529,7 +529,7 @@ char shutter::run()
         } 
         else
         {
-            _delay_ms(conf.cameraFPS * 10);
+            for(uint8_t i = 0; i < conf.cameraFPS; i++) _delay_ms(10);
             clock.tare();
             run_state = RUN_PHOTO;
         }
