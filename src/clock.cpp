@@ -90,6 +90,7 @@ volatile void Clock::count()
 {
     ms++;
     event_ms++;
+    
     if(ms >= 1000)
     {
         ms = 0;
@@ -155,8 +156,10 @@ void Clock::awake()
 
 void Clock::sleep()
 {
-    if(!sleepOk) 
+    if(!sleepOk)
+    {
         sleep_time = 0;
+    }
     else
     {
         if(!sleepWasOk) 
@@ -175,7 +178,8 @@ void Clock::sleep()
         awake();
         wasSleeping = 1;
 
-    } else if(backlightVal == 0 && light_time >= (uint16_t)conf.lcdBacklightTime * 10)
+    } 
+    else if(backlightVal == 0 && light_time >= (uint16_t)conf.lcdBacklightTime * 10)
     {
         backlightVal = lcd.getBacklight();
         lcd.backlight(0);
@@ -187,11 +191,10 @@ void Clock::sleep()
         {
             hardware_flashlight(0);
         }
-        
-    } else
-    {
-        flashlight_time = 0;
-    }
+        return;
+    } 
+
+    flashlight_time = 0;
 }
 
 /******************************************************************

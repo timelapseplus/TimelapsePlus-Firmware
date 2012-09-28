@@ -71,7 +71,8 @@ int8_t test()
                 termPrintStr(STR("Passed All Tests\n"));
                 VirtualSerial_Reset();
                 return 1;
-            } else
+            } 
+            else
             {
                 debug('0');
                 termPrintStr(STR("Failed Tests\n"));
@@ -93,7 +94,7 @@ int8_t test()
                case 'E':
 //				failed = 1;		// set but never referenced
                    termPrintStr(STR("Tests Failed\n"));
-                   for(;;) ;
+                   FOREVER;
                    break;
 
                case 'R':
@@ -111,6 +112,7 @@ int8_t test()
                    {
                        lcd.drawLine(0, i, 83, i);
                    }
+                   
                    lcd.update();
                    break;
 
@@ -140,8 +142,10 @@ int8_t test()
                    break;
 
                case 'C':
-                   if(timer.cableIsConnected()) debug('1');
-                   else debug('0');
+                   if(timer.cableIsConnected()) 
+                       debug('1');
+                   else 
+                       debug('0');
                    break;
 
                case 'S':
@@ -152,7 +156,8 @@ int8_t test()
                        termPrintStr(STR("Passed All Tests\n"));
                        VirtualSerial_Reset();
                        return 1;
-                   } else
+                   } 
+                   else
                    {
                        debug('0');
                        termPrintStr(STR("Failed Tests\n"));
@@ -188,11 +193,10 @@ int8_t test_assert(char test_case)
     {
         termPrintStr(STR("   Passed\n"));
         return 1;
-    } else
-    {
-        termPrintStr(STR("   Failed\n"));
-        return 0;
-    }
+    } 
+    
+    termPrintStr(STR("   Failed\n"));
+    return 0;
 }
 
 /******************************************************************
@@ -332,6 +336,7 @@ int8_t run_tests()
         {
             lcd.drawLine(0, i, 83, i);
         }
+        
         lcd.update();
         pass &= test_assert(button.waitfor(DOWN_KEY));
     }
@@ -395,7 +400,8 @@ void lightTest()
         termPrintByte(i + 1);
         termPrintStr(TEXT(" of 120\n"));
         
-        while (clock.eventMs() < 120000) wdt_reset();
+        while (clock.eventMs() < 120000) 
+            wdt_reset();
 
         clock.tare();
     }

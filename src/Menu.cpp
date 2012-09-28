@@ -91,13 +91,18 @@ char MENU::run()
        case ST_EDIT:
            ret = editNumber(key, var, name, desc, type, first);
            first = 0;
-           if(ret != FN_CONTINUE) state = ST_MENU;
+           
+           if(ret != FN_CONTINUE) 
+               state = ST_MENU;
            break;
 
        case ST_TEXT:
            ret = editNumber(key, var, name, desc, type, first);
            first = 0;
-           if(ret != FN_CONTINUE) state = ST_MENU;
+           
+           if(ret != FN_CONTINUE) 
+               state = ST_MENU;
+           break;
 
        case ST_LIST:
            ret = editSelect(key, bvar, list, name, first);
@@ -119,13 +124,16 @@ char MENU::run()
            }
            ret = editNumber(key, &e_val, name, desc, type, first);
            first = 0;
+           
            if(ret != FN_CONTINUE)
            {
                if(ret == FN_SAVE)
                {
                    unsigned int tmp;
                    eeprom_read_block(&tmp, var, 2);
-                   if(tmp != e_val) eeprom_write_block(&e_val, var, 2);
+                   
+                   if(tmp != e_val) 
+                       eeprom_write_block(&e_val, var, 2);
                }
                state = ST_MENU;
            }
@@ -134,6 +142,7 @@ char MENU::run()
        case ST_FUNC:
            ret = (*func)(key, first);
            first = 0;
+           
            if(ret != FN_CONTINUE)
            {
                state = ST_MENU;
@@ -141,7 +150,8 @@ char MENU::run()
            break;
     }
 
-    if(state != ST_CONT) key = 0;
+    if(state != ST_CONT) 
+        key = 0;
 
     return key;
 }
@@ -172,6 +182,7 @@ void MENU::init(menu_item *newmenu)
     for(i = 0; i < MENU_MAX; i++)
     {
         char *condition;
+        
         condition = (char*)pgm_read_word(&menu[i].condition);
 
         if(!condition || *condition)
@@ -204,7 +215,9 @@ void MENU::init(menu_item *newmenu)
 
                 for(uint8_t x = 0; x < MENU_MAX; x++)
                 {
-                    if(pgm_read_byte(&set[x].name[0]) == '0') break;
+                    if(pgm_read_byte(&set[x].name[0]) == '0') 
+                        break;
+                    
                     if(pgm_read_byte(&set[x].value) == *var)
                     {
                         for(c = 0; c < MENU_NAME_LEN - 1; c++) // Write settings item text //
@@ -215,7 +228,8 @@ void MENU::init(menu_item *newmenu)
                         break;
                     }
                 }
-            } else
+            } 
+            else
             {
                 for(c = 0; c < MENU_NAME_LEN - 1; c++) // Write menu item text //
                 {
@@ -228,9 +242,11 @@ void MENU::init(menu_item *newmenu)
             }
             menuSize++;
         }
+        
         ch = pgm_read_byte(&menu[i + 1]);
         if(ch == 0) break;
     }
+    
     i++;
     select(menuSelected);
 
@@ -255,9 +271,10 @@ void MENU::init(menu_item *newmenu)
         strcpy_P(l, (const char*)pgm_read_word(&menu[i].description));
         strcpy_P(r, (const char*)pgm_read_word(&menu[i].condition));
         setBar(l, r);
-        if(ch == 'F') handlerFunction = (char (*)(char, char))pgm_read_word(&menu[i].function);
-    }
 
+        if(ch == 'F') 
+            handlerFunction = (char (*)(char, char))pgm_read_word(&menu[i].function);
+    }
 }
 
 /******************************************************************
@@ -323,7 +340,9 @@ uint8_t MENU::getIndex(menu_item *cmenu, uint8_t selected)
         
         if(!condition || *condition)
         {
-            if(selected == i) break;
+            if(selected == i) 
+                break;
+            
             i++;
         }
         
@@ -356,6 +375,7 @@ uint8_t MENU::getSelected(menu_item *cmenu, uint8_t index)
         {
             i++;
         }
+        
         ind++;
     }
 
@@ -392,7 +412,8 @@ char *MENU::menuName(char *str)
                 break;
             }
         }
-    } else
+    } 
+    else
     {
         strcpy_P(str, PSTR("MAIN MENU"));
     }
@@ -443,10 +464,12 @@ void MENU::click()
                    {
                        name[b] = pgm_read_byte(&menu[index].name[b]);
 
-                       if(name[b] == ' ') break;
+                       if(name[b] == ' ') 
+                           break;
 
                        b++;
                    }
+                   
                    name[b] = '\0';
 
                    desc_addr = (unsigned char (*))pgm_read_word(&menu[index].description);
@@ -458,15 +481,19 @@ void MENU::click()
                        {
                            desc[b] = pgm_read_byte(desc_addr + b);
 
-                           if(desc[b] == '\0') break;
+                           if(desc[b] == '\0') 
+                               break;
 
                            b++;
                        }
                    }
+                   
                    desc[b] = '\0';
 
-                   if(type == 'P') state = ST_EEPR;
-                   else state = ST_EDIT;
+                   if(type == 'P') 
+                       state = ST_EEPR;
+                   else 
+                       state = ST_EDIT;
 
                    type = pgm_read_byte(&menu[index].name[MENU_NAME_LEN - 2]);
                    var = (unsigned int (*))pgm_read_word(&menu[index].function);
@@ -475,12 +502,17 @@ void MENU::click()
 
            case 'S': // Settings List Variable
                uint8_t b = 0;
+               
                while(b < MENU_NAME_LEN - 2)
                {
                    name[b] = pgm_read_byte(&menu[index].name[b]);
-                   if(name[b] == ' ') break;
+                   
+                   if(name[b] == ' ') 
+                       break;
+                   
                    b++;
                }
+               
                name[b] = '\0';
 
                func_short = (char (*)(void))pgm_read_word(&menu[index].condition);
@@ -523,7 +555,8 @@ void MENU::back()
 
 void MENU::highlight(char x1, char y1, char x2, char y2)
 {
-    if(hx1 | hy1 | hx2 | hy2) lcd->drawHighlight(hx1, hy1, hx2, hy2);
+    if(hx1 | hy1 | hx2 | hy2) 
+        lcd->drawHighlight(hx1, hy1, hx2, hy2);
 
     hx1 = x1;
     hy1 = y1;
@@ -542,7 +575,8 @@ void MENU::highlight(char x1, char y1, char x2, char y2)
 
 void MENU::clearHighlight()
 {
-    if(hx1 | hy1 | hx2 | hy2) lcd->drawHighlight(hx1, hy1, hx2, hy2);
+    if(hx1 | hy1 | hx2 | hy2) 
+        lcd->drawHighlight(hx1, hy1, hx2, hy2);
 
     hx1 = 0;
     hy1 = 0;
@@ -858,6 +892,7 @@ char MENU::editNumber(char key, unsigned int *n, char *name, char *unit, char mo
 char MENU::message(char *m, char first)
 {
     static uint32_t l;
+
     if(first)
     {
         l = strlen(m) * 6 / 2;
@@ -872,10 +907,8 @@ char MENU::message(char *m, char first)
     {
         return 1;
     } 
-    else
-    {
-        return 0;
-    }
+    
+    return 0;
 }
 
 /******************************************************************
@@ -921,6 +954,7 @@ menu_stack MENU::menu_pop()
         stack_counter--;
         return stack[stack_counter];
     }
+
     // todo need to return a proper error indicator -- John
     return stack[0];
 }
@@ -1005,6 +1039,7 @@ char MENU::editSelect(char key, char *n, void *settingslist, char *name, char fi
         {
             if(*n == pgm_read_byte(&slist[l].value)) 
                 i = l;
+            
             l++;
         }
     }
@@ -1112,6 +1147,7 @@ char MENU::editText(char key, char text[MENU_NAME_LEN], char *name, char first)
                text[i]--;
            else 
                text[i] = 'Z';
+           
            first = 1;
            break;
            
@@ -1123,6 +1159,7 @@ char MENU::editText(char key, char text[MENU_NAME_LEN], char *name, char first)
                 text[i]++;
             else 
                 text[i] = 'A';
+            
             first = 1;
             break;
     }

@@ -46,11 +46,13 @@ Button::Button()
         button_status[i] = 0;
         button_flag[i] = 0;
         p = pgm_read_byte(&button_pins[i]);
+        
         if(i < 2)
         {
             clrBit(p, FB_DDR);
             setBit(p, FB_PORT);
-        } else
+        } 
+        else
         {
             clrBit(p, B_DDR);
             setBit(p, B_PORT);
@@ -84,6 +86,7 @@ volatile void Button::poll()
             if(button_count[i] < DEBOUNCE_MAX)
             {
                 button_count[i]++;
+                
                 if(button_count[i] > DEBOUNCE_ON)
                 {
                     if(button_status[i] == 0)
@@ -96,7 +99,8 @@ volatile void Button::poll()
                 }
             }
 
-        } else // no button pressed
+        } 
+        else // no button pressed
         {
             if(button_count[i] > 0)
             {
@@ -109,7 +113,6 @@ volatile void Button::poll()
                 }
             }
         }
-
     }
 }
 
@@ -126,7 +129,8 @@ char Button::get()
     char key;
     uint8_t i;
 
-    if(clock.slept()) flushBuffer();
+    if(clock.slept()) 
+        flushBuffer();
 
     for(i = 0; i < NUM_KEYS; i++)
     {
@@ -135,11 +139,13 @@ char Button::get()
             button_flag[i] = 0;  // reset button flag
             key = ++i;
             break;
-        } else
+        } 
+        else
         {
             key = 0;
         }
     }
+    
     return key;
 }
 
@@ -156,7 +162,8 @@ char Button::pressed()
     char key;
     uint8_t i;
 
-    if(clock.slept()) flushBuffer();
+    if(clock.slept()) 
+        flushBuffer();
     
     for(i = 0; i < NUM_KEYS; i++)
     {
@@ -164,11 +171,13 @@ char Button::pressed()
         {
             key = ++i;
             break;
-        } else
+        } 
+        else
         {
             key = 0;
         }
     }
+    
     return key;
 }
 

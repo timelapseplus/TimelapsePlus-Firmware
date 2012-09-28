@@ -58,7 +58,7 @@ void chargingScreen(void);
 #define hardware_USB_Enable() setIn(USBID_PIN); setHigh(USBID_PIN)
 #define hardware_USB_Disable() setLow(USBID_PIN)
 
-
+#define FOREVER         for(;;)
 
 #define INPUT 0
 #define OUTPUT 1

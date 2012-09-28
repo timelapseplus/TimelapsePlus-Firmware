@@ -16,6 +16,7 @@
 #include <avr/interrupt.h>
 #include <util/delay.h>
 
+#include "timelapseplus.h"
 #include "LCD_Term.h"
 #include "5110LCD.h"
 
@@ -53,6 +54,7 @@ void termPrintChar(char c)
     else
     {
         x += lcd.writeCharTiny(x, y, c) + 1;
+        
         if(x > TERM_WIDTH)
         {
             y += TERM_LINE_HEIGHT;
@@ -63,18 +65,23 @@ void termPrintChar(char c)
     if(y > TERM_HEIGHT)
     {
         char j, i;
+        
         for(i = 0; i < LCD_WIDTH; i++)
         {
             for(j = 0; j < LCD_HEIGHT - TERM_LINE_HEIGHT; j++)
             {
-                if(lcd.getPixel(i, j + TERM_LINE_HEIGHT)) lcd.setPixel(i, j);
-                else lcd.clearPixel(i, j);
+                if(lcd.getPixel(i, j + TERM_LINE_HEIGHT)) 
+                    lcd.setPixel(i, j);
+                else 
+                    lcd.clearPixel(i, j);
             }
+            
             for(j = LCD_HEIGHT - TERM_LINE_HEIGHT; j < LCD_HEIGHT; j++)
             {
                 lcd.clearPixel(i, j);
             }
         }
+        
         y -= TERM_LINE_HEIGHT;
     }
 }
@@ -88,22 +95,11 @@ void termPrintChar(char c)
 
 void termPrintByte(uint8_t c)
 {
-    char buf[3];
+    char buf[5];
     
-    buf[0] = c % 10;
-    c -= buf[0]; c /= 10;
-    buf[1] = c % 10;
-    c -= buf[1]; c /= 10;
-    buf[2] = c % 10;
-    c -= buf[2]; c /= 10;
+    int_to_str((uint16_t)c, buf);
     
-    if(buf[2]) 
-        termPrintChar(buf[2] + '0');
-    
-    if(buf[1]) 
-        termPrintChar(buf[1] + '0');
-    
-    termPrintChar(buf[0] + '0');
+    termPrintStr(buf);
 }
 
 /******************************************************************

@@ -55,15 +55,18 @@ uint8_t BT::init(void)
     // Set Name //
     send(STR("ATSN,Timelapse+\r")); // Set Name
 
-    if(checkOK() == 0) return 0;
+    if(checkOK() == 0) 
+        return 0;
 
     send(STR("ATSZ,1,1,0\r")); // Configure Sleep mode (sleep on reset, wake on UART)
 
-    if(checkOK() == 0) return 0;
+    if(checkOK() == 0) 
+        return 0;
 
     send(STR("ATSDIF,782,1,1\r")); // Configure discovery display
 
-    if(checkOK() == 0) return 0;
+    if(checkOK() == 0) 
+        return 0;
 
     return power(3);
 }
@@ -126,7 +129,8 @@ uint8_t BT::power(uint8_t level)
 
 uint8_t BT::cancel(void)
 {
-    if(!present) return 1;
+    if(!present) 
+        return 1;
     
     send(STR("ATDC\r"));
 
@@ -142,7 +146,8 @@ uint8_t BT::cancel(void)
 
 uint8_t BT::sleep(void)
 {
-    if(!present) return 1;
+    if(!present) 
+        return 1;
     
     cancel();
     
@@ -151,7 +156,8 @@ uint8_t BT::sleep(void)
         send(STR("ATZ\r"));
 
         return checkOK();
-    } else
+    } 
+    else
     {
         return 1;
     }
@@ -166,7 +172,8 @@ uint8_t BT::sleep(void)
 
 uint8_t BT::temperature(void)
 {
-    if(!present) return 1;
+    if(!present) 
+        return 1;
     
     send(STR("ATT?\r"));
 
@@ -177,7 +184,9 @@ uint8_t BT::temperature(void)
     {
         for(++i; i < BT_DATA_SIZE; i++)
         {
-            if(data[i] == 0) break;
+            if(data[i] == 0) 
+                break;
+            
             if(data[i] == ',')
             {
                 n = (data[i + 1] - '0') * 100;
@@ -187,6 +196,7 @@ uint8_t BT::temperature(void)
             }
         }
     }
+    
     return 255;
 }
 
@@ -199,17 +209,21 @@ uint8_t BT::temperature(void)
 
 uint8_t BT::version(void)
 {
-    if(!present) return 1;
+    if(!present) 
+        return 1;
     
     send(STR("ATV?\r"));
     
     uint8_t i = checkOK();
     uint8_t n = 0;
+    
     if(i > 0)
     {
         for(++i; i < BT_DATA_SIZE; i++)
         {
-            if(data[i] == 0) break;
+            if(data[i] == 0) 
+                break;
+            
             if(i == 14)
             {
                 n = (data[i] - '0');
@@ -217,6 +231,7 @@ uint8_t BT::version(void)
             }
         }
     }
+    
     return 255;
 }
 
@@ -229,15 +244,20 @@ uint8_t BT::version(void)
 
 uint8_t BT::checkOK(void)
 {
-    if(!present) return 1;
+    if(!present) 
+        return 1;
     
     _delay_ms(50);
     uint8_t bytes = read();
     
     for(uint8_t i = 0; i < bytes; i++)
     {
-        if(data[i] == 0) break;
-        if(data[i] == '\n' || data[i] == '\r') continue; // SKIP CR/LF
+        if(data[i] == 0) 
+            break;
+        
+        if(data[i] == '\n' || data[i] == '\r') 
+            continue; // SKIP CR/LF
+        
         if(data[i] == 'O' && data[i + 1] == 'K')
         {
             return i;
@@ -256,15 +276,20 @@ uint8_t BT::checkOK(void)
 
 uint8_t BT::send(char *data)
 {
-    if(!present) return 1;
+    if(!present) 
+        return 1;
     
     if(!(BT_RTS))
     {
-        Serial_SendByte('A');
         char i = 0;
+
+        Serial_SendByte('A');
+        
         while (!(BT_RTS))
         {
-            if(++i > 250) break;
+            if(++i > 250) 
+                break;
+            
             _delay_ms(1);
         }
     }
@@ -272,7 +297,9 @@ uint8_t BT::send(char *data)
     if(BT_RTS)
     {
         char *ptr;
+        
         ptr = data;
+        
         while (*ptr != 0)
         {
             Serial_SendByte(*ptr);
@@ -292,7 +319,8 @@ uint8_t BT::send(char *data)
 
 uint8_t BT::read(void)
 {
-    if(!present) return 1;
+    if(!present) 
+        return 1;
     
     uint8_t bytes = 0;
 
@@ -303,16 +331,27 @@ uint8_t BT::read(void)
     for(;;)
     {
         timeout = 0;
-        while (!Serial_IsCharReceived()) if(++timeout > 5000) break;
-        if(timeout > 5000) break;
+
+        while(!Serial_IsCharReceived())
+        {
+            if(++timeout > 5000) 
+                break;
+        }
+        
+        if(timeout > 5000) 
+            break;
+        
         data[bytes] = (char)Serial_ReceiveByte();
         bytes++;
-        if(bytes >= BT_DATA_SIZE) break;
+        
+        if(bytes >= BT_DATA_SIZE) 
+            break;
     }
     
     BT_CLR_CTS;
 
     data[bytes] = 0;
+    
     return bytes;
 }
 

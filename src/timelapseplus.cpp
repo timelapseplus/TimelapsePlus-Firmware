@@ -954,6 +954,7 @@ volatile char notYet(char key, char first)
         menu.setBar(TEXT("RETURN"), BLANK_STR);
         lcd.update();
     }
+    
     if(key) 
         return FN_CANCEL;
     
@@ -974,6 +975,7 @@ volatile char usbPlug(char key, char first)
     if(first || (Camera_Connected != connected))
     {
         connected = Camera_Connected;
+        
         if(Camera_Connected)
         {
             lcd.cls();
@@ -1004,12 +1006,11 @@ volatile char usbPlug(char key, char first)
     {
         if(!Camera_Connected) 
             connectUSBcamera = 0;
+        
         return FN_CANCEL;
     } 
-    else
-    {
-        return FN_CONTINUE;
-    }
+
+    return FN_CONTINUE;
 }
 
 /******************************************************************
@@ -1185,6 +1186,7 @@ volatile char shutter_addKeyframe(char key, char first)
     }
     
     menu.back();
+    
     return FN_CANCEL;
 }
 
@@ -1228,6 +1230,7 @@ volatile char shutter_saveAs(char key, char first)
         {
             menu.message(TEXT("No Space"), 1);
             _delay_ms(500);
+            
             return FN_CANCEL;
         }
     }
@@ -1275,7 +1278,8 @@ volatile char shutter_load(char key, char first)
         menuSelected--;
         update = 1;
         
-    } else if(key == DOWN_KEY && menuSelected < menuSize - 1)
+    } 
+    else if(key == DOWN_KEY && menuSelected < menuSize - 1)
     {
         menuSelected++;
         update = 1;

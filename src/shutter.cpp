@@ -375,7 +375,10 @@ char shutter::run()
             _delay_ms(50);
             off();
             _delay_ms(50);
-            if(current.Gap <= settings_mirror_up_time) half(); // Mirror Up //
+            
+            if(current.Gap <= settings_mirror_up_time) 
+                half(); // Mirror Up //
+
             run_state = RUN_NEXT;
         }
     }
@@ -396,6 +399,7 @@ char shutter::run()
 
         bulb = true;
         full();
+        
         static uint8_t calc = true;
         static uint16_t bulb_length, exp;
 
@@ -423,6 +427,7 @@ char shutter::run()
                         break;
                     }
                 }
+                
                 if(found)
                 {
                     exp = (uint16_t)curve(key1, key2, key3, key4, ((float)clock.Seconds() - (i > 1 ? (float)current.Key[i - 2] : 0.0)) / ((float)current.Key[i - 1] - (i > 1 ? (float)current.Key[i - 2] : 0.0)));
@@ -431,6 +436,7 @@ char shutter::run()
                 {
                     exp = current.Bulb[current.Keyframes] * 100;
                 }
+                
                 bulb_length = exp;
 
                 if(conf.devMode)
@@ -441,7 +447,8 @@ char shutter::run()
                     debug(STR("Ramp: "));
                     debug(bulb_length);
 
-                    if(found) debug(STR(" (calculated)"));
+                    if(found) 
+                        debug(STR(" (calculated)"));
                     
                     debug_nl();
                 }
@@ -491,7 +498,8 @@ char shutter::run()
             off();
             _delay_ms(50);
 
-            if(current.Gap <= settings_mirror_up_time) half(); // Mirror Up //
+            if(current.Gap <= settings_mirror_up_time) 
+                half(); // Mirror Up //
 
             run_state = RUN_NEXT;
         }
@@ -507,6 +515,7 @@ char shutter::run()
                 debug(STR("State: RUN_NEXT"));
                 debug_nl();
             }
+            
             old_state = run_state;
         }
 #endif
@@ -541,6 +550,7 @@ char shutter::run()
                 debug(STR("State: RUN_GAP"));
                 debug_nl();
             }
+            
             old_state = run_state;
         }
 #endif

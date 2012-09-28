@@ -91,9 +91,10 @@ void hardware_off(void)
         // Shutdown
         setHigh(POWER_HOLD_PIN);
 
-        for(;;) ;
+        FOREVER;
         
-    } else // Plugged in
+    } 
+    else // Plugged in
     {
         // Charging screen //
         chargingScreen();
@@ -138,11 +139,10 @@ char hardware_flashlight(char on)
     {
         setLow(LED_PIN);
         return 1;
-    } else
-    {
-        setHigh(LED_PIN);
-        return 0;
     }
+    
+    setHigh(LED_PIN);
+    return 0;
 }
 
 /******************************************************************
@@ -193,9 +193,11 @@ unsigned int hardware_readLight(uint8_t r)
     char backlightVal = lcd.getBacklight();
     lcd.backlight(0);
     
-    if(backlightVal > 0) _delay_ms(50);
+    if(backlightVal > 0) 
+        _delay_ms(50);
     
-    if(r > 2) r = 2;
+    if(r > 2) 
+        r = 2;
     
     DDRA &= ~0b00000111; // clear all //
     PORTA &= ~0b00000111; // clear all //
@@ -257,7 +259,8 @@ uint8_t battery_read() // Returns 0-100 //
             eeprom_write_block((const void*)&raw, &battery_high, sizeof(uint16_t));
         
         percent = ((raw - low) * 100) / (high - low);
-    } else
+    } 
+    else
     {
         eeprom_read_block((void*)&low, &battery_low_charging, sizeof(uint16_t));
         
@@ -398,6 +401,6 @@ void hardware_bootloader(void)
 
     BootStartPtr();
 
-    for(;;) ;
+    FOREVER;
 }
 
