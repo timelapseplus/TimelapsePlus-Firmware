@@ -21,3 +21,8 @@
 *.map
 *.sym
 .dep
+
+*.vpj
+*.vpw
+*.vpwhistu
+*.zip
