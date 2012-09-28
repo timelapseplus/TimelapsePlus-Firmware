@@ -7,6 +7,7 @@
  *  Licensed under GPLv3
  *
  */
+ 
 #include <avr/pgmspace.h>
 #include <avr/wdt.h>
 #include "button.h"
@@ -26,12 +27,19 @@ const unsigned char PROGMEM button_pins[] = { 4, 2, 4, 5, 7, 6 };
 #define FB_DDR DDRE
 #define FB_PIN PINE
 
+/******************************************************************
+ *
+ *   Button::Button
+ *
+ *
+ ******************************************************************/
 
 Button::Button()
 {
     // setup interrupt-driven keypad arrays
     // reset button arrays
     char p;
+    
     for(uint8_t i = 0; i < NUM_KEYS; i++)
     {
         button_count[i] = 0;
@@ -50,6 +58,13 @@ Button::Button()
     }
 }
 
+/******************************************************************
+ *
+ *   Button:poll
+ *
+ *
+ ******************************************************************/
+
 volatile void Button::poll()
 {
     uint8_t i;
@@ -58,8 +73,12 @@ volatile void Button::poll()
     for(i = 0; i < NUM_KEYS; i++)
     {
         p = pgm_read_byte(&button_pins[i]);
-        if(i < 2) p = (getBit(p, FB_PIN) == LOW);
-        else p = (getBit(p, B_PIN) == LOW);
+        
+        if(i < 2) 
+            p = (getBit(p, FB_PIN) == LOW);
+        else 
+            p = (getBit(p, B_PIN) == LOW);
+        
         if(p)  // key is pressed
         {
             if(button_count[i] < DEBOUNCE_MAX)
@@ -83,6 +102,7 @@ volatile void Button::poll()
             {
                 button_flag[i] = 0;
                 button_count[i]--;
+                
                 if(button_count[i] < DEBOUNCE_OFF)
                 {
                     button_status[i] = 0;   //button debounced to 'released' status
@@ -93,7 +113,14 @@ volatile void Button::poll()
     }
 }
 
-// returnes key pressed and removes it from the buffer //
+/******************************************************************
+ *
+ *   Button::get
+ * 
+ *   returns key pressed and removes it from the buffer
+ *
+ ******************************************************************/
+
 char Button::get()
 {
     char key;
@@ -116,13 +143,21 @@ char Button::get()
     return key;
 }
 
-// returns key pressed and does not remove it from the buffer //
+/******************************************************************
+ *
+ *   Button::pressed
+ * 
+ *   returns key pressed and does not remove it from the buffer
+ *
+ ******************************************************************/
+
 char Button::pressed()
 {
     char key;
     uint8_t i;
 
     if(clock.slept()) flushBuffer();
+    
     for(i = 0; i < NUM_KEYS; i++)
     {
         if(button_flag[i] != 0)
@@ -137,11 +172,27 @@ char Button::pressed()
     return key;
 }
 
+/******************************************************************
+ *
+ *   Button::waitfor
+ *
+ *
+ ******************************************************************/
+
 char Button::waitfor(char key)
 {
-    while (get() != key) wdt_reset();
+    while (get() != key) 
+        wdt_reset();
+    
     return key;
 }
+
+/******************************************************************
+ *
+ *   Button::flushBuffer
+ *
+ *
+ ******************************************************************/
 
 void Button::flushBuffer()
 {
@@ -154,5 +205,4 @@ void Button::flushBuffer()
         button_flag[i] = 0;
     }
 }
-
 

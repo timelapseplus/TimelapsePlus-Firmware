@@ -19,10 +19,16 @@
 #include "LCD_Term.h"
 #include "5110LCD.h"
 
-
 extern LCD lcd;
 
 uint8_t x, y;
+
+/******************************************************************
+ *
+ *   termInit
+ *
+ *
+ ******************************************************************/
 
 void termInit()
 {
@@ -30,13 +36,21 @@ void termInit()
     termClear();
 }
 
+/******************************************************************
+ *
+ *   termPrintChar
+ *
+ *
+ ******************************************************************/
+
 void termPrintChar(char c)
 {
     if(c == 13 || c == 10)
     {
         y += TERM_LINE_HEIGHT;
         x = 1;
-    } else
+    } 
+    else
     {
         x += lcd.writeCharTiny(x, y, c) + 1;
         if(x > TERM_WIDTH)
@@ -45,6 +59,7 @@ void termPrintChar(char c)
             x = 1;
         }
     }
+    
     if(y > TERM_HEIGHT)
     {
         char j, i;
@@ -64,20 +79,39 @@ void termPrintChar(char c)
     }
 }
 
+/******************************************************************
+ *
+ *   termPrintByte
+ *
+ *
+ ******************************************************************/
+
 void termPrintByte(uint8_t c)
 {
     char buf[3];
+    
     buf[0] = c % 10;
     c -= buf[0]; c /= 10;
     buf[1] = c % 10;
     c -= buf[1]; c /= 10;
     buf[2] = c % 10;
     c -= buf[2]; c /= 10;
-    if(buf[2]) termPrintChar(buf[2] + '0');
-    if(buf[1]) termPrintChar(buf[1] + '0');
+    
+    if(buf[2]) 
+        termPrintChar(buf[2] + '0');
+    
+    if(buf[1]) 
+        termPrintChar(buf[1] + '0');
+    
     termPrintChar(buf[0] + '0');
 }
 
+/******************************************************************
+ *
+ *   termPrintStr
+ *
+ *
+ ******************************************************************/
 
 void termPrintStr(char *s)
 {
@@ -86,8 +120,16 @@ void termPrintStr(char *s)
         termPrintChar(*s);
         s++;
     }
+    
     lcd.update();
 }
+
+/******************************************************************
+ *
+ *   termClear
+ *
+ *
+ ******************************************************************/
 
 void termClear()
 {
@@ -96,3 +138,4 @@ void termClear()
     y = 1;
     lcd.update();
 }
+

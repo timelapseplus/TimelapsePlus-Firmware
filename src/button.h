@@ -1,3 +1,12 @@
+/*
+ *  button.h
+ *  Timelapse+
+ *
+ *  Created by Elijah Parker
+ *  Copyright 2012 Timelapse+
+ *  Licensed under GPLv3
+ *
+ */
 
 #define FL_KEY 1
 #define FR_KEY 2

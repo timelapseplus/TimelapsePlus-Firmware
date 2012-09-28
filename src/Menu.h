@@ -1,3 +1,13 @@
+/*
+ *  Menu.h
+ *  Timelapse+
+ *
+ *  Created by Elijah Parker
+ *  Copyright 2012 Timelapse+
+ *  Licensed under GPLv3
+ *
+ */
+ 
 #define MENU_NAME_LEN 13
 #define MENU_STACK_SIZE 5
 #define MENU_MAX 20

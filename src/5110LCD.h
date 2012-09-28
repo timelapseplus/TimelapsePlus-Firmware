@@ -1,3 +1,12 @@
+/*
+ *  5110LCD.h
+ *  Timelapse+
+ *
+ *  Created by Elijah Parker
+ *  Copyright 2012 Timelapse+
+ *  Licensed under GPLv3
+ *
+ */
 
 #define LCD_WIDTH 84
 #define LCD_HEIGHT 48
@@ -10,6 +19,7 @@
 class LCD
 {
 public:
+
     LCD();
     void setPixel(unsigned char x, unsigned char y);
     unsigned char getPixel(unsigned char x, unsigned char y);
@@ -42,6 +52,7 @@ public:
     unsigned char screen[LCD_WIDTH][LCD_HEIGHT>>3];
 
 private:
+
     void writeByte(unsigned char dat, unsigned char dat_type);
     void setXY(unsigned char X, unsigned char Y);
     void clear(void);

@@ -7,10 +7,17 @@
  *  Licensed under GPLv3
  *
  */
-//#include <stdio.h>
+ 
 #include "math.h"
 
-// Catmull–Rom spline implementation
+/******************************************************************
+ *
+ *   curve
+ * 
+ *   Catmull–Rom spline implementation
+ *
+ ******************************************************************/
+ 
 float curve(float p0, float p1, float p2, float p3, float t)
 {
     float t2 = t * t;

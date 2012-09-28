@@ -1,3 +1,13 @@
+/*
+ *  bluetooth.h
+ *  Timelapse+
+ *
+ *  Created by Elijah Parker
+ *  Copyright 2012 Timelapse+
+ *  Licensed under GPLv3
+ *
+ */
+
 #define BT_NAME
 #define BT_DATA_SIZE 64
 

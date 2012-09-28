@@ -1,3 +1,12 @@
+/*
+ *  hardware_map_20120703.h
+ *  Timelapse+
+ *
+ *  Created by Elijah Parker
+ *  Copyright 2012 Timelapse+
+ *  Licensed under GPLv3
+ *
+ */
 
 #define HARDWARE_VERSION 20120703
 

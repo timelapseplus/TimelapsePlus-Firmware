@@ -1,3 +1,13 @@
+/*
+ *  clock.h
+ *  Timelapse+
+ *
+ *  Created by Elijah Parker
+ *  Copyright 2012 Timelapse+
+ *  Licensed under GPLv3
+ *
+ */
+
 #define CLOCK_TUNE 134
 //#define CLOCK_TUNE 8
 
