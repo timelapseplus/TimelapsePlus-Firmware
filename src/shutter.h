@@ -61,12 +61,12 @@ struct program
     unsigned int Keyframes;   // 2 bytes
 };
 
-struct qprogram
+struct timer_status
 {
-    char running;
-    unsigned int Delay;
-    unsigned int Gap;
-    unsigned int Photos;
+    char textStatus[12];
+    unsigned int photosTaken;
+    unsigned int photosRemaining;
+    unsigned int nextPhoto;
 };
 
 extern program stored[MAX_STORED]EEMEM;
@@ -93,13 +93,12 @@ public:
     char cableIsConnected(void);
 
     volatile program current;
-    volatile qprogram quick;
+    timer_status status; 
     volatile char running;  // 0 = not running, 1 = running (shutter closed), 2 = running (shutter open)
     volatile int8_t currentId;
     volatile uint16_t length; // in Seconds
 
 private:
-    volatile char bulb;
     volatile char cable_connected; // 1 = cable connected, 0 = disconnected
     double test;
 };

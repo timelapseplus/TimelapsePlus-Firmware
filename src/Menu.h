@@ -23,6 +23,7 @@
 #define FN_CONTINUE 0
 #define FN_CANCEL 1
 #define FN_SAVE 2
+#define FN_JUMP 3
 
 struct menu_item  // 20 bytes total
 {
@@ -55,6 +56,8 @@ public:
     char run();
     void init(menu_item *newmenu);
     void click();
+    void spawn(void *function);
+    void refresh();
     void up();
     void down();
     void back();
@@ -86,6 +89,7 @@ private:
     menu_item *menu;
 
     char state;
+    char m_refresh;
     unsigned char type;
     unsigned int *var;
     char *bvar;

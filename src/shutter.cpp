@@ -16,6 +16,7 @@
 #include <avr/wdt.h>
 #include <avr/version.h>
 #include <avr/eeprom.h>
+#include <string.h>
 
 #include "tldefs.h"
 #include "shutter.h"
@@ -340,7 +341,6 @@ char shutter::run()
     /////// RUNNING PROCEDURE ///////
     if(run_state == RUN_DELAY)
     {
-#ifdef DEBUG
         if(old_state != run_state)
         {
             if(conf.devMode)
@@ -348,9 +348,12 @@ char shutter::run()
                 debug(STR("State: RUN_DELAY"));
                 debug_nl();
             }
+            status.photosRemaining = current.Photos;
+            status.photosTaken = 0;
+            strcpy((char *) status.textStatus, TEXT("Delay"));
             old_state = run_state;
         }
-#endif
+
 
         if(((unsigned long)clock.event_ms / 1000) > current.Delay)
         {
@@ -361,6 +364,7 @@ char shutter::run()
         } 
         else
         {
+            status.nextPhoto = (unsigned int) (current.Delay - (unsigned long)clock.event_ms / 1000);
             if(((unsigned long)clock.event_ms / 1000) + settings_mirror_up_time >= current.Delay)
             {
                 // Mirror Up //
@@ -377,7 +381,6 @@ char shutter::run()
 
     if(run_state == RUN_PHOTO)
     {
-#ifdef DEBUG
         if(old_state != run_state)
         {
             if(conf.devMode)
@@ -385,9 +388,9 @@ char shutter::run()
                 debug(STR("State: RUN_PHOTO"));
                 debug_nl();
             }
+            strcpy((char *) status.textStatus, TEXT("Photo"));
             old_state = run_state;
         }
-#endif
         if(current.Exp > 0 || (current.Mode & RAMP))
         {
             clock.tare();
@@ -407,7 +410,6 @@ char shutter::run()
     
     if(run_state == RUN_BULB)
     {
-#ifdef DEBUG
         if(old_state != run_state)
         {
             if(conf.devMode)
@@ -415,9 +417,9 @@ char shutter::run()
                 debug(STR("State: RUN_BULB"));
                 debug_nl();
             }
+            strcpy((char *) status.textStatus, TEXT("Bulb"));
             old_state = run_state;
         }
-#endif
 
         bulbStart();
         
@@ -528,7 +530,6 @@ char shutter::run()
     
     if(run_state == RUN_NEXT)
     {
-#ifdef DEBUG
         if(old_state != run_state)
         {
             if(conf.devMode)
@@ -536,10 +537,8 @@ char shutter::run()
                 debug(STR("State: RUN_NEXT"));
                 debug_nl();
             }
-            
             old_state = run_state;
         }
-#endif
 
         if((exps >= current.Exps && (current.Mode & HDR)) || (current.Mode & HDR) == 0)
         {
@@ -559,11 +558,12 @@ char shutter::run()
         {
             run_state = RUN_END;
         }
+        status.photosRemaining = current.Photos - photos;
+        status.photosTaken = photos;
     }
     
     if(run_state == RUN_GAP)
     {
-#ifdef DEBUG
         if(old_state != run_state)
         {
             if(conf.devMode)
@@ -571,10 +571,9 @@ char shutter::run()
                 debug(STR("State: RUN_GAP"));
                 debug_nl();
             }
-            
+            strcpy((char *) status.textStatus, TEXT("Waiting"));
             old_state = run_state;
         }
-#endif
         uint32_t cms = clock.Ms();
 
         if((cms - last_photo_ms) >= current.Gap * 100)
@@ -585,6 +584,7 @@ char shutter::run()
         } 
         else
         {
+            status.nextPhoto = (unsigned int) ((current.Gap * 100 - (cms - last_photo_ms)) / 1000);
             if((cms - last_photo_ms) + (uint32_t)settings_mirror_up_time * 1000 >= current.Gap * 100)
             {
                 // Mirror Up //
@@ -601,7 +601,6 @@ char shutter::run()
     
     if(run_state == RUN_END)
     {
-#ifdef DEBUG
         if(old_state != run_state)
         {
             if(conf.devMode)
@@ -609,9 +608,9 @@ char shutter::run()
                 debug(STR("State: RUN_END"));
                 debug_nl();
             }
+            strcpy((char *) status.textStatus, TEXT("Done"));
             old_state = run_state;
         }
-#endif
 
         enter = 0;
         running = 0;

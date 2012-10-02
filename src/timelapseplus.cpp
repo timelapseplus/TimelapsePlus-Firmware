@@ -187,8 +187,8 @@ int main()
 			VirtualSerial_Task();
 		}
 
+		if(timerNotRunning != !timer.running) menu.refresh();
 		timerNotRunning = !timer.running;
-		timerQuickNotRunning = !timer.quick.running;
 		modeTimelapse = (timer.current.Mode & TIMELAPSE);
 		modeHDR = (timer.current.Mode & HDR);
 		modeStandard = (!modeHDR && !modeRamp);
@@ -200,7 +200,6 @@ int main()
 		bulb3 = timer.current.Keyframes > 3 && modeRamp;
 		bulb4 = timer.current.Keyframes > 4 && modeRamp;
 		showGap = timer.current.Photos > 1 && modeTimelapse;
-		showGapQuick = timer.quick.Photos > 1;
 
 		if(VirtualSerial_CharWaiting()) // Process USB Commands from PC
 		{
@@ -252,7 +251,7 @@ int main()
 			}
 		}
 
-		clock.sleepOk = timerNotRunning && timerQuickNotRunning && !timer.cableIsConnected();
+		clock.sleepOk = timerNotRunning && !timer.cableIsConnected();
 		clock.sleep();
 	}
 }
@@ -751,28 +750,28 @@ volatile char timerStatus(char key, char first)
 //30 Battery %
 
 
-  val = clock.seconds;
+  val = timer.status.photosTaken;
   int_to_str(val, buf);
   text = buf;
   l = lcd.measureStringTiny(text);
   lcd.writeStringTiny(80 - l, 6 + SY, text);
-  lcd.writeStringTiny(3, 6 + SY, TEXT("Time Left:"));
+  lcd.writeStringTiny(3, 6 + SY, TEXT("Photos:"));
 
-  val = clock.seconds;
+  val = timer.status.photosRemaining;
   int_to_str(val, buf);
   text = buf;
   l = lcd.measureStringTiny(text);
   lcd.writeStringTiny(80 - l, 12 + SY, text);
-  lcd.writeStringTiny(3, 12 + SY, TEXT("Next Photo:"));
+  lcd.writeStringTiny(3, 12 + SY, TEXT("Photos rem:"));
 
-  val = clock.seconds;
+  val = timer.status.nextPhoto;
   int_to_str(val, buf);
   text = buf;
   l = lcd.measureStringTiny(text);
   lcd.writeStringTiny(80 - l, 18 + SY, text);
-  lcd.writeStringTiny(3, 18 + SY, TEXT("Next Exp:"));
+  lcd.writeStringTiny(3, 18 + SY, TEXT("Next Photo:"));
 
-  text = TEXT("Waiting");
+  text = timer.status.textStatus;
   l = lcd.measureStringTiny(text);
   lcd.writeStringTiny(80 - l, 24 + SY, text);
   lcd.writeStringTiny(3, 24 + SY, TEXT("Status:"));
@@ -785,11 +784,20 @@ volatile char timerStatus(char key, char first)
   lcd.writeStringTiny(3, 30 + SY, TEXT("Battery Level:"));
 
   menu.setTitle(TEXT("Running"));
-  menu.setBar(TEXT("OPTIONS"), TEXT("LIVE EDIT"));
+  menu.setBar(TEXT(""), TEXT("STOP"));
   lcd.update();
   _delay_ms(10);
 
-  if(key == FL_KEY || key == LEFT_KEY) return FN_CANCEL; else return FN_CONTINUE;
+  if(!timer.running) return FN_CANCEL;
+
+  if(key == FR_KEY)
+  {
+  	menu.push();
+  	menu.spawn((void*)timerStop);
+  	return FN_JUMP;
+  }
+
+  return FN_CONTINUE;
 }
 
 
@@ -1110,8 +1118,8 @@ volatile char runHandler(char key, char first)
 		menu.message(TEXT("Timer Started"), first);
 		_delay_ms(800);
 		timer.begin();
-
-		return FN_CANCEL;
+		menu.spawn((void*)timerStatus);
+		return FN_JUMP;
 	}
 
 	menu.push();

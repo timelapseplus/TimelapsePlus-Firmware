@@ -33,6 +33,7 @@ MENU::MENU()
     hy1 = 0;
     hx2 = 0;
     hy2 = 0;
+    m_refresh = 0;
 }
 
 /******************************************************************
@@ -59,9 +60,11 @@ char MENU::run()
         }
     }
 
+    if(m_refresh) first = 1;
     switch(state)
     {
        case ST_CONT:
+           if(m_refresh) state = ST_MENU;
            switch(key)
            {
               case UP_KEY:
@@ -145,13 +148,21 @@ char MENU::run()
            
            if(ret != FN_CONTINUE)
            {
-               state = ST_MENU;
+               if(ret == FN_JUMP)
+               {
+                   first = 1;
+               } else
+               {
+                   state = ST_MENU; // FN_JUMP means it's going straight to a new function
+               }
            }
            break;
     }
 
     if(state != ST_CONT) 
         key = 0;
+
+    m_refresh = 0;
 
     return key;
 }
@@ -522,6 +533,31 @@ void MENU::click()
                break;
         }
     }
+}
+
+
+/******************************************************************
+ *
+ *   MENU::spawn
+ *
+ *
+ ******************************************************************/
+
+void MENU::spawn(void *function)
+{
+   func = (char (*)(char, char)) function;
+}
+
+/******************************************************************
+ *
+ *   MENU::refresh
+ *
+ *
+ ******************************************************************/
+
+void MENU::refresh()
+{
+   m_refresh = 1;
 }
 
 /******************************************************************
