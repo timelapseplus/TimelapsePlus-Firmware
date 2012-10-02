@@ -87,12 +87,11 @@ const menu_item menu_timelapse[]PROGMEM =
     { "\0           ", 'F', (void*)&runHandler, (void*)STR_OPTIONS, (void*)STR_RUN }
 };
 
-const menu_item menu_quick[]PROGMEM =
+const menu_item menu_trigger[]PROGMEM =
 {
-    { "Delay      T", 'E', (void*)&timer.quick.Delay, (void*)STR_TIME, 0 },
-    { "Photos     U", 'E', (void*)&timer.quick.Photos, (void*)STR_PHOTOS, 0 },
-    { "Gap        F", 'E', (void*)&timer.quick.Gap, (void*)STR_TIME_TENTHS, (void*)&showGapQuick },
-    { "\0           ", 'F', (void*)&runHandlerQuick, (void*)STR_NULL, (void*)STR_RUN }
+    { "Cable Remote", 'F', (void*)cableRelease, 0, (void*)&timerNotRunning },
+    { "IR Remote   ", 'F', (void*)IRremote, 0, (void*)&timerNotRunning },
+    { "\0           ", 'V', 0, 0, 0 }
 };
 
 const menu_item menu_connect[]PROGMEM =
@@ -106,7 +105,7 @@ const menu_item menu_development[]PROGMEM =
 {
     { "Shutter Test", 'F', (void*)shutterTest, 0, (void*)&timerNotRunning },
     { "Shutter Lag ", 'F', (void*)shutterLagTest, 0, (void*)&timerNotRunning },
-    { "IR Test     ", 'F', (void*)IRtest, 0, (void*)&timerNotRunning },
+    { "IR Test     ", 'F', (void*)IRremote, 0, (void*)&timerNotRunning },
     { "4 Hour Light", 'F', (void*)lightTest, 0, (void*)&timerNotRunning },
     { "Sys Status  ", 'F', (void*)sysStatus, 0, 0 },
     { "Battery     ", 'F', (void*)batteryStatus, 0, 0 },
@@ -138,6 +137,7 @@ const settings_item menu_settings_camera_make[]PROGMEM =
     { "Olympus     ", OLYMPUS, (void*)STR_CAMERA_MAKE },
     { "Pentax      ", PENTAX, (void*)STR_CAMERA_MAKE },
     { "Sony        ", SONY, (void*)STR_CAMERA_MAKE },
+    { "Panasonic   ", PANASONIC, (void*)STR_CAMERA_MAKE },
     { "\0           ", 0, 0 }
 };
 
@@ -212,7 +212,7 @@ const menu_item menu_settings[]PROGMEM =
 
 const menu_item menu_main[]PROGMEM =
 {
-//    { "Simple Timer", 'M', (void*)menu_quick, 0, (void*)&timerNotRunning },
+    { "Trigger     ", 'M', (void*)menu_trigger, 0, (void*)&timerNotRunning },
     { "Timelapse   ", 'M', (void*)menu_timelapse, 0, (void*)&timerQuickNotRunning },
     { "Connect     ", 'M', (void*)menu_connect, 0, 0 },
     { "Settings    ", 'M', (void*)menu_settings, 0, 0 },

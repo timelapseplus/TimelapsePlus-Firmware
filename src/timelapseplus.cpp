@@ -257,19 +257,20 @@ int main()
 	}
 }
 
+
 /******************************************************************
  *
- *   IRTest
+ *   IRremote
  *
  *
  ******************************************************************/
 
-volatile char IRtest(char key, char first)
+volatile char IRremote(char key, char first)
 {
 	if(first)
 	{
 		lcd.cls();
-		menu.setTitle(TEXT("IR Test"));
+		menu.setTitle(TEXT("IR Remote"));
 		menu.setBar(TEXT("Delayed"), TEXT("Trigger"));
 		lcd.update();
 	}
@@ -361,6 +362,80 @@ volatile char shutterTest(char key, char first)
 	return FN_CONTINUE;
 }
 
+
+/******************************************************************
+ *
+ *   cableRelease
+ *
+ *
+ ******************************************************************/
+
+volatile char cableRelease(char key, char first)
+{
+	static char status; //, cable;
+
+	if(first)
+	{
+		status = 0;
+		//cable = 0;
+		lcd.cls();
+		menu.setTitle(TEXT("Cable Release"));
+		menu.setBar(TEXT("Bulb"), TEXT("Photo"));
+		lcd.update();
+		timer.half();
+	}
+
+	if(key == FL_KEY && status != 1)
+	{
+		status = 1;
+		lcd.eraseBox(8, 18, 8 + 6 * 11, 26);
+		lcd.writeString(8, 18, TEXT("(BULB OPEN)"));
+		timer.full();
+		lcd.update();
+	}
+	else if(key == FR_KEY && status != 1)
+	{
+		status = 0;
+		lcd.eraseBox(8, 18, 8 + 6 * 11, 26);
+		timer.full();
+		_delay_ms(100);
+		timer.half();
+		lcd.update();
+	}
+	else if(key != 0)
+	{
+		status = 0;
+		lcd.eraseBox(8, 18, 8 + 6 * 11, 26);
+		timer.half();
+		lcd.update();
+	}
+/*
+	if(timer.cableIsConnected())
+	{
+		if(cable == 0)
+		{
+			cable = 1;
+			lcd.writeStringTiny(6, 28, TEXT("Cable Connected"));
+			lcd.update();
+		}
+	}
+	else
+	{
+		if(cable == 1)
+		{
+			cable = 0;
+			lcd.eraseBox(6, 28, 6 + 15 * 5, 36);
+			lcd.update();
+		}
+	}
+*/
+	if(key == LEFT_KEY)
+	{
+		timer.off();
+		return FN_CANCEL;
+	}
+	return FN_CONTINUE;
+}
 /******************************************************************
  *
  *   shutterLagTest

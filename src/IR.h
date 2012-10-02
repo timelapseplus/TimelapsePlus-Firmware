@@ -34,6 +34,7 @@
 #define MINOLTA 3
 #define OLYMPUS 4
 #define PENTAX 5
+#define PANASONIC 6
 
 class IR
 {
