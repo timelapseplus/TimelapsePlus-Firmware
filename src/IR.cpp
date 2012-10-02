@@ -57,44 +57,45 @@ void IR::high38(unsigned int time)
 {
     uint16_t count = 0;
     
-    cli();
     while (count <= time / (1000 / 38))
     {
+        cli();
         setLow(IR_PIN);
         _delay_us((1000 / 38 / 2));
         setHigh(IR_PIN);
         _delay_us((1000 / 38 / 2));
+        sei();
         count++;
     }
     
-    sei();
 }
 
 void IR::shutterNow()
 {
     if(make == CANON || make == ALL)
-    {
-        cli();
-        
+    {        
         for(int i = 0; i < 16; i++)
         {
+            cli();
             setLow(IR_PIN);
             _delay_us(15.24);
             setHigh(IR_PIN);
             _delay_us(15.24);
+            sei();
         }
         
         _delay_ms(7.33);
         
         for(int i = 0; i < 16; i++)
         {
+            cli();
             setLow(IR_PIN);
             _delay_us(15.24);
             setHigh(IR_PIN);
             _delay_us(15.24);
+            sei();
         }
         
-        sei();
     }
 
     if(make == NIKON || make == ALL)

@@ -385,21 +385,28 @@ volatile char cableRelease(char key, char first)
 		timer.half();
 	}
 
-	if(key == FL_KEY && status != 1)
+	if(key == FL_KEY)
 	{
-		status = 1;
-		lcd.eraseBox(8, 18, 8 + 6 * 11, 26);
-		lcd.writeString(8, 18, TEXT("(BULB OPEN)"));
-		timer.full();
-		lcd.update();
+		if(status != 1)
+		{
+			status = 1;
+			lcd.eraseBox(8, 18, 8 + 6 * 11, 26);
+			lcd.writeString(8, 18, TEXT("(BULB OPEN)"));
+			timer.bulbStart();
+			lcd.update();
+		} else
+		{
+			status = 0;
+			lcd.eraseBox(8, 18, 8 + 6 * 11, 26);
+			timer.bulbEnd();
+			lcd.update();
+		}
 	}
 	else if(key == FR_KEY && status != 1)
 	{
 		status = 0;
 		lcd.eraseBox(8, 18, 8 + 6 * 11, 26);
-		timer.full();
-		_delay_ms(100);
-		timer.half();
+		timer.capture();
 		lcd.update();
 	}
 	else if(key != 0)
@@ -724,7 +731,7 @@ volatile char sysStatus(char key, char first)
 
 	return FN_CONTINUE;
 }
-/*
+
 volatile char timerStatus(char key, char first)
 {
   if(first)
@@ -733,7 +740,7 @@ volatile char timerStatus(char key, char first)
 
   lcd.cls();
 
-  char buf[6];
+  char buf[6], l, *text;
   uint16_t val;
 
 //
@@ -784,7 +791,7 @@ volatile char timerStatus(char key, char first)
 
   if(key == FL_KEY || key == LEFT_KEY) return FN_CANCEL; else return FN_CONTINUE;
 }
-*/
+
 
 /******************************************************************
  *

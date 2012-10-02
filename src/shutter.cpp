@@ -44,7 +44,7 @@ volatile unsigned char state;
 const uint16_t settings_warn_time = 0;
 const uint16_t settings_mirror_up_time = 1;
 
-char shutter_state; // used only for momentary toggle mode //
+char shutter_state, ir_shutter_state; // used only for momentary toggle mode //
 
 program stored[MAX_STORED]EEMEM;
 
@@ -65,6 +65,7 @@ shutter::shutter()
     ENABLE_SHUTTER;
     CHECK_CABLE;
     shutter_state = 0;
+    ir_shutter_state = 0;
 }
 
 /******************************************************************
@@ -107,27 +108,10 @@ void shutter::off(void)
     if(conf.devMode) 
         hardware_flashlight(0);
     
-    if(cable_connected == 0)
-    {
-        if(bulb && shutter_state)
-        {
-            ir.shutterNow();
-        }
-        shutter_state = 0;
-    } 
-    else if(conf.bulbMode == 0)
-    {
-        SHUTTER_CLOSE;
-        MIRROR_DOWN; _delay_ms(50); CHECK_CABLE;
-    } 
-    else if(conf.bulbMode == 1 && shutter_state == 1)
-    {
-        SHUTTER_CLOSE;
-        MIRROR_DOWN; _delay_ms(50); CHECK_CABLE;
-        shutter_state = 0;
-        full();
-        shutter_state = 0;
-    }
+    SHUTTER_CLOSE;
+    MIRROR_DOWN; _delay_ms(50); CHECK_CABLE;
+    ir_shutter_state = 0;
+    shutter_state = 0;
 }
 
 /******************************************************************
@@ -142,20 +126,8 @@ void shutter::half(void)
     if(conf.devMode) 
         hardware_flashlight(0);
     
-    if(cable_connected == 0)
-    {
-        if(bulb && shutter_state)
-        {
-            shutter_state = 0;
-            ir.shutterNow();
-        }
-        shutter_state = 0;
-    } 
-    else
-    {
-        SHUTTER_CLOSE;
-        MIRROR_UP;
-    }
+    SHUTTER_CLOSE;
+    MIRROR_UP;
 }
 
 /******************************************************************
@@ -170,28 +142,82 @@ void shutter::full(void)
     if(conf.devMode) 
         hardware_flashlight(1);
     
-    if(cable_connected == 0)
+    MIRROR_UP;
+    SHUTTER_OPEN;
+}
+
+/******************************************************************
+ *
+ *   shutter::bulbStart
+ *
+ *
+ ******************************************************************/
+
+void shutter::bulbStart(void)
+{
+    if(cable_connected == 0 && ir_shutter_state != 1)
     {
-        if(bulb) 
-            shutter_state = 1;
-        else 
-            shutter_state = 0;
-        
+        ir_shutter_state = 1;
         ir.shutterNow();
     } 
-    else if(conf.bulbMode == 0)
+    if(conf.bulbMode == 0)
     {
-        MIRROR_UP;
-        SHUTTER_OPEN;
+        full();
     } 
-    else if(conf.bulbMode == 1 && shutter_state == 0)
+    else if(conf.bulbMode == 1 && shutter_state != 1)
     {
-        MIRROR_UP;
-        SHUTTER_OPEN;
+        full();
         shutter_state = 1;
-        _delay_ms(50);
+        _delay_ms(75);
         half();
     }
+}
+
+/******************************************************************
+ *
+ *   shutter::bulbEnd
+ *
+ *
+ ******************************************************************/
+
+void shutter::bulbEnd(void)
+{
+    if(cable_connected == 0 && ir_shutter_state == 1)
+    {
+        ir_shutter_state = 0;
+        ir.shutterNow();
+    } 
+    if(conf.bulbMode == 0)
+    {
+        off();
+    }
+    else if(conf.bulbMode == 1 && shutter_state == 1)
+    {
+        full();
+        shutter_state = 0;
+        _delay_ms(75);
+        off();
+    }
+}
+
+/******************************************************************
+ *
+ *   shutter::capture
+ *
+ *
+ ******************************************************************/
+
+void shutter::capture(void)
+{
+    if(cable_connected == 0)
+    {
+        ir.shutterNow();
+    } 
+    full();
+    _delay_ms(75);
+    off();
+    ir_shutter_state = 0;
+    shutter_state = 0;
 }
 
 /******************************************************************
@@ -370,11 +396,7 @@ char shutter::run()
         else
         {
             exps++;
-            bulb = false;
-            full();
-            _delay_ms(50);
-            off();
-            _delay_ms(50);
+            capture();
             
             if(current.Gap <= settings_mirror_up_time) 
                 half(); // Mirror Up //
@@ -397,8 +419,7 @@ char shutter::run()
         }
 #endif
 
-        bulb = true;
-        full();
+        bulbStart();
         
         static uint8_t calc = true;
         static uint16_t bulb_length, exp;
@@ -495,7 +516,7 @@ char shutter::run()
         {
             calc = true;
             exps++;
-            off();
+            bulbEnd();
             _delay_ms(50);
 
             if(current.Gap <= settings_mirror_up_time) 

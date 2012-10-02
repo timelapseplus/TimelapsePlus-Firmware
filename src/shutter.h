@@ -86,6 +86,10 @@ public:
     void half(void);
     void full(void);
 
+    void bulbEnd(void);
+    void bulbStart(void);
+    void capture(void);
+
     char cableIsConnected(void);
 
     volatile program current;
