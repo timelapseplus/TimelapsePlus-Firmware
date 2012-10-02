@@ -331,6 +331,8 @@ char shutter::run()
         clock.tare();
         photos = 0;
         exps = 0;
+        status.photosRemaining = current.Photos;
+        status.photosTaken = 0;
 
         ENABLE_MIRROR;
         ENABLE_SHUTTER;
@@ -348,8 +350,6 @@ char shutter::run()
                 debug(STR("State: RUN_DELAY"));
                 debug_nl();
             }
-            status.photosRemaining = current.Photos;
-            status.photosTaken = 0;
             strcpy((char *) status.textStatus, TEXT("Delay"));
             old_state = run_state;
         }

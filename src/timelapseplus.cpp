@@ -968,6 +968,7 @@ void int_to_str(uint16_t n, char buf[6] )
 	{
 		buf[0] = '0';
 		buf[1] = 0;
+		return;
 	}
 
 	// Value too high for this code
