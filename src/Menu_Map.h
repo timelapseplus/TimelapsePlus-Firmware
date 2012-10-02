@@ -212,7 +212,7 @@ const menu_item menu_settings[]PROGMEM =
 
 const menu_item menu_main[]PROGMEM =
 {
-    { "Simple Timer", 'M', (void*)menu_quick, 0, (void*)&timerNotRunning },
+//    { "Simple Timer", 'M', (void*)menu_quick, 0, (void*)&timerNotRunning },
     { "Timelapse   ", 'M', (void*)menu_timelapse, 0, (void*)&timerQuickNotRunning },
     { "Connect     ", 'M', (void*)menu_connect, 0, 0 },
     { "Settings    ", 'M', (void*)menu_settings, 0, 0 },
