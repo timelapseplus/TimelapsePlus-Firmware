@@ -110,7 +110,9 @@ void shutter::off(void)
         hardware_flashlight(0);
     
     SHUTTER_CLOSE;
-    MIRROR_DOWN; _delay_ms(50); CHECK_CABLE;
+    MIRROR_DOWN; 
+    _delay_ms(50); 
+    CHECK_CABLE;
     ir_shutter_state = 0;
     shutter_state = 0;
 }
@@ -336,8 +338,8 @@ char shutter::run()
 
         ENABLE_MIRROR;
         ENABLE_SHUTTER;
-        MIRROR_DOWN;
         SHUTTER_CLOSE;
+        MIRROR_DOWN;
     }
 
     /////// RUNNING PROCEDURE ///////
