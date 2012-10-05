@@ -243,7 +243,6 @@ int main()
 				           debug(b);
 				       }
 				    }
-				   debug_nl();
 			}
 		}
 

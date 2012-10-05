@@ -1,3 +1,19 @@
+# screenshot.rb
+# Grabs screenshots from the Timelapse+
+#
+# Usage:
+#
+# ruby ./screenshot.rb "<name>"
+#
+# It will then create the screenshot <name>.png in the same folder
+#
+# By Elijah Parker
+# mail@timelapseplus.com
+#
+# For Mac OS X only
+
+
+
 require 'serialport'
 require 'chunky_png'
 
@@ -29,19 +45,6 @@ class TLP
 
 	def close
 		@sp.close if(@sp)
-	end
-
-	def print_b(n)
-		s = ""
-		(0..7).each do |i|
-			b = 0b10000000 >> i
-			if(b & n != 0)
-				s += "1"
-			else
-				s += "0"
-			end
-		end
-		s
 	end
 
 	def find
@@ -99,7 +102,9 @@ if(device.find)
 			x = 4
 		end
 	end
-	image.save("screenshot.png")
+	name = "screenshot"
+	name = ARGV[0] if ARGV[0]
+	image.save(name + ".png")
 end
 
 device.close
