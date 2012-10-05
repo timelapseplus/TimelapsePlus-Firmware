@@ -216,6 +216,7 @@ const menu_item menu_main[]PROGMEM =
     { "Timelapse   ", 'M', (void*)menu_timelapse, 0, (void*)&timerQuickNotRunning },
     { "Connect     ", 'M', (void*)menu_connect, 0, 0 },
     { "Settings    ", 'M', (void*)menu_settings, 0, 0 },
+    { "Power Off   ", 'F', (void*)hardware_off, 0, 0 },
     { "\0           ", 'V', 0, 0, 0 }
 };
 
