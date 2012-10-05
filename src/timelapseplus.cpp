@@ -233,6 +233,17 @@ int main()
 			   case 'L':
 				   readLightTest();
 				   break;
+
+			   case 'S': // Screen dump
+				   for(uint8_t j = 0; j < (LCD_HEIGHT >> 3); j++)
+				   {
+				       for(uint8_t i = 0; i < LCD_WIDTH; i++)
+				       {
+				           char b = lcd.screen[i][j];
+				           debug(b);
+				       }
+				    }
+				   debug_nl();
 			}
 		}
 
@@ -730,6 +741,13 @@ volatile char sysStatus(char key, char first)
 
 	return FN_CONTINUE;
 }
+
+/******************************************************************
+ *
+ *   timerStatus
+ *
+ *
+ ******************************************************************/
 
 volatile char timerStatus(char key, char first)
 {

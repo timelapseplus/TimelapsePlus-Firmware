@@ -8,7 +8,7 @@
  *
  */
  
-#define VERSION 20120925
+#define SETTINGS_VERSION 20120925
 
 
 struct settings
@@ -23,7 +23,7 @@ struct settings
     char lcdBacklightTime;
     char sysOffTime;
     char flashlightOffTime;
-    uint32_t version;
+    uint32_t settingsVersion;
     char devMode;
     char test1;
     char test2;

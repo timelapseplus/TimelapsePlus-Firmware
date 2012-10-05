@@ -72,7 +72,7 @@ void settings_init()
 {
     settings_load();
     
-    if(eeprom_read_byte((const uint8_t*)&conf_eep) == 255 || conf.version != VERSION)
+    if(eeprom_read_byte((const uint8_t*)&conf_eep) == 255 || conf.settingsVersion != SETTINGS_VERSION)
     {
         timer.setDefault();
         strcpy((char*)conf.sysName, "sys01");
@@ -82,11 +82,13 @@ void settings_init()
         conf.bulbMode = 0;
         conf.lcdColor = 0;
         conf.cameraMake = CANON;
-        conf.version = VERSION;
+        conf.settingsVersion = SETTINGS_VERSION;
         conf.lcdBacklightTime = 3;
         conf.sysOffTime = 12;
         conf.flashlightOffTime = 3;
         settings_save();
+
+        // This is where we'd put a setup wizard
     }
     
     settings_load();

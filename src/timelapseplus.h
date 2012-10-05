@@ -8,6 +8,9 @@
  *
  */
 
+#define VERSION 20121003
+
+
 volatile char timerRevert(char key, char first);
 volatile char timerSaveCurrent(char key, char first);
 volatile char timerSaveDefault(char key, char first);
