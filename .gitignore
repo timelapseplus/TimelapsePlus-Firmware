@@ -21,6 +21,7 @@
 *.map
 *.sym
 .dep
+*.hex
 
 *.vpj
 *.vpw
