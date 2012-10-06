@@ -8,7 +8,7 @@
  *
  */
 
-#define VERSION 20121003
+#define VERSION 20121005
 
 
 volatile char timerRevert(char key, char first);

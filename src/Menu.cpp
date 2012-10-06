@@ -787,7 +787,7 @@ char MENU::editNumber(char key, unsigned int *n, char *name, char *unit, char mo
         // Number -> Chars //
         for(x = 0; x < l; x++)
         {
-            lcd->writeCharBig(68 - x * 16, 5, d[x] + '0');
+            lcd->writeCharBig(67 - x * 16, 7, d[x] + '0');
         }
         
         switch(mode)
@@ -807,7 +807,7 @@ char MENU::editNumber(char key, unsigned int *n, char *name, char *unit, char mo
                 break;
         }
 
-        lcd->drawHighlight(68 - (i * 16) - 1, 8, 68 - (i * 16) + 12, 28);
+        lcd->drawHighlight(68 - (i * 16) - 1, 8, 68 - (i * 16) + 12, 29);
 
         switch(mode)
         {
