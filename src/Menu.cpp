@@ -148,15 +148,15 @@ char MENU::run()
            
            if(ret != FN_CONTINUE)
            {
-               if(ret == FN_JUMP)
-               {
-                   first = 1;
-               } else
-               {
-                   state = ST_MENU; // FN_JUMP means it's going straight to a new function
-               }
+                first = 1;
+                state = ST_MENU;
            }
            break;
+
+       case ST_SPAWN:
+            first = 1;
+            state = ST_FUNC;
+            break;
     }
 
     if(state != ST_CONT) 
@@ -546,6 +546,7 @@ void MENU::click()
 void MENU::spawn(void *function)
 {
    func = (char (*)(char, char)) function;
+   state = ST_SPAWN;
 }
 
 /******************************************************************

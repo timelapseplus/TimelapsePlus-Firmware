@@ -97,31 +97,8 @@ void hardware_off(void)
     else // Plugged in
     {
         // Charging screen //
-        chargingScreen();
+        menu.spawn((void *) batteryStatus);
     }
-}
-
-/******************************************************************
- *
- *   chargingScreen
- *
- *
- ******************************************************************/
-
-void chargingScreen(void)
-{
-    char first = 1;
-
-    menu.push();
-
-    while (button.get() != FL_KEY && battery_status() > 0)
-    {
-        wdt_reset();
-        batteryStatus(0, first);
-        first = 0;
-    }
-    
-    menu.back();
 }
 
 /******************************************************************

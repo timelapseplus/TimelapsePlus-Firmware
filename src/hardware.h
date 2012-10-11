@@ -43,8 +43,6 @@ uint16_t battery_read_raw(void);
 uint8_t battery_read(void);
 char battery_status(void);
 
-void chargingScreen(void);
-
 #ifdef __cplusplus
 }
 #endif

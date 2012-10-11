@@ -19,6 +19,7 @@
 #define ST_FUNC 4
 #define ST_LIST 5
 #define ST_TEXT 6
+#define ST_SPAWN 7
 
 #define FN_CONTINUE 0
 #define FN_CANCEL 1

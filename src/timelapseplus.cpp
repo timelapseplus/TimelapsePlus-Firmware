@@ -43,9 +43,7 @@ unsigned char I2C_Buf[4];
 char system_tested EEMEM;
 
 volatile unsigned char showGap = 0;
-volatile unsigned char showGapQuick = 0;
 volatile unsigned char timerNotRunning = 1;
-volatile unsigned char timerQuickNotRunning = 1;
 volatile unsigned char modeHDR = 0;
 volatile unsigned char modeTimelapse = 1;
 volatile unsigned char modeStandard = 1;
@@ -88,8 +86,8 @@ void setup()
 	wdt_disable();
 	wdt_enable(WDTO_2S);
 
-	_setIn(4, E);
-	_setHigh(4, E);
+	setIn(BUTTON_FL_PIN);
+	setHigh(BUTTON_FL_PIN);
 
 	if(battery_status() == 0 && getPin(BUTTON_FL_PIN)) // Looks like it's connected to the programmer
 	{
@@ -124,6 +122,19 @@ void setup()
 
 	bt.init();
 	bt.sleep();
+
+	//eeprom_write_byte((uint8_t *) &system_tested, 0x01);
+
+	// Check to see if system has passed self-test
+	if(eeprom_read_byte((const uint8_t*)&system_tested) == 0xFF || eeprom_read_byte((const uint8_t*)&system_tested) == 0x00 || button.get() == RIGHT_KEY)
+	{
+		if(test())
+		{
+			eeprom_write_byte((uint8_t*)&system_tested, 0x01);
+		}
+		wdt_enable(WDTO_8S);
+		for(;;) ;
+	}
 }
 
 /******************************************************************
@@ -138,19 +149,6 @@ int main()
 	char key;
 
 	setup();
-
-	//eeprom_write_byte((uint8_t *) &system_tested, 0x01);
-
-	if(eeprom_read_byte((const uint8_t*)&system_tested) == 0xFF || eeprom_read_byte((const uint8_t*)&system_tested) == 0x00 || button.get() == RIGHT_KEY)
-	{
-		if(test())
-		{
-			eeprom_write_byte((uint8_t*)&system_tested, 0x01);
-		}
-		wdt_enable(WDTO_8S);
-
-		for(;;) ;
-	}
 
 	if(battery_status() > 0)
 		hardware_off(); // If it was just plugged in, show the charging screen
