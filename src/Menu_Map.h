@@ -96,7 +96,7 @@ const menu_item menu_trigger[]PROGMEM =
 
 const menu_item menu_connect[]PROGMEM =
 {
-    { "Bluetooth   ", 'F', (void*)notYet, 0, &bt.present },
+    { "Bluetooth   ", 'F', (void*)btConnect, 0, &bt.present },
     { "USB         ", 'F', (void*)usbPlug, 0, 0 },
     { "\0           ", 'V', 0, 0, 0 }
 };
@@ -105,8 +105,9 @@ const menu_item menu_development[]PROGMEM =
 {
     { "Shutter Test", 'F', (void*)shutterTest, 0, (void*)&timerNotRunning },
     { "Shutter Lag ", 'F', (void*)shutterLagTest, 0, (void*)&timerNotRunning },
-    { "IR Test     ", 'F', (void*)IRremote, 0, (void*)&timerNotRunning },
-    { "4 Hour Light", 'F', (void*)lightTest, 0, (void*)&timerNotRunning },
+//    { "IR Test     ", 'F', (void*)IRremote, 0, (void*)&timerNotRunning },
+//    { "4 Hour Light", 'F', (void*)lightTest, 0, (void*)&timerNotRunning },
+//    { "BT Test     ", 'F', (void*)btTest, 0, 0 },
     { "Sys Status  ", 'F', (void*)sysStatus, 0, 0 },
     { "Battery     ", 'F', (void*)batteryStatus, 0, 0 },
     { "Light Meter ", 'F', (void*)lightMeter, 0, 0 },
@@ -130,14 +131,14 @@ const settings_item menu_settings_dev_mode[]PROGMEM =
 
 const settings_item menu_settings_camera_make[]PROGMEM =
 {
-    { "Other       ", (char)-2, (void*)STR_CAMERA_MAKE_OTHER },
     { "Canon       ", CANON, (void*)STR_CAMERA_MAKE },
-    { "Nikon       ", NIKON, (void*)STR_CAMERA_MAKE },
     { "Minolta     ", MINOLTA, (void*)STR_CAMERA_MAKE },
+    { "Nikon       ", NIKON, (void*)STR_CAMERA_MAKE },
     { "Olympus     ", OLYMPUS, (void*)STR_CAMERA_MAKE },
+    { "Panasonic   ", PANASONIC, (void*)STR_CAMERA_MAKE },
     { "Pentax      ", PENTAX, (void*)STR_CAMERA_MAKE },
     { "Sony        ", SONY, (void*)STR_CAMERA_MAKE },
-    { "Panasonic   ", PANASONIC, (void*)STR_CAMERA_MAKE },
+    { "Other       ", (char)-2, (void*)STR_CAMERA_MAKE_OTHER },
     { "\0           ", 0, 0 }
 };
 

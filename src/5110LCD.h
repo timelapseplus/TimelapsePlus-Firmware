@@ -51,6 +51,8 @@ public:
 
     unsigned char screen[LCD_WIDTH][LCD_HEIGHT>>3];
 
+    uint8_t disableUpdate;
+
 private:
 
     void writeByte(unsigned char dat, unsigned char dat_type);

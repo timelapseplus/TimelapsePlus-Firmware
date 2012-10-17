@@ -244,6 +244,17 @@ int main()
 			}
 		}
 
+		switch(bt.task())
+		{
+			case BT_EVENT_CONNECT:
+				menu.message(TEXT("Connected!"));
+				break;
+			case BT_EVENT_DISCONNECT:
+				menu.message(TEXT("Disconnected!"));
+				break;
+		}
+
+
 		key = menu.run();
 		timer.run();
 
@@ -621,12 +632,17 @@ volatile char batteryStatus(char key, char first)
 {
 	uint16_t batt_high = 645;
 	uint16_t batt_low = 500;
+	static uint8_t charging;
+	char stat = battery_status();
+
+	if(first)
+	{
+		charging = (stat > 0);
+	}
 
 	unsigned int batt_level = battery_read_raw();
 
 #define BATT_LINES 36
-
-	char stat = battery_status();
 
 	uint8_t lines = ((batt_level - batt_low) * BATT_LINES) / (batt_high - batt_low);
 
@@ -664,6 +680,8 @@ volatile char batteryStatus(char key, char first)
 	menu.setTitle(TEXT("Battery Status"));
 	menu.setBar(TEXT("RETURN"), BLANK_STR);
 	lcd.update();
+
+	if(stat == 0 && charging) return FN_CANCEL; // unplugged
 
 	if(key == FL_KEY)
 		return FN_CANCEL;
@@ -1062,6 +1080,139 @@ volatile char notYet(char key, char first)
 
 /******************************************************************
  *
+ *   btTest
+ *
+ *
+ ******************************************************************/
+
+
+volatile char btConnect(char key, char first)
+{
+	static uint8_t sfirst = 1;
+	uint8_t i;
+	static uint8_t menuSize;
+	static uint8_t menuSelected;
+	uint8_t c;
+	uint8_t update, menuScroll;
+	update = 0;
+
+	if(sfirst)
+	{
+		menuScroll = 0;
+		menuSelected = 0;
+		sfirst = 0;
+
+		update = 1;
+		if(bt.state != BT_ST_CONNECTED) bt.scan();
+	}
+
+	switch(key)
+	{
+		case FL_KEY:
+			sfirst = 1;
+			if(bt.state != BT_ST_CONNECTED) bt.sleep();
+			return FN_CANCEL;
+
+		case FR_KEY:
+			if(bt.state == BT_ST_CONNECTED)
+			{
+				bt.disconnect();
+			}
+			else
+			{
+				bt.connect(bt.device[menuSelected].addr);
+			}
+			break;
+	}
+
+	update = 1;
+	switch(bt.event)
+	{
+		case BT_EVENT_DISCOVERY:
+			break;
+		case BT_EVENT_SCAN_COMPLETE:
+			if(bt.state != BT_ST_CONNECTED) bt.scan();
+			break;
+		case BT_EVENT_DISCONNECT:
+			bt.scan();
+			break;
+		default:
+			update = 0;
+	}
+
+	bt.event = BT_EVENT_NULL; // clear event so we don't process it twice
+
+	if(first)
+	{
+		update = 1;
+	}
+
+	if(key == UP_KEY && menuSelected > 0)
+	{
+		menuSelected--;
+		update = 1;
+
+	}
+	else if(key == DOWN_KEY && menuSelected < menuSize - 1)
+	{
+		menuSelected++;
+		update = 1;
+	}
+
+	if(update)
+	{
+		lcd.cls();
+
+		if(bt.state == BT_ST_CONNECTED)
+		{
+			menu.setTitle(TEXT("Connect"));
+			menu.setBar(TEXT("RETURN"), TEXT("DISCONNECT"));
+		}
+		else
+		{
+			if(menuSelected > 2)
+				menuScroll = menuSelected - 2;
+
+			menuSize = 0;
+
+			for(i = 0; i < bt.devices; i++)
+			{
+				if(i >= menuScroll && i <= menuScroll + 4)
+				{
+					for(c = 0; c < MENU_NAME_LEN - 1; c++) // Write settings item text //
+					{
+							if(bt.device[i].name[c])
+								lcd.writeChar(3 + c * 6, 8 + 9 * (menuSize - menuScroll), bt.device[i].name[c]);
+					}
+				}
+				menuSize++;
+			}
+
+			if(bt.devices)
+			{
+				lcd.drawHighlight(2, 7 + 9 * (menuSelected - menuScroll), 81, 7 + 9 * (menuSelected - menuScroll) + 8);
+				menu.setBar(TEXT("RETURN"), TEXT("CONNECT"));
+			}
+			else
+			{
+				lcd.writeStringTiny(6, 20, TEXT("No Devices Found"));
+				menu.setBar(TEXT("RETURN"), BLANK_STR);
+			}
+
+			menu.setTitle(TEXT("Connect"));
+
+			lcd.drawLine(0, 3, 0, 40);
+			lcd.drawLine(83, 3, 83, 40);
+		}
+
+		lcd.update();
+	}
+
+	return FN_CONTINUE;
+}
+
+/******************************************************************
+ *
  *   usbPlug
  *
  *
@@ -1131,8 +1282,7 @@ volatile char runHandler(char key, char first)
 
 	if(pressed == FR_KEY)
 	{
-		menu.message(TEXT("Timer Started"), first);
-		_delay_ms(800);
+		menu.message(TEXT("Timer Started"));
 		timer.begin();
 		menu.spawn((void*)timerStatus);
 		return FN_JUMP;
@@ -1148,28 +1298,8 @@ volatile char runHandler(char key, char first)
 
 /******************************************************************
  *
- *   runHandlerQuick
- *
- *
- ******************************************************************/
-
-volatile char runHandlerQuick(char key, char first)
-{
-	if(first)
-	{
-		if(key != FR_KEY)
-			return FN_CANCEL;
-
-		key = 0;
-	}
-
-	return notYet(key, first);
-}
-
-/******************************************************************
- *
  *   timerStop
- *
+ *		Stops intervalometer if currently running
  *
  ******************************************************************/
 
@@ -1178,13 +1308,9 @@ volatile char timerStop(char key, char first)
 	if(first)
 		timer.running = 0;
 
-	if(menu.message(TEXT("Stopped"), first))
-	{
-		menu.back();
-		return FN_CANCEL;
-	}
-
-	return FN_CONTINUE;
+	menu.message(TEXT("Stopped"));
+	menu.back();
+	return FN_CANCEL;
 }
 
 /******************************************************************
@@ -1214,13 +1340,9 @@ volatile char timerSaveDefault(char key, char first)
 	if(first)
 		timer.save(0);
 
-	if(menu.message(TEXT("Saved"), first))
-	{
-		menu.back();
-		return FN_CANCEL;
-	}
-
-	return FN_CONTINUE;
+	menu.message(TEXT("Saved"));
+	menu.back();
+	return FN_CANCEL;
 }
 
 /******************************************************************
@@ -1235,13 +1357,9 @@ volatile char timerSaveCurrent(char key, char first)
 	if(first)
 		timer.save(timer.currentId);
 
-	if(menu.message(TEXT("Saved"), first))
-	{
-		menu.back();
-		return FN_CANCEL;
-	}
-
-	return FN_CONTINUE;
+	menu.message(TEXT("Saved"));
+	menu.back();
+	return FN_CANCEL;
 }
 
 /******************************************************************
@@ -1256,13 +1374,9 @@ volatile char timerRevert(char key, char first)
 	if(first)
 		timer.load(timer.currentId);
 
-	if(menu.message(TEXT("Reverted"), first))
-	{
-		menu.back();
-		return FN_CANCEL;
-	}
-
-	return FN_CONTINUE;
+	menu.message(TEXT("Reverted"));
+	menu.back();
+	return FN_CANCEL;
 }
 
 /******************************************************************
@@ -1327,9 +1441,7 @@ volatile char shutter_saveAs(char key, char first)
 
 		if(newId < 0)
 		{
-			menu.message(TEXT("No Space"), 1);
-			_delay_ms(500);
-
+			menu.message(TEXT("No Space"));
 			return FN_CANCEL;
 		}
 	}
@@ -1341,8 +1453,7 @@ volatile char shutter_saveAs(char key, char first)
 		name[MENU_NAME_LEN - 2] = 0;
 		strcpy((char*)timer.current.Name, name);
 		timer.save(newId);
-		menu.message(TEXT("Saved"), 1);
-		_delay_ms(200);
+		menu.message(TEXT("Saved"));
 		menu.back();
 	}
 
@@ -1440,8 +1551,7 @@ volatile char shutter_load(char key, char first)
 	   case FR_KEY:
 	   case RIGHT_KEY:
 		   timer.load(itemSelected);
-		   menu.message(TEXT("Loaded"), 1);
-		   _delay_ms(200);
+		   menu.message(TEXT("Loaded"));
 		   menu.back();
 		   menu.select(0);
 		   return FN_SAVE;

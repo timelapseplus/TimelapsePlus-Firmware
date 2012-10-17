@@ -8,7 +8,7 @@
  *
  */
 
-#define VERSION 20121005
+#define VERSION 20121014
 
 
 volatile char timerRevert(char key, char first);
@@ -16,7 +16,6 @@ volatile char timerSaveCurrent(char key, char first);
 volatile char timerSaveDefault(char key, char first);
 volatile char menuBack(char key, char first);
 volatile char timerStop(char key, char first);
-volatile char runHandlerQuick(char key, char first);
 volatile char runHandler(char key, char first);
 volatile char lightMeter(char key, char first);
 volatile char batteryStatus(char key, char first);
@@ -31,6 +30,7 @@ volatile char shutterLagTest(char key, char first);
 volatile char lcd_white(char key, char first);
 volatile char lcd_red(char key, char first);
 volatile char notYet(char key, char first);
+volatile char btConnect(char key, char first);
 volatile char usbPlug(char key, char first);
 volatile char shutter_addKeyframe(char key, char first);
 volatile char shutter_removeKeyframe(char key, char first);

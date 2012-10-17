@@ -769,6 +769,8 @@ void LCD::update()
 {
     uint8_t i, j, b;
     
+    if(disableUpdate) return;
+
     setXY(0, 0);
     
 #ifdef LCD_UPSIDEDOWN
@@ -847,6 +849,8 @@ void LCD::init(void)
     clear();
     writeByte(0x0c, 0);
     backlight(255);
+
+    disableUpdate = 0;
 }
 
 /******************************************************************

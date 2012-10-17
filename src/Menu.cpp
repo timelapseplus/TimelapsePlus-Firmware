@@ -149,7 +149,7 @@ char MENU::run()
            if(ret != FN_CONTINUE)
            {
                 first = 1;
-                state = ST_MENU;
+                if(state == ST_FUNC) state = ST_MENU;
            }
            break;
 
@@ -163,6 +163,30 @@ char MENU::run()
         key = 0;
 
     m_refresh = 0;
+
+
+    if(message_text) // For displaying brief pop-up messages
+    {
+        if(message_time == 0)
+        {
+            message_time = clock.Ms();
+        }
+        uint8_t l = strlen(message_text) * 6 / 2;
+        lcd->eraseBox(41 - l - 2, 12, 41 + l + 2, 24);
+        lcd->drawBox(41 - l - 1, 13, 41 + l + 1, 23);
+        lcd->writeString(41 - l, 15, message_text);
+        lcd->disableUpdate = 0;
+        lcd->update();
+        lcd->disableUpdate = 1;
+
+        if((clock.Ms() - message_time >= MENU_MESSAGE_DISPLAY_TIME))
+        {
+            lcd->disableUpdate = 0;
+            message_text = 0;
+            message_time = 0;
+            refresh();
+        } 
+    }
 
     return key;
 }
@@ -904,8 +928,7 @@ char MENU::editNumber(char key, unsigned int *n, char *name, char *unit, char mo
         switch(key)
         {
            case FR_KEY:
-                message(TEXT("Saved"), 1);
-                _delay_ms(500);
+                message(TEXT("Saved"));
                 *n = m; // Save new Value if not cancelled //
                 ret = FN_SAVE;
                 break;
@@ -926,26 +949,10 @@ char MENU::editNumber(char key, unsigned int *n, char *name, char *unit, char mo
  *
  ******************************************************************/
 
-char MENU::message(char *m, char first)
+void MENU::message(char *m)
 {
-    static uint32_t l;
-
-    if(first)
-    {
-        l = strlen(m) * 6 / 2;
-        lcd->eraseBox(41 - l - 2, 12, 41 + l + 2, 24);
-        lcd->drawBox(41 - l - 1, 13, 41 + l + 1, 23);
-        lcd->writeString(41 - l, 15, m);
-        lcd->update();
-        l = clock.Ms();
-    }
-    
-    if((clock.Ms() - l >= 500) || button->get())
-    {
-        return 1;
-    } 
-    
-    return 0;
+    message_text = m;
+    message_time = 0;
 }
 
 /******************************************************************
@@ -1127,8 +1134,7 @@ char MENU::editSelect(char key, char *n, void *settingslist, char *name, char fi
         
        case FR_KEY: // save //
             *n = pgm_read_byte(&slist[i].value);
-            message(TEXT("Saved"), 1);
-            _delay_ms(500);
+            message(TEXT("Saved"));
             return FN_SAVE;
     }
 

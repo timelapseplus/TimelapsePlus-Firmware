@@ -8,6 +8,8 @@
  *
  */
  
+#define MENU_MESSAGE_DISPLAY_TIME 900
+
 #define MENU_NAME_LEN 13
 #define MENU_STACK_SIZE 5
 #define MENU_MAX 20
@@ -71,7 +73,7 @@ public:
     char editSelect(char key, char *n, void *settingslist, char *name, char first);
     char editText(char key, char text[MENU_NAME_LEN], char *name, char first);
     char *menuName(char *str);
-    char message(char *m, char first);
+    void message(char *m);
     void push();
 
 private:
@@ -100,6 +102,8 @@ private:
     char (*handlerFunction)(char key, char first);
     char name[MENU_NAME_LEN - 2];
     char desc[MENU_NAME_LEN + 1];
+    char *message_text;
+    uint32_t message_time;
 };
 
 
