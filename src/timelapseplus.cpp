@@ -36,6 +36,7 @@
 #include "camera.h"
 #include "math.h"
 #include "selftest.h"
+#include "remote.h"
 
 unsigned char I2C_Buf[4];
 #define I2C_ADDR  0b1000100
@@ -55,8 +56,11 @@ volatile unsigned char bulb1 = 0;
 volatile unsigned char bulb2 = 0;
 volatile unsigned char bulb3 = 0;
 volatile unsigned char bulb4 = 0;
+volatile unsigned char showRemoteStart = 0;
 
 volatile unsigned char connectUSBcamera = 0;
+
+uint8_t battery_percent;
 
 extern settings conf;
 
@@ -69,6 +73,7 @@ Clock clock = Clock();
 Button button = Button();
 BT bt = BT();
 IR ir = IR();
+Remote remote = Remote();
 
 #include "Menu_Map.h"
 
@@ -111,6 +116,8 @@ void setup()
 	set_sleep_mode(SLEEP_MODE_PWR_DOWN);
 	sleep_enable();
 
+	battery_percent = battery_read();
+
 	menu.init((menu_item*)menu_main);
 
 	lcd.update();
@@ -123,6 +130,7 @@ void setup()
 	bt.init();
 	bt.sleep();
 
+#ifdef PRODUCTION
 	//eeprom_write_byte((uint8_t *) &system_tested, 0x01);
 
 	// Check to see if system has passed self-test
@@ -135,6 +143,7 @@ void setup()
 		wdt_enable(WDTO_8S);
 		for(;;) ;
 	}
+#endif
 }
 
 /******************************************************************
@@ -198,6 +207,7 @@ int main()
 		bulb3 = timer.current.Keyframes > 3 && modeRamp;
 		bulb4 = timer.current.Keyframes > 4 && modeRamp;
 		showGap = timer.current.Photos > 1 && modeTimelapse;
+		showRemoteStart = (remote.connected && !remote.running);
 
 		if(VirtualSerial_CharWaiting()) // Process USB Commands from PC
 		{
@@ -248,9 +258,14 @@ int main()
 		{
 			case BT_EVENT_CONNECT:
 				menu.message(TEXT("Connected!"));
+				remote.event();
 				break;
 			case BT_EVENT_DISCONNECT:
 				menu.message(TEXT("Disconnected!"));
+				remote.event();
+				break;
+			case BT_EVENT_DATA:
+				remote.event();
 				break;
 		}
 
@@ -630,8 +645,8 @@ char* getChargingStatus()
 
 volatile char batteryStatus(char key, char first)
 {
-	uint16_t batt_high = 645;
-	uint16_t batt_low = 500;
+//	uint16_t batt_high = 645;
+//	uint16_t batt_low = 540;
 	static uint8_t charging;
 	char stat = battery_status();
 
@@ -640,11 +655,12 @@ volatile char batteryStatus(char key, char first)
 		charging = (stat > 0);
 	}
 
-	unsigned int batt_level = battery_read_raw();
+//	unsigned int batt_level = battery_read_raw();
 
 #define BATT_LINES 36
 
-	uint8_t lines = ((batt_level - batt_low) * BATT_LINES) / (batt_high - batt_low);
+//	uint8_t lines = ((batt_level - batt_low) * BATT_LINES) / (batt_high - batt_low);
+	uint8_t lines = (uint8_t)((uint16_t)battery_percent * BATT_LINES / 100);
 
 	if(lines > BATT_LINES - 1 && stat == 1)
 		lines = BATT_LINES - 1;
@@ -718,7 +734,7 @@ volatile char sysStatus(char key, char first)
 	char buf[6];
 	uint16_t val;
 
-	val = (uint16_t)battery_read();
+	val = (uint16_t)battery_percent;
 	int_to_str(val, buf);
 	text = buf;
 	l = lcd.measureStringTiny(text);
@@ -766,73 +782,161 @@ volatile char sysStatus(char key, char first)
 
 volatile char timerStatus(char key, char first)
 {
-  if(first)
-  {
-  }
+	static uint8_t counter;
+	if(first)
+	{
+		counter = 0;
+	}
 
-  lcd.cls();
+	if(counter++ > 3)
+	{
+		counter = 0;
+		lcd.cls();
 
-  char buf[6], l, *text;
-  uint16_t val;
+		displayTimerStatus(0);
 
-//
-//06 Time remaining
-//12 Time to next photo
-//18 Next bulb
-//24 Status
-//30 Battery %
+		menu.setTitle(TEXT("Running"));
+		menu.setBar(TEXT(""), TEXT("STOP"));
+		lcd.update();
+	}
 
+	if(!timer.running) return FN_CANCEL;
 
-  val = timer.status.photosTaken;
-  int_to_str(val, buf);
-  text = buf;
-  l = lcd.measureStringTiny(text);
-  lcd.writeStringTiny(80 - l, 6 + SY, text);
-  lcd.writeStringTiny(3, 6 + SY, TEXT("Photos:"));
+	if(key == FR_KEY)
+	{
+		menu.push();
+		menu.spawn((void*)timerStop);
+		return FN_JUMP;
+	}
 
-  val = timer.status.photosRemaining;
-  int_to_str(val, buf);
-  text = buf;
-  l = lcd.measureStringTiny(text);
-  lcd.writeStringTiny(80 - l, 12 + SY, text);
-  lcd.writeStringTiny(3, 12 + SY, TEXT("Photos rem:"));
-
-  val = timer.status.nextPhoto;
-  int_to_str(val, buf);
-  text = buf;
-  l = lcd.measureStringTiny(text);
-  lcd.writeStringTiny(80 - l, 18 + SY, text);
-  lcd.writeStringTiny(3, 18 + SY, TEXT("Next Photo:"));
-
-  text = timer.status.textStatus;
-  l = lcd.measureStringTiny(text);
-  lcd.writeStringTiny(80 - l, 24 + SY, text);
-  lcd.writeStringTiny(3, 24 + SY, TEXT("Status:"));
-
-  val = (uint16_t) battery_read();
-  int_to_str(val, buf);
-  text = buf;
-  l = lcd.measureStringTiny(text);
-  lcd.writeStringTiny(80 - l, 30 + SY, text);
-  lcd.writeStringTiny(3, 30 + SY, TEXT("Battery Level:"));
-
-  menu.setTitle(TEXT("Running"));
-  menu.setBar(TEXT(""), TEXT("STOP"));
-  lcd.update();
-  _delay_ms(10);
-
-  if(!timer.running) return FN_CANCEL;
-
-  if(key == FR_KEY)
-  {
-  	menu.push();
-  	menu.spawn((void*)timerStop);
-  	return FN_JUMP;
-  }
-
-  return FN_CONTINUE;
+	return FN_CONTINUE;
 }
 
+/******************************************************************
+ *
+ *   timerStatusRemote
+ *
+ *
+ ******************************************************************/
+
+volatile char timerStatusRemote(char key, char first)
+{
+	static uint32_t startTime = 0;
+	static uint8_t toggle = 0;
+
+	if(first)
+	{
+		startTime = 0;
+	}
+
+	if(clock.Ms() > startTime + 300)
+	{
+		startTime = clock.Ms();
+		lcd.cls();
+
+		if(toggle == 0)
+			remote.request(REMOTE_START);
+		else if(toggle == 1)
+			remote.request(REMOTE_BATTERY);
+		else
+			remote.request(REMOTE_STATUS);
+
+		if(++toggle >= 10) toggle = 0;
+
+		displayTimerStatus(1);
+
+		menu.setTitle(TEXT("Remote"));
+		if(remote.running)
+			menu.setBar(TEXT("RETURN"), TEXT("STOP"));
+		else
+			menu.setBar(TEXT("RETURN"), BLANK_STR);
+		lcd.update();
+	}
+
+	if(!remote.connected) return FN_CANCEL;
+
+	if(key == FR_KEY)
+	{
+		remote.set(REMOTE_STOP);
+	}
+	if(key == FL_KEY || key == LEFT_KEY)
+	{
+		return FN_CANCEL;
+	}
+
+	return FN_CONTINUE;
+}
+
+/******************************************************************
+ *
+ *   displayTimerStatus
+ *
+ *
+ ******************************************************************/
+
+void displayTimerStatus(uint8_t remote_system)
+{
+	timer_status stat;
+	char buf[6], l, *text;
+	uint16_t val;
+
+	if(remote_system)
+	{
+		stat = remote.status;
+		l = remote.running;
+	}
+	else
+	{
+		stat = timer.status;
+		l = timer.running;
+	}
+	//
+	//06 Time remaining
+	//12 Time to next photo
+	//18 Next bulb
+	//24 Status
+	//30 Battery %
+
+	if(l)
+	{
+		val = stat.photosTaken;
+		int_to_str(val, buf);
+		text = buf;
+		l = lcd.measureStringTiny(text);
+		lcd.writeStringTiny(80 - l, 6 + SY, text);
+		lcd.writeStringTiny(3, 6 + SY, TEXT("Photos:"));
+
+		val = stat.photosRemaining;
+		int_to_str(val, buf);
+		text = buf;
+		l = lcd.measureStringTiny(text);
+		lcd.writeStringTiny(80 - l, 12 + SY, text);
+		lcd.writeStringTiny(3, 12 + SY, TEXT("Photos rem:"));
+
+		val = stat.nextPhoto;
+		int_to_str(val, buf);
+		text = buf;
+		l = lcd.measureStringTiny(text);
+		lcd.writeStringTiny(80 - l, 18 + SY, text);
+		lcd.writeStringTiny(3, 18 + SY, TEXT("Next Photo:"));
+	}
+	
+	text = stat.textStatus;
+	l = lcd.measureStringTiny(text);
+	lcd.writeStringTiny(80 - l, 24 + SY, text);
+	lcd.writeStringTiny(3, 24 + SY, TEXT("Status:"));
+
+	if(remote_system)
+		val = (uint16_t) remote.battery;
+	else
+		val = (uint16_t) battery_percent;
+	int_to_str(val, buf);
+	text = buf;
+	l = lcd.measureStringTiny(text);
+	lcd.writeStringTiny(80 - l, 30 + SY, text);
+	lcd.writeStringTiny(3, 30 + SY, TEXT("Battery Level:"));
+
+}
 
 /******************************************************************
  *
@@ -1080,7 +1184,7 @@ volatile char notYet(char key, char first)
 
 /******************************************************************
  *
- *   btTest
+ *   btConnect
  *
  *
  ******************************************************************/
@@ -1108,6 +1212,7 @@ volatile char btConnect(char key, char first)
 
 	switch(key)
 	{
+		case LEFT_KEY:
 		case FL_KEY:
 			sfirst = 1;
 			if(bt.state != BT_ST_CONNECTED) bt.sleep();
@@ -1129,8 +1234,10 @@ volatile char btConnect(char key, char first)
 	switch(bt.event)
 	{
 		case BT_EVENT_DISCOVERY:
+			debug(STR("dicovery!\r\n"));
 			break;
 		case BT_EVENT_SCAN_COMPLETE:
+			debug(STR("done!\r\n"));
 			if(bt.state != BT_ST_CONNECTED) bt.scan();
 			break;
 		case BT_EVENT_DISCONNECT:
@@ -1151,7 +1258,6 @@ volatile char btConnect(char key, char first)
 	{
 		menuSelected--;
 		update = 1;
-
 	}
 	else if(key == DOWN_KEY && menuSelected < menuSize - 1)
 	{
@@ -1166,6 +1272,7 @@ volatile char btConnect(char key, char first)
 		if(bt.state == BT_ST_CONNECTED)
 		{
 			menu.setTitle(TEXT("Connect"));
+			lcd.writeStringTiny(18, 20, TEXT("Connected!"));
 			menu.setBar(TEXT("RETURN"), TEXT("DISCONNECT"));
 		}
 		else
@@ -1294,6 +1401,22 @@ volatile char runHandler(char key, char first)
 	lcd.update();
 
 	return FN_CANCEL;
+}
+
+/******************************************************************
+ *
+ *   timerRemoteStart
+ *
+ *
+ ******************************************************************/
+
+volatile char timerRemoteStart(char key, char first)
+{
+	menu.message(TEXT("Started Remote"));
+	remote.set(REMOTE_PROGRAM);
+	remote.set(REMOTE_START);
+	menu.spawn((void*)timerStatusRemote);
+	return FN_JUMP;
 }
 
 /******************************************************************

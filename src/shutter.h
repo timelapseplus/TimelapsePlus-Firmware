@@ -92,7 +92,7 @@ public:
 
     char cableIsConnected(void);
 
-    volatile program current;
+    program current;
     timer_status status; 
     volatile char running;  // 0 = not running, 1 = running (shutter closed), 2 = running (shutter open)
     volatile int8_t currentId;

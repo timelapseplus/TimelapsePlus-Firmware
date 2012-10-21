@@ -9,7 +9,7 @@
  */
 
 #define BT_NAME_LEN 13
-#define BT_BUF_SIZE 512
+#define BT_BUF_SIZE 128
 #define BT_MAX_SCAN 5
 #define BT_ADDR_LEN 13
 #define BT_NAME_LEN 13
@@ -50,7 +50,7 @@ public:
     uint8_t read(void);
     uint8_t send(char *str);
     uint8_t sendCMD(char *str);
-    uint8_t sendDATA(char *str);
+    uint8_t sendDATA(uint8_t id, uint8_t type, void* buffer, uint16_t bytes);
     uint8_t power(uint8_t level);
     uint8_t power(void);
     uint8_t temperature(void);
@@ -63,15 +63,20 @@ public:
     uint8_t task(void);
 
     uint8_t present;
-    char buf[BT_BUF_SIZE];
     uint8_t state;
     uint8_t mode;
     uint8_t event;
+
+    char * data;
+    uint8_t dataId;
+    uint8_t dataType;
+    uint16_t dataSize;
 
     discovery device[BT_MAX_SCAN];
     uint8_t devices;
 
 private:
+    char buf[BT_BUF_SIZE];
     uint8_t checkOK(void);
     uint8_t btPower;
     uint8_t dataMode(void);

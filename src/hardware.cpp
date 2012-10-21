@@ -217,11 +217,12 @@ void hardware_readLightAll(void *result)
 uint8_t battery_read() // Returns 0-100 //
 {
     uint16_t raw = battery_read_raw();
-    uint16_t high, low, percent;
+    uint16_t high = 645, low = 540, percent;
     char status = battery_status();
 
     if(status == 0)
     {
+        /*
         eeprom_read_block((void*)&low, &battery_low, sizeof(uint16_t));
         
         if(raw < low) 
@@ -234,11 +235,12 @@ uint8_t battery_read() // Returns 0-100 //
         
         if(raw > high) 
             eeprom_write_block((const void*)&raw, &battery_high, sizeof(uint16_t));
-        
+        */
         percent = ((raw - low) * 100) / (high - low);
     } 
     else
     {
+        /*
         eeprom_read_block((void*)&low, &battery_low_charging, sizeof(uint16_t));
         
         if(raw < low) 
@@ -248,7 +250,8 @@ uint8_t battery_read() // Returns 0-100 //
         
         if(raw > high) 
             eeprom_write_block((const void*)&raw, &battery_high, sizeof(uint16_t));
-        
+        */
+
         percent = ((raw - low) * 100) / (high - low);
         
         if(status == 1 && percent > 99) 
@@ -257,6 +260,8 @@ uint8_t battery_read() // Returns 0-100 //
         if(status == 2) 
             percent = 100;
     }
+
+    if(percent > 100) percent = 100;
 
     return percent;
 }

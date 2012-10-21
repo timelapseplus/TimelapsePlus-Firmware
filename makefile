@@ -157,6 +157,7 @@ CPPSRC = src/$(TARGET).cpp 	        \
 			src/LCD_Term.cpp 			        \
 			src/selftest.cpp 			        \
 			src/math.cpp 			        \
+			src/remote.cpp 			        \
 			src/debug.cpp
 
 

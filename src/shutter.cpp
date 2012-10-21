@@ -162,6 +162,7 @@ void shutter::bulbStart(void)
     {
         ir_shutter_state = 1;
         ir.shutterNow();
+//        ir.shutterDelayed();
     } 
     if(conf.bulbMode == 0)
     {
@@ -189,6 +190,7 @@ void shutter::bulbEnd(void)
     {
         ir_shutter_state = 0;
         ir.shutterNow();
+//        ir.shutterDelayed();
     } 
     if(conf.bulbMode == 0)
     {
@@ -215,6 +217,7 @@ void shutter::capture(void)
     if(cable_connected == 0)
     {
         ir.shutterNow();
+//        ir.shutterDelayed();
     } 
     full();
     _delay_ms(75);
@@ -426,7 +429,7 @@ char shutter::run()
         bulbStart();
         
         static uint8_t calc = true;
-        static uint16_t bulb_length, exp;
+        static uint32_t bulb_length, exp;
 
         if(calc)
         {
@@ -455,7 +458,7 @@ char shutter::run()
                 
                 if(found)
                 {
-                    exp = (uint16_t)curve(key1, key2, key3, key4, ((float)clock.Seconds() - (i > 1 ? (float)current.Key[i - 2] : 0.0)) / ((float)current.Key[i - 1] - (i > 1 ? (float)current.Key[i - 2] : 0.0)));
+                    exp = (uint32_t)curve(key1, key2, key3, key4, ((float)clock.Seconds() - (i > 1 ? (float)current.Key[i - 2] : 0.0)) / ((float)current.Key[i - 1] - (i > 1 ? (float)current.Key[i - 2] : 0.0)));
                 } 
                 else
                 {
@@ -481,14 +484,14 @@ char shutter::run()
 
             if(current.Mode & HDR)
             {
-                uint16_t tmp = exps - (current.Exps >> 1);
-                bulb_length = (tmp < 32768) ? exp * (1 << tmp) : exp / (1 << (0 - tmp));
+                uint32_t tmp = exps - (current.Exps >> 1);
+                bulb_length = (tmp < (2^32/2)) ? exp * (1 << tmp) : exp / (1 << (0 - tmp));
 
                 if(conf.devMode)
                 {
                     debug(STR("exps - (current.Exps >> 1): "));
 
-                    if(tmp < 32768)
+                    if(tmp < (2^32/2))
                     {
                         debug(tmp);
                     } 
@@ -578,7 +581,7 @@ char shutter::run()
         }
         uint32_t cms = clock.Ms();
 
-        if((cms - last_photo_ms) >= current.Gap * 100)
+        if((cms - last_photo_ms) / 100 >= current.Gap)
         {
             last_photo_ms = cms;
             clock.tare();
@@ -586,8 +589,8 @@ char shutter::run()
         } 
         else
         {
-            status.nextPhoto = (unsigned int) ((current.Gap * 100 - (cms - last_photo_ms)) / 1000);
-            if((cms - last_photo_ms) + (uint32_t)settings_mirror_up_time * 1000 >= current.Gap * 100)
+            status.nextPhoto = (unsigned int) ((current.Gap - (cms - last_photo_ms) / 100) / 10);
+            if((cms - last_photo_ms) / 100 + (uint32_t)settings_mirror_up_time * 10 >= current.Gap)
             {
                 // Mirror Up //
                 half();

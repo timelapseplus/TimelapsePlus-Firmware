@@ -11,11 +11,13 @@
 #ifndef	HARDWARE_H
 #define HARDWARE_H
 
+#ifdef PROTOTYPE
 //This is the hardware map for the prototype version
-//#include "hardware_map_20120329.h"
-
+#include "hardware_map_20120329.h"
+#else
 //This is the hardware main for the production version
 #include "hardware_map_20120703.h"
+#endif
 
 #ifdef __cplusplus
 extern "C"

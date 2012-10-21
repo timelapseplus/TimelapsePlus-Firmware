@@ -17,6 +17,7 @@
 #include "button.h"
 #include "clock.h"
 #include "Menu.h"
+#include "debug.h"
 
 extern Clock clock;
 
@@ -904,12 +905,16 @@ char MENU::editNumber(char key, unsigned int *n, char *name, char *unit, char mo
            case 'F':
                 m += (d[4] * 10 + d[3]) * 600; // minutes
                 m += d[2] * 100 + d[1] * 10 + d[0]; // seconds
+                debug(m);
+                debug_nl();
                 break;
             
            case 'T':
                m += d[4] * 3600;  // hours
                m += (d[3] * 10 + d[2]) * 60; // minutes
                m += d[1] * 10 + d[0]; // seconds
+                debug(m);
+                debug_nl();
                break;
                
            default:

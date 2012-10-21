@@ -175,8 +175,8 @@ void Clock::sleep()
     sleep_mode();
     detachInterrupt(1);*/
         hardware_off();
-        awake();
-        wasSleeping = 1;
+//        awake();
+//        wasSleeping = 1;
 
     } 
     else if(backlightVal == 0 && light_time >= (uint16_t)conf.lcdBacklightTime * 10)

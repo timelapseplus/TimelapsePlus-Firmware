@@ -12,6 +12,7 @@
 #include <avr/io.h>
 #include <stdlib.h>
 #include <util/delay.h>
+#include <avr/wdt.h>
 #include "tldefs.h"
 #include "hardware.h"
 #include "bluetooth.h"
@@ -333,6 +334,8 @@ uint8_t BT::temperature(void)
 	uint8_t i = checkOK();
 	uint8_t n = 0;
 
+	read();
+
 	if(i > 0)
 	{
 		for(++i; i < BT_BUF_SIZE; i++)
@@ -370,6 +373,10 @@ uint8_t BT::version(void)
 	uint8_t i = checkOK();
 	uint8_t n = 0;
 
+	read();
+
+	debug(buf);
+
 	if(i > 0)
 	{
 		for(++i; i < BT_BUF_SIZE; i++)
@@ -377,7 +384,7 @@ uint8_t BT::version(void)
 			if(buf[i] == 0)
 				break;
 
-			if(i == 14)
+			if(i == 6)
 			{
 				n = (buf[i] - '0');
 				return n;
@@ -438,14 +445,35 @@ uint8_t BT::sendCMD(char* str)
  *
  ******************************************************************/
 
-uint8_t BT::sendDATA(char* str)
+uint8_t BT::sendDATA(uint8_t id, uint8_t type, void* buffer, uint16_t bytes)
 {
 	if(!present)
 		return 1;
 
 	if(dataMode())
 	{
-		return send(str);
+		if(BT_RTS)
+		{
+			char* byte;
+
+			Serial_SendByte('$');
+			Serial_SendByte((char) id);
+			Serial_SendByte((char) type);
+			Serial_SendByte((char) *(&bytes));
+			Serial_SendByte((char) *(&bytes + 1));
+			Serial_SendByte(':');
+
+			byte = (char *) buffer;
+			if(bytes > 0)
+			{
+				while(bytes--)
+				{
+					Serial_SendByte(*byte);
+					byte++;
+				}
+			}
+			return 1;
+		}
 	}
 
 	return 0;
@@ -507,7 +535,10 @@ uint8_t BT::read(void)
 		return 1;
 
 
-	uint8_t bytes = 0;
+	uint16_t bytes = 0;
+
+	dataId = 0;
+	dataSize = 0;
 
 	BT_SET_CTS;
 
@@ -519,20 +550,55 @@ uint8_t BT::read(void)
 
 		while(!Serial_IsCharReceived())
 		{
-			if(++timeout > 6000)
+			wdt_reset();
+			_delay_us(10);
+			if(++timeout > 5000)
 				break;
 		}
 
-		if(timeout > 6000)
+		if(timeout > 5000)
+		{
+			if(bytes > 0) debug(STR("TIMED OUT\r\n"));
 			break;
+		}
 
 		buf[bytes] = (char)Serial_ReceiveByte();
 
-		if(!(bytes == 0 && (buf[0] == '\n' || buf[0] == '\r'))) bytes++; // skip leading CR/LF
+		if(mode == BT_MODE_CMD)
+		{
+			if(!(bytes == 0 && (buf[0] == '\n' || buf[0] == '\r'))) bytes++; // skip leading CR/LF
+	
+			if(bytes > 0 && buf[bytes - 1] == '\r') // just get one line at a time
+				break;
+		}
+		else
+		{
+			bytes++;
+			if(dataSize > 0)
+			{
+				if(bytes > dataSize + 5) break;
+			}
+			else
+			{
+				if(bytes > 5)
+				{
+					if(buf[0] == '$' && buf[5] == ':')
+					{
+						dataId = buf[1];
+						dataType = buf[2];
+
+						*(&dataSize) = buf[3];
+						*(&dataSize + 1) = buf[4];
+
+						data = (buf + 6);
+
+						if(dataSize == 0) break;
+					}
+				}
+			}
+		}
 
 		if(bytes >= BT_BUF_SIZE)
-			break;
-		if(mode == BT_MODE_CMD && bytes > 0 && buf[bytes - 1] == '\r') // just get one line at a time
 			break;
 	}
 
@@ -556,10 +622,10 @@ uint8_t BT::task(void)
 	if(!present)
 		return 1;
 
-	char *ptr;
 	uint8_t pos = 0, len, ret = BT_EVENT_NULL;
 
 	len = read();
+
 	if(len)
 	{
 		if(mode == BT_MODE_CMD) debug(STR("CMD:\r\n")); else debug(STR("DATA:\r\n"));
@@ -567,74 +633,70 @@ uint8_t BT::task(void)
 		debug_nl();
 		if(mode == BT_MODE_CMD)
 		{
-			ptr = buf;
-
-			while(pos < len)
+			if(strncmp(buf, STR("DISCOVERY"), 9) == 0)
 			{
-				if(*(ptr + pos) == '\r' || *(ptr + pos) == '\n') // strip any leftover whitespace
+				if(*(buf + 10) == '6' && newDevices < BT_MAX_SCAN)
 				{
-					pos++;
-					continue;
-				}
-
-				if(strncmp(ptr + pos, STR("DISCOVERY"), 9) == 0)
-				{
-					if(*(ptr + pos + 10) == '6' && newDevices < BT_MAX_SCAN)
+					ret = BT_EVENT_DISCOVERY;
+					uint8_t i;
+					for(i = 0; i < BT_ADDR_LEN; i++)
 					{
-						ret = BT_EVENT_DISCOVERY;
-						uint8_t i;
-						for(i = 0; i < BT_ADDR_LEN; i++)
-						{
-							device[newDevices].addr[i] = *(ptr + pos + 12 + i);
-						}
-						device[newDevices].addr[BT_ADDR_LEN - 1] = '\0';
-						for(i = 0; i < BT_NAME_LEN; i++)
-						{
-							if(*(ptr + pos + 38 + i) == '\r') break;
-							device[newDevices].name[i] = *(ptr + pos + 38 + i);
-						}
-						device[newDevices].name[i] = '\0';
-						newDevices++;
-						if(newDevices > devices) devices = newDevices;
+						device[newDevices].addr[i] = *(buf + 12 + i);
 					}
+					device[newDevices].addr[BT_ADDR_LEN - 1] = '\0';
+					for(i = 0; i < BT_NAME_LEN; i++)
+					{
+						if(*(buf + 38 + i) == '\r') break;
+						device[newDevices].name[i] = *(buf + 38 + i);
+					}
+					device[newDevices].name[i] = '\0';
+					newDevices++;
+					if(newDevices > devices) devices = newDevices;
 				}
-				if(strncmp(ptr + pos, STR("CONNECT"), 7) == 0)
-				{
-					if(state == BT_ST_SCAN) cancelScan();
-					ret = BT_EVENT_CONNECT;
-					state = BT_ST_CONNECTED;
-				}
-				if(strncmp(ptr + pos, STR("BRSP"), 4) == 0)
-				{
-					ret = BT_EVENT_CONNECT;
-					mode = BT_MODE_DATA;
-					state = BT_ST_CONNECTED;
-				}
-				if(strncmp(ptr + pos, STR("DISCONNECT"), 10) == 0)
-				{
-					ret = BT_EVENT_DISCONNECT;
-					mode = BT_MODE_CMD;
-					state = BT_ST_IDLE;
-				}
-				if(strncmp(ptr + pos, STR("DONE"), 4) == 0)
-				{
-					ret = BT_EVENT_SCAN_COMPLETE;
-					devices = newDevices;
-				}
-
-				while(pos < len && *(ptr + pos) != '\r') pos++; // jump ahead to next line
 			}
-		}
-		else
-		{
+			if(strncmp(buf, STR("CONNECT"), 7) == 0)
+			{
+				if(state == BT_ST_SCAN) cancelScan();
+				ret = BT_EVENT_CONNECT;
+				state = BT_ST_CONNECTED;
+			}
+			if(strncmp(buf, STR("BRSP"), 4) == 0)
+			{
+				ret = BT_EVENT_CONNECT;
+				mode = BT_MODE_DATA;
+				state = BT_ST_CONNECTED;
+			}
 			if(strncmp(buf, STR("DISCONNECT"), 10) == 0)
 			{
 				ret = BT_EVENT_DISCONNECT;
 				mode = BT_MODE_CMD;
 				state = BT_ST_IDLE;
 			}
-			else
+			if(strncmp(buf, STR("DONE"), 4) == 0)
 			{
+				ret = BT_EVENT_SCAN_COMPLETE;
+				devices = newDevices;
+			}
+		}
+		else
+		{
+			while(*(buf + pos) == '\r' || *(buf + pos) == '\n') // strip any leftover whitespace
+			{
+				pos++;
+			}			
+			if(strncmp(buf + pos, STR("DISCONNECT"), 10) == 0)
+			{
+				ret = BT_EVENT_DISCONNECT;
+				mode = BT_MODE_CMD;
+				state = BT_ST_IDLE;
+			}
+			else if(dataId > 0)
+			{
+				debug(STR("Received Packet: "));
+				debug(dataId);
+				debug(STR(" ("));
+				debug(dataSize);
+				debug(STR(" bytes)\r\n"));
 				ret = BT_EVENT_DATA;
 			}
 		}

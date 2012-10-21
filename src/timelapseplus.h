@@ -8,12 +8,17 @@
  *
  */
 
-#define VERSION 20121014
-
+#define VERSION 20121020
+//#define PROTOTYPE
+//#define PRODUCTION
 
 volatile char timerRevert(char key, char first);
 volatile char timerSaveCurrent(char key, char first);
 volatile char timerSaveDefault(char key, char first);
+volatile char timerStatus(char key, char first);
+volatile char timerStatusRemote(char key, char first);
+void displayTimerStatus(uint8_t remote_system);
+volatile char timerRemoteStart(char key, char first);
 volatile char menuBack(char key, char first);
 volatile char timerStop(char key, char first);
 volatile char runHandler(char key, char first);

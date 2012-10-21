@@ -61,6 +61,21 @@ void debug(uint16_t n)
  *
  ******************************************************************/
 
+void debug(uint32_t n)
+{
+    char buf[6];
+
+    int_to_str((uint16_t)n, buf); // quick fix -- needs real implementation eventually
+    VirtualSerial_PutString(buf);
+}
+
+/******************************************************************
+ *
+ *   debug
+ *
+ *
+ ******************************************************************/
+
 void debug(char *s)
 {
     VirtualSerial_PutString(s);

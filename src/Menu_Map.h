@@ -28,9 +28,11 @@ const char STR_FLASHLIGHT_TIME[]PROGMEM = "LED auto off time";
 const menu_item menu_options[]PROGMEM =
 {
     { "Stop Timer  ", 'F', (void*)&timerStop, 0, (void*)&timer.running },
+    { "Remote Info ", 'F', (void*)&timerStatusRemote, 0, (void*)&remote.connected },
+    { "Start Remote", 'F', (void*)&timerRemoteStart, 0, (void*)&showRemoteStart },
     { "Add Keyframe", 'F', (void*)&shutter_addKeyframe, 0, (void*)&modeRampKeyAdd },
     { "Del Keyframe", 'F', (void*)&shutter_removeKeyframe, 0, (void*)&modeRampKeyDel },
-    { "View Details", 'F', (void*)&viewSeconds, 0, 0 },
+//    { "View Details", 'F', (void*)&viewSeconds, 0, 0 },
     { "Load Saved..", 'F', (void*)&shutter_load, 0, (void*)&timerNotRunning },
     { "Save As..   ", 'F', (void*)&shutter_saveAs, 0, 0 },
     { "Save        ", 'F', (void*)&timerSaveCurrent, 0, (void*)&timer.current.Name },
@@ -107,7 +109,6 @@ const menu_item menu_development[]PROGMEM =
     { "Shutter Lag ", 'F', (void*)shutterLagTest, 0, (void*)&timerNotRunning },
 //    { "IR Test     ", 'F', (void*)IRremote, 0, (void*)&timerNotRunning },
 //    { "4 Hour Light", 'F', (void*)lightTest, 0, (void*)&timerNotRunning },
-//    { "BT Test     ", 'F', (void*)btTest, 0, 0 },
     { "Sys Status  ", 'F', (void*)sysStatus, 0, 0 },
     { "Battery     ", 'F', (void*)batteryStatus, 0, 0 },
     { "Light Meter ", 'F', (void*)lightMeter, 0, 0 },
