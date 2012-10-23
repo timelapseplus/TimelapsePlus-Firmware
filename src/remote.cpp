@@ -26,6 +26,7 @@
 #include "camera.h"
 #include "math.h"
 #include "remote.h"
+#include "tlp_menu_functions.h"
 
 extern BT bt;
 extern shutter timer;

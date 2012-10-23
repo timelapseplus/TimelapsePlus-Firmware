@@ -19,6 +19,7 @@
 #include "timelapseplus.h"
 #include "LCD_Term.h"
 #include "5110LCD.h"
+#include "tlp_menu_functions.h"
 
 extern LCD lcd;
 

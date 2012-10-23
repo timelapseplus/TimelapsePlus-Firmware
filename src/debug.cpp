@@ -11,6 +11,7 @@
 #include "VirtualSerial.h"
 #include "debug.h"
 #include "timelapseplus.h"
+#include "tlp_menu_functions.h"
 
 /******************************************************************
  *

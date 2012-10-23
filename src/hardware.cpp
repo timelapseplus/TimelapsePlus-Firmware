@@ -17,6 +17,7 @@
 #include "Menu.h"
 #include "clock.h"
 #include "timelapseplus.h"
+#include "tlp_menu_functions.h"
 #include <LUFA/Common/Common.h>
 #include <LUFA/Drivers/USB/USB.h>
 #include <LUFA/Drivers/Peripheral/ADC.h>
