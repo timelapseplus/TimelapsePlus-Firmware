@@ -269,7 +269,6 @@ int main()
 				break;
 		}
 
-
 		key = menu.run();
 		timer.run();
 

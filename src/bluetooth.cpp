@@ -556,42 +556,49 @@ uint8_t BT::read(void)
 
 		if(timeout > 5000)
 		{
-			if(bytes > 0) debug(STR("TIMED OUT\r\n"));
+			if(bytes > 0)
+			{
+				debug(STR("TIMED OUT ("));
+				debug(bytes);
+			    debug(STR(": "));
+				buf[bytes] = 0;
+				debug(buf);
+			    debug(STR(")\r\n"));
+			}
 			break;
 		}
 
 		buf[bytes] = (char)Serial_ReceiveByte();
 
+		if(!(bytes == 0 && (buf[0] == '\n' || buf[0] == '\r'))) bytes++; // skip leading CR/LF
 		if(mode == BT_MODE_CMD)
 		{
-			if(!(bytes == 0 && (buf[0] == '\n' || buf[0] == '\r'))) bytes++; // skip leading CR/LF
-	
-			if(bytes > 0 && buf[bytes - 1] == '\r') // just get one line at a time
+			if(bytes > 0 && buf[bytes - 1] == '\n') // just get one line at a time
 				break;
 		}
 		else
 		{
-			bytes++;
 			if(dataSize > 0)
 			{
 				if(bytes > dataSize + 5) break;
 			}
 			else
 			{
-				if(bytes > 5)
+				if(bytes > 5 && buf[0] == '$' && buf[5] == ':')
 				{
-					if(buf[0] == '$' && buf[5] == ':')
-					{
-						dataId = buf[1];
-						dataType = buf[2];
+					dataId = buf[1];
+					dataType = buf[2];
 
-						*(&dataSize) = buf[3];
-						*(&dataSize + 1) = buf[4];
+					*(&dataSize) = buf[3];
+					*(&dataSize + 1) = buf[4];
 
-						data = (buf + 6);
+					data = (buf + 6);
 
-						if(dataSize == 0) break;
-					}
+					if(dataSize == 0) break;
+				}
+				else if(buf[bytes - 1] == '\n') // just get one line at a time
+				{
+					break;
 				}
 			}
 		}

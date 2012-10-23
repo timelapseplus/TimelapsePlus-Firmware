@@ -58,6 +58,7 @@ void Clock::init()
 
     wasSleeping = 0;
     sleepOk = 1;
+    sleeping = 0;
     reset();
 
     sei();
@@ -136,6 +137,7 @@ void Clock::tare()
 
 void Clock::awake()
 {
+    sleeping = 0;
     sleep_time = 0;
     light_time = 0;
 //  flashlight_time = 0;
@@ -168,8 +170,9 @@ void Clock::sleep()
     
     sleepWasOk = sleepOk;
     
-    if(sleepOk && sleep_time >= (uint16_t)conf.sysOffTime * 10)
+    if(!sleeping && sleepOk && sleep_time >= (uint16_t)conf.sysOffTime * 10)
     {
+        sleeping = 1;
 //    lcd.off();
 /*    attachInterrupt(1,wakeupFunction,LOW);
     sleep_mode();

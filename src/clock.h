@@ -31,6 +31,7 @@ public:
     uint32_t Seconds();
     uint32_t Ms();
     char sleepOk;
+    char sleeping;
 
 private:
     char sleepWasOk;

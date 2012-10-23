@@ -97,6 +97,7 @@ void hardware_off(void)
     else // Plugged in
     {
         // Charging screen //
+        clock.sleeping = 1;
         menu.spawn((void *) batteryStatus);
     }
 }
