@@ -158,6 +158,7 @@ CPPSRC = src/$(TARGET).cpp 	        \
 			src/selftest.cpp 			        \
 			src/math.cpp 			        \
 			src/remote.cpp 			        \
+			src/tlp_menu_functions.cpp 			        \
 			src/debug.cpp
 
 
