@@ -476,6 +476,68 @@ volatile char cableRelease(char key, char first)
 	}
 	return FN_CONTINUE;
 }
+
+/******************************************************************
+ *
+ *   cableReleaseRemote
+ *
+ *
+ ******************************************************************/
+
+volatile char cableReleaseRemote(char key, char first)
+{
+	static char status; //, cable;
+
+	if(first)
+	{
+		status = 0;
+		lcd.cls();
+		menu.setTitle(TEXT("BT Cable Release"));
+		menu.setBar(TEXT("Bulb"), TEXT("Photo"));
+		lcd.update();
+		remote.set(REMOTE_BULB_END);
+	}
+
+	if(key == FL_KEY)
+	{
+		if(status != 1)
+		{
+			status = 1;
+			lcd.eraseBox(8, 18, 8 + 6 * 11, 26);
+			lcd.writeString(8, 18, TEXT("(BULB OPEN)"));
+			remote.set(REMOTE_BULB_START);
+			lcd.update();
+		} else
+		{
+			status = 0;
+			lcd.eraseBox(8, 18, 8 + 6 * 11, 26);
+			remote.set(REMOTE_BULB_END);
+			lcd.update();
+		}
+	}
+	else if(key == FR_KEY && status != 1)
+	{
+		status = 0;
+		lcd.eraseBox(8, 18, 8 + 6 * 11, 26);
+		remote.set(REMOTE_CAPTURE);
+		lcd.update();
+	}
+	else if(key != 0)
+	{
+		status = 0;
+		lcd.eraseBox(8, 18, 8 + 6 * 11, 26);
+		remote.set(REMOTE_BULB_END);
+		lcd.update();
+	}
+
+	if(key == LEFT_KEY || !remote.connected)
+	{
+		remote.set(REMOTE_BULB_END);
+		return FN_CANCEL;
+	}
+	return FN_CONTINUE;
+}
+
 /******************************************************************
  *
  *   shutterLagTest
@@ -697,8 +759,11 @@ volatile char batteryStatus(char key, char first)
 	menu.setBar(TEXT("RETURN"), BLANK_STR);
 	lcd.update();
 
-	if(stat == 0 && charging) return FN_CANCEL; // unplugged
-
+	if(stat == 0 && charging)
+	{
+		clock.awake();
+		return FN_CANCEL; // unplugged
+	}
 	if(key == FL_KEY)
 		return FN_CANCEL;
 

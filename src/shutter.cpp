@@ -312,7 +312,7 @@ char shutter::run()
 {
     char cancel = 0;
     static uint8_t enter, photos, exps, run_state = RUN_DELAY, old_state = 255;
-    static uint32_t last_photo_ms;
+    static uint32_t last_photo_ms, last_photo_end_ms;
 
     if(MIRROR_IS_DOWN)
     {
@@ -338,6 +338,8 @@ char shutter::run()
         exps = 0;
         status.photosRemaining = current.Photos;
         status.photosTaken = 0;
+        last_photo_end_ms = 0;
+        last_photo_ms = 0;
 
         ENABLE_MIRROR;
         ENABLE_SHUTTER;
@@ -384,8 +386,13 @@ char shutter::run()
         }
     }
 
-    if(run_state == RUN_PHOTO)
+    debug(STR("MS: "));
+    debug((clock.Ms() - last_photo_end_ms) / 10);
+    debug_nl();
+
+    if(run_state == RUN_PHOTO && (exps + photos == 0 || (uint8_t)((clock.Ms() - last_photo_end_ms) / 10) >= conf.cameraFPS))
     {
+        last_photo_end_ms = 0;
         if(old_state != run_state)
         {
             if(conf.devMode)
@@ -535,6 +542,7 @@ char shutter::run()
     
     if(run_state == RUN_NEXT)
     {
+        last_photo_end_ms = clock.Ms();
         if(old_state != run_state)
         {
             if(conf.devMode)
@@ -554,7 +562,6 @@ char shutter::run()
         } 
         else
         {
-            for(uint8_t i = 0; i < conf.cameraFPS; i++) _delay_ms(10);
             clock.tare();
             run_state = RUN_PHOTO;
         }

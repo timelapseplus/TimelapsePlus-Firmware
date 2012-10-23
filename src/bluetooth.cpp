@@ -375,8 +375,6 @@ uint8_t BT::version(void)
 
 	read();
 
-	debug(buf);
-
 	if(i > 0)
 	{
 		for(++i; i < BT_BUF_SIZE; i++)

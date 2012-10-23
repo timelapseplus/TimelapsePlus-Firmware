@@ -30,6 +30,7 @@ volatile char IRremote(char key, char first);
 volatile char sysInfo(char key, char first);
 volatile char sysStatus(char key, char first);
 volatile char cableRelease(char key, char first);
+volatile char cableReleaseRemote(char key, char first);
 volatile char shutterTest(char key, char first);
 volatile char shutterLagTest(char key, char first);
 volatile char lcd_white(char key, char first);

@@ -58,9 +58,7 @@ uint8_t Remote::send(uint8_t id, uint8_t type)
 			return bt.sendDATA(id, type, (void *) &timer.status, sizeof(timer_status));
 		case REMOTE_PROGRAM:
 			return bt.sendDATA(id, type, (void *) &timer.current, sizeof(program));
-		case REMOTE_START:
-			return bt.sendDATA(id, type, 0, 0);
-		case REMOTE_STOP:
+		default:
 			return bt.sendDATA(id, type, 0, 0);
 	}
 	return 0;
@@ -109,6 +107,15 @@ void Remote::event()
 					if(bt.dataType == REMOTE_TYPE_REQUEST) send(timer.running ? REMOTE_START : REMOTE_STOP, REMOTE_TYPE_SEND);
 					if(bt.dataType == REMOTE_TYPE_SEND) running = 0;
 					if(bt.dataType == REMOTE_TYPE_SET) timerStop(FR_KEY, 1);
+					break;
+				case REMOTE_BULB_START:
+					if(bt.dataType == REMOTE_TYPE_SET) timer.bulbStart();
+					break;
+				case REMOTE_BULB_END:
+					if(bt.dataType == REMOTE_TYPE_SET) timer.bulbEnd();
+					break;
+				case REMOTE_CAPTURE:
+					if(bt.dataType == REMOTE_TYPE_SET) timer.capture();
 					break;
 				default:
 					return;

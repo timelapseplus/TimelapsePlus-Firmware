@@ -93,6 +93,7 @@ const menu_item menu_trigger[]PROGMEM =
 {
     { "Cable Remote", 'F', (void*)cableRelease, 0, (void*)&timerNotRunning },
     { "IR Remote   ", 'F', (void*)IRremote, 0, (void*)&timerNotRunning },
+    { "BT Remote   ", 'F', (void*)cableReleaseRemote, 0, (void*)&showRemoteStart },
     { "\0           ", 'V', 0, 0, 0 }
 };
 
@@ -184,16 +185,16 @@ const settings_item menu_settings_flashlight_time[]PROGMEM =
 
 const settings_item menu_settings_camera_fps[]PROGMEM =
 {
-    { "1 FPS       ", 101, (void*)STR_CAMERA_FPS },
-    { "2 FPS       ", 51, (void*)STR_CAMERA_FPS },
-    { "3 FPS       ", 34, (void*)STR_CAMERA_FPS },
-    { "4 FPS       ", 26, (void*)STR_CAMERA_FPS },
-    { "5 FPS       ", 21, (void*)STR_CAMERA_FPS },
-    { "6 FPS       ", 17, (void*)STR_CAMERA_FPS },
-    { "7 FPS       ", 15, (void*)STR_CAMERA_FPS },
-    { "8 FPS       ", 13, (void*)STR_CAMERA_FPS },
-    { "10 FPS      ", 11, (void*)STR_CAMERA_FPS },
-    { "12 FPS      ", 9, (void*)STR_CAMERA_FPS },
+    { "1 FPS       ", 100, (void*)STR_CAMERA_FPS },
+    { "2 FPS       ", 50, (void*)STR_CAMERA_FPS },
+    { "3 FPS       ", 33, (void*)STR_CAMERA_FPS },
+    { "4 FPS       ", 25, (void*)STR_CAMERA_FPS },
+    { "5 FPS       ", 20, (void*)STR_CAMERA_FPS },
+    { "6 FPS       ", 16, (void*)STR_CAMERA_FPS },
+    { "7 FPS       ", 14, (void*)STR_CAMERA_FPS },
+    { "8 FPS       ", 12, (void*)STR_CAMERA_FPS },
+    { "10 FPS      ", 10, (void*)STR_CAMERA_FPS },
+    { "12 FPS      ", 8, (void*)STR_CAMERA_FPS },
     { "\0           ", 0, 0 }
 };
 
