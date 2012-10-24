@@ -14,6 +14,8 @@
 #include "5110LCD.h"
 #include "IR.h"
 #include "shutter.h"
+#include "timelapseplus.h"
+#include "tlp_menu_functions.h"
 
 settings conf_eep EEMEM;
 volatile settings conf;
@@ -57,7 +59,7 @@ void settings_load()
 
 void settings_update()
 {
-    eeprom_write_block((const void*)&conf, &conf_eep, sizeof(settings));
+    settings_save();
     settings_load();
 }
 
@@ -71,7 +73,7 @@ void settings_update()
 void settings_init()
 {
     settings_load();
-    
+
     if(eeprom_read_byte((const uint8_t*)&conf_eep) == 255 || conf.settingsVersion != SETTINGS_VERSION)
     {
         timer.setDefault();

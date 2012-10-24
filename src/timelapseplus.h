@@ -8,9 +8,9 @@
  *
  */
 
-#define VERSION 20121023
+#define VERSION 20121024
 //#define PROTOTYPE
-#define PRODUCTION
+//#define PRODUCTION
 
 void setup(void);
 

@@ -1,3 +1,4 @@
+volatile char firmwareUpdated(char key, char first);
 volatile char timerRevert(char key, char first);
 volatile char timerSaveCurrent(char key, char first);
 volatile char timerSaveDefault(char key, char first);

@@ -311,7 +311,8 @@ void shutter::begin()
 char shutter::run()
 {
     char cancel = 0;
-    static uint8_t enter, photos, exps, run_state = RUN_DELAY, old_state = 255;
+    static uint8_t enter, exps, run_state = RUN_DELAY, old_state = 255;
+    static uint16_t photos;
     static uint32_t last_photo_ms, last_photo_end_ms;
 
     if(MIRROR_IS_DOWN)

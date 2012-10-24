@@ -66,6 +66,58 @@ extern Remote remote;
  *
  ******************************************************************/
 
+volatile char firmwareUpdated(char key, char first)
+{
+	if(first)
+	{
+		uint8_t l, c;
+		char* text;
+		char buf[6];
+
+		lcd.cls();
+		menu.setTitle(TEXT("FIRMWARE"));
+
+		lcd.writeStringTiny(13, 10, TEXT("Successfully"));
+		lcd.writeStringTiny(25, 16, TEXT("Updated"));
+
+		lcd.writeStringTiny(8, 28, TEXT("Version:"));
+		uint32_t version = VERSION;
+
+		l = 0;
+
+		while(version)
+		{
+			c = (char)(version % 10);
+			buf[0] = ((char)(c + '0'));
+			buf[1] = 0;
+			text = buf;
+			l += lcd.measureStringTiny(text) + 1;
+			lcd.writeStringTiny(75 - l, 28, text);
+
+			version -= (uint32_t)c;
+			version /= 10;
+		}
+		menu.setBar(TEXT("RETURN"), BLANK_STR);
+		lcd.update();
+	}
+
+	switch(key)
+	{
+	   case FL_KEY:
+	   case LEFT_KEY:
+		   return FN_CANCEL;
+	}
+
+	return FN_CONTINUE;
+}
+
+/******************************************************************
+ *
+ *   IRremote
+ *
+ *
+ ******************************************************************/
+
 volatile char IRremote(char key, char first)
 {
 	if(first)

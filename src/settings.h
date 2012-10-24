@@ -25,10 +25,7 @@ struct settings
     char flashlightOffTime;
     uint32_t settingsVersion;
     char devMode;
-    char test1;
-    char test2;
-    char test3;
-    char test4;
+    uint32_t firmwareVersion;
     char test5;
     char test6;
 };

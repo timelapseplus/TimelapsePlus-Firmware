@@ -162,8 +162,19 @@ int main()
 
 	setup();
 
-	if(battery_status() > 0)
-		hardware_off(); // If it was just plugged in, show the charging screen
+    if(conf.firmwareVersion != VERSION)
+    {
+        conf.firmwareVersion = VERSION;
+        settings_save();
+        menu.spawn((void*)firmwareUpdated);
+    }
+    else
+    {
+		if(battery_status() > 0)
+			hardware_off(); // If it was just plugged in, show the charging screen
+
+    }
+
 
 	timer.current.Keyframes = 1;
 	uint16_t count = 0;
