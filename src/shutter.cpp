@@ -337,6 +337,8 @@ char shutter::run()
         clock.tare();
         photos = 0;
         exps = 0;
+        current.infinitePhotos = current.Photos == 0 ? 1 : 0;
+        status.infinitePhotos = current.infinitePhotos;
         status.photosRemaining = current.Photos;
         status.photosTaken = 0;
         last_photo_end_ms = 0;
@@ -567,12 +569,20 @@ char shutter::run()
             run_state = RUN_PHOTO;
         }
         
-        if(photos >= current.Photos || (((current.Mode & TIMELAPSE) == 0) && photos >= 1))
+        if(current.infinitePhotos == 0)
         {
-            run_state = RUN_END;
+            if(photos >= current.Photos || (((current.Mode & TIMELAPSE) == 0) && photos >= 1))
+            {
+                run_state = RUN_END;
+            }
+
+            status.photosRemaining = current.Photos - photos;
+            status.photosTaken = photos;
         }
-        status.photosRemaining = current.Photos - photos;
-        status.photosTaken = photos;
+        else
+        {
+            run_state = RUN_DELAY;
+        }
     }
     
     if(run_state == RUN_GAP)

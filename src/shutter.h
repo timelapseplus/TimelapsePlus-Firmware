@@ -59,6 +59,7 @@ struct program
     unsigned int Bulb[10];    // 20 bytes
     unsigned int Key[10];     // 20 bytes
     unsigned int Keyframes;   // 2 bytes
+    char infinitePhotos;      // 1 byte  
 };
 
 struct timer_status
@@ -67,6 +68,7 @@ struct timer_status
     unsigned int photosTaken;
     unsigned int photosRemaining;
     unsigned int nextPhoto;
+    char infinitePhotos;
 };
 
 extern program stored[MAX_STORED]EEMEM;
