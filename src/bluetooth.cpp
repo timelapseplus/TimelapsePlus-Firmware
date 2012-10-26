@@ -44,6 +44,9 @@ uint8_t BT::init(void)
 	_delay_ms(100);
 	present = true;
 
+//	sendCMD(STR("ATRST\r")); // Reset module
+//	_delay_ms(200);
+
 	read(); // Flush buffer
 
 	sendCMD(STR("AT\r")); // Check connection
@@ -54,7 +57,11 @@ uint8_t BT::init(void)
 		return 0;
 	}
 
-	// Set Name //
+	sendCMD(STR("ATSDBLE,0,0\r")); // Default to Idle (don't advertise)
+
+	if(checkOK() == 0)
+		return 0;
+
 	sendCMD(STR("ATSN,Timelapse+\r")); // Set Name
 
 	if(checkOK() == 0)
@@ -69,6 +76,13 @@ uint8_t BT::init(void)
 
 	if(checkOK() == 0)
 		return 0;
+
+	sendCMD(STR("ATFC\r")); // Save configuration
+
+	if(checkOK() == 0)
+		return 0;
+
+	debug(STR("BT Init: Saved configuration\r\n"));
 
 	state = BT_ST_IDLE;
 	mode = BT_MODE_CMD;
@@ -161,6 +175,23 @@ uint8_t BT::cancel(void)
 	sendCMD(STR("ATDC\r"));
 
 	if(state != BT_ST_CONNECTED) state = BT_ST_IDLE;
+
+	return checkOK();
+}
+
+/******************************************************************
+ *
+ *   BT::advertise
+ *
+ *
+ ******************************************************************/
+
+uint8_t BT::advertise(void)
+{
+	if(!present)
+		return 1;
+
+	sendCMD(STR("ATDSLE\r"));
 
 	return checkOK();
 }
@@ -407,7 +438,7 @@ uint8_t BT::checkOK(void)
 
 	_delay_ms(50);
 	
-	for(uint8_t i = 0; i < 3; i++)
+	for(uint8_t i = 0; i < 4; i++)
 	{
 		read();
 		if(strncmp(buf, STR("OK"), 2) == 0)

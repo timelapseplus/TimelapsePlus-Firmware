@@ -1101,7 +1101,11 @@ volatile char btConnect(char key, char first)
 		sfirst = 0;
 
 		update = 1;
-		if(bt.state != BT_ST_CONNECTED) bt.scan();
+		if(bt.state != BT_ST_CONNECTED)
+		{
+			bt.advertise();
+			bt.scan();
+		}
 	}
 
 	switch(key)
@@ -1134,7 +1138,7 @@ volatile char btConnect(char key, char first)
 			debug(STR("done!\r\n"));
 			if(bt.state != BT_ST_CONNECTED) bt.scan();
 			break;
-		case BT_EVENT_DISCONNECT:
+		case BT_EVENT_DISCONNECT:		
 			bt.scan();
 			break;
 		default:

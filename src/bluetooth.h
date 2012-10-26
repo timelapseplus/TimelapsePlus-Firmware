@@ -58,6 +58,7 @@ public:
     uint8_t cancel(void);
     uint8_t cancelScan(void);
     uint8_t scan(void);
+    uint8_t advertise(void);
     uint8_t connect(char *address);
     uint8_t disconnect(void);
     uint8_t task(void);

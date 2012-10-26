@@ -18,6 +18,7 @@
 #include "clock.h"
 #include "timelapseplus.h"
 #include "tlp_menu_functions.h"
+#include "bluetooth.h"
 #include <LUFA/Common/Common.h>
 #include <LUFA/Drivers/USB/USB.h>
 #include <LUFA/Drivers/Peripheral/ADC.h>
@@ -33,6 +34,7 @@ extern LCD lcd;
 extern Button button;
 extern MENU menu;
 extern Clock clock;
+extern BT bt;
 
 uint16_t battery_low_charging EEMEM;
 uint16_t battery_high_charging EEMEM;
@@ -85,6 +87,10 @@ void hardware_off(void)
     {
         // If USB is used, detach from the bus
         USB_Detach();
+
+        // Shutdown bluetooth
+        bt.disconnect();
+        bt.sleep();
 
         // Disable all interrupts
         cli();

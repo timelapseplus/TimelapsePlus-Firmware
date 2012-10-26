@@ -131,6 +131,11 @@ void setup()
 	TWI_Master_Initialise();
 
 	bt.init();
+	if(!bt.present)
+	{
+		_delay_ms(100);
+		bt.init(); // give it one more try
+	}
 	bt.sleep();
 
 #ifdef PRODUCTION
