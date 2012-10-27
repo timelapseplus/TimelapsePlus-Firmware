@@ -308,7 +308,7 @@ int main()
 
 		uint8_t batteryRead = battery_read();
 
-		if(batteryRead != battery_percent)
+		if(batteryRead < battery_percent - 1 || batteryRead > battery_percent + 1 || batteryRead > 99)
 		{
 			battery_percent = batteryRead;
 
