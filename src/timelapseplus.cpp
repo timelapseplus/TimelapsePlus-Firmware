@@ -308,14 +308,11 @@ int main()
 
 		uint8_t batteryRead = battery_read();
 
-		if(batteryRead < battery_percent - 1 || batteryRead > battery_percent + 1 || batteryRead > 99)
+		if(batteryRead != battery_percent && (batteryRead < battery_percent - 1 || batteryRead > battery_percent + 1 || batteryRead > 99))
 		{
 			battery_percent = batteryRead;
 
-			if(remote.notifyBattery)
-			{
-				remote.send(REMOTE_BATTERY, REMOTE_TYPE_SEND);
-			}
+			if(remote.notifyBattery) remote.send(REMOTE_BATTERY, REMOTE_TYPE_SEND);
 		}
 	}
 }
