@@ -71,6 +71,7 @@ void Remote::event()
 	{
 		case BT_EVENT_DISCONNECT:
 			connected = 0;
+			notifyBattery = 0;
 			break;
 
 		case BT_EVENT_CONNECT:
@@ -98,6 +99,8 @@ void Remote::event()
 					if(bt.dataType == REMOTE_TYPE_REQUEST) send(bt.dataId, REMOTE_TYPE_SEND);
 					if(bt.dataType == REMOTE_TYPE_SEND) memcpy(&battery, bt.data, 1);
 					if(bt.dataType == REMOTE_TYPE_SET) memcpy(&battery, bt.data, 1);
+					if(bt.dataType == REMOTE_TYPE_NOTIFY_SET) notifyBattery = 1;
+					if(bt.dataType == REMOTE_TYPE_NOTIFY_UNSET) notifyBattery = 0;
 					break;
 				case REMOTE_START:
 					if(bt.dataType == REMOTE_TYPE_REQUEST) send(timer.running ? REMOTE_START : REMOTE_STOP, REMOTE_TYPE_SEND);

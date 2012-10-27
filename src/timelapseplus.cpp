@@ -306,7 +306,17 @@ int main()
 		clock.sleepOk = timerNotRunning && !timer.cableIsConnected() && bt.state != BT_ST_CONNECTED;
 		clock.sleep();
 
-		battery_percent = battery_read();
+		uint8_t batteryRead = battery_read();
+
+		if(batteryRead != battery_percent)
+		{
+			battery_percent = batteryRead;
+
+			if(remote.notifyBattery)
+			{
+				remote.send(REMOTE_BATTERY, REMOTE_TYPE_SEND);
+			}
+		}
 	}
 }
 

@@ -10,6 +10,8 @@
 #define REMOTE_TYPE_SEND 0
 #define REMOTE_TYPE_REQUEST 1
 #define REMOTE_TYPE_SET 2
+#define REMOTE_TYPE_NOTIFY_SET 3
+#define REMOTE_TYPE_NOTIFY_UNSET 4
 
 class Remote
 {
@@ -23,6 +25,8 @@ public:
     uint8_t connected;
     uint8_t running;
     uint8_t battery;
+
+    uint8_t notifyBattery;
 
     timer_status status;
     program current;
