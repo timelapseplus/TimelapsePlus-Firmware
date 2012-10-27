@@ -47,7 +47,7 @@ uint8_t BT::init(void)
 //	sendCMD(STR("ATRST\r")); // Reset module
 //	_delay_ms(200);
 
-	read(); // Flush buffer
+	while(read()); // Flush buffer
 
 	sendCMD(STR("AT\r")); // Check connection
 
