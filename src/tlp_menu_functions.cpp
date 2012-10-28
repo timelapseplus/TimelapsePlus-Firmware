@@ -720,13 +720,15 @@ volatile char timerStatusRemote(char key, char first)
 		lcd.cls();
 
 		if(toggle == 0)
-			remote.request(REMOTE_START);
-		else if(toggle == 1)
 			remote.request(REMOTE_BATTERY);
+		else if(toggle == 1)
+			remote.send(REMOTE_BATTERY, REMOTE_TYPE_NOTIFY_SET);
+		else if(toggle == 2)
+			remote.request(REMOTE_START);
 		else
 			remote.request(REMOTE_STATUS);
 
-		if(++toggle >= 10) toggle = 0;
+		if(++toggle >= 10) toggle = 2;
 
 		displayTimerStatus(1);
 
@@ -748,6 +750,8 @@ volatile char timerStatusRemote(char key, char first)
 		   
 	   case FL_KEY:
 	   case LEFT_KEY:
+		   remote.send(REMOTE_BATTERY, REMOTE_TYPE_NOTIFY_UNSET);
+		   toggle = 0;
 		   return FN_CANCEL;
 	}
 

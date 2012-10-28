@@ -54,7 +54,7 @@ uint8_t Remote::send(uint8_t id, uint8_t type)
 	switch(id)
 	{
 		case REMOTE_BATTERY:
-			return bt.sendDATA(id, type, (void *) &battery_percent, sizeof(uint8_t));
+			if(type < REMOTE_TYPE_NOTIFY_SET) return bt.sendDATA(id, type, (void *) &battery_percent, sizeof(uint8_t));
 		case REMOTE_STATUS:
 			return bt.sendDATA(id, type, (void *) &timer.status, sizeof(timer_status));
 		case REMOTE_PROGRAM:
