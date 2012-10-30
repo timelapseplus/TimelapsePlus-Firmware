@@ -156,7 +156,7 @@ void Clock::awake()
  *
  ******************************************************************/
 
-void Clock::sleep()
+void Clock::task()
 {
     if(!sleepOk)
     {

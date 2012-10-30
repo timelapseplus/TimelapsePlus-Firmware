@@ -44,7 +44,7 @@ MENU::MENU()
  *
  ******************************************************************/
 
-char MENU::run()
+void MENU::task()
 {
     char ret, key;
     static char first = 1;
@@ -189,7 +189,7 @@ char MENU::run()
         } 
     }
 
-    return key;
+    unusedKey = key;
 }
 
 

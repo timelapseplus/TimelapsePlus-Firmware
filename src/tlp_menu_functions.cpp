@@ -28,20 +28,20 @@
 #include "remote.h"
 #include "tlp_menu_functions.h"
 
-extern volatile uint8_t showGap;
-extern volatile uint8_t timerNotRunning ;
-extern volatile uint8_t modeHDR;
-extern volatile uint8_t modeTimelapse;
-extern volatile uint8_t modeStandard;
-extern volatile uint8_t modeRamp;
-extern volatile uint8_t modeRampKeyAdd;
-extern volatile uint8_t modeRampKeyDel;
-extern volatile uint8_t modeBulb;
-extern volatile uint8_t bulb1;
-extern volatile uint8_t bulb2;
-extern volatile uint8_t bulb3;
-extern volatile uint8_t bulb4;
-extern volatile uint8_t showRemoteStart;
+volatile uint8_t showGap = 0;
+volatile uint8_t timerNotRunning = 1;
+volatile uint8_t modeHDR = 0;
+volatile uint8_t modeTimelapse = 1;
+volatile uint8_t modeStandard = 1;
+volatile uint8_t modeRamp = 0;
+volatile uint8_t modeRampKeyAdd = 0;
+volatile uint8_t modeRampKeyDel = 0;
+volatile uint8_t modeBulb = 0;
+volatile uint8_t bulb1 = 0;
+volatile uint8_t bulb2 = 0;
+volatile uint8_t bulb3 = 0;
+volatile uint8_t bulb4 = 0;
+volatile uint8_t showRemoteStart = 0;
 
 extern uint8_t battery_percent;
 extern settings conf;
@@ -59,10 +59,37 @@ extern Remote remote;
 
 #include "Menu_Map.h"
 
+
+
 /******************************************************************
  *
  *   IRremote
  *
+ *
+ ******************************************************************/
+
+void updateConditions()
+{
+	if(timerNotRunning != !timer.running) menu.refresh();
+	timerNotRunning = !timer.running;
+	modeTimelapse = (timer.current.Mode & TIMELAPSE);
+	modeHDR = (timer.current.Mode & HDR);
+	modeStandard = (!modeHDR && !modeRamp);
+	modeRamp = (timer.current.Mode & RAMP);
+	modeRampKeyAdd = (modeRamp && (timer.current.Keyframes < MAX_KEYFRAMES));
+	modeRampKeyDel = (modeRamp && (timer.current.Keyframes > 1));
+	bulb1 = timer.current.Keyframes > 1 && modeRamp;
+	bulb2 = timer.current.Keyframes > 2 && modeRamp;
+	bulb3 = timer.current.Keyframes > 3 && modeRamp;
+	bulb4 = timer.current.Keyframes > 4 && modeRamp;
+	showGap = timer.current.Photos > 1 && modeTimelapse;
+	showRemoteStart = (remote.connected && !remote.running);	
+}
+
+/******************************************************************
+ *
+ *   firmwareUpdated
+ *	 - shown once after firmware version changes
  *
  ******************************************************************/
 

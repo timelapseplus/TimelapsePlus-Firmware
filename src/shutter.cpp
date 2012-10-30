@@ -308,7 +308,7 @@ void shutter::begin()
  *
  ******************************************************************/
 
-char shutter::run()
+char shutter::task()
 {
     char cancel = 0;
     static uint8_t enter, exps, run_state = RUN_DELAY, old_state = 255;
@@ -388,10 +388,6 @@ char shutter::run()
             }
         }
     }
-
-    debug(STR("MS: "));
-    debug((clock.Ms() - last_photo_end_ms) / 10);
-    debug_nl();
 
     if(run_state == RUN_PHOTO && (exps + photos == 0 || (uint8_t)((clock.Ms() - last_photo_end_ms) / 10) >= conf.cameraFPS))
     {
@@ -494,7 +490,7 @@ char shutter::run()
 
             if(current.Mode & HDR)
             {
-                uint32_t tmp = exps - (current.Exps >> 1);
+                uint32_t tmp = (exps - (current.Exps >> 1)) * current.Bracket;
                 bulb_length = (tmp < (2^32/2)) ? exp * (1 << tmp) : exp / (1 << (0 - tmp));
 
                 if(conf.devMode)

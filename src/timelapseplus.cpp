@@ -44,20 +44,20 @@ unsigned char I2C_Buf[4];
 
 char system_tested EEMEM;
 
-volatile uint8_t showGap = 0;
-volatile uint8_t timerNotRunning = 1;
-volatile uint8_t modeHDR = 0;
-volatile uint8_t modeTimelapse = 1;
-volatile uint8_t modeStandard = 1;
-volatile uint8_t modeRamp = 0;
-volatile uint8_t modeRampKeyAdd = 0;
-volatile uint8_t modeRampKeyDel = 0;
-volatile uint8_t modeBulb = 0;
-volatile uint8_t bulb1 = 0;
-volatile uint8_t bulb2 = 0;
-volatile uint8_t bulb3 = 0;
-volatile uint8_t bulb4 = 0;
-volatile uint8_t showRemoteStart = 0;
+extern volatile uint8_t showGap;
+extern volatile uint8_t timerNotRunning;
+extern volatile uint8_t modeHDR;
+extern volatile uint8_t modeTimelapse;
+extern volatile uint8_t modeStandard;
+extern volatile uint8_t modeRamp;
+extern volatile uint8_t modeRampKeyAdd;
+extern volatile uint8_t modeRampKeyDel;
+extern volatile uint8_t modeBulb;
+extern volatile uint8_t bulb1;
+extern volatile uint8_t bulb2;
+extern volatile uint8_t bulb3;
+extern volatile uint8_t bulb4;
+extern volatile uint8_t showRemoteStart;
 
 volatile uint8_t connectUSBcamera = 0;
 
@@ -163,8 +163,6 @@ void setup()
 
 int main()
 {
-	char key;
-
 	setup();
 
     if(conf.firmwareVersion != VERSION)
@@ -180,9 +178,12 @@ int main()
 
     }
 
-
 	timer.current.Keyframes = 1;
 	uint16_t count = 0;
+
+	/****************************
+	   Main Loop
+	*****************************/
 
 	for(;;)
 	{
@@ -190,45 +191,7 @@ int main()
 
 		wdt_reset();
 
-		if((hardware_USB_HostConnected || connectUSBcamera) && !hardware_USB_InHostMode)
-		{
-			USB_Detach();
-			USB_Disable();
-			hardware_USB_SetHostMode();
-			Camera_Enable();
-		}
-		else if((!hardware_USB_HostConnected && !connectUSBcamera) && hardware_USB_InHostMode)
-		{
-			Camera_Disable();
-			hardware_USB_SetDeviceMode();
-			VirtualSerial_Init();
-		}
-
-		if(hardware_USB_InHostMode)
-		{
-			Camera_Task();
-		}
-		else
-		{
-			VirtualSerial_Task();
-		}
-
-		if(timerNotRunning != !timer.running) menu.refresh();
-		timerNotRunning = !timer.running;
-		modeTimelapse = (timer.current.Mode & TIMELAPSE);
-		modeHDR = (timer.current.Mode & HDR);
-		modeStandard = (!modeHDR && !modeRamp);
-		modeRamp = (timer.current.Mode & RAMP);
-		modeRampKeyAdd = (modeRamp && (timer.current.Keyframes < MAX_KEYFRAMES));
-		modeRampKeyDel = (modeRamp && (timer.current.Keyframes > 1));
-		bulb1 = timer.current.Keyframes > 1 && modeRamp;
-		bulb2 = timer.current.Keyframes > 2 && modeRamp;
-		bulb3 = timer.current.Keyframes > 3 && modeRamp;
-		bulb4 = timer.current.Keyframes > 4 && modeRamp;
-		showGap = timer.current.Photos > 1 && modeTimelapse;
-		showRemoteStart = (remote.connected && !remote.running);
-
-		if(VirtualSerial_CharWaiting()) // Process USB Commands from PC
+		if(VirtualSerial_CharWaiting()) // Process USB Commands from PC (needs to be moved to sub-module)
 		{
 			char c = VirtualSerial_GetChar();
 
@@ -273,7 +236,29 @@ int main()
 			}
 		}
 
-		switch(bt.task())
+
+		/****************************
+		   Tasks
+		*****************************/
+
+		updateConditions();
+		bt.task();
+		menu.task();
+		timer.task();
+		clock.task();
+
+		if(hardware_USB_InHostMode)
+			Camera_Task();
+		else
+			VirtualSerial_Task();
+
+
+		/****************************
+		   Events / Notifications
+		*****************************/
+		
+
+		switch(bt.event)
 		{
 			case BT_EVENT_CONNECT:
 				menu.message(TEXT("Connected!"));
@@ -288,23 +273,10 @@ int main()
 				break;
 		}
 
-		key = menu.run();
-		timer.run();
-
-		if(key == FR_KEY)
-		{
-			if(hardware_flashlightIsOn())
-			{
-				hardware_flashlight(0);
-			}
-			else
-			{
-				hardware_flashlight(1);
-			}
-		}
+		if(menu.unusedKey == FR_KEY)
+			hardware_flashlight_toggle();
 
 		clock.sleepOk = timerNotRunning && !timer.cableIsConnected() && bt.state != BT_ST_CONNECTED;
-		clock.sleep();
 
 		uint8_t batteryRead = battery_read();
 
@@ -314,6 +286,21 @@ int main()
 
 			if(remote.notifyBattery) remote.send(REMOTE_BATTERY, REMOTE_TYPE_SEND);
 		}
+
+		if((hardware_USB_HostConnected || connectUSBcamera) && !hardware_USB_InHostMode)
+		{
+			USB_Detach();
+			USB_Disable();
+			hardware_USB_SetHostMode();
+			Camera_Enable();
+		}
+		else if((!hardware_USB_HostConnected && !connectUSBcamera) && hardware_USB_InHostMode)
+		{
+			Camera_Disable();
+			hardware_USB_SetDeviceMode();
+			VirtualSerial_Init();
+		}
+
 	}
 }
 

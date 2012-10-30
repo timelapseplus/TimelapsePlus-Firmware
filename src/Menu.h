@@ -56,7 +56,7 @@ public:
     MENU();
     LCD *lcd;
     Button *button;
-    char run();
+    void task();
     void init(menu_item *newmenu);
     void click();
     void spawn(void *function);
@@ -75,6 +75,8 @@ public:
     char *menuName(char *str);
     void message(char *m);
     void push();
+
+    uint8_t unusedKey;
 
 private:
     void menu_push(void *menu_addr, char selection);

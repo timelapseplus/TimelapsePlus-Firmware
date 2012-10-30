@@ -22,7 +22,7 @@ public:
     void reset();
     void tare();
     void awake();
-    void sleep();
+    void task();
     char slept();
     uint32_t eventMs();
     uint32_t event_ms;

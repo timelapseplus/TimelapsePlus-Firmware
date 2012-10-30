@@ -78,7 +78,7 @@ class shutter
 public:
     shutter();
     void begin(void);
-    char run(void);
+    char task(void);
     void save(char id);
     void load(char id);
     void setDefault(void);

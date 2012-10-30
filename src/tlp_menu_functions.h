@@ -30,3 +30,4 @@ volatile char shutter_removeKeyframe(char key, char first);
 volatile char shutter_saveAs(char key, char first);
 volatile char shutter_load(char key, char first);
 void int_to_str(uint16_t n, char buf[6]);
+void updateConditions();

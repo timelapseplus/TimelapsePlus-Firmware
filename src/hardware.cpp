@@ -147,6 +147,25 @@ char hardware_flashlightIsOn()
 
 /******************************************************************
  *
+ *   hardware_flashlight_toggle
+ *
+ *
+ ******************************************************************/
+
+void hardware_flashlight_toggle()
+{
+    if(hardware_flashlightIsOn())
+    {
+        hardware_flashlight(0);
+    }
+    else
+    {
+        hardware_flashlight(1);
+    }
+}
+
+/******************************************************************
+ *
  *   hardware_freeMemory
  *
  *
