@@ -847,6 +847,8 @@ char MENU::editNumber(char key, unsigned int *n, char *name, char *unit, char mo
            case 'T':
                if(i % 2) 
                    t = 5;
+               else
+                   t = 9;
                break;
                
            default:

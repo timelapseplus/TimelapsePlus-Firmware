@@ -8,7 +8,7 @@
  *
  */
 
-const char STR_TIME[]PROGMEM = "hh:mm:ss";
+const char STR_TIME[]PROGMEM = "h:mm:ss";
 const char STR_PHOTOS[]PROGMEM = "0 for inf.";
 const char STR_TIME_TENTHS[]PROGMEM = "mm:ss.s";
 const char STR_EEPROM[]PROGMEM = "EEPROM data";
