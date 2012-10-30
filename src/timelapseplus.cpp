@@ -278,11 +278,8 @@ int main()
 
 		clock.sleepOk = timerNotRunning && !timer.cableIsConnected() && bt.state != BT_ST_CONNECTED;
 
-		static uint32_t startTime = 0;
-
-		if(clock.Ms() > startTime + 60000)
+		if(clock.seconds % 60 == 0)
 		{
-			startTime = clock.Ms();
 			uint8_t batteryRead = battery_read();
 
 			if(batteryRead != battery_percent)
