@@ -1158,7 +1158,7 @@ char MENU::editSelect(char key, char *n, void *settingslist, char *name, char fi
 char MENU::editText(char key, char text[MENU_NAME_LEN], char *name, char first)
 {
     static uint8_t i;
-    uint8_t c, ch;
+    uint8_t c;
 
     if(first)
     {
@@ -1220,12 +1220,10 @@ char MENU::editText(char key, char text[MENU_NAME_LEN], char *name, char first)
         
         for(c = 0; c < MENU_NAME_LEN - 2; c++) // Write menu item text //
         {
-            ch = text[c];
-
-            if(ch < 'A' || ch > 'Z') 
-                ch = ' ';
+            if(text[c] < 'A' || text[c] > 'Z') 
+                text[c] = ' ';
             
-            lcd->writeChar(3 + c * 7, 15, ch);
+            lcd->writeChar(3 + c * 7, 15, text[c]);
 
             if(c == i) 
                 lcd->drawHighlight(3 + c * 7, 14, 3 + c * 7 + 6, 15 + 7);

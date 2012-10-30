@@ -63,7 +63,7 @@ extern Remote remote;
 
 /******************************************************************
  *
- *   IRremote
+ *   updateConditions
  *
  *
  ******************************************************************/
@@ -1567,9 +1567,11 @@ volatile char shutter_load(char key, char first)
 
 			for(c = 0; c < MENU_NAME_LEN - 1; c++) // Write settings item text //
 			{
-				if(i >= menuScroll && i <= menuScroll + 4)
+				if(i >= menuScroll && i <= menuScroll + 5)
 				{
 					ch = eeprom_read_byte((uint8_t*)&stored[i - 1].Name[c]);
+
+					if(ch == 0) break;
 
 					if(ch < 'A' || ch > 'Z')
 						ch = ' ';
