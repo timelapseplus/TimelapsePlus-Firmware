@@ -278,19 +278,13 @@ int main()
 
 		clock.sleepOk = timerNotRunning && !timer.cableIsConnected() && bt.state != BT_ST_CONNECTED;
 
-		static uint32_t startTime = 0;
+		uint8_t batteryRead = battery_read();
 
-		if(clock.Ms() > startTime + 60000)
+		if(batteryRead != battery_percent && (batteryRead < battery_percent - 1 || batteryRead > battery_percent + 1 || batteryRead > 99))
 		{
-			startTime = clock.Ms();
-			uint8_t batteryRead = battery_read();
+			battery_percent = batteryRead;
 
-			if(batteryRead != battery_percent)
-			{
-				battery_percent = batteryRead;
-
-				if(remote.notifyBattery) remote.send(REMOTE_BATTERY, REMOTE_TYPE_SEND);
-			}
+			if(remote.notifyBattery) remote.send(REMOTE_BATTERY, REMOTE_TYPE_SEND);
 		}
 
 		if((hardware_USB_HostConnected || connectUSBcamera) && !hardware_USB_InHostMode)
