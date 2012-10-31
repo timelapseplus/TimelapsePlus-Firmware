@@ -139,17 +139,17 @@ void setup()
 	bt.sleep();
 
 #ifdef PRODUCTION
-	//eeprom_write_byte((uint8_t *) &system_tested, 0x01);
-
 	// Check to see if system has passed self-test
 	if(eeprom_read_byte((const uint8_t*)&system_tested) == 0xFF || eeprom_read_byte((const uint8_t*)&system_tested) == 0x00 || button.get() == RIGHT_KEY)
 	{
-		if(test())
+		if(test()) // Run self-test (requires connection to test station)
 		{
+			// Test passed
 			eeprom_write_byte((uint8_t*)&system_tested, 0x01);
 		}
+		// Reboot
 		wdt_enable(WDTO_8S);
-		for(;;) ;
+		for(;;);
 	}
 #endif
 }
