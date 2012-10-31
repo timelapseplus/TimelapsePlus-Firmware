@@ -91,7 +91,7 @@ volatile void Clock::count()
 {
     ms++;
     event_ms++;
-    
+
     if(ms >= 1000)
     {
         ms = 0;
@@ -99,6 +99,30 @@ volatile void Clock::count()
         sleep_time++;
         light_time++;
         flashlight_time++;
+    }
+    if(inTime > 0)
+    {
+        inTime--;
+        if(inTime <= 0)
+        {
+            (*inFunction)();
+        }
+    }
+    if(newJob)
+    {
+        (*jobStart)();
+        newJob = 0;
+        jobRunning = 1;
+    }
+    else if(jobRunning)
+    {
+        jobDuration--;
+        if(jobDuration <= 0)
+        {
+            (*jobComplete)();
+            jobRunning = 0;
+        }
+
     }
 }
 
@@ -114,6 +138,8 @@ void Clock::reset()
     event_ms = 0;
     seconds = 0;
     ms = 0;
+    jobRunning = 0;
+    newJob = 0;
 }
 
 /******************************************************************
@@ -243,7 +269,7 @@ uint32_t Clock::Seconds()
  *
  ******************************************************************/
 
-char Clock::slept()
+uint8_t Clock::slept()
 {
     char tmp;
     
@@ -251,6 +277,35 @@ char Clock::slept()
     wasSleeping = 0;
     
     return tmp;
+}
+
+/******************************************************************
+ *
+ *   Clock::job
+ *
+ *
+ ******************************************************************/
+
+void Clock::job(void (*startFunction)(), void (*endFunction)(), uint32_t duration)
+{
+    jobRunning = 1;
+    jobStart = startFunction;
+    jobComplete = endFunction;
+    jobDuration = duration;
+    newJob = 1;
+}
+
+/******************************************************************
+ *
+ *   Clock::in
+ *
+ *
+ ******************************************************************/
+
+void Clock::in(uint16_t stime, void (*func)())
+{
+    inFunction = func;   
+    inTime = stime;
 }
 
 /******************************************************************

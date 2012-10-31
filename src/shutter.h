@@ -101,8 +101,20 @@ public:
     volatile uint16_t length; // in Seconds
 
 private:
-    volatile char cable_connected; // 1 = cable connected, 0 = disconnected
     double test;
 };
+
+void check_cable();
+void shutter_off(void);
+void shutter_half(void);
+void shutter_full(void);
+void shutter_bulbEnd(void);
+void shutter_bulbStart(void);
+//void shutter_capture(void);
+
+
+
+
+
 #endif
 

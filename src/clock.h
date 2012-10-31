@@ -23,23 +23,37 @@ public:
     void tare();
     void awake();
     void task();
-    char slept();
+    uint8_t slept();
     uint32_t eventMs();
     uint32_t event_ms;
     uint32_t seconds;
     uint16_t ms;
     uint32_t Seconds();
     uint32_t Ms();
-    char sleepOk;
-    char sleeping;
+    uint8_t sleepOk;
+    uint8_t sleeping;
+
+    uint8_t jobRunning;
+
+    void job(void (*startFunction)(), void (*endFunction)(), uint32_t duration);
+    void in(uint16_t stime, void (*func)());
 
 private:
-    char sleepWasOk;
+    void (*jobStart)();
+    void (*jobComplete)();
+    uint32_t jobDuration;
+    uint8_t newJob;
+
+    uint16_t inTime;
+    void (*inFunction)();
+
+    uint8_t sleepWasOk;
     uint16_t light_time;
     uint16_t sleep_time;
     uint16_t flashlight_time;
-    char wasSleeping;
-    unsigned char backlightVal;
+    uint8_t wasSleeping;
+    uint8_t backlightVal;
 };
 
 void wakeupFunction();
+void Clock_count();

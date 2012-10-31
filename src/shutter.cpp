@@ -26,6 +26,7 @@
 #include "debug.h"
 #include "math.h"
 #include "settings.h"
+#include "timelapseplus.h"
 
 #define DEBUG
 
@@ -39,11 +40,13 @@
 extern IR ir;
 
 extern settings conf;
+extern shutter timer;
 
 extern Clock clock;
 volatile unsigned char state;
 const uint16_t settings_warn_time = 0;
 const uint16_t settings_mirror_up_time = 1;
+volatile char cable_connected; // 1 = cable connected, 0 = disconnected
 
 char shutter_state, ir_shutter_state; // used only for momentary toggle mode //
 
@@ -103,16 +106,18 @@ void shutter::setDefault()
  *
  *
  ******************************************************************/
-
 void shutter::off(void)
+{
+    shutter_off();
+}
+void shutter_off(void)
 {
     if(conf.devMode) 
         hardware_flashlight(0);
     
     SHUTTER_CLOSE;
     MIRROR_DOWN; 
-    _delay_ms(50); 
-    CHECK_CABLE;
+    clock.in(50, &check_cable);
     ir_shutter_state = 0;
     shutter_state = 0;
 }
@@ -125,6 +130,10 @@ void shutter::off(void)
  ******************************************************************/
 
 void shutter::half(void)
+{
+    shutter_half();
+}
+void shutter_half(void)
 {
     if(conf.devMode) 
         hardware_flashlight(0);
@@ -142,6 +151,10 @@ void shutter::half(void)
 
 void shutter::full(void)
 {
+    shutter_full();
+}
+void shutter_full(void)
+{
     if(conf.devMode) 
         hardware_flashlight(1);
     
@@ -158,6 +171,10 @@ void shutter::full(void)
 
 void shutter::bulbStart(void)
 {
+    shutter_bulbStart();
+}
+void shutter_bulbStart(void)
+{
     if(cable_connected == 0 && ir_shutter_state != 1)
     {
         ir_shutter_state = 1;
@@ -166,14 +183,13 @@ void shutter::bulbStart(void)
     } 
     if(conf.bulbMode == 0)
     {
-        full();
+        shutter_full();
     } 
     else if(conf.bulbMode == 1 && shutter_state != 1)
     {
-        full();
+        shutter_full();
         shutter_state = 1;
-        _delay_ms(75);
-        half();
+        clock.in(75, &shutter_half);
     }
 }
 
@@ -186,6 +202,10 @@ void shutter::bulbStart(void)
 
 void shutter::bulbEnd(void)
 {
+    shutter_bulbEnd();
+}
+void shutter_bulbEnd(void)
+{
     if(cable_connected == 0 && ir_shutter_state == 1)
     {
         ir_shutter_state = 0;
@@ -194,14 +214,13 @@ void shutter::bulbEnd(void)
     } 
     if(conf.bulbMode == 0)
     {
-        off();
+        shutter_off();
     }
     else if(conf.bulbMode == 1 && shutter_state == 1)
     {
-        full();
+        shutter_full();
         shutter_state = 0;
-        _delay_ms(75);
-        off();
+        clock.in(75, &shutter_off);
     }
 }
 
@@ -219,9 +238,9 @@ void shutter::capture(void)
         ir.shutterNow();
 //        ir.shutterDelayed();
     } 
-    full();
+    shutter_full();
     _delay_ms(75);
-    off();
+    shutter_off();
     ir_shutter_state = 0;
     shutter_state = 0;
 }
@@ -378,7 +397,7 @@ char shutter::task()
             if(((unsigned long)clock.event_ms / 1000) + settings_mirror_up_time >= current.Delay)
             {
                 // Mirror Up //
-                half();
+                shutter_half();
             }
 
             if((settings_warn_time > 0) && (((unsigned long)clock.event_ms / 1000) + settings_warn_time >= current.Delay))
@@ -413,7 +432,7 @@ char shutter::task()
             capture();
             
             if(current.Gap <= settings_mirror_up_time) 
-                half(); // Mirror Up //
+                shutter_half(); // Mirror Up //
 
             run_state = RUN_NEXT;
         }
@@ -421,25 +440,19 @@ char shutter::task()
     
     if(run_state == RUN_BULB)
     {
+        static uint32_t bulb_length, exp;
+
         if(old_state != run_state)
         {
+            old_state = run_state;
+
             if(conf.devMode)
             {
                 debug(STR("State: RUN_BULB"));
                 debug_nl();
             }
             strcpy((char *) status.textStatus, TEXT("Bulb"));
-            old_state = run_state;
-        }
 
-        bulbStart();
-        
-        static uint8_t calc = true;
-        static uint32_t bulb_length, exp;
-
-        if(calc)
-        {
-            calc = false;
             exp = current.Exp * 100;
 
             if(current.Mode & RAMP)
@@ -523,17 +536,17 @@ char shutter::task()
                 }
                 bulb_length = exp;
             }
+
+            clock.job(&shutter_bulbStart, &shutter_bulbEnd, bulb_length);
         }
-        
-        if(((unsigned long)clock.eventMs()) >= bulb_length)
+        else if(!clock.jobRunning)
         {
-            calc = true;
             exps++;
-            bulbEnd();
+
             _delay_ms(50);
 
             if(current.Gap <= settings_mirror_up_time) 
-                half(); // Mirror Up //
+                shutter_half(); // Mirror Up //
 
             run_state = RUN_NEXT;
         }
@@ -607,7 +620,7 @@ char shutter::task()
             if((cms - last_photo_ms) / 100 + (uint32_t)settings_mirror_up_time * 10 >= current.Gap)
             {
                 // Mirror Up //
-                half();
+                shutter_half();
             }
 /*			if((settings_warn_time > 0) && ((cms - last_photo_ms) + (uint32_t)settings_warn_time * 1000 >= current.Gap * 100))
             {
@@ -633,7 +646,7 @@ char shutter::task()
 
         enter = 0;
         running = 0;
-        off();
+        shutter_off();
 
         return DONE;
     }
@@ -649,4 +662,11 @@ char shutter::task()
 
     return CONTINUE;
 }
+
+void check_cable()
+{
+    CHECK_CABLE;
+}
+
+
 
