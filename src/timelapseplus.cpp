@@ -276,8 +276,6 @@ int main()
 		if(menu.unusedKey == FR_KEY)
 			hardware_flashlight_toggle();
 
-		clock.sleepOk = timerNotRunning && !timer.cableIsConnected() && bt.state != BT_ST_CONNECTED;
-
 		static uint32_t startTime = 0;
 
 		if(clock.Ms() > startTime + 60000)
