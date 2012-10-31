@@ -242,10 +242,10 @@ int main()
 		*****************************/
 
 		updateConditions();
-		bt.task();
 		menu.task();
 		timer.task();
 		clock.task();
+		bt.task();
 
 		if(hardware_USB_InHostMode)
 			Camera_Task();
