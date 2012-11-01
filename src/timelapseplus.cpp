@@ -163,6 +163,10 @@ void setup()
 
 int main()
 {
+	/****************************
+	   Initialization
+	*****************************/
+
 	setup();
 
     if(conf.firmwareVersion != VERSION)
@@ -187,8 +191,6 @@ int main()
 
 	for(;;)
 	{
-		count++;
-
 		wdt_reset();
 
 		if(VirtualSerial_CharWaiting()) // Process USB Commands from PC (needs to be moved to sub-module)
@@ -257,6 +259,7 @@ int main()
 		   Events / Notifications
 		*****************************/
 		
+		count++;
 
 		switch(bt.event)
 		{
@@ -280,6 +283,10 @@ int main()
 
 		if(clock.Ms() > startTime + 60000)
 		{
+			debug(count);
+			debug_nl();
+			count = 0;
+
 			startTime = clock.Ms();
 			uint8_t batteryRead = battery_read();
 

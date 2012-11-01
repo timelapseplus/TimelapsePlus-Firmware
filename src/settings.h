@@ -32,6 +32,7 @@ struct settings
 
 void settings_load(void);
 void settings_save(void);
+void settings_default(void);
 void settings_update(void);
 void settings_init(void);
 

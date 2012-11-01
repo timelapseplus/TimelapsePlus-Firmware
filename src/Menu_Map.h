@@ -108,12 +108,12 @@ const menu_item menu_development[]PROGMEM =
 {
     { "Shutter Test", 'F', (void*)shutterTest, 0, (void*)&timerNotRunning },
     { "Shutter Lag ", 'F', (void*)shutterLagTest, 0, (void*)&timerNotRunning },
-//    { "IR Test     ", 'F', (void*)IRremote, 0, (void*)&timerNotRunning },
 //    { "4 Hour Light", 'F', (void*)lightTest, 0, (void*)&timerNotRunning },
     { "Sys Status  ", 'F', (void*)sysStatus, 0, 0 },
     { "Battery     ", 'F', (void*)batteryStatus, 0, 0 },
     { "Light Meter ", 'F', (void*)lightMeter, 0, 0 },
-    { "Power Off   ", 'F', (void*)hardware_off, 0, 0 },
+    { "Reset All   ", 'F', (void*)factoryReset, 0, 0 },
+    { "DFU Mode    ", 'F', (void*)hardware_bootloader, 0, 0 },
     { "\0           ", 'V', 0, 0, 0 }
 };
 

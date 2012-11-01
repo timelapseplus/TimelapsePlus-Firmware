@@ -65,6 +65,31 @@ void settings_update()
 
 /******************************************************************
  *
+ *   settings_default
+ *      restores factory defaults
+ *
+ ******************************************************************/
+
+void settings_default()
+{
+    timer.setDefault();
+    strcpy((char*)conf.sysName, "sys01");
+    conf.warnTime = 2;
+    conf.mirrorTime = 2;
+    conf.cameraFPS = 34;
+    conf.bulbMode = 0;
+    conf.lcdColor = 0;
+    conf.cameraMake = CANON;
+    conf.settingsVersion = SETTINGS_VERSION;
+    conf.lcdBacklightTime = 3;
+    conf.sysOffTime = 12;
+    conf.flashlightOffTime = 3;
+    settings_save();
+    settings_load();
+}
+
+/******************************************************************
+ *
  *   settings_init
  *
  *
@@ -76,23 +101,9 @@ void settings_init()
 
     if(eeprom_read_byte((const uint8_t*)&conf_eep) == 255 || conf.settingsVersion != SETTINGS_VERSION)
     {
-        timer.setDefault();
-        strcpy((char*)conf.sysName, "sys01");
-        conf.warnTime = 2;
-        conf.mirrorTime = 2;
-        conf.cameraFPS = 34;
-        conf.bulbMode = 0;
-        conf.lcdColor = 0;
-        conf.cameraMake = CANON;
-        conf.settingsVersion = SETTINGS_VERSION;
-        conf.lcdBacklightTime = 3;
-        conf.sysOffTime = 12;
-        conf.flashlightOffTime = 3;
-        settings_save();
+        settings_default();
 
         // This is where we'd put a setup wizard
     }
-    
-    settings_load();
 }
 

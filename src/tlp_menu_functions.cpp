@@ -490,6 +490,39 @@ volatile char memoryFree(char key, char first)
 
 /******************************************************************
  *
+ *   factoryReset
+ *
+ *
+ ******************************************************************/
+
+volatile char factoryReset(char key, char first)
+{
+	if(first)
+	{
+		lcd.cls();
+		lcd.writeString(14, 12, TEXT("Reset all"));
+		lcd.writeString(14, 22, TEXT("settings?"));
+		menu.setTitle(TEXT("Reset"));
+		menu.setBar(TEXT("CANCEL"), TEXT("RESET"));
+		lcd.update();
+	}
+
+	switch(key)
+	{
+	   case FL_KEY:
+		    return FN_CANCEL;
+
+	   case FR_KEY:
+	   		settings_default();
+	   		menu.message(TEXT("Factory Reset"));
+		    return FN_CANCEL;
+	}
+
+	return FN_CONTINUE;
+}
+
+/******************************************************************
+ *
  *   viewSeconds
  *
  *
