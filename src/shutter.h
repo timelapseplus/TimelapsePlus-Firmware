@@ -21,6 +21,7 @@
 
 #define MODE_TIMELAPSE (TIMELAPSE)
 #define MODE_HDR_TIMELAPSE (HDR | TIMELAPSE)
+#define MODE_BULB_PHOTO 0
 #define MODE_HDR_PHOTO (HDR)
 #define MODE_BULB_RAMP (RAMP | TIMELAPSE)
 #define MODE_HDR_RAMP (RAMP | HDR | TIMELAPSE)
@@ -49,11 +50,11 @@
 struct program
 {
     char Name[12];            // 12 bytes
+    unsigned int Mode;        // 2 bytes
     unsigned int Delay;       // 2 bytes
     unsigned int Photos;      // 2 bytes
     unsigned int Gap;         // 2 bytes
     unsigned int Exps;        // 2 bytes
-    unsigned int Mode;        // 2 bytes
     unsigned int Exp;         // 2 bytes
     unsigned int Bracket;     // 2 bytes
     unsigned int Bulb[10];    // 20 bytes
@@ -65,6 +66,7 @@ struct program
 struct timer_status
 {
     char textStatus[12];
+    uint8_t mode;
     unsigned int photosTaken;
     unsigned int photosRemaining;
     unsigned int nextPhoto;
@@ -107,6 +109,7 @@ private:
 void check_cable();
 void shutter_off(void);
 void shutter_half(void);
+void shutter_half_delayed(void);
 void shutter_full(void);
 void shutter_bulbEnd(void);
 void shutter_bulbStart(void);

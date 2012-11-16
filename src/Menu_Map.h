@@ -44,6 +44,7 @@ const menu_item menu_options[]PROGMEM =
 const char STR_TIMELAPSE[]PROGMEM = "Basic Timelapse";
 const char STR_HDR_TIMELAPSE[]PROGMEM = "HDR Timelapse";
 const char STR_HDR_PHOTO[]PROGMEM = "Single HDR Image";
+const char STR_BULB_PHOTO[]PROGMEM = "Long Bulb Exposure";
 const char STR_BULB_RAMP[]PROGMEM = "Ramp exposure";
 const char STR_AUTO_RAMP[]PROGMEM = "Auto Ramp w/meter";
 const char STR_HDR_RAMP[]PROGMEM = "Ramp HDR exp";
@@ -60,6 +61,7 @@ const settings_item settings_timer_mode[]PROGMEM =
     { "Time-lapse  ", MODE_TIMELAPSE, (void*)STR_TIMELAPSE },
     { "HDR T-lapse ", MODE_HDR_TIMELAPSE, (void*)STR_HDR_TIMELAPSE },
     { "HDR Photo   ", MODE_HDR_PHOTO, (void*)STR_HDR_PHOTO },
+    { "Bulb Photo  ", MODE_BULB_PHOTO, (void*)STR_BULB_PHOTO },
     { "Bulb-ramp   ", MODE_BULB_RAMP, (void*)STR_BULB_RAMP },
 //  {"Auto-ramp   ", MODE_AUTO_RAMP, (void *) STR_AUTO_RAMP},
 //  {"HDR Ramp    ", MODE_HDR_RAMP, (void *) STR_HDR_RAMP},

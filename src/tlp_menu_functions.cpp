@@ -851,33 +851,36 @@ void displayTimerStatus(uint8_t remote_system)
 
 	if(l)
 	{
-		val = stat.photosTaken;
-		int_to_str(val, buf);
-		text = buf;
-		l = lcd.measureStringTiny(text);
-		lcd.writeStringTiny(80 - l, 6 + SY, text);
-		lcd.writeStringTiny(3, 6 + SY, TEXT("Photos:"));
-
-		val = stat.photosRemaining;
-		if(stat.infinitePhotos == 0)
+		if(stat.mode & TIMELAPSE)
 		{
+			val = stat.photosTaken;
 			int_to_str(val, buf);
 			text = buf;
 			l = lcd.measureStringTiny(text);
-			lcd.writeStringTiny(80 - l, 12 + SY, text);
-			lcd.writeStringTiny(3, 12 + SY, TEXT("Photos rem:"));
-		}
-		else
-		{
-			lcd.writeStringTiny(3, 12 + SY, TEXT("Infinite Photos"));
-		}
+			lcd.writeStringTiny(80 - l, 6 + SY, text);
+			lcd.writeStringTiny(3, 6 + SY, TEXT("Photos:"));
 
-		val = stat.nextPhoto;
-		int_to_str(val, buf);
-		text = buf;
-		l = lcd.measureStringTiny(text);
-		lcd.writeStringTiny(80 - l, 18 + SY, text);
-		lcd.writeStringTiny(3, 18 + SY, TEXT("Next Photo:"));
+			val = stat.photosRemaining;
+			if(stat.infinitePhotos == 0)
+			{
+				int_to_str(val, buf);
+				text = buf;
+				l = lcd.measureStringTiny(text);
+				lcd.writeStringTiny(80 - l, 12 + SY, text);
+				lcd.writeStringTiny(3, 12 + SY, TEXT("Photos rem:"));
+			}
+			else
+			{
+				lcd.writeStringTiny(3, 12 + SY, TEXT("Infinite Photos"));
+			}
+
+			val = stat.nextPhoto;
+			int_to_str(val, buf);
+			text = buf;
+			l = lcd.measureStringTiny(text);
+			lcd.writeStringTiny(80 - l, 18 + SY, text);
+			lcd.writeStringTiny(3, 18 + SY, TEXT("Next Photo:"));
+		}
 	}
 	
 	text = stat.textStatus;

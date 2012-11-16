@@ -106,6 +106,7 @@ void shutter::setDefault()
  *
  *
  ******************************************************************/
+
 void shutter::off(void)
 {
     shutter_off();
@@ -117,7 +118,7 @@ void shutter_off(void)
     
     SHUTTER_CLOSE;
     MIRROR_DOWN; 
-    clock.in(50, &check_cable);
+    clock.in(20, &check_cable);
     ir_shutter_state = 0;
     shutter_state = 0;
 }
@@ -134,6 +135,11 @@ void shutter::half(void)
     shutter_half();
 }
 void shutter_half(void)
+{
+    shutter_off(); // first we completely release the shutter button since some cameras need this to release the bulb
+    clock.in(30, &shutter_half_delayed);
+}
+void shutter_half_delayed(void)
 {
     if(conf.devMode) 
         hardware_flashlight(0);
@@ -178,8 +184,7 @@ void shutter_bulbStart(void)
     if(cable_connected == 0 && ir_shutter_state != 1)
     {
         ir_shutter_state = 1;
-        ir.shutterNow();
-//        ir.shutterDelayed();
+        ir.bulbStart();
     } 
     if(conf.bulbMode == 0)
     {
@@ -209,8 +214,7 @@ void shutter_bulbEnd(void)
     if(cable_connected == 0 && ir_shutter_state == 1)
     {
         ir_shutter_state = 0;
-        ir.shutterNow();
-//        ir.shutterDelayed();
+        ir.bulbEnd();
     } 
     if(conf.bulbMode == 0)
     {
@@ -236,7 +240,6 @@ void shutter::capture(void)
     if(cable_connected == 0)
     {
         ir.shutterNow();
-//        ir.shutterDelayed();
     } 
     shutter_full();
     _delay_ms(75);
@@ -360,6 +363,7 @@ char shutter::task()
         status.infinitePhotos = current.infinitePhotos;
         status.photosRemaining = current.Photos;
         status.photosTaken = 0;
+        status.mode = (uint8_t) current.Mode;
         last_photo_end_ms = 0;
         last_photo_ms = 0;
 

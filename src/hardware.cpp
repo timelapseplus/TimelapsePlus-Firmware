@@ -11,13 +11,16 @@
 #include <avr/io.h>
 #include <avr/wdt.h>
 #include <util/delay.h>
+#include <avr/eeprom.h>
 #include "hardware.h"
 #include "button.h"
 #include "5110LCD.h"
 #include "Menu.h"
 #include "clock.h"
+#include "shutter.h"
 #include "timelapseplus.h"
 #include "tlp_menu_functions.h"
+#include "tldefs.h"
 #include "bluetooth.h"
 #include <LUFA/Common/Common.h>
 #include <LUFA/Drivers/USB/USB.h>
@@ -35,6 +38,7 @@ extern Button button;
 extern MENU menu;
 extern Clock clock;
 extern BT bt;
+extern shutter timer;
 
 uint16_t battery_low_charging EEMEM;
 uint16_t battery_high_charging EEMEM;
@@ -85,21 +89,27 @@ void hardware_off(void)
 {
     if(battery_status() == 0)
     {
-        // If USB is used, detach from the bus
-        USB_Detach();
+        if(timer.cableIsConnected())
+        {
+            menu.message(STR("Error: Camera"));
+        }
+        else
+        {
+            // If USB is used, detach from the bus
+            USB_Detach();
 
-        // Shutdown bluetooth
-        bt.disconnect();
-        bt.sleep();
+            // Shutdown bluetooth
+            bt.disconnect();
+            bt.sleep();
 
-        // Disable all interrupts
-        cli();
+            // Disable all interrupts
+            cli();
 
-        // Shutdown
-        setHigh(POWER_HOLD_PIN);
+            // Shutdown
+            setHigh(POWER_HOLD_PIN);
 
-        FOREVER;
-        
+            FOREVER;
+        }
     } 
     else // Plugged in
     {

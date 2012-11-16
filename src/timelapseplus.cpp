@@ -38,6 +38,7 @@
 #include "selftest.h"
 #include "remote.h"
 #include "tlp_menu_functions.h"
+#include "notify.h"
 
 unsigned char I2C_Buf[4];
 #define I2C_ADDR  0b1000100
@@ -61,7 +62,7 @@ extern volatile uint8_t showRemoteStart;
 
 volatile uint8_t connectUSBcamera = 0;
 
-uint8_t battery_percent;
+uint8_t battery_percent, charge_status;
 
 extern settings conf;
 
@@ -75,6 +76,7 @@ Button button = Button();
 BT bt = BT();
 IR ir = IR();
 Remote remote = Remote();
+Notify notify = Notify();
 
 #include "Menu_Map.h"
 
@@ -185,6 +187,9 @@ int main()
 	timer.current.Keyframes = 1;
 	uint16_t count = 0;
 
+	notify.watch(NOTIFY_CHARGE, (void *)&charge_status, sizeof(charge_status), &message_notify);
+	notify.watch(NOTIFY_BT, (void *)&remote.connected, sizeof(remote.connected), &message_notify);
+
 	/****************************
 	   Main Loop
 	*****************************/
@@ -248,6 +253,7 @@ int main()
 		timer.task();
 		clock.task();
 		bt.task();
+		notify.task();
 
 		if(hardware_USB_InHostMode)
 			Camera_Task();
@@ -260,24 +266,17 @@ int main()
 		*****************************/
 		
 		count++;
-
-		switch(bt.event)
+		if(count > 9)
 		{
-			case BT_EVENT_CONNECT:
-				menu.message(TEXT("Connected!"));
-				remote.event();
-				break;
-			case BT_EVENT_DISCONNECT:
-				menu.message(TEXT("Disconnected!"));
-				remote.event();
-				break;
-			case BT_EVENT_DATA:
-				remote.event();
-				break;
+			count = 0;
+			charge_status = battery_status();
 		}
+
+		if(bt.event) remote.event();
 
 		if(menu.unusedKey == FR_KEY)
 			hardware_flashlight_toggle();
+
 
 		static uint32_t startTime = 0;
 
@@ -315,13 +314,44 @@ int main()
 	}
 }
 
-
+void message_notify(uint8_t id)
+{
+	switch(id)
+	{
+		case NOTIFY_CHARGE:
+			switch(charge_status)
+			{
+				case 0:
+					menu.message(STR("Unplugged"));
+					break;
+				case 1:
+					menu.message(STR("Charging"));
+					break;
+				case 2:
+					menu.message(STR("Charged"));
+					break;
+			}
+			break;
+			
+		case NOTIFY_BT:
+			if(remote.connected)
+			{
+				menu.message(STR("BT Connected"));
+			}
+			else
+			{
+				menu.message(STR("Disconnected"));
+			}
+			break;
+	}
+}
 
 /******************************************************************
  *
  *   ISR
  * 
  *   Timer2 interrupt routine - called every millisecond
+ *   Configured in hardware.cpp hardware_init()
  *
  ******************************************************************/
 

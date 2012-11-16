@@ -346,6 +346,28 @@ void IR::zoomOut(unsigned int pct)
     }
 }
 
+void IR::bulbStart()
+{
+    if(make == OLYMPUS)
+    {
+        zoomOut(10);
+    }
+    else
+    {
+        shutterNow();
+    }
+}
 
 
+void IR::bulbEnd()
+{
+    if(make == OLYMPUS)
+    {
+        zoomIn(10);
+    }
+    else
+    {
+        shutterNow();
+    }
+}
 

@@ -42,6 +42,8 @@ public:
     IR();
     void shutterNow();
     void shutterDelayed();
+    void bulbStart();
+    void bulbEnd();
     void zoomIn(unsigned int pct);
     void zoomOut(unsigned int pct);
 
