@@ -21,6 +21,7 @@
 #include "timelapseplus.h"
 #include "tlp_menu_functions.h"
 #include "tldefs.h"
+#include "debug.h"
 #include "bluetooth.h"
 #include <LUFA/Common/Common.h>
 #include <LUFA/Drivers/USB/USB.h>
@@ -45,6 +46,7 @@ uint16_t battery_high_charging EEMEM;
 uint16_t battery_low EEMEM;
 uint16_t battery_high EEMEM;
 
+char backlightVal;
 
 /******************************************************************
  *
@@ -87,6 +89,7 @@ void hardware_init(void)
 
 void hardware_off(void)
 {
+    hardware_flashlight(0);
     if(battery_status() == 0)
     {
         if(timer.cableIsConnected())
@@ -95,6 +98,8 @@ void hardware_off(void)
         }
         else
         {
+            shutter_off();
+
             // If USB is used, detach from the bus
             USB_Detach();
 
@@ -203,30 +208,57 @@ int hardware_freeMemory()
 unsigned int hardware_readLight(uint8_t r)
 {
     // Need to power off lights //
-    hardware_flashlight(0);
-    char backlightVal = lcd.getBacklight();
+    backlightVal = lcd.getBacklight();
     lcd.backlight(0);
     
     if(backlightVal > 0) 
         _delay_ms(50);
     
-    if(r > 2) 
-        r = 2;
-    
-    DDRA &= ~0b00000111; // clear all //
-    PORTA &= ~0b00000111; // clear all //
-    
-    setBit(r, DDRA); // Powers Sensor //
-    clrBit(r, PORTA);
+    hardware_light_enable(r);
     _delay_ms(50);
     
     uint16_t light = hardware_analogRead(0);
-    clrBit(r, DDRA); // Shuts down Sensor //
+
+    hardware_light_disable();
     
     if(backlightVal > lcd.getBacklight()) 
         lcd.backlight(backlightVal);
     
     return light;
+}
+
+/******************************************************************
+ *
+ *   hardware_light_enable
+ *
+ *
+ ******************************************************************/
+
+void hardware_light_enable(uint8_t level)
+{
+    hardware_flashlight(0);
+        
+    if(level > 2) 
+        level = 2;
+    
+    DDRA &= ~0b00000111; // clear all //
+    PORTA &= ~0b00000111; // clear all //
+    
+    setBit(level, DDRA); // Powers Sensor //
+    clrBit(level, PORTA);
+}
+
+/******************************************************************
+ *
+ *   hardware_light_disable
+ *
+ *
+ ******************************************************************/
+
+void hardware_light_disable()
+{
+    DDRA &= ~0b00000111; // clear all //
+    PORTA &= ~0b00000111; // clear all //
 }
 
 /******************************************************************
@@ -409,6 +441,7 @@ void hardware_bootloader(void)
     USB_Detach();
     USB_Disable();
 
+    shutter_off();
     lcd.off();
 
     clock.disable();
@@ -422,4 +455,64 @@ void hardware_bootloader(void)
 
     FOREVER;
 }
+
+/******************************************************************
+ *
+ *   hardware_lightening_enable
+ *
+ *
+ ******************************************************************/
+
+void hardware_lightening_enable()
+{
+    // Need to power off lights //
+    backlightVal = lcd.getBacklight();
+    lcd.backlight(0);
+    
+    if(backlightVal > 0) 
+        _delay_ms(50);
+
+    setIn(LIGHT_SENSE_PIN); // set to input
+    setLow(LIGHT_SENSE_PIN); // no pull-up
+
+    uint8_t i = 3;
+    while(i--)
+    {
+        hardware_light_enable(i);
+        _delay_ms(50);
+        uint16_t reading = hardware_analogRead(0);
+        debug('(');
+        debug(reading);
+        debug(')');
+        debug(':');
+        debug(' ');
+        debug_nl();
+        if(reading < 256) break;
+    }
+    debug(i);
+    if(getPin(LIGHT_SENSE_PIN)) debug(STR("+")); else debug(STR("-"));
+
+    shutter_half();
+    
+    EIMSK &= ~_BV(INT6);      // Interrupt disable 
+    EICRB |= (1<<ISC61)|(1<<ISC60); // Rising edge
+    EIMSK |= _BV(INT6);      // Interrupt enable 
+}
+
+/******************************************************************
+ *
+ *   hardware_lightening_disable
+ *
+ *
+ ******************************************************************/
+
+void hardware_lightening_disable()
+{
+    EIMSK &= ~_BV(INT6);      // Interrupt disable
+    shutter_off();
+    hardware_light_disable();
+    if(backlightVal > lcd.getBacklight()) 
+        lcd.backlight(backlightVal);
+}
+
 

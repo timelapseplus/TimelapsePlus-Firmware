@@ -41,6 +41,10 @@ char hardware_flashlight(char on);
 char hardware_flashlightIsOn(void);
 void hardware_flashlight_toggle();
 void hardware_bootloader(void);
+void hardware_lightening_enable();
+void hardware_lightening_disable();
+void hardware_light_enable(uint8_t level);
+void hardware_light_disable();
 
 uint16_t battery_read_raw(void);
 uint8_t battery_read(void);

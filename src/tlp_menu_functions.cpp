@@ -57,6 +57,8 @@ extern BT bt;
 extern IR ir;
 extern Remote remote;
 
+uint8_t sleepOk = 1;
+
 #include "Menu_Map.h"
 
 
@@ -82,9 +84,9 @@ void updateConditions()
 	bulb2 = timer.current.Keyframes > 2 && modeRamp;
 	bulb3 = timer.current.Keyframes > 3 && modeRamp;
 	bulb4 = timer.current.Keyframes > 4 && modeRamp;
-	showGap = timer.current.Photos > 1 && modeTimelapse;
+	showGap = timer.current.Photos != 1 && modeTimelapse;
 	showRemoteStart = (remote.connected && !remote.running);	
-	clock.sleepOk = timerNotRunning && !timer.cableIsConnected() && bt.state != BT_ST_CONNECTED;
+	clock.sleepOk = timerNotRunning && !timer.cableIsConnected() && bt.state != BT_ST_CONNECTED && sleepOk;
 }
 
 /******************************************************************
@@ -775,7 +777,7 @@ volatile char timerStatusRemote(char key, char first)
 		startTime = 0;
 	}
 
-	if(clock.Ms() > startTime + 300)
+	if(clock.Ms() > startTime + 100)
 	{
 		startTime = clock.Ms();
 		lcd.cls();
@@ -1044,6 +1046,95 @@ volatile char lightMeter(char key, char first)
 
 	if(key == FL_KEY)
 	{
+		lcd.backlight(255);
+		return FN_CANCEL;
+	}
+
+	return FN_CONTINUE;
+}
+
+
+/******************************************************************
+ *
+ *   motionTrigger
+ *
+ *
+ ******************************************************************/
+
+volatile char motionTrigger(char key, char first)
+{
+	uint8_t i;
+	uint16_t val;
+	static uint16_t lv[3];
+	static uint8_t threshold = 2;
+
+	if(key == LEFT_KEY)
+	{
+		if(threshold > 0) threshold--;
+		first = 1;
+	}
+	if(key == RIGHT_KEY)
+	{
+		if(threshold < 4) threshold++;
+		first = 1;
+	}
+
+	if(first)
+	{
+		sleepOk = 0;
+		clock.tare();
+		lcd.cls();
+		menu.setTitle(TEXT("Motion Sensor"));
+		menu.setBar(TEXT("RETURN"), BLANK_STR);
+
+		lcd.drawLine(10, 22, 84-10, 22);
+		lcd.drawLine(11, 21, 11, 23);
+		lcd.drawLine(84-11, 21, 84-11, 23);
+		lcd.drawLine(12, 20, 12, 24);
+		lcd.drawLine(84-12, 20, 84-12, 24);
+		lcd.drawLine(13, 20, 13, 24);
+		lcd.drawLine(84-13, 20, 84-13, 24);
+		lcd.setPixel(42, 21);
+		lcd.setPixel(42+10, 21);
+		lcd.setPixel(42-10, 21);
+		lcd.setPixel(42+20, 21);
+		lcd.setPixel(42-20, 21);
+
+		i = threshold * 10;
+		lcd.drawLine(42-3-20+i, 16, 42+3-20+i, 16);
+		lcd.drawLine(42-2-20+i, 17, 42+2-20+i, 17);
+		lcd.drawLine(42-1-20+i, 18, 42+1-20+i, 18);
+		lcd.setPixel(42-20+i, 19);
+
+		lcd.writeStringTiny(19, 25, TEXT("SENSITIVITY"));
+
+		lcd.update();
+		lcd.backlight(0);
+		hardware_flashlight(0);
+		_delay_ms(50);
+		for(i = 0; i < 3; i++)
+		{
+			lv[i] = (uint16_t)hardware_readLight(i);
+		}
+	}
+
+	uint8_t thres = 4 - threshold + 2;
+	if((4 - threshold) > 2) thres += ((4 - threshold) - 1) * 2;
+
+	for(i = 0; i < 3; i++)
+	{
+		val = (uint16_t)hardware_readLight(i);
+		if(clock.eventMs() > 1000 && val > thres && (val < (lv[i] - thres) || val > (lv[i] + thres)))
+		{
+			clock.tare();
+			shutter_capture();
+		}
+		lv[i] = val;
+	}
+
+	if(key == FL_KEY)
+	{
+		sleepOk = 1;
 		lcd.backlight(255);
 		return FN_CANCEL;
 	}
@@ -1331,6 +1422,41 @@ volatile char usbPlug(char key, char first)
 			connectUSBcamera = 0;
 
 		return FN_CANCEL;
+	}
+
+	return FN_CONTINUE;
+}
+
+/******************************************************************
+ *
+ *   lighteningTrigger
+ *
+ *
+ ******************************************************************/
+
+volatile char lighteningTrigger(char key, char first)
+{
+	if(first)
+	{
+		sleepOk = 0;
+		hardware_lightening_enable();
+		lcd.cls();
+		menu.setTitle(TEXT("Lightening"));
+		lcd.writeString(25, 20, TEXT("READY"));
+		menu.setBar(TEXT("RETURN"), TEXT("CALIBRATE"));
+		lcd.update();
+	}
+
+	if(key == FL_KEY || key == LEFT_KEY)
+	{
+		sleepOk = 1;
+		hardware_lightening_disable();
+		return FN_CANCEL;
+	}
+	if(key == FR_KEY)
+	{
+		menu.message(TEXT("Calibrating"));
+		hardware_lightening_disable();
 	}
 
 	return FN_CONTINUE;

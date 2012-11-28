@@ -282,10 +282,6 @@ int main()
 
 		if(clock.Ms() > startTime + 60000)
 		{
-			debug(count);
-			debug_nl();
-			count = 0;
-
 			startTime = clock.Ms();
 			uint8_t batteryRead = battery_read();
 
@@ -361,3 +357,16 @@ ISR(TIMER2_COMPA_vect)
 	button.poll();
 }
 
+/******************************************************************
+ *
+ *   ISR
+ * 
+ *   INT6 external interrupt routine - lightening trigger
+ *   Configured in hardware.cpp hardware_lightening_enable()
+ *
+ ******************************************************************/
+
+ISR(INT6_vect) // Lightening Trigger
+{ 
+	shutter_capture();
+} 
