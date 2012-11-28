@@ -96,6 +96,8 @@ const menu_item menu_trigger[]PROGMEM =
     { "Cable Remote", 'F', (void*)cableRelease, 0, (void*)&timerNotRunning },
     { "IR Remote   ", 'F', (void*)IRremote, 0, (void*)&timerNotRunning },
     { "BT Remote   ", 'F', (void*)cableReleaseRemote, 0, (void*)&showRemoteStart },
+    { "Lightening  ", 'F', (void*)lighteningTrigger, 0, (void*)&timerNotRunning },
+    { "Motion      ", 'F', (void*)motionTrigger, 0, (void*)&timerNotRunning },
     { "\0           ", 'V', 0, 0, 0 }
 };
 
@@ -155,48 +157,48 @@ const settings_item menu_settings_lcd_color[]PROGMEM =
 
 const settings_item menu_settings_backlight_time[]PROGMEM =
 {
-    { "10 Seconds  ", 1, (void*)STR_BACKLIGHT_TIME },
-    { "30 Seconds  ", 3, (void*)STR_BACKLIGHT_TIME },
-    { "1 Minute    ", 6, (void*)STR_BACKLIGHT_TIME },
-    { "2 Minutes   ", 12, (void*)STR_BACKLIGHT_TIME },
-    { "5 Minutes   ", 30, (void*)STR_BACKLIGHT_TIME },
     { "10 Minutes  ", 60, (void*)STR_BACKLIGHT_TIME },
+    { "5 Minutes   ", 30, (void*)STR_BACKLIGHT_TIME },
+    { "2 Minutes   ", 12, (void*)STR_BACKLIGHT_TIME },
+    { "1 Minute    ", 6, (void*)STR_BACKLIGHT_TIME },
+    { "30 Seconds  ", 3, (void*)STR_BACKLIGHT_TIME },
+    { "10 Seconds  ", 1, (void*)STR_BACKLIGHT_TIME },
     { "\0           ", 0, 0 }
 };
 
 const settings_item menu_settings_power_off_time[]PROGMEM =
 {
-    { "1 Minute    ", 6, (void*)STR_POWER_TIME },
-    { "2 Minutes   ", 12, (void*)STR_POWER_TIME },
-    { "5 Minutes   ", 30, (void*)STR_POWER_TIME },
-    { "10 Minutes  ", 60, (void*)STR_POWER_TIME },
     { "30 Minutes  ", 180, (void*)STR_POWER_TIME },
+    { "10 Minutes  ", 60, (void*)STR_POWER_TIME },
+    { "5 Minutes   ", 30, (void*)STR_POWER_TIME },
+    { "2 Minutes   ", 12, (void*)STR_POWER_TIME },
+    { "1 Minute    ", 6, (void*)STR_POWER_TIME },
     { "\0           ", 0, 0 }
 };
 
 const settings_item menu_settings_flashlight_time[]PROGMEM =
 {
-    { "10 Seconds  ", 1, (void*)STR_FLASHLIGHT_TIME },
-    { "30 Seconds  ", 3, (void*)STR_FLASHLIGHT_TIME },
-    { "1 Minute    ", 6, (void*)STR_FLASHLIGHT_TIME },
-    { "2 Minutes   ", 12, (void*)STR_FLASHLIGHT_TIME },
-    { "5 Minutes   ", 30, (void*)STR_FLASHLIGHT_TIME },
     { "10 Minutes  ", 60, (void*)STR_FLASHLIGHT_TIME },
+    { "5 Minutes   ", 30, (void*)STR_FLASHLIGHT_TIME },
+    { "2 Minutes   ", 12, (void*)STR_FLASHLIGHT_TIME },
+    { "1 Minute    ", 6, (void*)STR_FLASHLIGHT_TIME },
+    { "30 Seconds  ", 3, (void*)STR_FLASHLIGHT_TIME },
+    { "10 Seconds  ", 1, (void*)STR_FLASHLIGHT_TIME },
     { "\0           ", 0, 0 }
 };
 
 const settings_item menu_settings_camera_fps[]PROGMEM =
 {
-    { "1 FPS       ", 100, (void*)STR_CAMERA_FPS },
-    { "2 FPS       ", 50, (void*)STR_CAMERA_FPS },
-    { "3 FPS       ", 33, (void*)STR_CAMERA_FPS },
-    { "4 FPS       ", 25, (void*)STR_CAMERA_FPS },
-    { "5 FPS       ", 20, (void*)STR_CAMERA_FPS },
-    { "6 FPS       ", 16, (void*)STR_CAMERA_FPS },
-    { "7 FPS       ", 14, (void*)STR_CAMERA_FPS },
-    { "8 FPS       ", 12, (void*)STR_CAMERA_FPS },
-    { "10 FPS      ", 10, (void*)STR_CAMERA_FPS },
     { "12 FPS      ", 8, (void*)STR_CAMERA_FPS },
+    { "10 FPS      ", 10, (void*)STR_CAMERA_FPS },
+    { "8 FPS       ", 12, (void*)STR_CAMERA_FPS },
+    { "7 FPS       ", 14, (void*)STR_CAMERA_FPS },
+    { "6 FPS       ", 16, (void*)STR_CAMERA_FPS },
+    { "5 FPS       ", 20, (void*)STR_CAMERA_FPS },
+    { "4 FPS       ", 25, (void*)STR_CAMERA_FPS },
+    { "3 FPS       ", 33, (void*)STR_CAMERA_FPS },
+    { "2 FPS       ", 50, (void*)STR_CAMERA_FPS },
+    { "1 FPS       ", 100, (void*)STR_CAMERA_FPS },
     { "\0           ", 0, 0 }
 };
 
