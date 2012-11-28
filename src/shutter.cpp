@@ -237,15 +237,18 @@ void shutter_bulbEnd(void)
 
 void shutter::capture(void)
 {
+    shutter_capture();
+}
+void shutter_capture(void)
+{
+    shutter_full();
+    clock.in(75, &shutter_off);
+    ir_shutter_state = 0;
+    shutter_state = 0;
     if(cable_connected == 0)
     {
         ir.shutterNow();
     } 
-    shutter_full();
-    _delay_ms(75);
-    shutter_off();
-    ir_shutter_state = 0;
-    shutter_state = 0;
 }
 
 /******************************************************************
@@ -588,14 +591,13 @@ char shutter::task()
             {
                 run_state = RUN_END;
             }
-
-            status.photosRemaining = current.Photos - photos;
-            status.photosTaken = photos;
         }
         else
         {
-            run_state = RUN_DELAY;
+            run_state = RUN_GAP;
         }
+        status.photosRemaining = current.Photos - photos;
+        status.photosTaken = photos;
     }
     
     if(run_state == RUN_GAP)

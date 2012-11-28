@@ -113,7 +113,7 @@ void shutter_half_delayed(void);
 void shutter_full(void);
 void shutter_bulbEnd(void);
 void shutter_bulbStart(void);
-//void shutter_capture(void);
+void shutter_capture(void);
 
 
 
