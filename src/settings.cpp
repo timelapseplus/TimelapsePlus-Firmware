@@ -90,7 +90,7 @@ void settings_default()
     strcpy((char*)conf.sysName, "sys01");
     conf.warnTime = 2;
     conf.mirrorTime = 2;
-    conf.cameraFPS = 34;
+    conf.cameraFPS = 33;
     conf.bulbMode = 0;
     conf.lcdColor = 0;
     conf.cameraMake = CANON;
