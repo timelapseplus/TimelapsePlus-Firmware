@@ -223,6 +223,18 @@ int main()
 					   break;
 				   }
 
+			   case 'v': // binary version (4 bytes)
+				   {
+					   uint32_t v = VERSION;
+					   char *ptr;
+					   ptr = (char*) &v;
+					   debug(*ptr);
+					   debug(*(ptr+1));
+					   debug(*(ptr+2));
+					   debug(*(ptr+3));
+					   break;
+				   }
+
 			   case 'T':
 				   debug('E');
 				   break;
