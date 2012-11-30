@@ -13,8 +13,8 @@
 #include "settings.h"
 #include "5110LCD.h"
 #include "IR.h"
-#include "remote.h"
 #include "shutter.h"
+#include "remote.h"
 #include "timelapseplus.h"
 #include "tlp_menu_functions.h"
 
