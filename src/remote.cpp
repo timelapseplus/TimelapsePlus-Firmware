@@ -32,6 +32,7 @@ extern BT bt;
 extern shutter timer;
 extern MENU menu;
 extern uint8_t battery_percent;
+extern settings conf;
 
 Remote::Remote()
 {
@@ -59,6 +60,27 @@ uint8_t Remote::send(uint8_t id, uint8_t type)
 			return bt.sendDATA(id, type, (void *) &timer.status, sizeof(timer_status));
 		case REMOTE_PROGRAM:
 			return bt.sendDATA(id, type, (void *) &timer.current, sizeof(program));
+		case REMOTE_FIRMWARE:
+		{
+			unsigned long version = VERSION;
+			void *ptr = &version;
+			return bt.sendDATA(id, type, ptr, sizeof(version));
+		}
+		case REMOTE_BT_FW_VERSION:
+		{
+			uint8_t btVersion = bt.version();
+			return bt.sendDATA(id, type, (void *) &btVersion, sizeof(btVersion));
+		}
+		case REMOTE_PROTOCOL_VERSION:
+		{
+			unsigned long remoteVersion = REMOTE_VERSION;
+			void *ptr = &remoteVersion;
+			return bt.sendDATA(id, type, ptr, sizeof(remoteVersion));
+		}
+		case REMOTE_CAMERA_FPS:
+			return bt.sendDATA(id, type, (void *) &conf.cameraFPS, sizeof(conf.cameraFPS));
+		case REMOTE_CAMERA_MAKE:
+			return bt.sendDATA(id, type, (void *) &conf.cameraMake, sizeof(conf.cameraMake));
 		default:
 			return bt.sendDATA(id, type, 0, 0);
 	}
@@ -72,6 +94,8 @@ void Remote::event()
 		case BT_EVENT_DISCONNECT:
 			connected = 0;
 			notifyBattery = 0;
+			notifyCameraFPS = 0;
+			notifyCameraMake = 0;
 			break;
 
 		case BT_EVENT_CONNECT:
@@ -120,6 +144,22 @@ void Remote::event()
 					break;
 				case REMOTE_CAPTURE:
 					if(bt.dataType == REMOTE_TYPE_SET) timer.capture();
+					break;
+				case REMOTE_FIRMWARE:
+				case REMOTE_BT_FW_VERSION:
+				case REMOTE_PROTOCOL_VERSION:
+					if(bt.dataType == REMOTE_TYPE_REQUEST)
+send(bt.dataId, REMOTE_TYPE_SEND);
+					break;
+				case REMOTE_CAMERA_FPS:
+					if(bt.dataType == REMOTE_TYPE_REQUEST) send(bt.dataId, REMOTE_TYPE_SEND);
+					if(bt.dataType == REMOTE_TYPE_NOTIFY_SET) notifyCameraFPS = 1;
+					if(bt.dataType == REMOTE_TYPE_NOTIFY_UNSET) notifyCameraFPS = 0;
+					break;
+				case REMOTE_CAMERA_MAKE:
+					if(bt.dataType == REMOTE_TYPE_REQUEST) send(bt.dataId, REMOTE_TYPE_SEND);
+					if(bt.dataType == REMOTE_TYPE_NOTIFY_SET) notifyCameraMake = 1;
+					if(bt.dataType == REMOTE_TYPE_NOTIFY_UNSET) notifyCameraMake = 0;
 					break;
 				default:
 					return;
