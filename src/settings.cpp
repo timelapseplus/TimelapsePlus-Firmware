@@ -98,6 +98,7 @@ void settings_default()
     conf.lcdBacklightTime = 3;
     conf.sysOffTime = 12;
     conf.flashlightOffTime = 3;
+    conf.devMode = 0;
     settings_save();
     settings_load();
 }
