@@ -144,7 +144,7 @@ const settings_item menu_settings_camera_make[]PROGMEM =
     { "Panasonic   ", PANASONIC, (void*)STR_CAMERA_MAKE },
     { "Pentax      ", PENTAX, (void*)STR_CAMERA_MAKE },
     { "Sony        ", SONY, (void*)STR_CAMERA_MAKE },
-    { "Other       ", 0, (void*)STR_CAMERA_MAKE_OTHER },
+    { "Other       ", OTHER, (void*)STR_CAMERA_MAKE_OTHER },
     { "\0           ", 0, 0 }
 };
 

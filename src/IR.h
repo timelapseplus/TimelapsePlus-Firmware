@@ -35,6 +35,7 @@
 #define OLYMPUS 4
 #define PENTAX 5
 #define PANASONIC 6
+#define OTHER 100 
 
 class IR
 {
