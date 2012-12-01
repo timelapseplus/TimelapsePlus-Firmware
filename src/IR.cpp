@@ -57,17 +57,18 @@ void IR::high38(unsigned int time)
 {
     uint16_t count = 0;
     
+    cli();
+
     while (count <= time / (1000 / 38))
     {
-        cli();
         setLow(IR_PIN);
         _delay_us((1000 / 38 / 2));
         setHigh(IR_PIN);
         _delay_us((1000 / 38 / 2));
-        sei();
         count++;
     }
     
+    sei();
 }
 
 void IR::shutterNow()
