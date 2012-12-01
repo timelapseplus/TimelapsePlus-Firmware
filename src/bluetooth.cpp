@@ -90,6 +90,8 @@ uint8_t BT::init(void)
 	devices = 0;
 	newDevices = 0;
 
+	updateVersion();
+
 	return power(3);
 }
 
@@ -389,12 +391,12 @@ uint8_t BT::temperature(void)
 
 /******************************************************************
  *
- *   BT::version
+ *   BT::updateVersion
  *
  *
  ******************************************************************/
 
-uint8_t BT::version(void)
+uint8_t BT::updateVersion(void)
 {
 	if(!present)
 		return 1;
@@ -416,12 +418,27 @@ uint8_t BT::version(void)
 			if(i == 6)
 			{
 				n = (buf[i] - '0');
+				btVersion = n;
 				return n;
 			}
 		}
 	}
 
 	return 255;
+}
+
+/******************************************************************
+ *
+ *   BT::version
+ *
+ *
+ ******************************************************************/
+
+uint8_t BT::version(void)
+{
+	if(!present)
+		return 1;
+	return btVersion;
 }
 
 /******************************************************************

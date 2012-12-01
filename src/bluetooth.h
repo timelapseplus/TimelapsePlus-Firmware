@@ -55,6 +55,7 @@ public:
     uint8_t power(void);
     uint8_t temperature(void);
     uint8_t version(void);
+    uint8_t updateVersion(void);
     uint8_t cancel(void);
     uint8_t cancelScan(void);
     uint8_t scan(void);
@@ -67,6 +68,8 @@ public:
     uint8_t state;
     uint8_t mode;
     uint8_t event;
+
+    uint8_t btVersion;
 
     char * data;
     uint8_t dataId;
