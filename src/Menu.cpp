@@ -1182,33 +1182,35 @@ char MENU::editText(char key, char text[MENU_NAME_LEN], char *name, char first)
            break;
            
        case RIGHT_KEY:
-           if(i < MENU_NAME_LEN - 3) 
+           if(i < MENU_NAME_LEN - 3)
                i++;
            else 
                i = 0;
            first = 1;
            break;
            
-       case DOWN_KEY:
-           if(text[i] > 'Z') 
-               text[i] = 'A' - 1;
-           
-           if(text[i] >= 'A') 
+       case UP_KEY:
+           if((text[i] > 'A' || text[i] > '0') && (text[i] <= '9' || text[i] <= 'Z'))
                text[i]--;
+           else if(text[i] == 'A') 
+               text[i] = ' ';
+           else if(text[i] == ' ') 
+               text[i] = '9';
            else 
                text[i] = 'Z';
            
            first = 1;
            break;
            
-       case UP_KEY:
-            if(text[i] < 'A') 
-                text[i] = 'Z' + 1;
-            
-            if(text[i] <= 'Z') 
-                text[i]++;
-            else 
-                text[i] = 'A';
+       case DOWN_KEY:
+           if((text[i] < 'Z' || text[i] < '9') && (text[i] >= '0' || text[i] >= 'A')) 
+               text[i]++;
+           else if(text[i] == 'Z') 
+               text[i] = '0';
+           else if(text[i] == ' ')
+               text[i] = 'A';
+           else 
+               text[i] = '0';
             
             first = 1;
             break;
@@ -1220,7 +1222,7 @@ char MENU::editText(char key, char text[MENU_NAME_LEN], char *name, char first)
         
         for(c = 0; c < MENU_NAME_LEN - 2; c++) // Write menu item text //
         {
-            if(text[c] < 'A' || text[c] > 'Z') 
+            if((text[c] < 'A' || text[c] > 'Z') && (text[c] < '0' || text[c] > '9'))
                 text[c] = ' ';
             
             lcd->writeChar(3 + c * 7, 15, text[c]);
