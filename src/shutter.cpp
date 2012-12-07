@@ -460,7 +460,7 @@ char shutter::task()
             }
             strcpy((char *) status.textStatus, TEXT("Bulb"));
 
-            exp = current.Exp * 100;
+            exp = ((uint32_t) current.Exp) * 100UL;
 
             if(current.Mode & RAMP)
             {
@@ -538,7 +538,11 @@ char shutter::task()
             {
                 if(conf.devMode)
                 {
-                    debug(STR("***Using exp"));
+                    debug(STR("***Using exp: "));
+                    debug(exp);
+                    debug(STR(" ("));
+                    debug(current.Exp);
+                    debug(STR(")"));
                     debug_nl();
                 }
                 bulb_length = exp;
