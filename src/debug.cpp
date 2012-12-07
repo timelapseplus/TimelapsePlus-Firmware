@@ -71,10 +71,17 @@ void debug(uint16_t n)
 void debug(uint32_t n)
 {
     if(conf.devMode == 0) return;
-    char buf[6];
 
-    int_to_str((uint16_t)n, buf); // quick fix -- needs real implementation eventually
-    VirtualSerial_PutString(buf);
+    uint8_t i = 0;
+    char buf[10];
+    while(n)
+    {
+        buf[i] = (char)(n % 10) + '0';
+        n -= n % 10;
+        n /= 10;
+        i++;
+    }
+    while(i--) VirtualSerial_PutChar(buf[i - 1]);
 }
 
 /******************************************************************

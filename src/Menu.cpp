@@ -915,8 +915,8 @@ char MENU::editNumber(char key, unsigned int *n, char *name, char *unit, char mo
                m += d[4] * 3600;  // hours
                m += (d[3] * 10 + d[2]) * 60; // minutes
                m += d[1] * 10 + d[0]; // seconds
-                debug(m);
-                debug_nl();
+               debug(m);
+               debug_nl();
                break;
                
            default:

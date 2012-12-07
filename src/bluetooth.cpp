@@ -43,6 +43,7 @@ uint8_t BT::init(void)
 {
 	_delay_ms(100);
 	present = true;
+	debug(STR("BT Init\n\r"));
 
 //	sendCMD(STR("ATRST\r")); // Reset module
 //	_delay_ms(200);
@@ -50,6 +51,10 @@ uint8_t BT::init(void)
 	while(read()); // Flush buffer
 
 	sendCMD(STR("AT\r")); // Check connection
+
+	debug(STR("Data: "));
+	debug(data);
+	debug_nl();
 
 	if(checkOK() == 0)
 	{
