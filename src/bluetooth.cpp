@@ -95,7 +95,7 @@ uint8_t BT::init(void)
 	devices = 0;
 	newDevices = 0;
 
-	updateVersion();
+//	updateVersion();
 
 	return power(3);
 }
@@ -443,6 +443,7 @@ uint8_t BT::version(void)
 {
 	if(!present)
 		return 1;
+	updateVersion(); // disable caching for now
 	return btVersion;
 }
 
