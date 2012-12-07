@@ -286,7 +286,7 @@ void hardware_readLightAll(void *result)
 uint8_t battery_read() // Returns 0-100 //
 {
     uint16_t raw = battery_read_raw();
-    uint16_t high = 645, low = 540, percent;
+    uint16_t high = 645, low = 555, percent;
     char status = battery_status();
 
     if(status == 0)
