@@ -239,6 +239,10 @@ int main()
 				   debug('E');
 				   break;
 
+			   case 'B':
+				   bt.init();
+				   break;
+
 			   case 'L':
 				   readLightTest();
 				   break;
