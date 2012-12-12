@@ -99,6 +99,7 @@ void settings_default()
     conf.sysOffTime = 12;
     conf.flashlightOffTime = 3;
     conf.devMode = 0;
+    conf.auxPort = AUX_MODE_DISABLED;
     settings_save();
     settings_load();
 }
