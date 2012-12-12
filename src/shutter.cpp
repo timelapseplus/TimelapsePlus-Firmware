@@ -194,7 +194,7 @@ void shutter_bulbStart(void)
     {
         shutter_full();
         shutter_state = 1;
-        clock.in(75, &shutter_half);
+        clock.in(SHUTTER_PRESS_TIME, &shutter_half);
     }
 }
 
@@ -224,7 +224,7 @@ void shutter_bulbEnd(void)
     {
         shutter_full();
         shutter_state = 0;
-        clock.in(75, &shutter_off);
+        clock.in(SHUTTER_PRESS_TIME, &shutter_off);
     }
 }
 
@@ -242,7 +242,7 @@ void shutter::capture(void)
 void shutter_capture(void)
 {
     shutter_full();
-    clock.in(75, &shutter_off);
+    clock.in(SHUTTER_PRESS_TIME, &shutter_off);
     ir_shutter_state = 0;
     shutter_state = 0;
     if(cable_connected == 0)
@@ -600,6 +600,8 @@ char shutter::task()
         {
             run_state = RUN_GAP;
         }
+
+        if(run_state == RUN_GAP && conf.auxPort == AUX_MODE_DOLLY) aux_pulse();
         status.photosRemaining = current.Photos - photos;
         status.photosTaken = photos;
     }
@@ -678,5 +680,20 @@ void check_cable()
     CHECK_CABLE;
 }
 
+void aux_pulse()
+{
+    aux_on();
+    clock.in(100, &aux_off);
+}
 
+void aux_on()
+{
+    ENABLE_AUX_PORT;
+    AUX_OUT1_ON;
+    AUX_OUT2_ON;
+}
 
+void aux_off()
+{
+    ENABLE_AUX_PORT;
+}

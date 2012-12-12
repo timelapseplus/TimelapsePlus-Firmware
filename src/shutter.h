@@ -12,12 +12,17 @@
 
 #define MAX_STORED 25
 
+#define SHUTTER_PRESS_TIME (conf.cameraFPS * 4)
+
 #define DONE 0
 #define CONTINUE 1
 
 #define TIMELAPSE 0x0001
 #define HDR 0x0002
 #define RAMP 0x0004
+
+#define AUX_MODE_DISABLED 0
+#define AUX_MODE_DOLLY 1
 
 #define MODE_TIMELAPSE (TIMELAPSE)
 #define MODE_HDR_TIMELAPSE (HDR | TIMELAPSE)
@@ -33,8 +38,13 @@
 #define ENABLE_SHUTTER setHigh(SHUTTER_FULL_PIN); setOut(SHUTTER_FULL_PIN); setIn(CHECK_CABLE_PIN); setHigh(CHECK_CABLE_PIN); setIn(SHUTTER_SENSE_PIN); setHigh(SHUTTER_SENSE_PIN);
 #define ENABLE_MIRROR setHigh(SHUTTER_HALF_PIN); setOut(SHUTTER_HALF_PIN)
 
-#define ENABLE_AUX_INPUT setOut(AUX_OUT1_PIN); setHigh(AUX_OUT1_PIN); setIn(AUX_INPUT1_PIN); setHigh(AUX_INPUT1_PIN)
-#define AUX_INPUT (getPin(AUX_INPUT1_PIN) == 0)
+#define ENABLE_AUX_PORT setOut(AUX_OUT1_PIN); setHigh(AUX_OUT1_PIN); setOut(AUX_OUT2_PIN); setHigh(AUX_OUT2_PIN); setIn(AUX_INPUT1_PIN); setHigh(AUX_INPUT1_PIN); setIn(AUX_INPUT2_PIN); setHigh(AUX_INPUT2_PIN)
+#define AUX_INPUT1 (getPin(AUX_INPUT1_PIN) == 0)
+#define AUX_INPUT2 (getPin(AUX_INPUT2_PIN) == 0)
+#define AUX_OUT1_ON (setLow(AUX_OUT1_PIN))
+#define AUX_OUT2_ON (setLow(AUX_OUT2_PIN))
+#define AUX_OUT1_OFF (setHigh(AUX_OUT1_PIN))
+#define AUX_OUT2_OFF (setHigh(AUX_OUT2_PIN))
 
 
 #define MIRROR_UP setLow(SHUTTER_HALF_PIN)
@@ -114,8 +124,9 @@ void shutter_full(void);
 void shutter_bulbEnd(void);
 void shutter_bulbStart(void);
 void shutter_capture(void);
-
-
+void aux_on(void);
+void aux_off(void);
+void aux_pulse(void);
 
 
 

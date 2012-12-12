@@ -248,7 +248,7 @@ int8_t run_tests()
         termPrintStr(STR("Testing Shutter\n"));
         ENABLE_SHUTTER;
         ENABLE_MIRROR;
-        ENABLE_AUX_INPUT;
+        ENABLE_AUX_PORT;
         uint8_t i = 0;      // this was uninitialized. I set it to 0 -- John
         
         while (i < 30)
@@ -256,10 +256,10 @@ int8_t run_tests()
             wdt_reset();
             _delay_ms(100);
 
-            if(AUX_INPUT) 
+            if(AUX_INPUT1) 
                 break;
         }
-        pass &= test_assert(AUX_INPUT);
+        pass &= test_assert(AUX_INPUT1);
     }
     
     wdt_reset();

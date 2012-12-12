@@ -25,6 +25,25 @@ const char STR_BACKLIGHT_TIME[]PROGMEM = "Backlight on time";
 const char STR_POWER_TIME[]PROGMEM = "Auto pwr off time";
 const char STR_FLASHLIGHT_TIME[]PROGMEM = "LED auto off time";
 
+const char STR_AUX_DISABLED[]PROGMEM = "AUX port disabled";
+const char STR_AUX_DOLLY[]PROGMEM = "between frames";
+
+const char STR_CAMERA_FPS[]PROGMEM = "Frames per Second";
+const char STR_DEV_MODE_ON[]PROGMEM = "Shutter lights LED";
+const char STR_DEV_MODE_OFF[]PROGMEM = "LED off during use";
+
+const char STR_TIMELAPSE[]PROGMEM = "Basic Timelapse";
+const char STR_HDR_TIMELAPSE[]PROGMEM = "HDR Timelapse";
+const char STR_HDR_PHOTO[]PROGMEM = "Single HDR Image";
+const char STR_BULB_PHOTO[]PROGMEM = "Long Bulb Exposure";
+const char STR_BULB_RAMP[]PROGMEM = "Ramp exposure";
+const char STR_AUTO_RAMP[]PROGMEM = "Auto Ramp w/meter";
+const char STR_HDR_RAMP[]PROGMEM = "Ramp HDR exp";
+const char STR_CAMERA_MAKE[]PROGMEM = "Camera make";
+const char STR_CAMERA_MAKE_OTHER[]PROGMEM = "Choose if not listed";
+const char STR_TIME_SINCE_START[]PROGMEM = "Since start";
+const char STR_BRACKET[]PROGMEM = "Stops between exposures";
+
 const menu_item menu_options[]PROGMEM =
 {
     { "Stop Timer  ", 'F', (void*)&timerStop, 0, (void*)&timer.running },
@@ -41,20 +60,6 @@ const menu_item menu_options[]PROGMEM =
     { "\0OPTIONS\0   ", 'F', (void*)&menuBack, (void*)STR_RETURN, (void*)STR_NULL }
 };
 
-const char STR_TIMELAPSE[]PROGMEM = "Basic Timelapse";
-const char STR_HDR_TIMELAPSE[]PROGMEM = "HDR Timelapse";
-const char STR_HDR_PHOTO[]PROGMEM = "Single HDR Image";
-const char STR_BULB_PHOTO[]PROGMEM = "Long Bulb Exposure";
-const char STR_BULB_RAMP[]PROGMEM = "Ramp exposure";
-const char STR_AUTO_RAMP[]PROGMEM = "Auto Ramp w/meter";
-const char STR_HDR_RAMP[]PROGMEM = "Ramp HDR exp";
-const char STR_CAMERA_MAKE[]PROGMEM = "Camera make";
-const char STR_CAMERA_MAKE_OTHER[]PROGMEM = "Choose if not listed";
-const char STR_TIME_SINCE_START[]PROGMEM = "Since start";
-const char STR_BRACKET[]PROGMEM = "Stops between exposures";
-const char STR_CAMERA_FPS[]PROGMEM = "Frames per Second";
-const char STR_DEV_MODE_ON[]PROGMEM = "Shutter lights LED";
-const char STR_DEV_MODE_OFF[]PROGMEM = "LED off during use";
 
 const settings_item settings_timer_mode[]PROGMEM =
 {
@@ -176,6 +181,15 @@ const settings_item menu_settings_power_off_time[]PROGMEM =
     { "\0           ", 0, 0 }
 };
 
+const settings_item menu_settings_aux_port[]PROGMEM =
+{
+    { "Disabled    ", AUX_MODE_DISABLED, (void*)STR_AUX_DISABLED },
+    { "Dolly Out   ", AUX_MODE_DOLLY, (void*)STR_AUX_DOLLY },
+//    { "2nd Camera  ", 60, (void*)STR_AUX_DOLLY },
+//    { "PC Sync In  ", 60, (void*)STR_AUX_DOLLY },
+    { "\0           ", 0, 0 }
+};
+
 const settings_item menu_settings_flashlight_time[]PROGMEM =
 {
     { "10 Minutes  ", 60, (void*)STR_FLASHLIGHT_TIME },
@@ -212,6 +226,7 @@ const menu_item menu_settings[]PROGMEM =
     { "Bulb Mode   ", 'S', (void*)menu_settings_bulb_mode, (void*)&conf.bulbMode, (void*)settings_update },
     { "Camera FPS  ", 'S', (void*)menu_settings_camera_fps, (void*)&conf.cameraFPS, (void*)settings_update_camera_fps },
     { "Camera Make ", 'S', (void*)menu_settings_camera_make, (void*)&conf.cameraMake, (void*)settings_update_camera_make },
+    { "AUX Port    ", 'S', (void*)menu_settings_aux_port, (void*)&conf.auxPort, (void*)settings_update },
     { "Dev Mode LED", 'S', (void*)menu_settings_dev_mode, (void*)&conf.devMode, (void*)settings_update },
     { "Development ", 'M', (void*)menu_development, 0, 0 },
     { "\0           ", 'V', 0, 0, 0 }

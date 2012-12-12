@@ -26,7 +26,7 @@ struct settings
     uint32_t settingsVersion;
     char devMode;
     uint32_t firmwareVersion;
-    char test5;
+    char auxPort;
     char test6;
 };
 
