@@ -262,7 +262,7 @@ volatile char cableRelease(char key, char first)
 		status = 0;
 		//cable = 0;
 		lcd.cls();
-		menu.setTitle(TEXT("Cable Release"));
+		menu.setTitle(TEXT("Cable Remote"));
 		menu.setBar(TEXT("Bulb"), TEXT("Photo"));
 		lcd.update();
 		timer.half();
@@ -342,7 +342,7 @@ volatile char cableReleaseRemote(char key, char first)
 	{
 		status = 0;
 		lcd.cls();
-		menu.setTitle(TEXT("BT Cable Release"));
+		menu.setTitle(TEXT("BT Cable Remote"));
 		menu.setBar(TEXT("Bulb"), TEXT("Photo"));
 		lcd.update();
 		remote.set(REMOTE_BULB_END);
@@ -416,7 +416,7 @@ volatile char shutterLagTest(char key, char first)
 
 		ENABLE_SHUTTER;
 		ENABLE_MIRROR;
-		ENABLE_AUX_INPUT;
+		ENABLE_AUX_PORT;
 
 		_delay_ms(100);
 
@@ -429,7 +429,7 @@ volatile char shutterLagTest(char key, char first)
 		SHUTTER_OPEN;
 		clock.tare();
 
-		while(!AUX_INPUT)
+		while(!AUX_INPUT1)
 		{
 			if(clock.eventMs() >= 1000)
 				break;
@@ -442,7 +442,7 @@ volatile char shutterLagTest(char key, char first)
 		SHUTTER_CLOSE;
 		clock.tare();
 
-		while(AUX_INPUT)
+		while(AUX_INPUT1)
 		{
 			if(clock.eventMs() > 1000)
 				break;

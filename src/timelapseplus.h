@@ -8,7 +8,7 @@
  *
  */
 
-#define VERSION 20121128
+#define VERSION 20121212
 //#define PROTOTYPE
 //#define PRODUCTION
 
