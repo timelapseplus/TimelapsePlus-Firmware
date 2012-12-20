@@ -14,6 +14,7 @@
 
 #define NOTIFY_CHARGE 1
 #define NOTIFY_BT 2
+#define NOTIFY_CAMERA 3
 
 int main();
 void setup(void);

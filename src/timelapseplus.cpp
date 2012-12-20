@@ -62,7 +62,7 @@ extern volatile uint8_t showRemoteStart;
 
 volatile uint8_t connectUSBcamera = 0;
 
-uint8_t battery_percent, charge_status;
+uint8_t battery_percent, charge_status, USBmode = 0;
 
 extern settings conf;
 
@@ -189,6 +189,7 @@ int main()
 
 	notify.watch(NOTIFY_CHARGE, (void *)&charge_status, sizeof(charge_status), &message_notify);
 	notify.watch(NOTIFY_BT, (void *)&remote.connected, sizeof(remote.connected), &message_notify);
+	notify.watch(NOTIFY_CAMERA, (void *)&Camera_Info_Ready, sizeof(Camera_Info_Ready), &message_notify);
 
 	/****************************
 	   Main Loop
@@ -271,7 +272,7 @@ int main()
 		bt.task();
 		notify.task();
 
-		if(hardware_USB_InHostMode)
+		if(USBmode == 1)
 			Camera_Task();
 		else
 			VirtualSerial_Task();
@@ -309,15 +310,17 @@ int main()
 			}
 		}
 
-		if((hardware_USB_HostConnected || connectUSBcamera) && !hardware_USB_InHostMode)
+		if((hardware_USB_HostConnected || connectUSBcamera) && (USBmode == 0))
 		{
+			USBmode = 1;
 			USB_Detach();
 			USB_Disable();
 			hardware_USB_SetHostMode();
 			Camera_Enable();
 		}
-		else if((!hardware_USB_HostConnected && !connectUSBcamera) && hardware_USB_InHostMode)
+		else if((!hardware_USB_HostConnected && !connectUSBcamera) && (USBmode == 1))
 		{
+			USBmode = 0;
 			Camera_Disable();
 			hardware_USB_SetDeviceMode();
 			VirtualSerial_Init();
@@ -353,6 +356,17 @@ void message_notify(uint8_t id)
 			else
 			{
 				menu.message(STR("Disconnected"));
+			}
+			break;
+
+		case NOTIFY_CAMERA:
+			if(Camera_Info_Ready)
+			{
+				menu.message(Camera_Model);
+			}
+			else
+			{
+//				menu.message(STR("Disconnected"));
 			}
 			break;
 	}

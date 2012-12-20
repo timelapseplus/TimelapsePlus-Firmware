@@ -37,26 +37,36 @@
 #include "camera.h"
 
 volatile char Camera_Connected;
+char Camera_Model[21];
+uint8_t Camera_Info_Ready, configured;
 
 /** Task to print device information through the serial port, and open/close a test PIMA session with the
  *  attached Still Image device.
  */
 void Camera_Task(void)
 {
-    USB_USBTask();
+    for(uint8_t i = 0; i < 100; i++)
+    {
+        USB_USBTask();
+        if(USB_HostState == HOST_STATE_Configured)
+        {
+            if(configured != USB_HostState)
+            {
+                configured = USB_HostState;
+                puts_P(PSTR("Retrieving Device Info...\r\n"));
+                Camera_GetModel();
 
-    if(USB_HostState != HOST_STATE_Configured) return;
-
-    puts_P(PSTR("Retrieving Device Info...\r\n"));
-    _delay_ms(50);
-
-    Camera_GetModel();
-
-    Camera_Open();
-//	Camera_SetParam(EOS_DPC_ISO, EOS_DVC_ISO_1250);
-    Camera_Capture();
-    Camera_Close();
-
+                Camera_Open();
+    //            Camera_SetParam(EOS_DPC_ISO, EOS_DVC_ISO_1250);
+    //            Camera_Capture();
+    //            Camera_Close();
+            }
+        }
+        else
+        {
+            configured = USB_HostState;
+        }
+    }
 }
 
 /** Configures the board hardware and chip peripherals for the demo's functionality. */
@@ -69,13 +79,19 @@ void Camera_Enable(void)
 
     /* Create a stdio stream for the serial port for stdin and stdout */
     Serial_CreateStream(NULL);
+    puts_P(PSTR("Camera Enabled.\r\n"));
+    Camera_Info_Ready = 0;
 }
 
 void Camera_Disable(void)
 {
+    Camera_Close();
+    USB_USBTask();
     USB_Detach();
     USB_Disable();
     Camera_Connected = 0;
+    puts_P(PSTR("Camera Disabled.\r\n"));
+    Camera_Info_Ready = 0;
     return;
 }
 
@@ -94,6 +110,7 @@ void EVENT_USB_Host_DeviceAttached(void)
 void EVENT_USB_Host_DeviceUnattached(void)
 {
     Camera_Connected = 0;
+    Camera_Info_Ready = 0;
     puts_P(PSTR("\r\nDevice Unattached.\r\n"));
 }
 
@@ -199,7 +216,7 @@ void Camera_SetProperty(uint32_t param, uint32_t val)
 
     PIMA_SendBlock = (PIMA_Container_t)
     {
-        .DataLength = PIMA_COMMAND_SIZE(1) + 2,
+        .DataLength = PIMA_COMMAND_SIZE(1),
         .Type = PIMA_CONTAINER_CommandBlock,
         .Code = EOS_OC_PROPERTY_SET,
         .TransactionID = 0x00000001,
@@ -208,6 +225,7 @@ void Camera_SetProperty(uint32_t param, uint32_t val)
 
     /* Send the GETDEVICEINFO block */
     SImage_SendBlockHeader();
+    puts_P(PSTR("Sent Header...\r\n"));
 
     uint8_t *SendData = ((uint8_t*)((void*)(&val)));
 
@@ -221,6 +239,7 @@ void Camera_SetProperty(uint32_t param, uint32_t val)
     }
 
     SImage_SendData(SendData, 2);
+    puts_P(PSTR("Sent Data...\r\n"));
 
     /* Receive the response data block */
     if((ErrorCode = SImage_ReceiveBlockHeader()) != PIPE_RWSTREAM_NoError)
@@ -290,7 +309,7 @@ void Camera_GetModel(void)
     char Manufacturer[*DeviceInfoPos];
     UnicodeToASCII(DeviceInfoPos, Manufacturer);
     printf_P(PSTR("   Manufacturer: %s\r\n"), Manufacturer);
-    _delay_ms(50);
+    //_delay_ms(50);
 
     DeviceInfoPos += 1 + UNICODE_STRING_LENGTH(*DeviceInfoPos);   // Skip over Manufacturer String
 
@@ -298,7 +317,9 @@ void Camera_GetModel(void)
     char Model[*DeviceInfoPos];
     UnicodeToASCII(DeviceInfoPos, Model);
     printf_P(PSTR("   Model: %s\r\n"), Model);
-    _delay_ms(50);
+    //_delay_ms(50);
+
+    strncpy(Camera_Model, Model, 20);
 
     DeviceInfoPos += 1 + UNICODE_STRING_LENGTH(*DeviceInfoPos);   // Skip over Model String
 
@@ -306,7 +327,7 @@ void Camera_GetModel(void)
     char DeviceVersion[*DeviceInfoPos];
     UnicodeToASCII(DeviceInfoPos, DeviceVersion);
     printf_P(PSTR("   Device Version: %s\r\n\r\n"), DeviceVersion);
-    _delay_ms(50);
+    //_delay_ms(50);
 
     /* Receive the final response block from the device */
     if((ErrorCode = SImage_ReceiveBlockHeader()) != PIPE_RWSTREAM_NoError)
@@ -326,6 +347,7 @@ void Camera_GetModel(void)
         return;
     }
 */
+    Camera_Info_Ready = 1;
     return;
 }
 

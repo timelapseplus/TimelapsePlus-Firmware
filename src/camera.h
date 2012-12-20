@@ -78,6 +78,10 @@ void UnicodeToASCII(uint8_t *UnicodeString,
                     char *Buffer);
 void ShowCommandError(uint8_t ErrorCode,
                       bool ResponseCodeError);
+
+extern char Camera_Model[21];
+extern uint8_t Camera_Info_Ready;
+
 #ifdef __cplusplus
 }
 #endif

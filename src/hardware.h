@@ -39,12 +39,12 @@ uint16_t hardware_analogRead(uint8_t ch);
 void hardware_off(void);
 char hardware_flashlight(char on);
 char hardware_flashlightIsOn(void);
-void hardware_flashlight_toggle();
+void hardware_flashlight_toggle(void);
 void hardware_bootloader(void);
-void hardware_lightening_enable();
-void hardware_lightening_disable();
+void hardware_lightening_enable(void);
+void hardware_lightening_disable(void);
 void hardware_light_enable(uint8_t level);
-void hardware_light_disable();
+void hardware_light_disable(void);
 
 uint16_t battery_read_raw(void);
 uint8_t battery_read(void);

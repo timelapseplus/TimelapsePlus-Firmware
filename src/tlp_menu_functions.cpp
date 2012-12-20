@@ -1384,23 +1384,41 @@ volatile char btConnect(char key, char first)
 
 volatile char usbPlug(char key, char first)
 {
-	static char connected = 0;
+	static char connected = 0, ready = 0;
 
-	if(first || (Camera_Connected != connected))
+	if(first || (Camera_Connected != connected) || (ready != Camera_Info_Ready))
 	{
 		connected = Camera_Connected;
+		ready = Camera_Info_Ready;
 
 		if(Camera_Connected)
 		{
-			lcd.cls();
-			lcd.writeString(3, 7, TEXT(" Connected!  "));
-			lcd.writeString(3, 15, TEXT("             "));
-			lcd.writeString(3, 23, TEXT("             "));
-			lcd.writeString(3, 31, TEXT("             "));
-			menu.setTitle(TEXT("Camera Info"));
-			menu.setBar(TEXT("RETURN"), BLANK_STR);
-			lcd.update();
-			connectUSBcamera = 1;
+			if(Camera_Info_Ready)
+			{
+				lcd.cls();
+				lcd.writeString(3, 7,  TEXT(" Connected!  "));
+				lcd.writeString(3, 15, TEXT("             "));
+				lcd.writeString(3, 23, Camera_Model);
+				lcd.writeString(3, 31, TEXT("             "));
+				menu.setTitle(TEXT("Camera Info"));
+				menu.setBar(TEXT("RETURN"), TEXT("PHOTO"));
+				lcd.update();
+				connectUSBcamera = 1;
+
+			}
+			else
+			{
+				lcd.cls();
+				lcd.writeString(3, 7,  TEXT(" Connected!  "));
+				lcd.writeString(3, 15, TEXT(" Retrieving  "));
+				lcd.writeString(3, 23, TEXT("   Device    "));
+				lcd.writeString(3, 31, TEXT("   Info...   "));
+				menu.setTitle(TEXT("Camera Info"));
+				menu.setBar(TEXT("RETURN"), BLANK_STR);
+				lcd.update();
+				connectUSBcamera = 1;
+
+			}
 		}
 		else
 		{
@@ -1416,12 +1434,20 @@ volatile char usbPlug(char key, char first)
 		}
 	}
 
-	if(key)
+	if(key == FL_KEY || key == LEFT_KEY)
 	{
 		if(!Camera_Connected)
 			connectUSBcamera = 0;
 
 		return FN_CANCEL;
+	}
+	else if(key == FR_KEY)
+	{
+		if(Camera_Info_Ready) Camera_Capture();
+	}
+	else if(key == DOWN_KEY)
+	{
+//		if(Camera_Info_Ready) Camera_SetProperty(EOS_DPC_ISO, EOS_DVC_ISO_1250);
 	}
 
 	return FN_CONTINUE;
