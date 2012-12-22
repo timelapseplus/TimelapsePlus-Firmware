@@ -211,40 +211,66 @@ void Camera_SetProperty(uint32_t param, uint32_t val)
 
     uint8_t ErrorCode;
 
+    wdt_disable();
+
     puts_P(PSTR("Changing Property...\r\n"));
     _delay_ms(50);
 
     PIMA_SendBlock = (PIMA_Container_t)
     {
-        .DataLength = PIMA_COMMAND_SIZE(1),
+        .DataLength = PIMA_COMMAND_SIZE(12),
         .Type = PIMA_CONTAINER_CommandBlock,
         .Code = EOS_OC_PROPERTY_SET,
         .TransactionID = 0x00000001,
-        .Params = { param },
+        .Params = {  },
     };
 
     /* Send the GETDEVICEINFO block */
     SImage_SendBlockHeader();
-    puts_P(PSTR("Sent Header...\r\n"));
-
-    uint8_t *SendData = ((uint8_t*)((void*)(&val)));
+    puts_P(PSTR("Sent Command Header...\r\n"));
 
     /* Receive the response data block */
     if((ErrorCode = SImage_ReceiveBlockHeader()) != PIPE_RWSTREAM_NoError)
     {
-        puts_P(PSTR("Error 9\r\n"));
+        puts_P(PSTR("Error 8*\r\n"));
         ShowCommandError(ErrorCode, false);
         USB_Host_SetDeviceConfiguration(0);
         return;
     }
 
-    SImage_SendData(SendData, 2);
+    PIMA_SendBlock = (PIMA_Container_t)
+    {
+        .DataLength = PIMA_DATA_SIZE(12),
+        .Type = PIMA_CONTAINER_DataBlock,
+        .Code = EOS_OC_PROPERTY_SET,
+        .TransactionID = 0x00000001,
+        .Params = {  },
+    };
+
+    /* Send the GETDEVICEINFO block */
+    SImage_SendBlockHeader();
+    puts_P(PSTR("Sent Data Header...\r\n"));
+
+//    uint32_t data[] = {0x0000000c, 0x0000d103, 0x00000065};
+    uint8_t data[] = {0x00, 0x00, 0x00, 0x0c, 0x00, 0x00, 0xd1, 0x03, 0x00, 0x00, 0x00, 0x65};
+//    uint8_t *SendData = ((uint8_t*)((void*)(data)));
+
+    /* Receive the response data block */
+    if((ErrorCode = SImage_ReceiveBlockHeader()) != PIPE_RWSTREAM_NoError)
+    {
+        puts_P(PSTR("Error 9*\r\n"));
+        ShowCommandError(ErrorCode, false);
+        USB_Host_SetDeviceConfiguration(0);
+        return;
+    }
+
+    SImage_SendData(data, 12);
     puts_P(PSTR("Sent Data...\r\n"));
 
     /* Receive the response data block */
     if((ErrorCode = SImage_ReceiveBlockHeader()) != PIPE_RWSTREAM_NoError)
     {
-        puts_P(PSTR("Error 12\r\n"));
+        puts_P(PSTR("Error 12*\r\n"));
         ShowCommandError(ErrorCode, false);
         USB_Host_SetDeviceConfiguration(0);
         return;

@@ -1447,7 +1447,7 @@ volatile char usbPlug(char key, char first)
 	}
 	else if(key == DOWN_KEY)
 	{
-//		if(Camera_Info_Ready) Camera_SetProperty(EOS_DPC_ISO, EOS_DVC_ISO_1250);
+		if(Camera_Info_Ready) Camera_SetProperty(EOS_DPC_ISO, EOS_DVC_ISO_1250);
 	}
 
 	return FN_CONTINUE;
