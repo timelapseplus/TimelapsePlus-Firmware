@@ -50,6 +50,7 @@ void settings_load()
     eeprom_read_block((void*)&conf, &conf_eep, sizeof(settings));
     lcd.color(conf.lcdColor);
     ir.make = conf.cameraMake;
+    if(conf.auxPort != AUX_MODE_DISABLED) aux_off();
 }
 
 /******************************************************************
