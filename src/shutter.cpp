@@ -601,7 +601,6 @@ char shutter::task()
             run_state = RUN_GAP;
         }
 
-        if(run_state == RUN_GAP && conf.auxPort == AUX_MODE_DOLLY) aux_pulse();
         status.photosRemaining = current.Photos - photos;
         status.photosTaken = photos;
     }
@@ -610,6 +609,7 @@ char shutter::task()
     {
         if(old_state != run_state)
         {
+            if(run_state == RUN_GAP && conf.auxPort == AUX_MODE_DOLLY) aux_pulse();
             if(conf.devMode)
             {
                 debug(STR("State: RUN_GAP"));
