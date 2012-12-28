@@ -96,7 +96,9 @@ void PTP_Enable(void)
 
     /* Create a stdio stream for the serial port for stdin and stdout */
     Serial_CreateStream(NULL);
+    #ifdef PTP_DEBUG
     puts_P(PSTR("Camera Enabled.\r\n"));
+    #endif
     PTP_Ready = 0;
 }
 
@@ -137,14 +139,18 @@ uint8_t PTP_Transaction(uint16_t opCode, uint8_t mode, uint8_t paramCount, uint3
     {
         SI_Host_ReceiveBlockHeader(&DigitalCamera_SI_Interface, &PIMA_Block);
         uint16_t receivedBytes = (PIMA_Block.DataLength - PIMA_COMMAND_SIZE(0));
+        #ifdef PTP_DEBUG
         printf_P(PSTR("   Bytes received: %d\r\n\r\n"), receivedBytes);
+        #endif
         SI_Host_ReadData(&DigitalCamera_SI_Interface, PTP_Buffer, receivedBytes);
         PTP_Buffer[receivedBytes] = 0;
     }
 
     if (SI_Host_ReceiveResponse(&DigitalCamera_SI_Interface))
     {
+        #ifdef PTP_DEBUG
         puts_P(PSTR("PTP_Command Error.\r\n"));
+        #endif
         USB_Host_SetDeviceConfiguration(0);
         return 1;
     }
@@ -156,7 +162,9 @@ uint8_t PTP_OpenSession()
 {
     if (SI_Host_OpenSession(&DigitalCamera_SI_Interface) != PIPE_RWSTREAM_NoError)
     {
+        #ifdef PTP_DEBUG
         puts_P(PSTR("Could not open PIMA session.\r\n"));
+        #endif
         USB_Host_SetDeviceConfiguration(0);
         return 1;
     }
@@ -167,7 +175,9 @@ uint8_t PTP_CloseSession()
 {
     if (SI_Host_CloseSession(&DigitalCamera_SI_Interface) != PIPE_RWSTREAM_NoError)
     {
+        #ifdef PTP_DEBUG
         puts_P(PSTR("Could not close PIMA session.\r\n"));
+        #endif
         USB_Host_SetDeviceConfiguration(0);
         return 1;
     }
@@ -194,15 +204,17 @@ uint8_t PTP_GetDeviceInfo()
     /* Extract and convert the Manufacturer Unicode string to ASCII and print it through the USART */
     char Manufacturer[*DeviceInfoPos];
     UnicodeToASCII(DeviceInfoPos, Manufacturer);
+    #ifdef PTP_DEBUG
     printf_P(PSTR("   Manufacturer: %s\r\n"), Manufacturer);
-
+    #endif
     DeviceInfoPos += 1 + UNICODE_STRING_LENGTH(*DeviceInfoPos);   // Skip over Manufacturer String
 
     /* Extract and convert the Model Unicode string to ASCII and print it through the USART */
     char Model[*DeviceInfoPos];
     UnicodeToASCII(DeviceInfoPos, Model);
+    #ifdef PTP_DEBUG
     printf_P(PSTR("   Model: %s\r\n"), Model);
-
+    #endif
     strncpy(PTP_CameraModel, Model, 20);
 
     DeviceInfoPos += 1 + UNICODE_STRING_LENGTH(*DeviceInfoPos);   // Skip over Model String
@@ -210,7 +222,9 @@ uint8_t PTP_GetDeviceInfo()
     /* Extract and convert the Device Version Unicode string to ASCII and print it through the USART */
     char DeviceVersion[*DeviceInfoPos];
     UnicodeToASCII(DeviceInfoPos, DeviceVersion);
+    #ifdef PTP_DEBUG
     printf_P(PSTR("   Device Version: %s\r\n\r\n"), DeviceVersion);
+    #endif
     return 0;
 }
 
@@ -220,7 +234,9 @@ uint8_t PTP_GetDeviceInfo()
 void EVENT_USB_Host_DeviceAttached(void)
 {
     PTP_Connected = 1;
+    #ifdef PTP_DEBUG
     puts_P(PSTR("Device Attached.\r\n"));
+    #endif
 }
 
 /** Event handler for the USB_DeviceUnattached event. This indicates that a device has been removed from the host, and
@@ -229,7 +245,9 @@ void EVENT_USB_Host_DeviceAttached(void)
 void EVENT_USB_Host_DeviceUnattached(void)
 {
     PTP_Connected = 0;
+    #ifdef PTP_DEBUG
     puts_P(PSTR("\r\nDevice Unattached.\r\n"));
+    #endif
 }
 
 /** Event handler for the USB_DeviceEnumerationComplete event. This indicates that a device has been successfully
@@ -242,24 +260,32 @@ void EVENT_USB_Host_DeviceEnumerationComplete(void)
     if (USB_Host_GetDeviceConfigDescriptor(1, &ConfigDescriptorSize, PTP_Buffer,
                                            sizeof(PTP_Buffer)) != HOST_GETCONFIG_Successful)
     {
+        #ifdef PTP_DEBUG
         puts_P(PSTR("Error Retrieving Configuration Descriptor.\r\n"));
+        #endif
         return;
     }
 
     if (SI_Host_ConfigurePipes(&DigitalCamera_SI_Interface,
                                ConfigDescriptorSize, PTP_Buffer) != SI_ENUMERROR_NoError)
     {
+        #ifdef PTP_DEBUG
         puts_P(PSTR("Attached Device Not a Valid Still Image Class Device.\r\n"));
+        #endif
         return;
     }
 
     if (USB_Host_SetDeviceConfiguration(1) != HOST_SENDCONTROL_Successful)
     {
+        #ifdef PTP_DEBUG
         puts_P(PSTR("Error Setting Device Configuration.\r\n"));
+        #endif
         return;
     }
 
+    #ifdef PTP_DEBUG
     puts_P(PSTR("Still Image Device Enumerated.\r\n"));
+    #endif
 }
 
 /** Event handler for the USB_HostError event. This indicates that a hardware error occurred while in host mode. */
@@ -267,9 +293,10 @@ void EVENT_USB_Host_HostError(const uint8_t ErrorCode)
 {
     PTP_Disable();
 
+    #ifdef PTP_DEBUG
     printf_P(PSTR( "Host Mode Error\r\n"
                              " -- Error Code %d\r\n" ), ErrorCode);
-
+    #endif
     for(;;);
 }
 
@@ -279,11 +306,13 @@ void EVENT_USB_Host_HostError(const uint8_t ErrorCode)
 void EVENT_USB_Host_DeviceEnumerationFailed(const uint8_t ErrorCode,
                                             const uint8_t SubErrorCode)
 {
+    #ifdef PTP_DEBUG
     printf_P(PSTR( "Dev Enum Error\r\n"
                              " -- Error Code %d\r\n"
                              " -- Sub Error Code %d\r\n"
                              " -- In State %d\r\n" ), ErrorCode, SubErrorCode, USB_HostState);
 
+    #endif
 }
 
 /** Function to convert a given Unicode encoded string to ASCII. This function will only work correctly on Unicode

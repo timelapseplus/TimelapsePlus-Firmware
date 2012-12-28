@@ -36,6 +36,8 @@
 #ifndef _STILL_IMAGE_HOST_H_
 #define _STILL_IMAGE_HOST_H_
 
+#define PTP_DEBUG
+
 /* Includes: */
 #include <avr/io.h>
 #include <avr/wdt.h>
