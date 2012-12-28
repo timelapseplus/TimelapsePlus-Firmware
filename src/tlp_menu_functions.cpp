@@ -22,7 +22,7 @@
 #include "debug.h"
 #include "bluetooth.h"
 #include "settings.h"
-#include "camera.h"
+#include "PTP_Driver.h"
 #include "math.h"
 #include "selftest.h"
 #include "remote.h"
@@ -1386,19 +1386,19 @@ volatile char usbPlug(char key, char first)
 {
 	static char connected = 0, ready = 0;
 
-	if(first || (Camera_Connected != connected) || (ready != Camera_Info_Ready))
+	if(first || (PTP_Connected != connected) || (ready != PTP_Ready))
 	{
-		connected = Camera_Connected;
-		ready = Camera_Info_Ready;
+		connected = PTP_Connected;
+		ready = PTP_Ready;
 
-		if(Camera_Connected)
+		if(PTP_Connected)
 		{
-			if(Camera_Info_Ready)
+			if(PTP_Ready)
 			{
 				lcd.cls();
 				lcd.writeString(3, 7,  TEXT(" Connected!  "));
 				lcd.writeString(3, 15, TEXT("             "));
-				lcd.writeString(3, 23, Camera_Model);
+				lcd.writeString(3, 23, PTP_CameraModel);
 				lcd.writeString(3, 31, TEXT("             "));
 				menu.setTitle(TEXT("Camera Info"));
 				menu.setBar(TEXT("RETURN"), TEXT("PHOTO"));
@@ -1436,18 +1436,18 @@ volatile char usbPlug(char key, char first)
 
 	if(key == FL_KEY || key == LEFT_KEY)
 	{
-		if(!Camera_Connected)
+		if(!PTP_Connected)
 			connectUSBcamera = 0;
 
 		return FN_CANCEL;
 	}
 	else if(key == FR_KEY)
 	{
-		if(Camera_Info_Ready) Camera_Capture();
+		//if(PTP_Ready) Camera_Capture();
 	}
 	else if(key == DOWN_KEY)
 	{
-		if(Camera_Info_Ready) Camera_SetProperty(EOS_DPC_ISO, EOS_DVC_ISO_1250);
+		//if(PTP_Ready) Camera_SetProperty(EOS_DPC_ISO, EOS_DVC_ISO_1250);
 	}
 
 	return FN_CONTINUE;

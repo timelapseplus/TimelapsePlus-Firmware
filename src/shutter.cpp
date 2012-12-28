@@ -26,7 +26,8 @@
 #include "debug.h"
 #include "math.h"
 #include "settings.h"
-#include "camera.h"
+#include "PTP_Driver.h"
+#include "PTP.h"
 #include "timelapseplus.h"
 
 #define DEBUG
@@ -246,11 +247,12 @@ void shutter_capture(void)
     clock.in(SHUTTER_PRESS_TIME, &shutter_off);
     ir_shutter_state = 0;
     shutter_state = 0;
-    if(Camera_Info_Ready)
+/*    if(Camera_Info_Ready)
     {
         Camera_Capture();
     }
-    else if(cable_connected == 0)
+    else */
+    if(cable_connected == 0)
     {
         ir.shutterNow();
     } 

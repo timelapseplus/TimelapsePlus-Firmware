@@ -23,7 +23,7 @@
 #include "debug.h"
 #include "bluetooth.h"
 #include "settings.h"
-#include "camera.h"
+#include "PTP_Driver.h"
 #include "math.h"
 #include "remote.h"
 #include "tlp_menu_functions.h"

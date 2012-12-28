@@ -33,7 +33,7 @@
 #include "debug.h"
 #include "bluetooth.h"
 #include "settings.h"
-#include "camera.h"
+#include "PTP_Driver.h"
 #include "math.h"
 #include "selftest.h"
 #include "remote.h"
@@ -189,7 +189,7 @@ int main()
 
 	notify.watch(NOTIFY_CHARGE, (void *)&charge_status, sizeof(charge_status), &message_notify);
 	notify.watch(NOTIFY_BT, (void *)&remote.connected, sizeof(remote.connected), &message_notify);
-	notify.watch(NOTIFY_CAMERA, (void *)&Camera_Info_Ready, sizeof(Camera_Info_Ready), &message_notify);
+	notify.watch(NOTIFY_CAMERA, (void *)&PTP_Ready, sizeof(PTP_Ready), &message_notify);
 
 	/****************************
 	   Main Loop
@@ -273,7 +273,7 @@ int main()
 		notify.task();
 
 		if(USBmode == 1)
-			Camera_Task();
+			PTP_Task();
 		else
 			VirtualSerial_Task();
 
@@ -316,12 +316,12 @@ int main()
 			USB_Detach();
 			USB_Disable();
 			hardware_USB_SetHostMode();
-			Camera_Enable();
+			PTP_Enable();
 		}
 		else if((!hardware_USB_HostConnected && !connectUSBcamera) && (USBmode == 1))
 		{
 			USBmode = 0;
-			Camera_Disable();
+			PTP_Disable();
 			hardware_USB_SetDeviceMode();
 			VirtualSerial_Init();
 		}
@@ -360,9 +360,9 @@ void message_notify(uint8_t id)
 			break;
 
 		case NOTIFY_CAMERA:
-			if(Camera_Info_Ready)
+			if(PTP_Ready)
 			{
-				menu.message(Camera_Model);
+				menu.message(PTP_CameraModel);
 			}
 			else
 			{

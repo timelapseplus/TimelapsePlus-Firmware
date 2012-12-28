@@ -137,29 +137,28 @@ SRC = src/Descriptors.c 	\
 	  $(LUFA_SRC_SERIAL)	\
 	  src/TWI_Master.c      \
 	  src/TWI_Master.c      \
-	  src/SIConfigDescriptor.c      \
-	  src/camera.c      \
-	  src/Lib/StillImageCommands.c      \
+	  src/PTP_Driver.c      \
 	  src/VirtualSerial.c
 
 
 # List C++ source files here. (C dependencies are automatically generated.)
-CPPSRC = src/$(TARGET).cpp 	        \
-			src/button.cpp 					      \
-			src/clock.cpp 					      \
-			src/hardware.cpp 				      \
-			src/Menu.cpp 					        \
-			src/IR.cpp 	                  \
-			src/5110LCD.cpp     			    \
-			src/shutter.cpp 				      \
-			src/bluetooth.cpp 			      \
-			src/settings.cpp 			        \
-			src/LCD_Term.cpp 			        \
-			src/selftest.cpp 			        \
+CPPSRC = src/$(TARGET).cpp 	                \
+			src/button.cpp 					\
+			src/clock.cpp 					\
+			src/hardware.cpp 				\
+			src/Menu.cpp 					\
+			src/IR.cpp 	                    \
+			src/5110LCD.cpp                 \
+			src/shutter.cpp                 \
+			src/bluetooth.cpp               \
+			src/settings.cpp 			    \
+			src/LCD_Term.cpp 			    \
+			src/selftest.cpp 			    \
 			src/math.cpp 			        \
 			src/remote.cpp 			        \
-			src/tlp_menu_functions.cpp 			        \
+			src/tlp_menu_functions.cpp 	    \
 			src/notify.cpp 			        \
+			src/PTP.cpp 			        \
 			src/debug.cpp
 
 

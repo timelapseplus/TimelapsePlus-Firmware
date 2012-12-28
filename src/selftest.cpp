@@ -31,7 +31,6 @@
 #include "debug.h"
 #include "bluetooth.h"
 #include "settings.h"
-#include "camera.h"
 #include "selftest.h"
 #include "math.h"
 

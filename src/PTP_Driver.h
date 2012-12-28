@@ -30,36 +30,55 @@
 
 /** \file
  *
- *  Header file for StillImageCommands.c.
+ *  Header file for StillImageHost.c.
  */
 
-#ifndef _STILL_IMAGE_COMMANDS_H_
-#define _STILL_IMAGE_COMMANDS_H_
+#ifndef _STILL_IMAGE_HOST_H_
+#define _STILL_IMAGE_HOST_H_
 
 /* Includes: */
+#include <avr/io.h>
+#include <avr/wdt.h>
+#include <avr/power.h>
+#include <avr/interrupt.h>
+#include <stdio.h>
+
+#include "hardware.h"
+#include "PTP_Codes.h"
+
 #include <LUFA/Drivers/USB/USB.h>
+#include <LUFA/Drivers/Peripheral/Serial.h>
 
-#include "PIMACodes.h"
-#include "../camera.h"
-
-/* Macros: */
-/** Timeout period between the issuing of a command to a device, and the reception of the first packet. */
-#define COMMAND_DATA_TIMEOUT_MS        10000
-
-/* External Variables: */
-extern PIMA_Container_t PIMA_SendBlock;
-extern PIMA_Container_t PIMA_ReceivedBlock;
-extern PIMA_Container_t PIMA_EventBlock;
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 
 /* Function Prototypes: */
-void SImage_SendBlockHeader(void);
-uint8_t SImage_ReceiveBlockHeader(void);
-uint8_t SImage_ReceiveEventHeader(void);
-uint8_t SImage_SendData(void *const Buffer,
-                        const uint16_t Bytes);
-uint8_t SImage_ReadData(void *const Buffer,
-                        const uint16_t Bytes);
-bool SImage_IsEventReceived(void);
+void PTP_Enable(void);
+void PTP_Disable(void);
+void PTP_Task(void);
+
+void EVENT_USB_Host_HostError(const uint8_t ErrorCode);
+void EVENT_USB_Host_DeviceAttached(void);
+void EVENT_USB_Host_DeviceUnattached(void);
+void EVENT_USB_Host_DeviceEnumerationFailed(const uint8_t ErrorCode,
+                                            const uint8_t SubErrorCode);
+void EVENT_USB_Host_DeviceEnumerationComplete(void);
+uint8_t PTP_Transaction(uint16_t opCode, uint8_t mode, uint8_t paramCount, uint32_t *params);
+uint8_t PTP_OpenSession(void);
+uint8_t PTP_CloseSession(void);
+uint8_t PTP_GetDeviceInfo(void);
+void UnicodeToASCII(char *UnicodeString,
+                char *Buffer);
+
+extern char PTP_Buffer[512];
+extern char PTP_CameraModel[21];
+extern uint8_t PTP_Ready, PTP_Connected;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 
