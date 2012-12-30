@@ -40,7 +40,7 @@
 #define RUN_END 5
 
 extern IR ir;
-
+extern PTP camera;
 extern settings conf;
 extern shutter timer;
 
@@ -183,7 +183,11 @@ void shutter::bulbStart(void)
 }
 void shutter_bulbStart(void)
 {
-    if(cable_connected == 0 && ir_shutter_state != 1)
+    if(camera.supports.bulb)
+    {
+        camera.bulbStart();
+    }
+    else if(cable_connected == 0 && ir_shutter_state != 1)
     {
         ir_shutter_state = 1;
         ir.bulbStart();
@@ -213,7 +217,11 @@ void shutter::bulbEnd(void)
 }
 void shutter_bulbEnd(void)
 {
-    if(cable_connected == 0 && ir_shutter_state == 1)
+    if(camera.supports.bulb)
+    {
+        camera.bulbEnd();
+    }
+    else if(cable_connected == 0 && ir_shutter_state == 1)
     {
         ir_shutter_state = 0;
         ir.bulbEnd();
@@ -247,12 +255,11 @@ void shutter_capture(void)
     clock.in(SHUTTER_PRESS_TIME, &shutter_off);
     ir_shutter_state = 0;
     shutter_state = 0;
-/*    if(Camera_Info_Ready)
+    if(camera.supports.capture)
     {
-        Camera_Capture();
+        camera.capture();
     }
-    else */
-    if(cable_connected == 0)
+    else if(cable_connected == 0)
     {
         ir.shutterNow();
     } 

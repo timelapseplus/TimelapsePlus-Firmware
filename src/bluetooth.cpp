@@ -543,7 +543,7 @@ uint8_t BT::send(char* str)
 	if(!present)
 		return 1;
 
-	if(!(BT_RTS))
+/*	if(!(BT_RTS))
 	{
 		char i = 0;
 
@@ -559,7 +559,7 @@ uint8_t BT::send(char* str)
 	}
 
 	if(BT_RTS)
-	{
+	{*/
 		char* ptr;
 
 		ptr = str;
@@ -569,7 +569,7 @@ uint8_t BT::send(char* str)
 			Serial_SendByte(*ptr);
 			ptr++;
 		}
-	}
+//	}
 
 	return 1;
 }

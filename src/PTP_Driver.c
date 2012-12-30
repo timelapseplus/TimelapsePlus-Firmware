@@ -56,7 +56,8 @@ USB_ClassInfo_SI_Host_t DigitalCamera_SI_Interface =
             },
     };
 
-char PTP_Buffer[512];
+char PTP_Buffer[PTP_BUFFER_SIZE];
+uint16_t PTP_Bytes_Received, PTP_Bytes_Remaining;
 char PTP_CameraModel[21];
 PIMA_Container_t PIMA_Block;
 uint8_t PTP_Ready, PTP_Connected, configured;
@@ -99,6 +100,7 @@ void PTP_Enable(void)
     #ifdef PTP_DEBUG
     puts_P(PSTR("Camera Enabled.\r\n"));
     #endif
+    PTP_Bytes_Remaining = 0;
     PTP_Ready = 0;
 }
 
@@ -111,12 +113,15 @@ void PTP_Disable(void)
     puts_P(PSTR("Camera Disabled.\r\n"));
     PTP_Ready = 0;
     PTP_Connected = 0;
+    PTP_Bytes_Remaining = 0;
     return;
 }
 
 
 uint8_t PTP_Transaction(uint16_t opCode, uint8_t mode, uint8_t paramCount, uint32_t *params)
 {
+    if(PTP_Bytes_Remaining > 0) return PTP_FetchData(0);
+
     if(mode == 1)
         SI_Host_SendCommand(&DigitalCamera_SI_Interface, CPU_TO_LE16(opCode), 0, NULL);
     else
@@ -130,20 +135,37 @@ uint8_t PTP_Transaction(uint16_t opCode, uint8_t mode, uint8_t paramCount, uint3
         {
             .DataLength = CPU_TO_LE32(PIMA_DATA_SIZE(sizeof(uint32_t) * paramCount)),
             .Type = CPU_TO_LE16(PIMA_CONTAINER_DataBlock),
-            .Code = CPU_TO_LE16(opCode),
+            .Code = CPU_TO_LE16(opCode)
         };
         memcpy(&PIMA_Block.Params, params, sizeof(uint32_t) * paramCount);
         SI_Host_SendBlockHeader(&DigitalCamera_SI_Interface, &PIMA_Block);
     }
     else if(mode == 2) // receive data
     {
+        PTP_Bytes_Received = 0;
         SI_Host_ReceiveBlockHeader(&DigitalCamera_SI_Interface, &PIMA_Block);
-        uint16_t receivedBytes = (PIMA_Block.DataLength - PIMA_COMMAND_SIZE(0));
+        PTP_Bytes_Received = (PIMA_Block.DataLength - PIMA_COMMAND_SIZE(0));
         #ifdef PTP_DEBUG
-        printf_P(PSTR("   Bytes received: %d\r\n\r\n"), receivedBytes);
+//        printf_P(PSTR("   Bytes received: %d\r\n\r\n"), PTP_Bytes_Received);
         #endif
-        SI_Host_ReadData(&DigitalCamera_SI_Interface, PTP_Buffer, receivedBytes);
-        PTP_Buffer[receivedBytes] = 0;
+        if(PTP_Bytes_Received > PTP_BUFFER_SIZE)
+        {
+            PTP_Bytes_Remaining = PTP_Bytes_Received - PTP_BUFFER_SIZE;
+            PTP_Bytes_Received = PTP_BUFFER_SIZE;
+            SI_Host_ReadData(&DigitalCamera_SI_Interface, PTP_Buffer, PTP_Bytes_Received);
+            #ifdef PTP_DEBUG
+//            printf_P(PSTR("   Chunk Size: %d\r\n"), PTP_Bytes_Received);
+            #endif
+            #ifdef PTP_DEBUG
+//            printf_P(PSTR("   (Bytes PTP_Bytes_Remaining: %d)\r\n\r\n"), PTP_Bytes_Remaining);
+            #endif
+            return PTP_RETURN_DATA_REMAINING;
+        }
+        else
+        {
+            PTP_Bytes_Remaining = 0;
+            SI_Host_ReadData(&DigitalCamera_SI_Interface, PTP_Buffer, PTP_Bytes_Received);
+        }
     }
 
     if (SI_Host_ReceiveResponse(&DigitalCamera_SI_Interface))
@@ -152,9 +174,44 @@ uint8_t PTP_Transaction(uint16_t opCode, uint8_t mode, uint8_t paramCount, uint3
         puts_P(PSTR("PTP_Command Error.\r\n"));
         #endif
         USB_Host_SetDeviceConfiguration(0);
-        return 1;
+        return PTP_RETURN_ERROR;
     }
-    return 0;
+    return PTP_RETURN_OK;
+}
+
+uint8_t PTP_FetchData(uint16_t offset)
+{
+    if(PTP_Bytes_Remaining > 0)
+    {
+        if(PTP_Bytes_Remaining > PTP_BUFFER_SIZE) PTP_Bytes_Received = PTP_BUFFER_SIZE; else PTP_Bytes_Received = PTP_Bytes_Remaining;
+        if(offset > 0)
+        {
+            if(PTP_Bytes_Received + offset > PTP_BUFFER_SIZE) PTP_Bytes_Received = PTP_BUFFER_SIZE - offset;
+            memmove(PTP_Buffer, PTP_Buffer + (PTP_BUFFER_SIZE - offset), offset);
+        }
+        PTP_Bytes_Remaining -= PTP_Bytes_Received;
+        SI_Host_ReadData(&DigitalCamera_SI_Interface, (PTP_Buffer + offset), PTP_Bytes_Received);
+
+        PTP_Bytes_Received += offset;
+
+        if(PTP_Bytes_Remaining == 0)
+        {
+            if (SI_Host_ReceiveResponse(&DigitalCamera_SI_Interface))
+            {
+                #ifdef PTP_DEBUG
+                puts_P(PSTR("PTP_FetchData Error.\r\n"));
+                #endif
+                USB_Host_SetDeviceConfiguration(0);
+                return PTP_RETURN_ERROR;
+            }
+            return PTP_RETURN_OK;
+        }
+        return PTP_RETURN_DATA_REMAINING;
+    }
+    else
+    {
+        return PTP_RETURN_ERROR;
+    }
 }
 
 
@@ -166,9 +223,9 @@ uint8_t PTP_OpenSession()
         puts_P(PSTR("Could not open PIMA session.\r\n"));
         #endif
         USB_Host_SetDeviceConfiguration(0);
-        return 1;
+        return PTP_RETURN_ERROR;
     }
-    return 0;
+    return PTP_RETURN_OK;
 }
 
 uint8_t PTP_CloseSession()
@@ -179,16 +236,16 @@ uint8_t PTP_CloseSession()
         puts_P(PSTR("Could not close PIMA session.\r\n"));
         #endif
         USB_Host_SetDeviceConfiguration(0);
-        return 1;
+        return PTP_RETURN_ERROR;
     }
     USB_Host_SetDeviceConfiguration(0);
-    return 0;
+    return PTP_RETURN_OK;
 }
 
 
 uint8_t PTP_GetDeviceInfo()
 {
-    if(PTP_Transaction(PIMA_OPERATION_GETDEVICEINFO, 2, 0, NULL)) return 1;
+    if(PTP_Transaction(PIMA_OPERATION_GETDEVICEINFO, 2, 0, NULL)) return PTP_RETURN_ERROR;
     char *DeviceInfoPos = PTP_Buffer;
 
     /* Skip over the data before the unicode device information strings */
@@ -225,7 +282,7 @@ uint8_t PTP_GetDeviceInfo()
     #ifdef PTP_DEBUG
     printf_P(PSTR("   Device Version: %s\r\n\r\n"), DeviceVersion);
     #endif
-    return 0;
+    return PTP_RETURN_OK;
 }
 
 /** Event handler for the USB_DeviceAttached event. This indicates that a device has been attached to the host, and
@@ -234,6 +291,7 @@ uint8_t PTP_GetDeviceInfo()
 void EVENT_USB_Host_DeviceAttached(void)
 {
     PTP_Connected = 1;
+    PTP_Bytes_Remaining = 0;
     #ifdef PTP_DEBUG
     puts_P(PSTR("Device Attached.\r\n"));
     #endif

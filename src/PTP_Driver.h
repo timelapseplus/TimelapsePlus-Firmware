@@ -38,6 +38,12 @@
 
 #define PTP_DEBUG
 
+#define PTP_RETURN_OK 0
+#define PTP_RETURN_ERROR 1
+#define PTP_RETURN_DATA_REMAINING 2
+
+#define PTP_BUFFER_SIZE 1024
+
 /* Includes: */
 #include <avr/io.h>
 #include <avr/wdt.h>
@@ -68,13 +74,15 @@ void EVENT_USB_Host_DeviceEnumerationFailed(const uint8_t ErrorCode,
                                             const uint8_t SubErrorCode);
 void EVENT_USB_Host_DeviceEnumerationComplete(void);
 uint8_t PTP_Transaction(uint16_t opCode, uint8_t mode, uint8_t paramCount, uint32_t *params);
+uint8_t PTP_FetchData(uint16_t offset);
 uint8_t PTP_OpenSession(void);
 uint8_t PTP_CloseSession(void);
 uint8_t PTP_GetDeviceInfo(void);
 void UnicodeToASCII(char *UnicodeString,
                 char *Buffer);
 
-extern char PTP_Buffer[512];
+extern char PTP_Buffer[PTP_BUFFER_SIZE];
+extern uint16_t PTP_Bytes_Received;
 extern char PTP_CameraModel[21];
 extern uint8_t PTP_Ready, PTP_Connected;
 

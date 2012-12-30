@@ -23,6 +23,7 @@
 #include "bluetooth.h"
 #include "settings.h"
 #include "PTP_Driver.h"
+#include "PTP.h"
 #include "math.h"
 #include "selftest.h"
 #include "remote.h"
@@ -56,6 +57,7 @@ extern Button button;
 extern BT bt;
 extern IR ir;
 extern Remote remote;
+extern PTP camera;
 
 uint8_t sleepOk = 1;
 
@@ -1384,22 +1386,33 @@ volatile char btConnect(char key, char first)
 
 volatile char usbPlug(char key, char first)
 {
-	static char connected = 0, ready = 0;
+	static char connected = 0;
 
-	if(first || (PTP_Connected != connected) || (ready != PTP_Ready))
+	if(first || (PTP_Connected != connected) || (PTP_Ready))
 	{
 		connected = PTP_Connected;
-		ready = PTP_Ready;
+		char exp_name[7];
 
 		if(PTP_Connected)
 		{
 			if(PTP_Ready)
 			{
 				lcd.cls();
-				lcd.writeString(3, 7,  TEXT(" Connected!  "));
-				lcd.writeString(3, 15, TEXT("             "));
-				lcd.writeString(3, 23, PTP_CameraModel);
-				lcd.writeString(3, 31, TEXT("             "));
+				lcd.writeString(3, 7,  PTP_CameraModel);
+				if(camera.shutterName(exp_name, camera.shutter))
+				{
+					lcd.writeString(3, 15, exp_name);
+				}
+				if(camera.apertureName(exp_name, camera.aperture))
+				{
+					lcd.writeString(3, 23, TEXT("f"));
+					lcd.writeString(3+6, 23, exp_name);
+				}
+				if(camera.isoName(exp_name, camera.iso))
+				{
+					lcd.writeString(3, 31, TEXT("ISO"));
+					lcd.writeString(3+24, 31, exp_name);
+				}
 				menu.setTitle(TEXT("Camera Info"));
 				menu.setBar(TEXT("RETURN"), TEXT("PHOTO"));
 				lcd.update();
@@ -1443,11 +1456,15 @@ volatile char usbPlug(char key, char first)
 	}
 	else if(key == FR_KEY)
 	{
-		//if(PTP_Ready) Camera_Capture();
+		if(PTP_Ready) camera.capture();
+	}
+	else if(key == UP_KEY)
+	{
+		if(PTP_Ready) camera.isoUp(camera.iso);
 	}
 	else if(key == DOWN_KEY)
 	{
-		//if(PTP_Ready) Camera_SetProperty(EOS_DPC_ISO, EOS_DVC_ISO_1250);
+		if(PTP_Ready) camera.isoDown(camera.iso);
 	}
 
 	return FN_CONTINUE;

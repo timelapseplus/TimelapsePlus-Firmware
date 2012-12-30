@@ -39,6 +39,7 @@
 #include "remote.h"
 #include "tlp_menu_functions.h"
 #include "notify.h"
+#include "PTP.h"
 
 unsigned char I2C_Buf[4];
 #define I2C_ADDR  0b1000100
@@ -77,6 +78,7 @@ BT bt = BT();
 IR ir = IR();
 Remote remote = Remote();
 Notify notify = Notify();
+PTP camera = PTP();
 
 #include "Menu_Map.h"
 
@@ -271,6 +273,7 @@ int main()
 		clock.task();
 		bt.task();
 		notify.task();
+		camera.checkEvent();
 
 		if(USBmode == 1)
 			PTP_Task();
@@ -363,10 +366,12 @@ void message_notify(uint8_t id)
 			if(PTP_Ready)
 			{
 				menu.message(PTP_CameraModel);
+				camera.init();
 			}
 			else
 			{
 //				menu.message(STR("Disconnected"));
+				camera.close();
 			}
 			break;
 	}
