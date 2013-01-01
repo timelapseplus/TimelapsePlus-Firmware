@@ -15,24 +15,6 @@
 #define EOS_DPC_SHUTTER 0xD102
 #define EOS_DPC_ISO 0xD103
 
-#define EOS_DVC_ISO_50 0x40
-#define EOS_DVC_ISO_100 0x48
-#define EOS_DVC_ISO_125 0x4b
-#define EOS_DVC_ISO_160 0x4d
-#define EOS_DVC_ISO_200 0x50
-#define EOS_DVC_ISO_250 0x53
-#define EOS_DVC_ISO_320 0x55
-#define EOS_DVC_ISO_400 0x58
-#define EOS_DVC_ISO_500 0x5b
-#define EOS_DVC_ISO_640 0x5d
-#define EOS_DVC_ISO_800 0x60
-#define EOS_DVC_ISO_1000 0x63
-#define EOS_DVC_ISO_1250 0x65
-#define EOS_DVC_ISO_1600 0x68
-#define EOS_DVC_ISO_3200 0x70
-
-#define EOS_DVC_APERTURE_50 0x40
-
 
 
 
