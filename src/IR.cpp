@@ -171,10 +171,13 @@ void IR::shutterNow()
     {
         bool _seq[] = {
             1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1 };
-        
+
+        cli();
+
         for(int j = 0; j < 3; j++)
         {
             high40(2320);
+            cli();
             _delay_us(650);
             
             for(uint8_t i = 0; i < sizeof(_seq)/sizeof(_seq[0]); i++)
@@ -182,15 +185,18 @@ void IR::shutterNow()
                 if(_seq[i] == 0)
                 {
                     high40(575);
+                    cli();
                     _delay_us(650);
                 } else
                 {
                     high40(1175);
+                    cli();
                     _delay_us(650);
                 }
             }
             _delay_ms(10);
         }
+        sei();
     }
 
 }
