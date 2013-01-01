@@ -36,7 +36,8 @@
 #ifndef _STILL_IMAGE_HOST_H_
 #define _STILL_IMAGE_HOST_H_
 
-#define PTP_DEBUG
+//When on, this breaks BT functionality
+//#define PTP_DEBUG
 
 #define PTP_RETURN_OK 0
 #define PTP_RETURN_ERROR 1

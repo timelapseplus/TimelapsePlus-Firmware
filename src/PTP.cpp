@@ -1,9 +1,11 @@
 #include <avr/pgmspace.h>
-#include "PTP_Codes.h"
 #include "PTP_Driver.h"
 #include "PTP.h"
-#include "bluetooth.h"
+#include "PTP_Codes.h"
 #include "tldefs.h"
+#ifdef PTP_DEBUG
+#include "bluetooth.h"
+#endif
 
 const propertyDescription_t EOS_Aperture_List[] PROGMEM = {
     { "1.2", 0x0c },
@@ -90,7 +92,7 @@ const propertyDescription_t EOS_Shutter_List[] PROGMEM = {
     {"20s", 0x14 },
     {"25s", 0x13 },
     {"30s", 0x10 },
-    {"bulb", 0x0c }
+    {"Bulb", 0x0c }
 };
 
 const propertyDescription_t EOS_ISO_List[] PROGMEM = {
@@ -117,9 +119,13 @@ const propertyDescription_t EOS_ISO_List[] PROGMEM = {
     {"12800",  0x80 }
 };
 
+
+
 void sendHex(char *hex);
 
+#ifdef PTP_DEBUG
 extern BT bt;
+#endif
 
 PTP::PTP(void)
 {
@@ -237,7 +243,9 @@ uint8_t PTP::checkEvent()
 		ret = PTP_Transaction(EOS_OC_EVENT_GET, 2, 0, NULL);
 		if(ret == PTP_RETURN_ERROR)
 		{
+			#ifdef PTP_DEBUG
 			bt.send(STR("ERROR!\r\n"));
+			#endif
 			return 1;	
 		}
 		uint32_t event_size;
@@ -250,7 +258,9 @@ uint8_t PTP::checkEvent()
 			memcpy(&event_size, &PTP_Buffer[i], sizeof(uint32_t));
 			if(event_size == 0)
 			{
+				#ifdef PTP_DEBUG
 				bt.send(STR("ERROR: Zero-length\r\n"));
+				#endif
 				return PTP_RETURN_ERROR;
 			}
 			if((event_size + i) > PTP_BUFFER_SIZE)
@@ -259,11 +269,12 @@ uint8_t PTP::checkEvent()
 				{
 					if(event_size > PTP_BUFFER_SIZE)
 					{
+						#ifdef PTP_DEBUG
 						bt.send(STR("Too Big: "));
 						sendHex((char *) &event_size);
 						bt.send(STR(" i: "));
 						sendHex((char *) &i);
-
+						#endif
 						while(event_size > PTP_BUFFER_SIZE && ret == PTP_RETURN_DATA_REMAINING)
 						{
 							ret = PTP_FetchData(0);
@@ -296,22 +307,26 @@ uint8_t PTP::checkEvent()
 				{
 					case EOS_DPC_ISO:
 						iso = event_value;
+						#ifdef PTP_DEBUG
 						bt.send(STR(" ISO:"));
 						sendHex((char *) &event_value);
+						#endif
 						break;
 					case EOS_DPC_SHUTTER:
 						shutter = event_value;
+						#ifdef PTP_DEBUG
 						bt.send(STR(" SHUTTER:"));
 						sendHex((char *) &event_value);
+						#endif
 						break;
 					case EOS_DPC_APERTURE:
 						aperture = event_value;
+						#ifdef PTP_DEBUG
 						bt.send(STR(" APERTURE:"));
 						sendHex((char *) &event_value);
+						#endif
 						break;
 				}
-
-				//bt.send(STR("*"));
 			}
 			else if(event_type == 0xC18A)
 			{
@@ -320,10 +335,12 @@ uint8_t PTP::checkEvent()
 					case EOS_DPC_ISO:
 					case EOS_DPC_SHUTTER:
 					case EOS_DPC_APERTURE:
+						#ifdef PTP_DEBUG
 						bt.send(STR(" Type:"));
 						sendHex((char *) &event_type);
 						bt.send(STR(" Size:"));
 						sendHex((char *) &event_size);
+						#endif
 					break;
 				}
 			}
@@ -335,6 +352,7 @@ uint8_t PTP::checkEvent()
 
 void sendHex(char *hex)
 {
+	#ifdef PTP_DEBUG
 	for(uint8_t i = 4; i > 0; i--)
 	{
 		char b[4];
@@ -352,6 +370,7 @@ void sendHex(char *hex)
 		}
 		_delay_ms(10);
 	}
+	#endif
 }
 
 uint8_t PTP::close()

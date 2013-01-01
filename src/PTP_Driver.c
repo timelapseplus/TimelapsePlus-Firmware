@@ -91,13 +91,12 @@ void PTP_Task(void)
 void PTP_Enable(void)
 {
     /* Hardware Initialization */
-    Serial_Init(115200, true);
-
     USB_Init(USB_MODE_Host);
 
     /* Create a stdio stream for the serial port for stdin and stdout */
-    Serial_CreateStream(NULL);
     #ifdef PTP_DEBUG
+    Serial_Init(115200, true);
+    Serial_CreateStream(NULL);
     puts_P(PSTR("Camera Enabled.\r\n"));
     #endif
     PTP_Bytes_Remaining = 0;
@@ -110,7 +109,9 @@ void PTP_Disable(void)
     USB_USBTask();
     USB_Detach();
     USB_Disable();
+    #ifdef PTP_DEBUG
     puts_P(PSTR("Camera Disabled.\r\n"));
+    #endif
     PTP_Ready = 0;
     PTP_Connected = 0;
     PTP_Bytes_Remaining = 0;
