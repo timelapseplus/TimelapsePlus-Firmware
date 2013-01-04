@@ -17,6 +17,8 @@
 
 //keypad debounce parameter
 #define DEBOUNCE_MAX 15
+#define DEBOUNCE_REPEAT_DELAY 250
+#define DEBOUNCE_REPEAT_SPEED 160
 #define DEBOUNCE_ON  10
 #define DEBOUNCE_OFF 3
 

@@ -83,7 +83,7 @@ volatile void Button::poll()
         
         if(p)  // key is pressed
         {
-            if(button_count[i] < DEBOUNCE_MAX)
+            if(button_count[i] < DEBOUNCE_REPEAT_DELAY)
             {
                 button_count[i]++;
                 
@@ -98,6 +98,15 @@ volatile void Button::poll()
 
                 }
             }
+            else
+            {
+                if(i + 1 == UP_KEY || i + 1 == DOWN_KEY)
+                {
+                    button_flag[i] = 1;
+                    button_status[i] = 1; //button debounced to 'pressed' status
+                    button_count[i] = DEBOUNCE_REPEAT_DELAY - DEBOUNCE_REPEAT_SPEED;
+                }
+            }
 
         } 
         else // no button pressed
@@ -105,6 +114,7 @@ volatile void Button::poll()
             if(button_count[i] > 0)
             {
                 button_flag[i] = 0;
+                if(button_count[i] > DEBOUNCE_MAX) button_count[i] = DEBOUNCE_MAX;
                 button_count[i]--;
                 
                 if(button_count[i] < DEBOUNCE_OFF)
