@@ -23,6 +23,7 @@
 #include "clock.h"
 #include "hardware.h"
 #include "IR.h"
+#include "bluetooth.h"
 #include "debug.h"
 #include "math.h"
 #include "settings.h"
@@ -43,6 +44,7 @@ extern IR ir;
 extern PTP camera;
 extern settings conf;
 extern shutter timer;
+extern BT bt;
 
 extern Clock clock;
 volatile unsigned char state;
@@ -51,7 +53,7 @@ const uint16_t settings_mirror_up_time = 1;
 volatile char cable_connected; // 1 = cable connected, 0 = disconnected
 
 char shutter_state, ir_shutter_state; // used only for momentary toggle mode //
-
+uint16_t BulbMax; // calculated during bulb ramp mode
 program stored[MAX_STORED]EEMEM;
 
 /******************************************************************
@@ -139,7 +141,7 @@ void shutter::half(void)
 void shutter_half(void)
 {
     shutter_off(); // first we completely release the shutter button since some cameras need this to release the bulb
-    clock.in(30, &shutter_half_delayed);
+    if(conf.halfPress == HALF_PRESS_ENABLED) clock.in(30, &shutter_half_delayed);
 }
 void shutter_half_delayed(void)
 {
@@ -183,14 +185,18 @@ void shutter::bulbStart(void)
 }
 void shutter_bulbStart(void)
 {
-    if(camera.supports.bulb)
+    if(cable_connected == 0 && ir_shutter_state != 1)
     {
-        camera.bulbStart();
-    }
-    else if(cable_connected == 0 && ir_shutter_state != 1)
-    {
-        ir_shutter_state = 1;
-        ir.bulbStart();
+        if(camera.supports.bulb)
+        {
+            ir_shutter_state = 1;
+            camera.bulbStart();
+        }
+        else
+        {
+            ir_shutter_state = 1;
+            ir.bulbStart();
+        }
     } 
     if(conf.bulbMode == 0)
     {
@@ -217,14 +223,18 @@ void shutter::bulbEnd(void)
 }
 void shutter_bulbEnd(void)
 {
-    if(camera.supports.bulb)
+    if(cable_connected == 0 && ir_shutter_state == 1)
     {
-        camera.bulbEnd();
-    }
-    else if(cable_connected == 0 && ir_shutter_state == 1)
-    {
-        ir_shutter_state = 0;
-        ir.bulbEnd();
+        if(camera.supports.bulb)
+        {
+            ir_shutter_state = 0;
+            camera.bulbEnd();
+        }
+        else
+        {
+            ir_shutter_state = 0;
+            ir.bulbEnd();
+        }
     } 
     if(conf.bulbMode == 0)
     {
@@ -255,13 +265,16 @@ void shutter_capture(void)
     clock.in(SHUTTER_PRESS_TIME, &shutter_off);
     ir_shutter_state = 0;
     shutter_state = 0;
-    if(camera.supports.capture)
+    if(cable_connected == 0)
     {
-        camera.capture();
-    }
-    else if(cable_connected == 0)
-    {
-        ir.shutterNow();
+        if(camera.supports.capture)
+        {
+            camera.capture();
+        }
+        else
+        {
+            ir.shutterNow();
+        }
     } 
 }
 
@@ -351,6 +364,7 @@ char shutter::task()
 {
     char cancel = 0;
     static uint8_t enter, exps, run_state = RUN_DELAY, old_state = 255;
+    static int8_t evShift;
     static uint16_t photos;
     static uint32_t last_photo_ms, last_photo_end_ms;
 
@@ -376,6 +390,17 @@ char shutter::task()
         clock.tare();
         photos = 0;
         exps = 0;
+        if(current.Mode & RAMP)
+        {
+            current.Photos = (current.Duration * 10) / current.Gap;
+            BulbMax = (timer.current.Gap / 10 - 1) * 1000;
+        }
+        if(conf.devMode)
+        {
+            debug(STR("Photos: "));
+            debug(current.Photos);
+            debug_nl();
+        }
         current.infinitePhotos = current.Photos == 0 ? 1 : 0;
         status.infinitePhotos = current.infinitePhotos;
         status.photosRemaining = current.Photos;
@@ -383,6 +408,7 @@ char shutter::task()
         status.mode = (uint8_t) current.Mode;
         last_photo_end_ms = 0;
         last_photo_ms = 0;
+        evShift = 0;
 
         ENABLE_MIRROR;
         ENABLE_SHUTTER;
@@ -462,6 +488,7 @@ char shutter::task()
     if(run_state == RUN_BULB)
     {
         static uint32_t bulb_length, exp;
+        static uint8_t m = SHUTTER_MODE_BULB;
 
         if(old_state != run_state)
         {
@@ -474,76 +501,155 @@ char shutter::task()
             }
             strcpy((char *) status.textStatus, TEXT("Bulb"));
 
-            exp = ((uint32_t) current.Exp) * 100UL;
+            exp = camera.bulbTime(current.Exp);
+            m = camera.shutterType(current.Exp);
 
             if(current.Mode & RAMP)
             {
-                float key1, key2, key3, key4;
+                double key1 = 1, key2 = 1, key3 = 1, key4 = 1;
                 char found = 0;
                 uint8_t i;
+                m = SHUTTER_MODE_BULB;
 
                 // Bulb ramp algorithm goes here
-                for(i = 1; i <= current.Keyframes; i++)
+                for(i = 0; i <= current.Keyframes; i++)
                 {
-                    if(clock.Seconds() <= current.Key[i - 1])
+                    if(clock.Seconds() <= current.Key[i])
                     {
                         found = 1;
-                        key1 = (float)current.Bulb[i > 1 ? i - 2 : i - 1] * 100;
-                        key2 = (float)current.Bulb[i - 1] * 100;
-                        key3 = (float)current.Bulb[i] * 100;
-                        key4 = (float)current.Bulb[i < current.Keyframes ? i + 1 : i] * 100;
+                        if(i == 0)
+                        {
+                            key2 = key1 = (double)camera.bulbTime(current.BulbStart);
+                        }
+                        else if(i == 1)
+                        {
+                            key1 = (double)camera.bulbTime(current.BulbStart);
+                            key2 = (double)camera.bulbTime((int8_t)current.BulbStart - *((int8_t*)&current.Bulb[i - 1]));
+                        }
+                        else
+                        {
+                            key1 = (double)camera.bulbTime((int8_t)current.BulbStart - *((int8_t*)&current.Bulb[i - 2]));
+                            key2 = (double)camera.bulbTime((int8_t)current.BulbStart - *((int8_t*)&current.Bulb[i - 1]));
+                        }
+                        key3 = (double)camera.bulbTime((int8_t)current.BulbStart - *((int8_t*)&current.Bulb[i]));
+                        key4 = (double)camera.bulbTime((int8_t)current.BulbStart - *((int8_t*)&current.Bulb[i < (current.Keyframes - 1) ? i + 1 : i]));
                         break;
                     }
                 }
                 
                 if(found)
                 {
-                    exp = (uint32_t)curve(key1, key2, key3, key4, ((float)clock.Seconds() - (i > 1 ? (float)current.Key[i - 2] : 0.0)) / ((float)current.Key[i - 1] - (i > 1 ? (float)current.Key[i - 2] : 0.0)));
-                } 
+                    exp = (uint32_t)curve(key1, key2, key3, key4, ((double)clock.Seconds() - (i > 0 ? (double)current.Key[i - 1] : 0.0)) / ((double)current.Key[i] - (i > 0 ? (double)current.Key[i - 1] : 0.0)));
+                }
                 else
                 {
-                    exp = current.Bulb[current.Keyframes] * 100;
+                    exp = camera.bulbTime(current.BulbStart - *((int8_t*)&current.Bulb[current.Keyframes - 1]));
+                }
+
+                bulb_length = camera.shiftBulb(exp, evShift);
+
+                if(camera.supports.iso)
+                {
+                    if(bulb_length > BulbMax)
+                    {
+                        uint8_t nextISO = camera.isoUp(camera.iso());
+                        if(nextISO >= camera.isoMax())
+                        {
+                            shutter_off();
+                            evShift += nextISO - camera.iso();
+                            bt.send(STR("ISO UP:"));
+                            sendByte(evShift);
+                            bt.send(STR("\r\n"));
+                            bt.send(STR("ISO Val:"));
+                            sendByte(nextISO);
+                            bt.send(STR("\r\n"));
+                            camera.setISO(nextISO);
+                            bt.send(STR("  Done!\r\n"));
+                            shutter_half();
+                        }
+                    }
+                    else if(bulb_length < 99)
+                    {
+                        if(camera.isoDown(camera.iso()) <= camera.isoMin())
+                        {
+                            evShift -= camera.iso() - camera.isoDown(camera.iso());
+                            camera.setISO(camera.isoDown(camera.iso()));
+                        }
+                    }
+                    bulb_length = camera.shiftBulb(exp, evShift);
                 }
                 
-                bulb_length = exp;
-
                 if(conf.devMode)
                 {
                     debug(STR("Seconds: "));
                     debug((uint16_t)clock.Seconds());
                     debug_nl();
+                    debug(STR("BulbStart: "));
+                    debug((uint16_t)camera.bulbTime(current.BulbStart));
+                    debug_nl();
                     debug(STR("Ramp: "));
-                    debug(bulb_length);
+                    debug((uint16_t)bulb_length);
 
                     if(found) 
                         debug(STR(" (calculated)"));
                     
+                    debug_nl();
+
+
+                    debug(STR("i: "));
+                    debug(current.Bulb[i]);
+                    debug_nl();
+                    debug(STR("Key1: "));
+                    debug((uint16_t)key1);
+                    debug_nl();
+                    debug(STR("Key2: "));
+                    debug((uint16_t)key2);
+                    debug_nl();
+                    debug(STR("Key3: "));
+                    debug((uint16_t)key3);
+                    debug_nl();
+                    debug(STR("Key4: "));
+                    debug((uint16_t)key4);
                     debug_nl();
                 }
             }
 
             if(current.Mode & HDR)
             {
-                uint32_t tmp = (exps - (current.Exps >> 1)) * current.Bracket;
-                bulb_length = (tmp < (2^32/2)) ? exp * (1 << tmp) : exp / (1 << (0 - tmp));
+                //uint32_t tmp = (exps - (current.Exps >> 1)) * current.Bracket;
+                //bulb_length = (tmp < (2^32/2)) ? exp * (1 << tmp) : exp / (1 << (0 - tmp));
+
+                uint8_t tv_offset = ((current.Exps - 1) / 2) * current.Bracket - exps * current.Bracket;
+                if(current.Mode & RAMP)
+                {
+                    bulb_length = camera.shiftBulb(bulb_length, tv_offset);
+                }
+                else
+                {
+                    m = camera.shutterType(current.Exp - tv_offset);
+                    if(m & SHUTTER_MODE_PTP)
+                    {
+                        camera.setShutter(current.Exp - tv_offset);
+                        bulb_length = camera.bulbTime(current.Exp - tv_offset);
+                    }
+                    else
+                    {
+                        m = SHUTTER_MODE_BULB;
+                        bulb_length = camera.bulbTime(current.Exp - tv_offset);
+                    }
+                }
 
                 if(conf.devMode)
                 {
-                    debug(STR("exps - (current.Exps >> 1): "));
-
-                    if(tmp < (2^32/2))
-                    {
-                        debug(tmp);
-                    } 
-                    else
-                    {
-                        debug(STR("-"));
-                        debug(0 - tmp);
-                    }
-                    
+                    debug_nl();
+                    debug(STR("Mode: "));
+                    debug(m);
+                    debug_nl();
+                    debug(STR("Tv: "));
+                    debug(current.Exp - tv_offset);
                     debug_nl();
                     debug(STR("Bulb: "));
-                    debug(bulb_length);
+                    debug((uint16_t)bulb_length);
                     debug_nl();
                 }
             }
@@ -560,11 +666,23 @@ char shutter::task()
                     debug_nl();
                 }
                 bulb_length = exp;
+                if(m & SHUTTER_MODE_PTP)
+                {
+                    camera.setShutter(current.Exp);
+                }
             }
 
-            clock.job(&shutter_bulbStart, &shutter_bulbEnd, bulb_length);
+            if(m & SHUTTER_MODE_PTP)
+            {
+                camera.capture();
+                //clock.job(0, 0, bulb_length);
+            }
+            else
+            {
+                clock.job(&shutter_bulbStart, &shutter_bulbEnd, bulb_length);
+            }
         }
-        else if(!clock.jobRunning)
+        else if(!clock.jobRunning && (((m & SHUTTER_MODE_PTP) && !camera.busy) || !(m & SHUTTER_MODE_PTP)))
         {
             exps++;
 
@@ -673,6 +791,7 @@ char shutter::task()
         enter = 0;
         running = 0;
         shutter_off();
+        camera.bulbEnd();
 
         return DONE;
     }
@@ -711,3 +830,257 @@ void aux_off()
 {
     ENABLE_AUX_PORT;
 }
+
+uint8_t stopName(char name[8], uint8_t stop)
+{
+    name[0] = ' ';
+    name[1] = ' ';
+    name[2] = ' ';
+    name[3] = ' ';
+    name[4] = ' ';
+    name[5] = ' ';
+    name[6] = ' ';
+    name[7] = '\0';
+
+    int8_t ev = *((int8_t*)&stop);
+
+    uint8_t sign = 0;
+    if(ev < 0)
+    {
+        sign = 1;
+        ev = 0 - ev;
+    }
+    uint8_t mod = ev % 3;
+    ev /= 3;
+    if(mod == 0)
+    {
+        if(sign) name[5] = '-'; else name[5] = '+';
+        if(ev > 9)
+        {
+            name[4] = name[5];
+            name[5] = '0' + ev / 10;
+            ev %= 10;
+            name[6] = '0' + ev;
+        }
+        else
+        {
+            name[6] = '0' + ev;
+        }
+    }
+    else
+    {
+        if(sign) name[ev > 0 ? 1 : 3] = '-'; else name[ev > 0 ? 1 : 3] = '+';
+        if(ev > 9)
+        {
+            name[0] = name[1];
+            name[1] = '0' + ev / 10;
+            ev %= 10;
+            name[2] = '0' + ev;
+        }
+        else if(ev > 0)
+        {
+            name[2] = '0' + ev;
+        }
+        name[4] = '0' + mod;
+        name[5] = '/';
+        name[6] = '3';
+    }
+    return 1;
+}
+
+uint8_t stopUp(uint8_t stop)
+{
+    int8_t ev = *((int8_t*)&stop);
+
+    BulbMax = (timer.current.Gap / 10 - 1) * 1000;
+    uint8_t BulbMaxEv = 1;
+    for(uint8_t i = camera.bulbMax(); i < camera.bulbMin(); i++)
+    {
+        if(BulbMax > camera.bulbTime(i))
+        {
+            if(i < 1) i = 1;
+            BulbMaxEv = i - 1;
+            break;
+        }
+    }
+
+    if(ev < 25*3) ev++; else ev = 25*3;
+
+    int8_t evMax = ((int8_t)camera.iso() - (int8_t)camera.isoMax()) + ((int8_t)timer.current.BulbStart - (int8_t)BulbMaxEv);
+
+    if(ev <= evMax) return ev; else return evMax;
+
+    return ev;
+}
+
+uint8_t stopDown(uint8_t stop)
+{
+    int8_t ev = *((int8_t*)&stop);
+
+    if(ev > -25*3) ev--; else ev = -25*3;
+
+    int8_t evMin = 0 - ((int8_t)camera.isoMin() - (int8_t)camera.iso() + (camera.bulbMin() - (int8_t)timer.current.BulbStart));
+
+    if(ev >= evMin) return ev; else return stop;
+
+    return ev;
+}
+
+uint8_t checkHDR(uint8_t exps, uint8_t mid, uint8_t bracket)
+{
+    uint8_t up = mid - (exps / 2) * bracket;
+    uint8_t down = mid + (exps / 2) * bracket;
+
+    debug(STR("up: "));
+    debug(up);
+    debug_nl();
+    debug(STR("down: "));
+    debug(down);
+    debug_nl();
+    debug(STR("max: "));
+    debug(camera.shutterMax());
+    debug_nl();
+    debug(STR("min: "));
+    debug(camera.shutterMin());
+    debug_nl();
+
+    if(up < camera.shutterMax() || down > camera.shutterMin()) return 1; else return 0;
+}
+
+uint8_t hdrTvUp(uint8_t ev)
+{
+    if(checkHDR(timer.current.Exps, ev, timer.current.Bracket))
+    {
+        uint8_t mid = (camera.shutterMin() - camera.shutterMax()) / 2 + camera.shutterMax();
+        if(mid > ev)
+        {
+            for(uint8_t i = ev; i <= mid; i++)
+            {
+                if(!checkHDR(timer.current.Exps, i, timer.current.Bracket))
+                {
+                    ev = i;
+                    break;
+                }
+            }
+        }
+        else
+        {
+            for(uint8_t i = ev; i >= mid; i--)
+            {
+                if(!checkHDR(timer.current.Exps, i, timer.current.Bracket))
+                {
+                    ev = i;
+                    break;
+                }
+            }
+        }
+    }
+    else
+    {
+        uint8_t tmp = camera.shutterUp(ev);
+        if(!checkHDR(timer.current.Exps, tmp, timer.current.Bracket)) ev = tmp;
+    }
+    return ev;
+}
+
+uint8_t hdrTvDown(uint8_t ev)
+{
+    if(checkHDR(timer.current.Exps, ev, timer.current.Bracket))
+    {
+        uint8_t mid = (camera.shutterMin() - camera.shutterMax()) / 2 + camera.shutterMax();
+        if(mid > ev)
+        {
+            for(uint8_t i = ev; i <= mid; i++)
+            {
+                if(!checkHDR(timer.current.Exps, i, timer.current.Bracket))
+                {
+                    ev = i;
+                    break;
+                }
+            }
+        }
+        else
+        {
+            for(uint8_t i = ev; i >= mid; i--)
+            {
+                if(!checkHDR(timer.current.Exps, i, timer.current.Bracket))
+                {
+                    ev = i;
+                    break;
+                }
+            }
+        }
+    }
+    else
+    {
+        uint8_t tmp = camera.shutterDown(ev);
+        if(!checkHDR(timer.current.Exps, tmp, timer.current.Bracket)) ev = tmp;
+    }
+    return ev;
+}
+
+uint8_t bracketUp(uint8_t ev)
+{
+    uint8_t max = 1;
+    for(uint8_t i = 1; i < 255; i++)
+    {
+        if(checkHDR(timer.current.Exps, timer.current.Exp, i))
+        {
+            max = i - 1;
+            break;
+        }
+    }
+    if(ev < max) ev++; else ev = max;
+    return ev;
+}
+
+uint8_t bracketDown(uint8_t ev)
+{
+    if(ev > 1) ev--; else ev = 1;
+    return ev;
+}
+
+uint8_t hdrExpsUp(uint8_t hdr_exps)
+{
+    uint8_t max = 1;
+    for(uint8_t i = 1; i < 255; i++)
+    {
+        if(checkHDR(i, timer.current.Exp, timer.current.Bracket))
+        {
+            max = i - 1;
+            if(max < 3) max = 3;
+            break;
+        }
+    }
+    if(hdr_exps < max) hdr_exps++; else hdr_exps = max;
+    return hdr_exps;
+}
+
+uint8_t hdrExpsDown(uint8_t hdr_exps)
+{
+    if(hdr_exps > 1) hdr_exps--; else hdr_exps = 3;
+    return hdr_exps;
+}
+
+uint8_t hdrExpsName(char name[8], uint8_t hdr_exps)
+{
+    name[0] = ' ';
+    name[1] = ' ';
+    name[2] = ' ';
+    name[3] = ' ';
+    name[4] = ' ';
+    name[5] = ' ';
+    name[6] = ' ';
+    name[7] = '\0';
+
+    if(hdr_exps > 9)
+    {
+        name[5] = '0' + (hdr_exps / 10);
+        hdr_exps %= 10;
+    }
+    name[6] = '0' + hdr_exps;
+
+    return 1;
+}
+
+

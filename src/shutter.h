@@ -62,15 +62,17 @@ struct program
     char Name[12];            // 12 bytes
     unsigned int Mode;        // 2 bytes
     unsigned int Delay;       // 2 bytes
+    unsigned int Duration;    // 2 bytes
     unsigned int Photos;      // 2 bytes
     unsigned int Gap;         // 2 bytes
     unsigned int Exps;        // 2 bytes
     unsigned int Exp;         // 2 bytes
     unsigned int Bracket;     // 2 bytes
+    unsigned int BulbStart;   // 20 bytes
     unsigned int Bulb[10];    // 20 bytes
     unsigned int Key[10];     // 20 bytes
     unsigned int Keyframes;   // 2 bytes
-    char infinitePhotos;      // 1 byte  
+    uint8_t infinitePhotos;   // 1 byte  
 };
 
 struct timer_status
@@ -80,7 +82,7 @@ struct timer_status
     unsigned int photosTaken;
     unsigned int photosRemaining;
     unsigned int nextPhoto;
-    char infinitePhotos;
+    uint8_t infinitePhotos;
 };
 
 extern program stored[MAX_STORED]EEMEM;
@@ -127,8 +129,16 @@ void shutter_capture(void);
 void aux_on(void);
 void aux_off(void);
 void aux_pulse(void);
-
-
-
+uint8_t stopName(char name[7], uint8_t stop);
+uint8_t stopUp(uint8_t stop);
+uint8_t stopDown(uint8_t stop);
+uint8_t checkHDR(uint8_t exps, uint8_t mid, uint8_t bracket);
+uint8_t hdrTvUp(uint8_t ev);
+uint8_t hdrTvDown(uint8_t ev);
+uint8_t bracketUp(uint8_t ev);
+uint8_t bracketDown(uint8_t ev);
+uint8_t hdrExpsUp(uint8_t hdr_exps);
+uint8_t hdrExpsDown(uint8_t hdr_exps);
+uint8_t hdrExpsName(char name[8], uint8_t hdr_exps);
 #endif
 
