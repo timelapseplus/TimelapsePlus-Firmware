@@ -8,6 +8,8 @@
  *
  */
  
+//#include <stdio.h>
+
 #include "math.h"
 
 /******************************************************************
@@ -17,13 +19,13 @@
  *   Catmull–Rom spline implementation
  *
  ******************************************************************/
- 
-float curve(float p0, float p1, float p2, float p3, float t)
-{
-    float t2 = t * t;
-    float t3 = t2 * t;
 
-    float ret = (float)
+double curve(double p0, double p1, double p2, double p3, double t)
+{
+    double t2 = t * t;
+    double t3 = t2 * t;
+
+    double ret = (double)
        ((2.0 * p1) +
         (p2 - p0) * t +
         (2.0 * p0 - 5.0 * p1 + 4.0 * p2 - p3) * t2 +
@@ -32,16 +34,17 @@ float curve(float p0, float p1, float p2, float p3, float t)
     return ret;
 }
 
+
 /*
 int main()
 {
   printf("Testing...\n\n");
 
-  float i;
+  double i;
 
   for(i = 0; i <= 1.1; i += 0.1)
   {
-    float y = curve(5, 5, 20, 20, i);
+    double y = curve(5, 5, 20, 20, i);
     int j;
     for (j = 0; j < (int) (y * 2.0); j++)
     {
@@ -50,6 +53,12 @@ int main()
     printf("#\n");
 //    printf("y = %f   [%f]\n", y, i);
   }
+  for(i = 0; i <= 1.1; i += 0.1)
+  {
+    double y = curve(5, 5, 20, 20, i);
+    printf("y = %f   [%f]\n", y, i);
+  }
+
 
   return 0;
 }
