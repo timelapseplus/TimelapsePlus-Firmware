@@ -97,19 +97,44 @@ void MENU::task()
            first = 0;
            
            if(ret != FN_CONTINUE) 
+           {
+               if(ret == FN_SAVE && func_short)
+               {
+                   (*func_short)();
+               }
                state = ST_MENU;
+           }
            break;
 
        case ST_TEXT:
            ret = editNumber(key, var, name, desc, type, first);
            first = 0;
            
-           if(ret != FN_CONTINUE) 
+           if(ret != FN_CONTINUE)
+           {
+               if(ret == FN_SAVE && func_short)
+               {
+                   (*func_short)();
+               }
                state = ST_MENU;
+           }
            break;
 
        case ST_LIST:
            ret = editSelect(key, bvar, list, name, first);
+           first = 0;
+           if(ret != FN_CONTINUE)
+           {
+               if(ret == FN_SAVE && func_short)
+               {
+                   (*func_short)();
+               }
+               state = ST_MENU;
+           }
+           break;
+
+       case ST_DLIST:
+           ret = editDynamic(key, (uint8_t *)bvar, dlist, name, first);
            first = 0;
            if(ret != FN_CONTINUE)
            {
@@ -247,7 +272,6 @@ void MENU::init(menu_item *newmenu)
                 settings_item *set;
                 set = (settings_item*)pgm_read_word(&menu[i].function);
                 var = (unsigned int*)pgm_read_word(&menu[i].description);
-//        unsigned int val;
 
                 for(uint8_t x = 0; x < MENU_MAX; x++)
                 {
@@ -267,13 +291,55 @@ void MENU::init(menu_item *newmenu)
             } 
             else
             {
-                for(c = 0; c < MENU_NAME_LEN - 1; c++) // Write menu item text //
+                for(uint8_t b = 0; b < MENU_NAME_LEN - 1; b++) // Write menu item text //
                 {
-                    if((type != 'E' && type != 'P') || c < MENU_NAME_LEN - var_len - 1)
+                    if((type != 'E' && type != 'P') || b < MENU_NAME_LEN - var_len - 1)
                     {
-                        ch = pgm_read_byte(&menu[i].name[c]);
-                        lcd->writeChar(2 + c * 6, 8 + 9 * menuSize - menuScroll, ch);
+                        ch = pgm_read_byte(&menu[i].name[b]);
+                        if(ch == '+') continue;
+                        lcd->writeChar(2 + b * 6, 8 + 9 * menuSize - menuScroll, ch);
                     }
+                }
+            }
+            
+            if(type == 'S' && c == '+') // Write setting selection over menu text
+            {
+                settings_item *set;
+                set = (settings_item*)pgm_read_word(&menu[i].function);
+                var = (unsigned int*)pgm_read_word(&menu[i].description);
+
+                for(uint8_t x = 0; x < MENU_MAX; x++)
+                {
+                    if(pgm_read_byte(&set[x].name[0]) == '0') 
+                        break;
+                    
+                    if(pgm_read_byte(&set[x].value) == *var)
+                    {
+                        for(c = 0; c < MENU_NAME_LEN - 1; c++) // Write settings item text //
+                        {
+                            ch = pgm_read_byte(&set[x].name[c]);
+                            lcd->writeChar(2 + (c + 2) * 6, 8 + 9 * menuSize - menuScroll, ch);
+                        }
+                        break;
+                    }
+                }
+            }
+            else if(type == 'D' && c == '+') // Write setting selection over menu text
+            {
+                dynamicItem_t *set;
+                set = (dynamicItem_t*)pgm_read_word(&menu[i].function);
+                var = (unsigned int*)pgm_read_word(&menu[i].description);
+
+                char item_name[8];
+                uint8_t (*nameFunc)(char name[8], uint8_t id);
+                nameFunc = (uint8_t (*)(char*, uint8_t))pgm_read_word(&set->nameFunc);
+                if((nameFunc)(item_name, *var))
+                {
+                  for(c = 0; c < 7; c++) // Write item text //
+                  {
+                    if(item_name[c] == 0) break;
+                    lcd->writeChar(2 + (c + 6) * 6, 8 + 9 * menuSize - menuScroll, item_name[c]);
+                  }        
                 }
             }
             menuSize++;
@@ -479,6 +545,8 @@ void MENU::click()
         {
            case 'M': // Submenu
                push();
+               func_short = (char (*)(void))pgm_read_word(&menu[index].short_function);
+               if(func_short) (*func_short)();
                menu = (menu_item*)pgm_read_word(&menu[index].function);
                select(0);
                state = ST_MENU;
@@ -531,12 +599,14 @@ void MENU::click()
                    else 
                        state = ST_EDIT;
 
+                   func_short = (char (*)(void))pgm_read_word(&menu[index].short_function);
                    type = pgm_read_byte(&menu[index].name[MENU_NAME_LEN - 2]);
                    var = (unsigned int (*))pgm_read_word(&menu[index].function);
                    break;
                }
 
            case 'S': // Settings List Variable
+           case 'D': // Dynamic Settings List Variable
                uint8_t b = 0;
                
                while(b < MENU_NAME_LEN - 2)
@@ -551,10 +621,18 @@ void MENU::click()
                
                name[b] = '\0';
 
-               func_short = (char (*)(void))pgm_read_word(&menu[index].condition);
+               func_short = (char (*)(void))pgm_read_word(&menu[index].short_function);
                bvar = (char (*))pgm_read_word(&menu[index].description);
-               list = (settings_item(*)) pgm_read_word(&menu[index].function);
-               state = ST_LIST;
+               if(type == 'D')
+               {
+                 dlist = (dynamicItem_t(*)) pgm_read_word(&menu[index].function);
+                 state = ST_DLIST;
+               }
+               else
+               {
+                 list = (settings_item(*)) pgm_read_word(&menu[index].function);
+                 state = ST_LIST;
+               }
                break;
         }
     }
@@ -1141,6 +1219,114 @@ char MENU::editSelect(char key, char *n, void *settingslist, char *name, char fi
         
        case FR_KEY: // save //
             *n = pgm_read_byte(&slist[i].value);
+            message(TEXT("Saved"));
+            return FN_SAVE;
+    }
+
+    return FN_CONTINUE;
+}
+
+/******************************************************************
+ *
+ *   MENU::editDynamic
+ *
+ *
+ ******************************************************************/
+
+char MENU::editDynamic(char key, uint8_t *var, void *ditem, char *name, char first)
+{
+    char item_name[8];
+    dynamicItem_t *item;
+    static uint8_t val;
+    uint8_t c = 0;
+    char ch = 0;
+    uint8_t (*npFunc)(uint8_t id);
+    uint8_t (*nameFunc)(char name[8], uint8_t id);
+    
+    item = (dynamicItem_t*)ditem;
+
+    if(first)
+    {
+        lcd->cls();
+        setTitle(name);
+        setBar(TEXT("CANCEL"), TEXT("SAVE"));
+
+        // Box //
+        lcd->drawBox(2, 12, 71, 24);
+        lcd->drawBox(1, 11, 72, 25);
+
+        // Up Arrow //
+        lcd->drawLine(74, 17, 82, 17);
+        lcd->drawLine(74, 16, 82, 16);
+        lcd->drawLine(75, 15, 81, 15);
+        lcd->drawLine(76, 14, 80, 14);
+        lcd->drawLine(77, 13, 79, 13);
+        //   lcd->setPixel(78, 12);
+
+        // Down Arrow //
+        lcd->drawLine(74, 19, 82, 19);
+        lcd->drawLine(74, 20, 82, 20);
+        lcd->drawLine(75, 21, 81, 21);
+        lcd->drawLine(76, 22, 80, 22);
+        lcd->drawLine(77, 23, 79, 23);
+//    lcd->setPixel(78, 24);
+
+        val = *var;
+    }
+
+
+    switch(key)
+    {
+       case UP_KEY:
+           npFunc = (uint8_t (*)(uint8_t))pgm_read_word(&item->nextFunc);
+           val = (npFunc)(val);
+           ch = 1;
+           break;
+           
+       case DOWN_KEY:
+           npFunc = (uint8_t (*)(uint8_t))pgm_read_word(&item->prevFunc);
+           val = (npFunc)(val);
+           ch = 1;
+           break;
+    }
+
+    if(ch || first)
+    {
+        lcd->eraseBox(3, 13, 69, 23);
+
+        nameFunc = (uint8_t (*)(char*, uint8_t))pgm_read_word(&item->nameFunc);
+        if((nameFunc)(item_name, val))
+        {
+          for(c = 0; c < 7; c++) // Write item text //
+          {
+            if(item_name[c] == 0) break;
+            lcd->writeChar(4 + (c + 4) * 6, 15, item_name[c]);
+          }        
+        }
+          
+        c = 0;
+        char *tmp;
+        uint8_t sp = 0;
+        lcd->eraseBox(0, 30, 83, 35);
+        tmp = (char*)pgm_read_word(&item->description);
+        
+        while ((ch = pgm_read_byte(tmp + c))) // Write menu item text //
+        {
+            sp += lcd->writeCharTiny(sp + c, 30, ch);
+            c++;
+        }
+
+        lcd->update();
+    }
+
+    switch(key)
+    {
+       case FL_KEY:
+       case LEFT_KEY:
+           return FN_CANCEL;
+        
+       case FR_KEY: // save //
+            *var = val;
             message(TEXT("Saved"));
             return FN_SAVE;
     }

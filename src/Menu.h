@@ -22,6 +22,7 @@
 #define ST_LIST 5
 #define ST_TEXT 6
 #define ST_SPAWN 7
+#define ST_DLIST 8
 
 #define FN_CONTINUE 0
 #define FN_CANCEL 1
@@ -31,24 +32,33 @@
 struct menu_item  // 20 bytes total
 {
     char name[MENU_NAME_LEN];  // 13 bytes
-    char type;         // 1 byte
-    void *function;    // 2 bytes
-    void *description; // 2 bytes
-    void *condition;   // 2 bytes
+    char type;                 // 1 byte
+    void *function;            // 2 bytes
+    void *description;         // 2 bytes
+    void *short_function;      // 2 bytes
+    void *condition;           // 2 bytes
 };
 
 struct settings_item  // 14 bytes total
 {
     char name[MENU_NAME_LEN];  // 13 bytes
-    char value;                // 1 byte
+    uint8_t value;             // 1 byte
     void *description;         // 2 bytes
 };
 
-struct menu_stack  // 16 bytes total
+struct menu_stack  // 3 bytes total
 {
     char index; // 1 byte
-    void *menu;     // 2 bytes
+    void *menu; // 2 bytes
 };
+struct dynamicItem_t
+{
+    void *nextFunc;
+    void *prevFunc;
+    void *nameFunc;
+    void *description;
+};
+
 
 class MENU
 {
@@ -71,6 +81,7 @@ public:
     void setBar(char *left, char *right);
     char editNumber(char key, unsigned int *n, char *name, char *unit, char mode, char first);
     char editSelect(char key, char *n, void *settingslist, char *name, char first);
+    char editDynamic(char key, uint8_t *var, void *ditem, char *name, char first);
     char editText(char key, char text[MENU_NAME_LEN], char *name, char first);
     char *menuName(char *str);
     void message(char *m);
@@ -99,6 +110,7 @@ private:
     unsigned int *var;
     char *bvar;
     settings_item *list;
+    dynamicItem_t *dlist;
     char (*func)(char key, char first);
     char (*func_short)(void);
     char (*handlerFunction)(char key, char first);
