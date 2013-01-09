@@ -58,9 +58,12 @@ USB_ClassInfo_SI_Host_t DigitalCamera_SI_Interface =
 
 char PTP_Buffer[PTP_BUFFER_SIZE];
 uint16_t PTP_Bytes_Received, PTP_Bytes_Remaining;
-char PTP_CameraModel[21];
+char PTP_CameraModel[23];
 PIMA_Container_t PIMA_Block;
 uint8_t PTP_Ready, PTP_Connected, configured;
+uint16_t PTP_Error;
+uint16_t supportedOperationsCount;
+uint16_t *supportedOperations;
 
 /** Task to print device information through the serial port, and open/close a test PIMA session with the
  *  attached Still Image device.
@@ -101,6 +104,7 @@ void PTP_Enable(void)
     #endif
     PTP_Bytes_Remaining = 0;
     PTP_Ready = 0;
+    PTP_Error = 0;
 }
 
 void PTP_Disable(void)
@@ -121,6 +125,7 @@ void PTP_Disable(void)
 
 uint8_t PTP_Transaction(uint16_t opCode, uint8_t mode, uint8_t paramCount, uint32_t *params)
 {
+    if(PTP_Error) return PTP_RETURN_ERROR;
     if(PTP_Bytes_Remaining > 0) return PTP_FetchData(0);
 
     if(mode == 1)
@@ -169,12 +174,15 @@ uint8_t PTP_Transaction(uint16_t opCode, uint8_t mode, uint8_t paramCount, uint3
         }
     }
 
-    if (SI_Host_ReceiveResponse(&DigitalCamera_SI_Interface))
+    uint8_t error_code = SI_Host_ReceiveResponse(&DigitalCamera_SI_Interface);
+    if(error_code)
     {
         #ifdef PTP_DEBUG
-        puts_P(PSTR("PTP_Command Error.\r\n"));
+        printf_P(PSTR("PTP_Transaction Error (opCode: %x, Error:%x).\r\n"), opCode);
         #endif
-        USB_Host_SetDeviceConfiguration(0);
+        PTP_Error = opCode;
+        PTP_Ready = 0;
+        //USB_Host_SetDeviceConfiguration(0);
         return PTP_RETURN_ERROR;
     }
     return PTP_RETURN_OK;
@@ -243,7 +251,6 @@ uint8_t PTP_CloseSession()
     return PTP_RETURN_OK;
 }
 
-
 uint8_t PTP_GetDeviceInfo()
 {
     if(PTP_Transaction(PIMA_OPERATION_GETDEVICEINFO, 2, 0, NULL)) return PTP_RETURN_ERROR;
@@ -253,6 +260,8 @@ uint8_t PTP_GetDeviceInfo()
     DeviceInfoPos += 8;                                          // Skip to VendorExtensionDesc String
     DeviceInfoPos += (1 + UNICODE_STRING_LENGTH(*DeviceInfoPos)); // Skip over VendorExtensionDesc String
     DeviceInfoPos += 2;                                          // Skip over FunctionalMode
+    supportedOperationsCount = (uint16_t) *(uint32_t*)DeviceInfoPos;
+    supportedOperations = (uint16_t*)(DeviceInfoPos + 4);
     DeviceInfoPos += (4 + (*(uint32_t*)DeviceInfoPos << 1));      // Skip over Supported Operations Array
     DeviceInfoPos += (4 + (*(uint32_t*)DeviceInfoPos << 1));      // Skip over Supported Events Array
     DeviceInfoPos += (4 + (*(uint32_t*)DeviceInfoPos << 1));      // Skip over Supported Device Properties Array
@@ -270,10 +279,21 @@ uint8_t PTP_GetDeviceInfo()
     /* Extract and convert the Model Unicode string to ASCII and print it through the USART */
     char Model[*DeviceInfoPos];
     UnicodeToASCII(DeviceInfoPos, Model);
+    strncpy(PTP_CameraModel, Model, 22);
+    for(uint8_t c = 0; c < 22; c++)
+    {
+        if(strncmp(&PTP_CameraModel[c], "Mark", 4) == 0)
+        {
+            for(uint8_t c2 = c + 1; c2 < 22; c2++)
+            {
+                PTP_CameraModel[c2] = PTP_CameraModel[c2 + 2];
+            }
+        }
+    }
     #ifdef PTP_DEBUG
-    printf_P(PSTR("   Model: %s\r\n"), Model);
+    printf_P(PSTR("   Model: %s\r\n"), PTP_CameraModel);
     #endif
-    strncpy(PTP_CameraModel, Model, 20);
+
 
     DeviceInfoPos += 1 + UNICODE_STRING_LENGTH(*DeviceInfoPos);   // Skip over Model String
 
@@ -283,6 +303,19 @@ uint8_t PTP_GetDeviceInfo()
     #ifdef PTP_DEBUG
     printf_P(PSTR("   Device Version: %s\r\n\r\n"), DeviceVersion);
     #endif
+
+    #ifdef PTP_DEBUG
+    printf_P(PSTR("   Supported Operations (%d): \r\n"), supportedOperationsCount);
+    #endif
+/*    for(uint16_t i = 0; i < supportedOperationsCount; i++)
+    {
+        #ifdef PTP_DEBUG
+        printf_P(PSTR("   %x\r\n"), supportedOperations[i]);
+        _delay_ms(20);
+        wdt_reset();
+        #endif
+    }
+*/
     return PTP_RETURN_OK;
 }
 
@@ -291,6 +324,7 @@ uint8_t PTP_GetDeviceInfo()
  */
 void EVENT_USB_Host_DeviceAttached(void)
 {
+    PTP_Error = 0;
     PTP_Connected = 1;
     PTP_Bytes_Remaining = 0;
     #ifdef PTP_DEBUG
@@ -303,6 +337,7 @@ void EVENT_USB_Host_DeviceAttached(void)
  */
 void EVENT_USB_Host_DeviceUnattached(void)
 {
+    PTP_Error = 0;
     PTP_Connected = 0;
     #ifdef PTP_DEBUG
     puts_P(PSTR("\r\nDevice Unattached.\r\n"));
@@ -351,6 +386,7 @@ void EVENT_USB_Host_DeviceEnumerationComplete(void)
 void EVENT_USB_Host_HostError(const uint8_t ErrorCode)
 {
     PTP_Disable();
+    PTP_Error = 1;
 
     #ifdef PTP_DEBUG
     printf_P(PSTR( "Host Mode Error\r\n"

@@ -36,8 +36,8 @@
 #ifndef _STILL_IMAGE_HOST_H_
 #define _STILL_IMAGE_HOST_H_
 
-//When on, this breaks BT functionality
-//#define PTP_DEBUG
+//When defined, this breaks BT functionality
+#define PTP_DEBUG
 
 #define PTP_RETURN_OK 0
 #define PTP_RETURN_ERROR 1
@@ -84,12 +84,15 @@ void UnicodeToASCII(char *UnicodeString,
 
 extern char PTP_Buffer[PTP_BUFFER_SIZE];
 extern uint16_t PTP_Bytes_Received;
-extern char PTP_CameraModel[21];
+extern char PTP_CameraModel[23];
 extern uint8_t PTP_Ready, PTP_Connected;
+extern uint16_t PTP_Error;
+extern uint16_t supportedOperationsCount;
+extern uint16_t *supportedOperations; // note that is memory space is reused -- only available immediately after init
+
 
 #ifdef __cplusplus
 }
 #endif
 
 #endif
-
