@@ -14,6 +14,7 @@
 #include "5110LCD.h"
 #include "IR.h"
 #include "shutter.h"
+#include "bluetooth.h"
 #include "remote.h"
 #include "timelapseplus.h"
 #include "tlp_menu_functions.h"
@@ -25,6 +26,7 @@ extern LCD lcd;
 extern IR ir;
 extern Remote remote;
 extern shutter timer;
+extern BT bt;
 
 /******************************************************************
  *
@@ -51,6 +53,10 @@ void settings_load()
     lcd.color(conf.lcdColor);
     ir.make = conf.cameraMake;
     if(conf.auxPort != AUX_MODE_DISABLED) aux_off();
+    if(bt.present && !remote.connected)
+    {
+        if(conf.btMode == BT_MODE_SLEEP) bt.sleep(); else bt.advertise();
+    }
 }
 
 /******************************************************************
@@ -101,6 +107,8 @@ void settings_default()
     conf.flashlightOffTime = 3;
     conf.devMode = 0;
     conf.auxPort = AUX_MODE_DISABLED;
+    conf.btMode = BT_MODE_SLEEP;
+    conf.halfPress = HALF_PRESS_ENABLED;
     settings_save();
     settings_load();
 }

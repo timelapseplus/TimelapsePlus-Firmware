@@ -8,8 +8,12 @@
  *
  */
  
-#define SETTINGS_VERSION 20120925
+#define SETTINGS_VERSION 20130104
 
+#define BT_MODE_SLEEP 0
+#define BT_MODE_DISCOVERABLE 1
+#define HALF_PRESS_ENABLED 0
+#define HALF_PRESS_DISABLED 1
 
 struct settings
 {
@@ -27,7 +31,18 @@ struct settings
     char devMode;
     uint32_t firmwareVersion;
     char auxPort;
+    char btMode;
+    char halfPress;
+    char test0;
+    char test1;
+    char test2;
+    char test3;
+    char test4;
+    char test5;
     char test6;
+    char test7;
+    char test8;
+    char test9;
 };
 
 void settings_load(void);
