@@ -546,19 +546,23 @@ uint8_t BT::send(char* str)
 	char i = 0;
 	if(!(BT_RTS) && state == BT_ST_SLEEP)
 	{
-		Serial_SendByte('A');
-
+		debug(STR("Waking up BT\r\n"));
+		state = BT_ST_IDLE;
 		while(!(BT_RTS))
 		{
+			Serial_SendByte('A');
 			if(++i > 250)
 			{
-				state = BT_ST_IDLE;
+				state = BT_ST_SLEEP;
 				break;
 			}
-
 			_delay_ms(1);
 		}
-		if(state == BT_ST_SLEEP) return 0; // wakeup failed
+		if(state == BT_ST_SLEEP)
+		{
+			debug(STR("ERROR: BT didn't wake up!\r\n"));
+			return 0; // wakeup failed
+		}
 	}
 
 	while(!(BT_RTS))
