@@ -35,6 +35,7 @@ volatile uint8_t modeHDR = 0;
 volatile uint8_t modeTimelapse = 1;
 volatile uint8_t modeStandard = 1;
 volatile uint8_t modeRamp = 0;
+volatile uint8_t modeNoRamp = 1;
 volatile uint8_t modeRampKeyAdd = 0;
 volatile uint8_t modeRampKeyDel = 0;
 volatile uint8_t modeBulb = 0;
@@ -80,6 +81,7 @@ void updateConditions()
 	modeHDR = (timer.current.Mode & HDR);
 	modeStandard = (!modeHDR && !modeRamp);
 	modeRamp = (timer.current.Mode & RAMP);
+	modeNoRamp = !modeRamp && modeTimelapse;
 	modeRampKeyAdd = (modeRamp && (timer.current.Keyframes < MAX_KEYFRAMES));
 	modeRampKeyDel = (modeRamp && (timer.current.Keyframes > 1));
 	bulb1 = timer.current.Keyframes > 1 && modeRamp;
@@ -1274,7 +1276,10 @@ volatile char btConnect(char key, char first)
 		case LEFT_KEY:
 		case FL_KEY:
 			sfirst = 1;
-			if(bt.state != BT_ST_CONNECTED) bt.sleep();
+			if(bt.state != BT_ST_CONNECTED)
+			{
+				if(conf.btMode == BT_MODE_SLEEP) bt.sleep(); else bt.advertise();
+			}
 			return FN_CANCEL;
 
 		case FR_KEY:
@@ -1395,23 +1400,47 @@ volatile char usbPlug(char key, char first)
 
 		if(PTP_Connected)
 		{
-			if(PTP_Ready)
+			if(PTP_Error)
 			{
 				lcd.cls();
-				lcd.writeString(3, 7,  PTP_CameraModel);
-				if(camera.shutterName(exp_name, camera.shutter))
+				lcd.writeString(3, 7,  TEXT(" PTP Error!  "));
+
+				lcd.writeChar(3+3*6, 15, '(');
+				char b, *c = (char*)&PTP_Error;
+				b = (c[1] >> 4) + '0'; if(b > '9') b += 7;
+				lcd.writeChar(3+4*6, 15, b);
+				b = (c[1] & 0x0F) + '0'; if(b > '9') b += 7;
+				lcd.writeChar(3+5*6, 15, b);
+				b = (c[0] >> 4) + '0'; if(b > '9') b += 7;
+				lcd.writeChar(3+6*6, 15, b);
+				b = (c[0] & 0x0F) + '0'; if(b > '9') b += 7;
+				lcd.writeChar(3+7*6, 15, b);
+				lcd.writeChar(3+8*6, 15, ')');
+
+				lcd.writeString(3, 23, TEXT("Unplug camera"));
+				lcd.writeString(3, 31, TEXT("to reset...  "));
+				menu.setTitle(TEXT("Camera Info"));
+				menu.setBar(TEXT("RETURN"), BLANK_STR);
+				lcd.update();
+				connectUSBcamera = 1;
+
+			}
+			else if(PTP_Ready)
+			{
+				lcd.cls();
+				lcd.writeStringTiny(1, 7,  PTP_CameraModel);
+				if(camera.shutterName(exp_name, camera.shutter()))
 				{
-					lcd.writeString(3, 15, exp_name);
+					lcd.writeString(3+22-6, 15, exp_name);
 				}
-				if(camera.apertureName(exp_name, camera.aperture))
+				if(camera.apertureName(exp_name, camera.aperture()))
 				{
-					lcd.writeString(3, 23, TEXT("f"));
-					lcd.writeString(3+6, 23, exp_name);
+					lcd.writeString(3+22-6, 23, exp_name);
 				}
-				if(camera.isoName(exp_name, camera.iso))
+				if(camera.isoName(exp_name, camera.iso()))
 				{
-					lcd.writeString(3, 31, TEXT("ISO"));
-					lcd.writeString(3+24, 31, exp_name);
+					lcd.writeString(3, 31, exp_name);
+					lcd.writeString(3+46, 31, TEXT("ISO"));
 				}
 				menu.setTitle(TEXT("Camera Info"));
 				menu.setBar(TEXT("RETURN"), TEXT("PHOTO"));
@@ -1460,11 +1489,11 @@ volatile char usbPlug(char key, char first)
 	}
 	else if(key == UP_KEY)
 	{
-		if(PTP_Ready) camera.isoUp(camera.iso);
+		if(PTP_Ready) camera.setISO(camera.isoUp(camera.iso()));
 	}
 	else if(key == DOWN_KEY)
 	{
-		if(PTP_Ready) camera.isoDown(camera.iso);
+		if(PTP_Ready) camera.setISO(camera.isoDown(camera.iso()));
 	}
 
 	return FN_CONTINUE;
