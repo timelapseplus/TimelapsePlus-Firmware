@@ -686,8 +686,10 @@ uint8_t PTP::init()
 				break;
     	}
     }
+    #ifdef PTP_DEBUG
     if(supports.bulb) bt.send(STR("Supports CAPTURE\r\n"));
     if(supports.bulb) bt.send(STR("Supports BULB\r\n"));
+    #endif
 
 	data[0] = 0x00000001;
 	if(PTP_Transaction(EOS_OC_PC_CONNECT, 0, 1, data)) return 1; // PC Connect Mode //
