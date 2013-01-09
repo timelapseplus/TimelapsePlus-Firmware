@@ -52,6 +52,7 @@ extern volatile uint8_t modeHDR;
 extern volatile uint8_t modeTimelapse;
 extern volatile uint8_t modeStandard;
 extern volatile uint8_t modeRamp;
+extern volatile uint8_t modeNoRamp;
 extern volatile uint8_t modeRampKeyAdd;
 extern volatile uint8_t modeRampKeyDel;
 extern volatile uint8_t modeBulb;
@@ -140,7 +141,7 @@ void setup()
 		_delay_ms(100);
 		bt.init(); // give it one more try
 	}
-	bt.sleep();
+	if(conf.btMode == BT_MODE_SLEEP) bt.sleep(); else bt.advertise();
 
 #ifdef PRODUCTION
 	// Check to see if system has passed self-test
@@ -273,7 +274,6 @@ int main()
 		clock.task();
 		bt.task();
 		notify.task();
-		camera.checkEvent();
 
 		if(USBmode == 1)
 			PTP_Task();
@@ -290,6 +290,7 @@ int main()
 		{
 			count = 0;
 			charge_status = battery_status();
+			camera.checkEvent();
 		}
 
 		if(bt.event) remote.event();
@@ -365,13 +366,16 @@ void message_notify(uint8_t id)
 		case NOTIFY_CAMERA:
 			if(PTP_Ready)
 			{
-				menu.message(PTP_CameraModel);
+				menu.message(STR("USB Camera"));
+				menu.refresh();
+//				menu.message(PTP_CameraModel);
 				camera.init();
 			}
 			else
 			{
-//				menu.message(STR("Disconnected"));
+				if(PTP_Error) menu.spawn((void*)usbPlug); else menu.message(STR("Disconnected"));
 				camera.close();
+				menu.refresh();
 			}
 			break;
 	}
