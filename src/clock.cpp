@@ -110,7 +110,7 @@ volatile void Clock::count()
     }
     if(newJob)
     {
-        (*jobStart)();
+        if(jobStart) (*jobStart)();
         newJob = 0;
         jobRunning = 1;
     }
@@ -119,7 +119,7 @@ volatile void Clock::count()
         jobDuration--;
         if(jobDuration <= 0)
         {
-            (*jobComplete)();
+            if(jobComplete) (*jobComplete)();
             jobRunning = 0;
         }
 
