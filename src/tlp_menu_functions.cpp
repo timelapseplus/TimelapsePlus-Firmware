@@ -790,17 +790,17 @@ volatile char timerStatusRemote(char key, char first)
 		if(toggle == 0)
 		{
 			remote.request(REMOTE_BATTERY);
-			remote.send(REMOTE_BATTERY, REMOTE_TYPE_NOTIFY_WATCH);
+			remote.watch(REMOTE_BATTERY);
 		}
 		else if(toggle == 1)
 		{
 			remote.request(REMOTE_START);
-			remote.send(REMOTE_START, REMOTE_TYPE_NOTIFY_WATCH);
+			remote.watch(REMOTE_START);
 		}
 		else if(toggle == 2)
 		{
 			remote.request(REMOTE_STATUS);
-			remote.send(REMOTE_STATUS, REMOTE_TYPE_NOTIFY_WATCH);
+			remote.watch(REMOTE_STATUS);
 		}
 
 		if(toggle <= 2) toggle++;
@@ -825,9 +825,9 @@ volatile char timerStatusRemote(char key, char first)
 		   
 	   case FL_KEY:
 	   case LEFT_KEY:
-		   remote.send(REMOTE_BATTERY, REMOTE_TYPE_NOTIFY_UNWATCH);
-		   remote.send(REMOTE_START, REMOTE_TYPE_NOTIFY_UNWATCH);
-		   remote.send(REMOTE_STATUS, REMOTE_TYPE_NOTIFY_UNWATCH);
+		   remote.unWatch(REMOTE_BATTERY);
+		   remote.unWatch(REMOTE_START);
+		   remote.unWatch(REMOTE_STATUS);
 		   return FN_CANCEL;
 	}
 

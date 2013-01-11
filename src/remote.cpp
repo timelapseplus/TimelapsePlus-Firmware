@@ -47,6 +47,16 @@ uint8_t Remote::request(uint8_t id)
 	return bt.sendDATA(id, REMOTE_TYPE_REQUEST, 0, 0);
 }
 
+uint8_t Remote::watch(uint8_t id)
+{
+	return bt.sendDATA(id, REMOTE_TYPE_NOTIFY_WATCH, 0, 0);
+}
+
+uint8_t Remote::unWatch(uint8_t id)
+{
+	return bt.sendDATA(id, REMOTE_TYPE_NOTIFY_UNWATCH, 0, 0);
+}
+
 uint8_t Remote::set(uint8_t id)
 {
 	return send(id, REMOTE_TYPE_SET);
