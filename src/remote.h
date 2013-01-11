@@ -9,6 +9,8 @@
 #define REMOTE_BULB_END 7
 #define REMOTE_CAPTURE 8
 
+#define REMOTE_MODEL 9 // Reserved for future use
+#define REMOTE_EDITION 10 // Reserved
 #define REMOTE_FIRMWARE 11
 #define REMOTE_BT_FW_VERSION 12
 #define REMOTE_PROTOCOL_VERSION 13
@@ -18,8 +20,8 @@
 #define REMOTE_TYPE_SEND 0
 #define REMOTE_TYPE_REQUEST 1
 #define REMOTE_TYPE_SET 2
-#define REMOTE_TYPE_NOTIFY_SET 3
-#define REMOTE_TYPE_NOTIFY_UNSET 4
+#define REMOTE_TYPE_NOTIFY_WATCH 3
+#define REMOTE_TYPE_NOTIFY_UNWATCH 4
 
 class Remote
 {
