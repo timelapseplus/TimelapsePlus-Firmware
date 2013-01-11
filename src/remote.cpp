@@ -134,11 +134,15 @@ void Remote::event()
 					if(bt.dataType == REMOTE_TYPE_REQUEST) send(timer.running ? REMOTE_START : REMOTE_STOP, REMOTE_TYPE_SEND);
 					if(bt.dataType == REMOTE_TYPE_SEND) running = 1;
 					if(bt.dataType == REMOTE_TYPE_SET) runHandler(FR_KEY, 1);
+					if(bt.dataType == REMOTE_TYPE_NOTIFY_WATCH) notify.watch(REMOTE_START, (void *)&timer.running, sizeof(timer.running), &remote_notify);
+					if(bt.dataType == REMOTE_TYPE_NOTIFY_UNWATCH) notify.unWatch(REMOTE_START, &remote_notify);
 					break;
 				case REMOTE_STOP:
 					if(bt.dataType == REMOTE_TYPE_REQUEST) send(timer.running ? REMOTE_START : REMOTE_STOP, REMOTE_TYPE_SEND);
 					if(bt.dataType == REMOTE_TYPE_SEND) running = 0;
 					if(bt.dataType == REMOTE_TYPE_SET) timerStop(FR_KEY, 1);
+					if(bt.dataType == REMOTE_TYPE_NOTIFY_WATCH) notify.watch(REMOTE_STOP, (void *)&timer.running, sizeof(timer.running), &remote_notify);
+					if(bt.dataType == REMOTE_TYPE_NOTIFY_UNWATCH) notify.unWatch(REMOTE_STOP, &remote_notify);
 					break;
 				case REMOTE_BULB_START:
 					if(bt.dataType == REMOTE_TYPE_SET) timer.bulbStart();
@@ -175,5 +179,14 @@ void Remote::event()
 
 void remote_notify(uint8_t id)
 {
-	Remote::send(id, REMOTE_TYPE_SEND);
+	switch(id)
+	{
+		case REMOTE_START:
+		case REMOTE_STOP:
+			Remote::send(timer.running ? REMOTE_START : REMOTE_STOP, REMOTE_TYPE_SEND);
+			break;
+		default:
+			Remote::send(id, REMOTE_TYPE_SEND);
+			break;
+	}
 }
