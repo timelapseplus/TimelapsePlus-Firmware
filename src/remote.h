@@ -27,7 +27,7 @@ public:
     Remote(void);
     uint8_t request(uint8_t id);
     uint8_t set(uint8_t id);
-    uint8_t send(uint8_t id, uint8_t type);
+    static uint8_t send(uint8_t id, uint8_t type);
     void event(void);
 
     uint8_t connected;
@@ -35,8 +35,8 @@ public:
     uint8_t battery;
 
     uint8_t notifyBattery;
-    uint8_t notifyCameraFPS;
-    uint8_t notifyCameraMake;
+//    uint8_t notifyCameraFPS;
+//    uint8_t notifyCameraMake;
 
     timer_status status;
     program current;
@@ -44,3 +44,5 @@ public:
 private:
 	volatile uint8_t requestActive;
 };
+
+void remote_notify(uint8_t id);

@@ -86,4 +86,17 @@ void Notify::unWatch(uint8_t id, void (handler)(uint8_t))
     return;
 }
 
+void Notify::unWatch(void (handler)(uint8_t))
+{
+    uint8_t i;
+    for(i = 0; i < MAX_ITEMS_WATCHED; i++)
+    {
+        if(watchedItems[i].active && watchedItems[i].handler == (void*)handler)
+        {
+            watchedItems[i].active = 0;
+        }
+    }
+    return;
+}
+
 

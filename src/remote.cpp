@@ -27,12 +27,14 @@
 #include "math.h"
 #include "remote.h"
 #include "tlp_menu_functions.h"
+#include "notify.h"
 
 extern BT bt;
 extern shutter timer;
 extern MENU menu;
 extern uint8_t battery_percent;
 extern settings conf;
+extern Notify notify;
 
 Remote::Remote()
 {
@@ -92,10 +94,9 @@ void Remote::event()
 	switch(bt.event)
 	{
 		case BT_EVENT_DISCONNECT:
+			notify.unWatch(&remote_notify); // stop all active notifications
 			connected = 0;
 			notifyBattery = 0;
-			notifyCameraFPS = 0;
-			notifyCameraMake = 0;
 			break;
 
 		case BT_EVENT_CONNECT:
@@ -109,6 +110,8 @@ void Remote::event()
 					if(bt.dataType == REMOTE_TYPE_REQUEST) send(bt.dataId, REMOTE_TYPE_SEND);
 					if(bt.dataType == REMOTE_TYPE_SEND) memcpy(&status, bt.data, bt.dataSize);
 					if(bt.dataType == REMOTE_TYPE_SET) memcpy(&status, bt.data, bt.dataSize);
+					if(bt.dataType == REMOTE_TYPE_NOTIFY_SET) notify.watch(REMOTE_STATUS, (void *)&timer.status, sizeof(timer.status), &remote_notify);
+					if(bt.dataType == REMOTE_TYPE_NOTIFY_UNSET) notify.unWatch(REMOTE_STATUS, &remote_notify);
 					break;
 				case REMOTE_PROGRAM:
 					if(bt.dataType == REMOTE_TYPE_REQUEST) send(bt.dataId, REMOTE_TYPE_SEND);
@@ -118,6 +121,8 @@ void Remote::event()
 						memcpy((void*)&timer.current, bt.data, bt.dataSize);
 						menu.refresh();
 					}
+					if(bt.dataType == REMOTE_TYPE_NOTIFY_SET) notify.watch(REMOTE_PROGRAM, (void *)&timer.current, sizeof(timer.current), &remote_notify);
+					if(bt.dataType == REMOTE_TYPE_NOTIFY_UNSET) notify.unWatch(REMOTE_PROGRAM, &remote_notify);
 					break;
 				case REMOTE_BATTERY:
 					if(bt.dataType == REMOTE_TYPE_REQUEST) send(bt.dataId, REMOTE_TYPE_SEND);
@@ -148,18 +153,21 @@ void Remote::event()
 				case REMOTE_FIRMWARE:
 				case REMOTE_BT_FW_VERSION:
 				case REMOTE_PROTOCOL_VERSION:
-					if(bt.dataType == REMOTE_TYPE_REQUEST)
-send(bt.dataId, REMOTE_TYPE_SEND);
+					if(bt.dataType == REMOTE_TYPE_REQUEST) send(bt.dataId, REMOTE_TYPE_SEND);
 					break;
 				case REMOTE_CAMERA_FPS:
 					if(bt.dataType == REMOTE_TYPE_REQUEST) send(bt.dataId, REMOTE_TYPE_SEND);
-					if(bt.dataType == REMOTE_TYPE_NOTIFY_SET) notifyCameraFPS = 1;
-					if(bt.dataType == REMOTE_TYPE_NOTIFY_UNSET) notifyCameraFPS = 0;
+					if(bt.dataType == REMOTE_TYPE_NOTIFY_SET) notify.watch(REMOTE_CAMERA_FPS, (void *)&conf.cameraFPS, sizeof(conf.cameraFPS), &remote_notify);
+					if(bt.dataType == REMOTE_TYPE_NOTIFY_UNSET) notify.unWatch(REMOTE_CAMERA_FPS, &remote_notify);
+//					if(bt.dataType == REMOTE_TYPE_NOTIFY_SET) notifyCameraFPS = 1;
+//					if(bt.dataType == REMOTE_TYPE_NOTIFY_UNSET) notifyCameraFPS = 0;
 					break;
 				case REMOTE_CAMERA_MAKE:
 					if(bt.dataType == REMOTE_TYPE_REQUEST) send(bt.dataId, REMOTE_TYPE_SEND);
-					if(bt.dataType == REMOTE_TYPE_NOTIFY_SET) notifyCameraMake = 1;
-					if(bt.dataType == REMOTE_TYPE_NOTIFY_UNSET) notifyCameraMake = 0;
+					if(bt.dataType == REMOTE_TYPE_NOTIFY_SET) notify.watch(REMOTE_CAMERA_MAKE, (void *)&conf.cameraMake, sizeof(conf.cameraMake), &remote_notify);
+					if(bt.dataType == REMOTE_TYPE_NOTIFY_UNSET) notify.unWatch(REMOTE_CAMERA_MAKE, &remote_notify);
+//					if(bt.dataType == REMOTE_TYPE_NOTIFY_SET) notifyCameraMake = 1;
+//					if(bt.dataType == REMOTE_TYPE_NOTIFY_UNSET) notifyCameraMake = 0;
 					break;
 				default:
 					return;
@@ -170,4 +178,7 @@ send(bt.dataId, REMOTE_TYPE_SEND);
 	requestActive = 0;
 }
 
-
+void remote_notify(uint8_t id)
+{
+	Remote::send(id, REMOTE_TYPE_SEND);
+}

@@ -1,4 +1,4 @@
-#define MAX_ITEMS_WATCHED 7
+#define MAX_ITEMS_WATCHED 15
 
 struct watched_item_struct
 {
@@ -19,8 +19,9 @@ public:
     void task(void);
 
     void watch(uint8_t id, void * item, uint8_t size, void (handler)(uint8_t));
-    void unWatch(uint8_t id);
-    void unWatch(uint8_t id, void (handler)(uint8_t));
+    void unWatch(uint8_t id); // Unwatch all with specified id
+    void unWatch(uint8_t id, void (handler)(uint8_t)); // Unwatch item with specified id & handler
+    void unWatch(void (handler)(uint8_t)); // Unwatch all with specified handler
 
 
 private:
