@@ -304,14 +304,7 @@ int main()
 		if(clock.Ms() > startTime + 60000)
 		{
 			startTime = clock.Ms();
-			uint8_t batteryRead = battery_read();
-
-			if(batteryRead != battery_percent)
-			{
-				battery_percent = batteryRead;
-
-				if(remote.notifyBattery) remote.send(REMOTE_BATTERY, REMOTE_TYPE_SEND);
-			}
+			battery_percent = battery_read();
 		}
 
 		if((hardware_USB_HostConnected || connectUSBcamera) && (USBmode == 0))

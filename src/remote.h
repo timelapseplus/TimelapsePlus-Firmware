@@ -1,4 +1,4 @@
-#define REMOTE_VERSION 20121130
+#define REMOTE_VERSION 20130111
 
 #define REMOTE_STATUS 1
 #define REMOTE_PROGRAM 2
@@ -33,10 +33,6 @@ public:
     uint8_t connected;
     uint8_t running;
     uint8_t battery;
-
-    uint8_t notifyBattery;
-//    uint8_t notifyCameraFPS;
-//    uint8_t notifyCameraMake;
 
     timer_status status;
     program current;
