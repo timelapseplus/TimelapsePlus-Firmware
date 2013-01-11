@@ -779,6 +779,7 @@ volatile char timerStatusRemote(char key, char first)
 	if(first)
 	{
 		startTime = 0;
+		toggle = 0;
 	}
 
 	if(clock.Ms() > startTime + 100)
@@ -787,15 +788,22 @@ volatile char timerStatusRemote(char key, char first)
 		lcd.cls();
 
 		if(toggle == 0)
+		{
 			remote.request(REMOTE_BATTERY);
-		else if(toggle == 1)
 			remote.send(REMOTE_BATTERY, REMOTE_TYPE_NOTIFY_WATCH);
-		else if(toggle == 2)
+		}
+		else if(toggle == 1)
+		{
 			remote.request(REMOTE_START);
-		else
+			remote.send(REMOTE_START, REMOTE_TYPE_NOTIFY_WATCH);
+		}
+		else if(toggle == 2)
+		{
 			remote.request(REMOTE_STATUS);
+			remote.send(REMOTE_STATUS, REMOTE_TYPE_NOTIFY_WATCH);
+		}
 
-		if(++toggle >= 10) toggle = 2;
+		if(toggle <= 2) toggle++;
 
 		displayTimerStatus(1);
 
@@ -818,7 +826,8 @@ volatile char timerStatusRemote(char key, char first)
 	   case FL_KEY:
 	   case LEFT_KEY:
 		   remote.send(REMOTE_BATTERY, REMOTE_TYPE_NOTIFY_UNWATCH);
-		   toggle = 0;
+		   remote.send(REMOTE_START, REMOTE_TYPE_NOTIFY_UNWATCH);
+		   remote.send(REMOTE_STATUS, REMOTE_TYPE_NOTIFY_UNWATCH);
 		   return FN_CANCEL;
 	}
 
