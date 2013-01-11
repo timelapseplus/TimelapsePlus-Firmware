@@ -72,18 +72,6 @@ void settings_update()
     settings_load();
 }
 
-void settings_update_camera_fps()
-{
-    settings_update();
-//    if(remote.notifyCameraFPS) remote.send(REMOTE_CAMERA_FPS, REMOTE_TYPE_SEND);
-}
-
-void settings_update_camera_make()
-{
-    settings_update();
-//    if(remote.notifyCameraMake) remote.send(REMOTE_CAMERA_MAKE, REMOTE_TYPE_SEND);
-}
-
 /******************************************************************
  *
  *   settings_default

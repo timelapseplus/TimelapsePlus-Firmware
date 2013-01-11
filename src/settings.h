@@ -49,7 +49,5 @@ void settings_load(void);
 void settings_save(void);
 void settings_default(void);
 void settings_update(void);
-void settings_update_camera_fps(void);
-void settings_update_camera_make(void);
 void settings_init(void);
 
