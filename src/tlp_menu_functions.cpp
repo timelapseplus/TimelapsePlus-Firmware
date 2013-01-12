@@ -800,21 +800,14 @@ volatile char timerStatusRemote(char key, char first)
 		lcd.update();
 	}
 
-	if(!remote.connected) return FN_CANCEL;
-
-	switch(key)
+	if(key == FR_KEY) remote.set(REMOTE_STOP);
+	else if(!remote.connected || key == FL_KEY || key == LEFT_KEY)
 	{
-	   case FR_KEY:
-		   remote.set(REMOTE_STOP);
-		   break;
-		   
-	   case FL_KEY:
-	   case LEFT_KEY:
-	   		init = 1;
-			remote.unWatch(REMOTE_STATUS);
-			remote.unWatch(REMOTE_START);
-			remote.unWatch(REMOTE_BATTERY);
-		    return FN_CANCEL;
+	   	init = 1;
+		remote.unWatch(REMOTE_STATUS);
+		remote.unWatch(REMOTE_START);
+		remote.unWatch(REMOTE_BATTERY);
+		return FN_CANCEL;
 	}
 
 	return FN_CONTINUE;
