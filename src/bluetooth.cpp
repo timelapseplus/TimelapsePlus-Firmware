@@ -502,8 +502,19 @@ uint8_t BT::sendDATA(uint8_t id, uint8_t type, void* buffer, uint16_t bytes)
 	if(!present)
 		return 1;
 
+	debug(STR("Sending: "));
+	debug(id);
+	debug(STR(", "));
+	debug(type);
+	debug_nl();
 	if(dataMode())
 	{
+		uint8_t i = 0;
+		while(!(BT_RTS))
+		{
+			if(++i > 250) break;
+			_delay_ms(1);
+		}
 		if(BT_RTS)
 		{
 			char* byte;
@@ -520,11 +531,26 @@ uint8_t BT::sendDATA(uint8_t id, uint8_t type, void* buffer, uint16_t bytes)
 			{
 				while(bytes--)
 				{
+					i = 0;
+					while(!(BT_RTS))
+					{
+						if(++i > 250) break;
+						_delay_ms(1);
+					}
+					if(i > 250)
+					{
+						debug(STR("BT RTS Failed!\r\n"));
+						break;
+					}
 					Serial_SendByte(*byte);
 					byte++;
 				}
 			}
 			return 1;
+		}
+		else
+		{
+			debug(STR("BT RTS Failed!\r\n"));
 		}
 	}
 
@@ -650,6 +676,12 @@ uint8_t BT::read(void)
 		}
 		else
 		{
+//			if(bytes == 1 && buf[0] != '$' && buf[0] != 'O') bytes--;
+			if(bytes > 1 && buf[bytes - 1] == '$')
+			{
+				buf[0] = '$';
+				bytes = 1;
+			}
 			if(dataSize > 0)
 			{
 				if(bytes > dataSize + 5) break;
@@ -668,7 +700,7 @@ uint8_t BT::read(void)
 
 					if(dataSize == 0) break;
 				}
-				else if(buf[bytes - 1] == '\n') // just get one line at a time
+				else if(buf[0] != '$' && buf[bytes - 1] == '\n') // just get one line at a time
 				{
 					break;
 				}
