@@ -62,7 +62,7 @@ const menu_item menu_options[]PROGMEM =
 //    { "View Details", 'F', (void*)&viewSeconds, 0, 0, 0 },
     { "Load Saved..", 'F', (void*)&shutter_load, 0, 0, (void*)&timerNotRunning },
     { "Save As..   ", 'F', (void*)&shutter_saveAs, 0, 0, 0 },
-    { "Save        ", 'F', (void*)&timerSaveCurrent, 0, 0, (void*)&timer.current.Name },
+    { "Save        ", 'F', (void*)&timerSaveCurrent, 0, 0, (void*)&timer.currentId },
     { "Save Default", 'F', (void*)&timerSaveDefault, 0, 0, 0 },
     { "Revert      ", 'F', (void*)&timerRevert, 0, 0, (void*)&timerNotRunning },
     { "\0OPTIONS\0   ", 'F', (void*)&menuBack, (void*)STR_RETURN, 0, (void*)STR_NULL }

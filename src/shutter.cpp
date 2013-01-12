@@ -98,10 +98,20 @@ void shutter::setDefault()
     current.Gap = 20;
     current.Exps = 3;
     current.Mode = MODE_TIMELAPSE;
-    current.Exp = 1;
-    current.Bracket = 1;
+    current.Exp = 40;
+    current.Bracket = 6;
     current.Keyframes = 1;
+    current.Duration = 3600;
+    current.BulbStart = 47;
+    current.Bulb[0] = 36;
+    current.Key[0] = 3600;
     save(0);
+
+    uint8_t i;
+    for(i = 1; i < MAX_STORED; i++)
+    {
+        eeprom_write_byte((uint8_t*)&stored[i].Name[0],  255);
+    }
 }
 
 /******************************************************************

@@ -513,6 +513,7 @@ volatile char factoryReset(char key, char first)
 
 	   case FR_KEY:
 	   		settings_default();
+	   		timer.setDefault();
 	   		menu.message(TEXT("Factory Reset"));
 		    return FN_CANCEL;
 	}
@@ -1659,7 +1660,17 @@ volatile char menuBack(char key, char first)
 volatile char timerSaveDefault(char key, char first)
 {
 	if(first)
+	{
+		timer.current.Name[0] = 'D';
+		timer.current.Name[1] = 'E';
+		timer.current.Name[2] = 'F';
+		timer.current.Name[3] = 'A';
+		timer.current.Name[4] = 'U';
+		timer.current.Name[5] = 'L';
+		timer.current.Name[6] = 'T';
+		timer.current.Name[7] = '\0';
 		timer.save(0);
+	}
 
 	menu.message(TEXT("Saved"));
 	menu.back();
@@ -1842,7 +1853,7 @@ volatile char shutter_load(char key, char first)
 
 					if(ch == 0) break;
 
-					if(ch < 'A' || ch > 'Z')
+					if((ch < 'A' || ch > 'Z') && (ch < '0' || ch > '9'))
 						ch = ' ';
 
 					lcd.writeChar(3 + c * 6, 8 + 9 * (menuSize - menuScroll), ch);
