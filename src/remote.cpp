@@ -168,7 +168,7 @@ void Remote::event()
 					break;
 				case REMOTE_MODEL:
 					if(bt.dataType == REMOTE_TYPE_REQUEST) send(REMOTE_MODEL, REMOTE_TYPE_SEND);
-					if(bt.dataType == REMOTE_TYPE_SEND) memcpy(&model, bt.data, bt.dataSize);
+					if(bt.dataType == REMOTE_TYPE_SEND) memcpy(&model, bt.data, 1);
 					break;
 				case REMOTE_FIRMWARE:
 				case REMOTE_BT_FW_VERSION:
