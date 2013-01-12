@@ -219,6 +219,7 @@ const menu_item menu_development[]PROGMEM =
     { "Sys Status  ", 'F', (void*)sysStatus, 0, 0, 0 },
     { "Battery     ", 'F', (void*)batteryStatus, 0, 0, 0 },
     { "Light Meter ", 'F', (void*)lightMeter, 0, 0, 0 },
+    { "BT Flood    ", 'F', (void*)btFloodTest, 0, 0, 0 },
     { "Reset All   ", 'F', (void*)factoryReset, 0, 0, 0 },
     { "DFU Mode    ", 'F', (void*)hardware_bootloader, 0, 0, 0 },
     { "\0           ", 'V', 0, 0, 0 }
