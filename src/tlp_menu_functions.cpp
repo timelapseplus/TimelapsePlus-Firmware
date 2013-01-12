@@ -89,7 +89,7 @@ void updateConditions()
 	bulb3 = timer.current.Keyframes > 3 && modeRamp;
 	bulb4 = timer.current.Keyframes > 4 && modeRamp;
 	showGap = timer.current.Photos != 1 && modeTimelapse;
-	showRemoteStart = (remote.connected && !remote.running);	
+	showRemoteStart = (remote.connected && !remote.running && remote.model == REMOTE_MODEL_TLP);	
 	clock.sleepOk = timerNotRunning && !timer.cableIsConnected() && bt.state != BT_ST_CONNECTED && sleepOk;
 }
 

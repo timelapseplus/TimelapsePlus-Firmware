@@ -72,6 +72,8 @@ uint8_t Remote::send(uint8_t id, uint8_t type)
 			return bt.sendDATA(id, type, (void *) &timer.status, sizeof(timer_status));
 		case REMOTE_PROGRAM:
 			return bt.sendDATA(id, type, (void *) &timer.current, sizeof(program));
+		case REMOTE_MODEL:
+			return bt.sendDATA(id, type, (void *) REMOTE_MODEL_TLP, sizeof(uint8_t));
 		case REMOTE_FIRMWARE:
 		{
 			unsigned long version = VERSION;
@@ -110,6 +112,7 @@ void Remote::event()
 
 		case BT_EVENT_CONNECT:
 			connected = 1;
+			request(REMOTE_MODEL);
 			break;
 
 		case BT_EVENT_DATA:
@@ -162,6 +165,10 @@ void Remote::event()
 					break;
 				case REMOTE_CAPTURE:
 					if(bt.dataType == REMOTE_TYPE_SET) timer.capture();
+					break;
+				case REMOTE_MODEL:
+					if(bt.dataType == REMOTE_TYPE_REQUEST) send(REMOTE_MODEL, REMOTE_TYPE_SEND);
+					if(bt.dataType == REMOTE_TYPE_SEND) memcpy(&model, bt.data, bt.dataSize);
 					break;
 				case REMOTE_FIRMWARE:
 				case REMOTE_BT_FW_VERSION:
