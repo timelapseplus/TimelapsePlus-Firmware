@@ -26,7 +26,7 @@ void Notify::task()
             uint8_t x, sum = 0;
             for(x = 0; x < watchedItems[i].size; x++)
             {
-                sum += ((char *) watchedItems[i].item)[x];
+                sum ^= ((char *) watchedItems[i].item)[x];
             }
             if(sum != watchedItems[i].chksum)
             {
@@ -51,7 +51,7 @@ void Notify::watch(uint8_t id, void * item, uint8_t size, void (handler)(uint8_t
             watchedItems[i].item = item;
             watchedItems[i].handler = (void*)handler;
             uint8_t x, sum = 0;
-            for(x = 0; x < size; x++) sum += ((char *) item)[x];
+            for(x = 0; x < size; x++) sum ^= ((char *) item)[x];
             watchedItems[i].chksum = sum;
             return;
         }
