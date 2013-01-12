@@ -766,7 +766,7 @@ uint8_t BT::task(void)
 			if(strncmp(buf, STR("CONNECT"), 7) == 0)
 			{
 				if(state == BT_ST_SCAN) cancelScan();
-				ret = BT_EVENT_CONNECT;
+				//ret = BT_EVENT_CONNECT;
 				state = BT_ST_CONNECTED;
 			}
 			if(strncmp(buf, STR("BRSP"), 4) == 0)
