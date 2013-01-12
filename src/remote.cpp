@@ -67,7 +67,7 @@ uint8_t Remote::send(uint8_t id, uint8_t type)
 	switch(id)
 	{
 		case REMOTE_BATTERY:
-			if(type < REMOTE_TYPE_NOTIFY_WATCH) return bt.sendDATA(id, type, (void *) &battery_percent, sizeof(uint8_t));
+			return bt.sendDATA(id, type, (void *) &battery_percent, sizeof(uint8_t));
 		case REMOTE_STATUS:
 			return bt.sendDATA(id, type, (void *) &timer.status, sizeof(timer_status));
 		case REMOTE_PROGRAM:
@@ -121,7 +121,6 @@ void Remote::event()
 				case REMOTE_STATUS:
 					if(bt.dataType == REMOTE_TYPE_REQUEST) send(bt.dataId, REMOTE_TYPE_SEND);
 					if(bt.dataType == REMOTE_TYPE_SEND) memcpy(&status, bt.data, bt.dataSize);
-					if(bt.dataType == REMOTE_TYPE_SET) memcpy(&status, bt.data, bt.dataSize);
 					if(bt.dataType == REMOTE_TYPE_NOTIFY_WATCH) notify.watch(REMOTE_STATUS, (void *)&timer.status, sizeof(timer.status), &remote_notify);
 					if(bt.dataType == REMOTE_TYPE_NOTIFY_UNWATCH) notify.unWatch(REMOTE_STATUS, &remote_notify);
 					break;
@@ -139,7 +138,6 @@ void Remote::event()
 				case REMOTE_BATTERY:
 					if(bt.dataType == REMOTE_TYPE_REQUEST) send(bt.dataId, REMOTE_TYPE_SEND);
 					if(bt.dataType == REMOTE_TYPE_SEND) memcpy(&battery, bt.data, 1);
-					if(bt.dataType == REMOTE_TYPE_SET) memcpy(&battery, bt.data, 1);
 					if(bt.dataType == REMOTE_TYPE_NOTIFY_WATCH) notify.watch(REMOTE_BATTERY, (void *)&battery_percent, sizeof(uint8_t), &remote_notify);
 					if(bt.dataType == REMOTE_TYPE_NOTIFY_UNWATCH) notify.unWatch(REMOTE_BATTERY, &remote_notify);
 					break;
