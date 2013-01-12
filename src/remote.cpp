@@ -67,13 +67,16 @@ uint8_t Remote::send(uint8_t id, uint8_t type)
 	switch(id)
 	{
 		case REMOTE_BATTERY:
-			return bt.sendDATA(id, type, (void *) &battery_percent, sizeof(uint8_t));
+			return bt.sendDATA(id, type, (void *) &battery_percent, sizeof(battery_percent));
 		case REMOTE_STATUS:
-			return bt.sendDATA(id, type, (void *) &timer.status, sizeof(timer_status));
+			return bt.sendDATA(id, type, (void *) &timer.status, sizeof(timer.status));
 		case REMOTE_PROGRAM:
-			return bt.sendDATA(id, type, (void *) &timer.current, sizeof(program));
+			return bt.sendDATA(id, type, (void *) &timer.current, sizeof(timer.current));
 		case REMOTE_MODEL:
-			return bt.sendDATA(id, type, (void *) REMOTE_MODEL_TLP, sizeof(uint8_t));
+		{
+			uint8_t model = REMOTE_MODEL_TLP;
+			return bt.sendDATA(id, type, (void *) &model, sizeof(model));
+		}
 		case REMOTE_FIRMWARE:
 		{
 			unsigned long version = VERSION;
@@ -82,8 +85,8 @@ uint8_t Remote::send(uint8_t id, uint8_t type)
 		}
 		case REMOTE_BT_FW_VERSION:
 		{
-			uint8_t btVersion = bt.version();
-			return bt.sendDATA(id, type, (void *) &btVersion, sizeof(btVersion));
+			uint8_t version = bt.version();
+			return bt.sendDATA(id, type, (void *) &version, sizeof(version));
 		}
 		case REMOTE_PROTOCOL_VERSION:
 		{
@@ -137,8 +140,8 @@ void Remote::event()
 					break;
 				case REMOTE_BATTERY:
 					if(bt.dataType == REMOTE_TYPE_REQUEST) send(bt.dataId, REMOTE_TYPE_SEND);
-					if(bt.dataType == REMOTE_TYPE_SEND) memcpy(&battery, bt.data, 1);
-					if(bt.dataType == REMOTE_TYPE_NOTIFY_WATCH) notify.watch(REMOTE_BATTERY, (void *)&battery_percent, sizeof(uint8_t), &remote_notify);
+					if(bt.dataType == REMOTE_TYPE_SEND) memcpy(&battery, bt.data, bt.dataSize);
+					if(bt.dataType == REMOTE_TYPE_NOTIFY_WATCH) notify.watch(REMOTE_BATTERY, (void *)&battery_percent, sizeof(battery_percent), &remote_notify);
 					if(bt.dataType == REMOTE_TYPE_NOTIFY_UNWATCH) notify.unWatch(REMOTE_BATTERY, &remote_notify);
 					break;
 				case REMOTE_START:
@@ -166,7 +169,7 @@ void Remote::event()
 					break;
 				case REMOTE_MODEL:
 					if(bt.dataType == REMOTE_TYPE_REQUEST) send(REMOTE_MODEL, REMOTE_TYPE_SEND);
-					if(bt.dataType == REMOTE_TYPE_SEND) memcpy(&model, bt.data, 1);
+					if(bt.dataType == REMOTE_TYPE_SEND) memcpy(&model, bt.data, bt.dataSize);
 					break;
 				case REMOTE_FIRMWARE:
 				case REMOTE_BT_FW_VERSION:
