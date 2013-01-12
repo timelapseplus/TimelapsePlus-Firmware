@@ -349,12 +349,12 @@ volatile char cableReleaseRemote(char key, char first)
 		menu.setTitle(TEXT("BT Cable Remote"));
 		menu.setBar(TEXT("Bulb"), TEXT("Photo"));
 		lcd.update();
-		remote.set(REMOTE_BULB_END);
+		//remote.set(REMOTE_BULB_END);
 	}
 
-	if(key == FL_KEY)
+	if(status != 1)
 	{
-		if(status != 1)
+		if(key == FL_KEY)
 		{
 			status = 1;
 			lcd.eraseBox(8, 18, 8 + 6 * 11, 26);
@@ -362,35 +362,25 @@ volatile char cableReleaseRemote(char key, char first)
 			remote.set(REMOTE_BULB_START);
 			lcd.update();
 		}
-		else
-		{
-			status = 0;
-			lcd.eraseBox(8, 18, 8 + 6 * 11, 26);
-			remote.set(REMOTE_BULB_END);
-			lcd.update();
-		}
-	}
-	else if(key == FR_KEY)
-	{
-		if(status != 1)
+		else if(key == FR_KEY)
 		{
 			status = 0;
 			lcd.eraseBox(8, 18, 8 + 6 * 11, 26);
 			remote.set(REMOTE_CAPTURE);
 			lcd.update();
 		}
-		else
-		{
-			status = 0;
-			lcd.eraseBox(8, 18, 8 + 6 * 11, 26);
-			remote.set(REMOTE_BULB_END);
-			lcd.update();
-		}
+	}
+	else if(key != 0)
+	{
+		status = 0;
+		lcd.eraseBox(8, 18, 8 + 6 * 11, 26);
+		remote.set(REMOTE_BULB_END);
+		lcd.update();
 	}
 
 	if(key == LEFT_KEY || !remote.connected)
 	{
-		remote.set(REMOTE_BULB_END);
+		//remote.set(REMOTE_BULB_END);
 		return FN_CANCEL;
 	}
 	return FN_CONTINUE;
@@ -791,26 +781,37 @@ volatile char timerStatusRemote(char key, char first)
 		startTime = clock.Ms();
 		lcd.cls();
 
-		if(toggle == 0)
-			remote.request(REMOTE_BATTERY);
-		else if(toggle == 1)
-			remote.watch(REMOTE_BATTERY);
-		else if(toggle == 2)
-			remote.request(REMOTE_START);
-		else if(toggle == 3)
-			remote.watch(REMOTE_START);
-		else if(toggle == 4)
-			remote.request(REMOTE_STATUS);
-		else if(toggle == 5)
-			remote.watch(REMOTE_STATUS);
-		else if(toggle == 7)
-			remote.unWatch(REMOTE_STATUS);
-		else if(toggle == 8)
-			remote.unWatch(REMOTE_START);
-		else if(toggle == 9)
+		switch(toggle)
 		{
-			remote.unWatch(REMOTE_BATTERY);
-			return FN_CANCEL;
+			case 0:
+				remote.request(REMOTE_BATTERY);
+				break;
+			case 1:
+				remote.watch(REMOTE_BATTERY);
+				break;
+			case 2:
+				remote.request(REMOTE_START);
+				break;
+			case 3:
+				remote.watch(REMOTE_START);
+				break;
+			case 4:
+				remote.request(REMOTE_STATUS);
+				break;
+			case 5:
+				remote.watch(REMOTE_STATUS);
+				break;
+			case 7:
+				remote.unWatch(REMOTE_STATUS);
+				break;
+			case 8:
+				remote.unWatch(REMOTE_START);
+				break;
+			case 9:
+				remote.unWatch(REMOTE_BATTERY);
+				return FN_CANCEL;
+			default:
+				break;
 		}
 
 		if(toggle <= 5 || (toggle >= 7 && toggle <= 9)) toggle++;
@@ -1611,20 +1612,21 @@ volatile char timerRemoteStart(char key, char first)
 	{
 		startTime = clock.Ms();
 
-		if(toggle == 0)
+		switch(toggle)
 		{
-			startTime += 100;
-			menu.message(TEXT("Started Remote"));
-			remote.set(REMOTE_PROGRAM);
-		}
-		else if(toggle == 1)
-		{
-			remote.set(REMOTE_START);
-		}
-		else if(toggle == 2)
-		{
-			menu.spawn((void*)timerStatusRemote);
-			return FN_JUMP;
+			case 0:
+				startTime += 100;
+				//menu.message(TEXT("Started Remote"));
+				remote.set(REMOTE_PROGRAM);
+				break;
+			case 1:
+				remote.set(REMOTE_START);
+				break;
+			case 2:
+				menu.spawn((void*)timerStatusRemote);
+				return FN_JUMP;
+			default:
+				break;
 		}
 
 		if(toggle <= 2) toggle++;
