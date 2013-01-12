@@ -349,7 +349,6 @@ volatile char cableReleaseRemote(char key, char first)
 		menu.setTitle(TEXT("BT Cable Remote"));
 		menu.setBar(TEXT("Bulb"), TEXT("Photo"));
 		lcd.update();
-		//remote.set(REMOTE_BULB_END);
 	}
 
 	if(status != 1)
@@ -768,61 +767,35 @@ volatile char timerStatus(char key, char first)
 volatile char timerStatusRemote(char key, char first)
 {
 	static uint32_t startTime = 0;
-	static uint8_t toggle = 0;
+	static uint8_t init = 1;
 
-	if(first)
+	if(init)
 	{
 		startTime = 0;
-		toggle = 0;
+		init = 0;
+
+		remote.request(REMOTE_BATTERY);
+		remote.watch(REMOTE_BATTERY);
+		remote.request(REMOTE_START);
+		remote.watch(REMOTE_START);
+		remote.request(REMOTE_STATUS);
+		remote.watch(REMOTE_STATUS);
 	}
 
-	if(clock.Ms() > startTime + 100)
+	if(clock.Ms() > startTime + 100 || first)
 	{
 		startTime = clock.Ms();
 		lcd.cls();
 
-		switch(toggle)
-		{
-			case 0:
-				remote.request(REMOTE_BATTERY);
-				break;
-			case 1:
-				remote.watch(REMOTE_BATTERY);
-				break;
-			case 2:
-				remote.request(REMOTE_START);
-				break;
-			case 3:
-				remote.watch(REMOTE_START);
-				break;
-			case 4:
-				remote.request(REMOTE_STATUS);
-				break;
-			case 5:
-				remote.watch(REMOTE_STATUS);
-				break;
-			case 7:
-				remote.unWatch(REMOTE_STATUS);
-				break;
-			case 8:
-				remote.unWatch(REMOTE_START);
-				break;
-			case 9:
-				remote.unWatch(REMOTE_BATTERY);
-				return FN_CANCEL;
-			default:
-				break;
-		}
-
-		if(toggle <= 5 || (toggle >= 7 && toggle <= 9)) toggle++;
-
 		displayTimerStatus(1);
 
 		menu.setTitle(TEXT("Remote"));
+
 		if(remote.running)
 			menu.setBar(TEXT("RETURN"), TEXT("STOP"));
 		else
 			menu.setBar(TEXT("RETURN"), BLANK_STR);
+
 		lcd.update();
 	}
 
@@ -836,8 +809,11 @@ volatile char timerStatusRemote(char key, char first)
 		   
 	   case FL_KEY:
 	   case LEFT_KEY:
-		   if(toggle > 5 && toggle < 7) toggle++;
-		   //return FN_CANCEL;
+	   		init = 1;
+			remote.unWatch(REMOTE_STATUS);
+			remote.unWatch(REMOTE_START);
+			remote.unWatch(REMOTE_BATTERY);
+		    return FN_CANCEL;
 	}
 
 	return FN_CONTINUE;
@@ -1599,37 +1575,43 @@ volatile char runHandler(char key, char first)
 
 volatile char timerRemoteStart(char key, char first)
 {
-	static uint32_t startTime = 0;
-	static uint8_t toggle = 0;
+	menu.message(TEXT("Started Remote"));
+	remote.set(REMOTE_PROGRAM);
+	remote.set(REMOTE_START);
+	menu.spawn((void*)timerStatusRemote);
+	
+	return FN_JUMP;
+}
 
+/******************************************************************
+ *
+ *   btFloodTest
+ *
+ *
+ ******************************************************************/
+
+volatile char btFloodTest(char key, char first)
+{
 	if(first)
 	{
-		startTime = 0;
-		toggle = 0;
+		lcd.cls();
+		menu.setTitle(TEXT("BT Flood"));
+		menu.setBar(TEXT("CANCEL"), TEXT("FLOOD"));
+		lcd.update();
 	}
 
-	if(clock.Ms() > startTime + 100)
+	if(key == LEFT_KEY)
 	{
-		startTime = clock.Ms();
-
-		switch(toggle)
-		{
-			case 0:
-				startTime += 100;
-				//menu.message(TEXT("Started Remote"));
-				remote.set(REMOTE_PROGRAM);
-				break;
-			case 1:
-				remote.set(REMOTE_START);
-				break;
-			case 2:
-				menu.spawn((void*)timerStatusRemote);
-				return FN_JUMP;
-			default:
-				break;
-		}
-
-		if(toggle <= 2) toggle++;
+		return FN_CANCEL;
+	}
+	else if(key == FR_KEY)
+	{
+		remote.send(REMOTE_PROGRAM, REMOTE_TYPE_SEND);
+		remote.send(REMOTE_PROGRAM, REMOTE_TYPE_SEND);
+		remote.send(REMOTE_PROGRAM, REMOTE_TYPE_SEND);
+		remote.send(REMOTE_PROGRAM, REMOTE_TYPE_SEND);
+		remote.send(REMOTE_PROGRAM, REMOTE_TYPE_SEND);
+		menu.message(TEXT("Sent 5 Packets"));
 	}
 
 	return FN_CONTINUE;
