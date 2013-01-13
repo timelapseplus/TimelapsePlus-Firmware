@@ -73,10 +73,7 @@ uint8_t Remote::send(uint8_t id, uint8_t type)
 		case REMOTE_PROGRAM:
 			return bt.sendDATA(id, type, (void *) &timer.current, sizeof(timer.current));
 		case REMOTE_MODEL:
-		{
-			uint8_t model = REMOTE_MODEL_TLP;
-			return bt.sendDATA(id, type, (void *) &model, sizeof(model));
-		}
+			return bt.sendDATA(id, type, (void *) REMOTE_MODEL_TLP, sizeof(uint8_t));
 		case REMOTE_FIRMWARE:
 		{
 			unsigned long version = VERSION;
@@ -123,14 +120,14 @@ void Remote::event()
 			{
 				case REMOTE_STATUS:
 					if(bt.dataType == REMOTE_TYPE_REQUEST) send(bt.dataId, REMOTE_TYPE_SEND);
-					if(bt.dataType == REMOTE_TYPE_SEND) memcpy(&status, bt.data, bt.dataSize);
+					if(bt.dataType == REMOTE_TYPE_SEND && bt.dataSize == sizeof(timer_status)) memcpy(&status, bt.data, bt.dataSize);
 					if(bt.dataType == REMOTE_TYPE_NOTIFY_WATCH) notify.watch(REMOTE_STATUS, (void *)&timer.status, sizeof(timer.status), &remote_notify);
 					if(bt.dataType == REMOTE_TYPE_NOTIFY_UNWATCH) notify.unWatch(REMOTE_STATUS, &remote_notify);
 					break;
 				case REMOTE_PROGRAM:
 					if(bt.dataType == REMOTE_TYPE_REQUEST) send(bt.dataId, REMOTE_TYPE_SEND);
-					if(bt.dataType == REMOTE_TYPE_SEND) memcpy(&current, bt.data, bt.dataSize);
-					if(bt.dataType == REMOTE_TYPE_SET)
+					if(bt.dataType == REMOTE_TYPE_SEND && bt.dataSize == sizeof(program)) memcpy(&current, bt.data, bt.dataSize);
+					if(bt.dataType == REMOTE_TYPE_SET && bt.dataSize == sizeof(program))
 					{
 						memcpy((void*)&timer.current, bt.data, bt.dataSize);
 						menu.refresh();
