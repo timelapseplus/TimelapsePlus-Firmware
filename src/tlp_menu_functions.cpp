@@ -349,6 +349,7 @@ volatile char cableReleaseRemote(char key, char first)
 		menu.setTitle(TEXT("BT Cable Remote"));
 		menu.setBar(TEXT("Bulb"), TEXT("Photo"));
 		lcd.update();
+		remote.set(REMOTE_BULB_END);
 	}
 
 	if(status != 1)
@@ -379,7 +380,6 @@ volatile char cableReleaseRemote(char key, char first)
 
 	if(key == LEFT_KEY || !remote.connected)
 	{
-		//remote.set(REMOTE_BULB_END);
 		return FN_CANCEL;
 	}
 	return FN_CONTINUE;
