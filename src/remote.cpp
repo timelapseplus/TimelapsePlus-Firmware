@@ -82,8 +82,8 @@ uint8_t Remote::send(uint8_t id, uint8_t type)
 		}
 		case REMOTE_BT_FW_VERSION:
 		{
-			uint8_t version = bt.version();
-			return bt.sendDATA(id, type, (void *) &version, sizeof(version));
+			uint8_t btVersion = bt.version();
+			return bt.sendDATA(id, type, (void *) &btVersion, sizeof(btVersion));
 		}
 		case REMOTE_PROTOCOL_VERSION:
 		{
