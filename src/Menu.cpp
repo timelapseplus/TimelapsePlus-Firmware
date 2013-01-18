@@ -56,6 +56,7 @@ void MENU::task()
     {
         if(handlerFunction)
         {
+            //push();
             func = handlerFunction;
             state = ST_FUNC;
         }
@@ -176,12 +177,25 @@ void MENU::task()
            {
                 first = 1;
                 if(state == ST_FUNC) state = ST_MENU;
+                /*if(ret == FN_JUMP)
+                {
+                  stack_counter--;
+                }
+                else
+                {
+                  back();
+                }*/
            }
            break;
 
        case ST_SPAWN:
             first = 1;
             state = ST_FUNC;
+            break;
+
+       case ST_SUBMENU:
+            first = 1;
+            state = ST_MENU;
             break;
     }
 
@@ -497,7 +511,14 @@ char *MENU::menuName(char *str)
 
     if(stack_counter > 0) // is there a calling menu? //
     {
-        menu_item *cmenu = (menu_item*)stack[stack_counter - 1].menu; // retreive calling menu //
+        menu_item *cmenu = (menu_item*)stack[stack_counter - 1].item;;
+        for(i = stack_counter; i > 0; i--)
+        {
+          if(stack[stack_counter - 1].type == 0)
+          {
+            cmenu = (menu_item*)stack[stack_counter - 1].item; // retreive calling menu //
+          }
+        }
 
         index = stack[stack_counter - 1].index;;
 
@@ -553,6 +574,7 @@ void MENU::click()
                break;
 
            case 'F': // Function
+               //push();
                func = (char (*)(char, char))pgm_read_word(&menu[index].function);
                state = ST_FUNC;
                break;
@@ -654,6 +676,21 @@ void MENU::spawn(void *function)
 
 /******************************************************************
  *
+ *   MENU::submenu
+ *
+ *
+ ******************************************************************/
+
+void MENU::submenu(void *new_menu)
+{
+    menuSelected = 0;
+    menu = (menu_item*)new_menu;
+    checkScroll();
+    state = ST_SUBMENU;
+}
+
+/******************************************************************
+ *
  *   MENU::refresh
  *
  *
@@ -675,15 +712,31 @@ void MENU::back()
 {
     if(stack_counter > 0)
     {
+        debug(STR("POP: "));
+        debug(stack_counter);
         menu_stack new_menu;
         new_menu = menu_pop();
-        menuSelected = getSelected((menu_item*)new_menu.menu, new_menu.index);
-        menu = (menu_item*)new_menu.menu;
-
-        checkScroll();
+        if(new_menu.type == 1)
+        {
+          debug(STR(" (function)\r\n"));
+          func = (char (*)(char, char)) new_menu.item;
+          menuSelected = getSelected((menu_item*)new_menu.menu_backup, new_menu.index);
+          menu = (menu_item*)new_menu.menu_backup;
+          checkScroll();
+          state = ST_SPAWN;
+        }
+        else
+        {
+          debug(STR(" (menu)\r\n"));
+          menuSelected = getSelected((menu_item*)new_menu.item, new_menu.index);
+          menu = (menu_item*)new_menu.item;
+          state = ST_MENU;
+        }
     }
-    
-    state = ST_MENU;
+    else
+    {
+        debug(STR("POP: BOTTOM\r\n"));
+    }
 }
 
 /******************************************************************
@@ -1049,7 +1102,33 @@ void MENU::message(char *m)
 
 void MENU::push()
 {
-    menu_push(menu, menuSelected);
+    if(state == ST_FUNC)
+    {
+      menu_push((void*)func, 0, 1);
+    }
+    else
+    {
+      menu_push(menu, menuSelected, 0);
+    }
+}
+
+/******************************************************************
+ *
+ *   MENU::push
+ *
+ *
+ ******************************************************************/
+
+void MENU::push(uint8_t type)
+{
+    if(type == 1)
+    {
+      menu_push((void*)func, 0, 1);
+    }
+    else
+    {
+      menu_push(menu, menuSelected, 0);
+    }
 }
 
 /******************************************************************
@@ -1059,13 +1138,32 @@ void MENU::push()
  *
  ******************************************************************/
 
-void MENU::menu_push(void *menu_addr, char selection)
+void MENU::menu_push(void *item_addr, char selection, uint8_t type)
 {
     if(stack_counter < MENU_STACK_SIZE)
     {
         stack_counter++;
-        stack[stack_counter - 1].menu = menu_addr;
-        stack[stack_counter - 1].index = getIndex((menu_item*)menu_addr, selection);
+        stack[stack_counter - 1].type = type;
+        stack[stack_counter - 1].item = item_addr;
+        if(type == 0)
+        {
+          stack[stack_counter - 1].index = getIndex((menu_item*)item_addr, selection);
+        }
+        else
+        {
+          stack[stack_counter - 1].index = getIndex((menu_item*)menu, menuSelected);
+          stack[stack_counter - 1].menu_backup = (void*)menu;
+        }
+        debug(STR("PUSH: "));
+        debug(stack_counter);
+        if(type == 1)
+          debug(STR(" (function)\r\n"));
+        else
+          debug(STR(" (menu)\r\n"));
+    }
+    else
+    {
+      debug(STR("ERROR: Menu Stack Full!\r\n"));
     }
 }
 

@@ -23,6 +23,7 @@
 #define ST_TEXT 6
 #define ST_SPAWN 7
 #define ST_DLIST 8
+#define ST_SUBMENU 9
 
 #define FN_CONTINUE 0
 #define FN_CANCEL 1
@@ -48,8 +49,10 @@ struct settings_item  // 14 bytes total
 
 struct menu_stack  // 3 bytes total
 {
-    char index; // 1 byte
-    void *menu; // 2 bytes
+    uint8_t index; // 1 byte
+    uint8_t type; // 0 = menu, 1 = function
+    void *item; // 2 bytes
+    void *menu_backup;
 };
 struct dynamicItem_t
 {
@@ -70,6 +73,7 @@ public:
     void init(menu_item *newmenu);
     void click();
     void spawn(void *function);
+    void submenu(void *new_menu);
     void refresh();
     void up();
     void down();
@@ -86,11 +90,12 @@ public:
     char *menuName(char *str);
     void message(char *m);
     void push();
-
+    void push(uint8_t type);
+    
     uint8_t unusedKey;
 
 private:
-    void menu_push(void *menu_addr, char selection);
+    void menu_push(void *item_addr, char selection, uint8_t type);
     menu_stack menu_pop();
     char checkScroll();
     uint8_t getIndex(menu_item *cmenu, uint8_t selected);
