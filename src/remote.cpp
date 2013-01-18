@@ -73,7 +73,10 @@ uint8_t Remote::send(uint8_t id, uint8_t type)
 		case REMOTE_PROGRAM:
 			return bt.sendDATA(id, type, (void *) &timer.current, sizeof(timer.current));
 		case REMOTE_MODEL:
-			return bt.sendDATA(id, type, (void *) REMOTE_MODEL_TLP, sizeof(uint8_t));
+		{
+			uint8_t tmp = REMOTE_MODEL_TLP;
+			return bt.sendDATA(id, type, (void *) &tmp, sizeof(uint8_t));
+		}
 		case REMOTE_FIRMWARE:
 		{
 			unsigned long version = VERSION;
@@ -107,11 +110,13 @@ void Remote::event()
 	{
 		case BT_EVENT_DISCONNECT:
 			notify.unWatch(&remote_notify); // stop all active notifications
+			debug(STR("REMOTE::EVENT: Disconnected\r\n"));
 			connected = 0;
 			break;
 
 		case BT_EVENT_CONNECT:
 			connected = 1;
+			debug(STR("REMOTE::EVENT: Connected\r\n"));
 			request(REMOTE_MODEL);
 			break;
 
@@ -152,8 +157,8 @@ void Remote::event()
 					if(bt.dataType == REMOTE_TYPE_REQUEST) send(timer.running ? REMOTE_START : REMOTE_STOP, REMOTE_TYPE_SEND);
 					if(bt.dataType == REMOTE_TYPE_SEND) running = 0;
 					if(bt.dataType == REMOTE_TYPE_SET) timerStop(FR_KEY, 1);
-					if(bt.dataType == REMOTE_TYPE_NOTIFY_WATCH) notify.watch(REMOTE_STOP, (void *)&timer.running, sizeof(timer.running), &remote_notify);
-					if(bt.dataType == REMOTE_TYPE_NOTIFY_UNWATCH) notify.unWatch(REMOTE_STOP, &remote_notify);
+					if(bt.dataType == REMOTE_TYPE_NOTIFY_WATCH) notify.watch(REMOTE_START, (void *)&timer.running, sizeof(timer.running), &remote_notify);
+					if(bt.dataType == REMOTE_TYPE_NOTIFY_UNWATCH) notify.unWatch(REMOTE_START, &remote_notify);
 					break;
 				case REMOTE_BULB_START:
 					if(bt.dataType == REMOTE_TYPE_SET) timer.bulbStart();
