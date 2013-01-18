@@ -4,7 +4,8 @@
 #define SHUTTER_MODE_EITHER SHUTTER_MODE_PTP | SHUTTER_MODE_BULB
 
 #define CUBE_ROOT_OF_2 1.25992104989
-
+#define THIRTIETH_ROOT_OF_2 1.023373892
+#define THREE_HUNDREDTH_ROOT_OF_2 1.00231316184
 
 
 struct propertyDescription_t
@@ -53,7 +54,8 @@ public:
     uint8_t setShutter(uint8_t value);
     uint8_t setAperture(uint8_t value);
 
-    uint32_t bulbTime(uint8_t ev);
+    uint32_t bulbTime(int8_t ev);
+    uint32_t bulbTime(float ev);
     uint32_t shiftBulb(uint32_t ms, int8_t ev);
 
     static uint8_t isoName(char name[8], uint8_t ev);

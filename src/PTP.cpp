@@ -128,6 +128,9 @@ const propertyDescription_t EOS_ISO_List[] PROGMEM = {
     {" 204800",  0xA0, 10 }
 }; 
 
+//4294967296
+//419430400
+
 const bulbSettings_t Bulb_List[] PROGMEM = {
     {"   1/10", 99, 47 },
     {"    1/8", 125, 46 },
@@ -240,7 +243,7 @@ uint8_t PTP::isoMin() // 46
 
 uint8_t PTP::shutterMax() // 7
 {
-	return pgm_read_byte(&Bulb_List[sizeof(Bulb_List) / sizeof(Bulb_List[0]) - 1].ev);
+	return bulbMax();
 }
 
 uint8_t PTP::shutterMin() // 76
@@ -253,7 +256,7 @@ uint8_t PTP::shutterMin() // 76
 			if(tmp > 0 && tmp < 128) return tmp;
 		}
 	}
-	return pgm_read_byte(&Bulb_List[0].ev);
+	return bulbMin();
 }
 
 uint8_t PTP::isoUp(uint8_t ev)
@@ -609,7 +612,30 @@ uint8_t PTP::shutterType(uint8_t ev)
 	return ret;
 }
 
-uint32_t PTP::bulbTime(uint8_t ev)
+uint32_t PTP::bulbTime(float ev)
+{
+	int8_t d = (int8_t)floor(ev);
+	float ms = (float) bulbTime(d);
+	ev -= (float)d;
+	ev *= 10;
+	d = (int8_t)floor(ev);
+	for(int8_t i = 0; i < d; i++)
+	{
+		ms *= THIRTIETH_ROOT_OF_2;
+	}
+	ev -= (float)d;
+	ev *= 10;
+	d = (int8_t)floor(ev);
+	for(int8_t i = 0; i < d; i++)
+	{
+		ms *= THREE_HUNDREDTH_ROOT_OF_2;
+	}
+
+	return ms;
+}
+
+
+uint32_t PTP::bulbTime(int8_t ev)
 {
 	uint32_t ms = 0;
 	for(uint8_t i = 0; i < sizeof(Bulb_List) / sizeof(Bulb_List[0]); i++)
@@ -623,10 +649,20 @@ uint32_t PTP::bulbTime(uint8_t ev)
 			ptr1[1] = pgm_read_byte(&ptr2[1]);
 			ptr1[2] = pgm_read_byte(&ptr2[2]);
 			ptr1[3] = pgm_read_byte(&ptr2[3]);
-			break;
+			return ms;
 		}
 	}
-	return ms;
+	// Reaching outside of predefined list
+	if(ev < bulbMax())
+	{
+		int8_t diff = bulbMax() - ev;
+		return shiftBulb(bulbTime((int8_t)bulbMax()), diff);
+	}
+	else
+	{
+		int8_t diff = bulbMin() - ev;
+		return shiftBulb(bulbTime((int8_t)bulbMax()), diff);
+	}
 }
 
 uint32_t PTP::shiftBulb(uint32_t ms, int8_t ev)
@@ -893,10 +929,10 @@ uint8_t PTP::checkEvent()
 			else if(event_type > 0)
 			{
 				#ifdef PTP_DEBUG
-				bt.send(STR("\r\n Unknown: "));
-				sendHex((char *)&event_type);
-				bt.send(STR("\r\n    Size: "));
-				sendHex((char *)&event_size);
+				//bt.send(STR("\r\n Unknown: "));
+				//sendHex((char *)&event_type);
+				//bt.send(STR("\r\n    Size: "));
+				//sendHex((char *)&event_size);
 				#endif
 			}
 			i += event_size;
@@ -978,8 +1014,9 @@ uint8_t PTP::capture()
 uint8_t PTP::bulbStart()
 {
 	bulb = true;
+	busy = true;
 	preBulbMode = modePTP;
-	setParameter(EOS_DPC_MODE, 0x04); // Bulb Mode
+	if(modePTP != 0x04) setParameter(EOS_DPC_MODE, 0x04); // Bulb Mode
 	if(PTP_Transaction(EOS_OC_SETUILOCK, 0, 0, NULL)) return 1; // SetUILock
 	if(PTP_Transaction(EOS_OC_BULBSTART, 0, 0, NULL)) return 1; // Bulb Start
 	return 0;
@@ -1004,11 +1041,7 @@ uint8_t PTP::setISO(uint8_t ev)
 uint8_t PTP::setShutter(uint8_t ev)
 {
 	if(ev == 0xff) return 0;
-//	if(preBulbMode)
-//	{
-//		setParameter(EOS_DPC_MODE, preBulbMode); // Bulb Mode
-//		preBulbMode = 0;
-//	}
+	if(modePTP == 0x04) setParameter(EOS_DPC_MODE, 0x03); // Manual Mode
 	return setParameter(EOS_DPC_SHUTTER, shutterEvPTP(ev));
 }
 
