@@ -128,6 +128,18 @@ volatile void Clock::count()
 
 /******************************************************************
  *
+ *   Clock::advance
+ *   Only call with interrupts disabled!
+ *
+ ******************************************************************/
+
+void Clock::advance(uint8_t advance_ms)
+{
+    while(advance_ms--) count();
+}
+
+/******************************************************************
+ *
  *   Clock::reset
  *
  *

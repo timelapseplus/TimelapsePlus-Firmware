@@ -19,6 +19,7 @@ public:
     void init();
     void disable();
     volatile void count();
+    void advance(uint8_t advance_ms);
     void reset();
     void tare();
     void awake();
