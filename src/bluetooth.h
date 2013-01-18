@@ -51,6 +51,7 @@ public:
     uint8_t send(char *str);
     uint8_t sendCMD(char *str);
     uint8_t sendDATA(uint8_t id, uint8_t type, void* buffer, uint16_t bytes);
+    uint8_t waitRTS(void);
     uint8_t power(uint8_t level);
     uint8_t power(void);
     uint8_t temperature(void);

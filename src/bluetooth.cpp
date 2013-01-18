@@ -497,6 +497,21 @@ uint8_t BT::sendCMD(char* str)
  *
  ******************************************************************/
 
+uint8_t BT::waitRTS()
+{
+	uint8_t i = 0;
+	while(!(BT_RTS))
+	{
+		if(++i > 250)
+		{
+			debug(STR("BT RTS Failed!\r\n"));
+			return 1;
+		}
+		_delay_ms(1);
+	}
+	return 0;
+}
+
 uint8_t BT::sendDATA(uint8_t id, uint8_t type, void* buffer, uint16_t bytes)
 {
 	if(!present)
@@ -509,21 +524,22 @@ uint8_t BT::sendDATA(uint8_t id, uint8_t type, void* buffer, uint16_t bytes)
 	debug_nl();
 	if(dataMode())
 	{
-		uint8_t i = 0;
-		while(!(BT_RTS))
-		{
-			if(++i > 250) break;
-			_delay_ms(1);
-		}
+		waitRTS();
 		if(BT_RTS)
 		{
 			char* byte;
 
+			if(waitRTS()) return 1;
 			Serial_SendByte('$');
+			if(waitRTS()) return 1;
 			Serial_SendByte((char) id);
+			if(waitRTS()) return 1;
 			Serial_SendByte((char) type);
+			if(waitRTS()) return 1;
 			Serial_SendByte((char) *(&bytes));
+			if(waitRTS()) return 1;
 			Serial_SendByte((char) *(&bytes + 1));
+			if(waitRTS()) return 1;
 			Serial_SendByte(':');
 
 			byte = (char *) buffer;
@@ -531,17 +547,7 @@ uint8_t BT::sendDATA(uint8_t id, uint8_t type, void* buffer, uint16_t bytes)
 			{
 				while(bytes--)
 				{
-					i = 0;
-					while(!(BT_RTS))
-					{
-						if(++i > 250) break;
-						_delay_ms(1);
-					}
-					if(i > 250)
-					{
-						debug(STR("BT RTS Failed!\r\n"));
-						break;
-					}
+					if(waitRTS()) break;
 					Serial_SendByte(*byte);
 					byte++;
 				}
@@ -556,6 +562,8 @@ uint8_t BT::sendDATA(uint8_t id, uint8_t type, void* buffer, uint16_t bytes)
 
 	return 0;
 }
+
+
 
 /******************************************************************
  *
@@ -648,21 +656,36 @@ uint8_t BT::read(void)
 		{
 			wdt_reset();
 			_delay_us(10);
-			if(++timeout > 5000)
+			if(++timeout > (bytes > 0 ? 50000 : 5000))
 				break;
 		}
 
-		if(timeout > 5000)
+		if(timeout > 50000)
 		{
-			if(bytes > 0)
-			{
-				debug(STR("TIMED OUT ("));
-				debug(bytes);
-			    debug(STR(": "));
-				buf[bytes] = 0;
-				debug(buf);
-			    debug(STR(")\r\n"));
-			}
+			debug(STR("TIMED OUT!"));
+			debug(STR("\r\n   BYTES: "));
+			debug(bytes);
+			debug(STR("\r\n      ID: "));
+			debug((uint8_t)buf[1]);
+			debug(STR("\r\n    SIZE: "));
+			debug(dataSize);
+			debug(STR("\r\n  DATA[0]: "));
+			debug(buf[0]);
+			debug(STR("\r\n  DATA[1]: "));
+			debug((uint8_t)buf[1]);
+			debug(STR("\r\n  DATA[2]: "));
+			debug((uint8_t)buf[2]);
+			debug(STR("\r\n  DATA[3]: "));
+			debug((uint8_t)buf[3]);
+			debug(STR("\r\n  DATA[4]: "));
+			debug(buf[4]);
+			debug(STR("\r\n  DATA[5]: "));
+			debug(buf[5]);
+		    debug(STR("\r\n"));
+			break;
+		}
+		else if(timeout > 5000 && bytes == 0)
+		{
 			break;
 		}
 
@@ -676,8 +699,7 @@ uint8_t BT::read(void)
 		}
 		else
 		{
-//			if(bytes == 1 && buf[0] != '$' && buf[0] != 'O') bytes--;
-			if(bytes > 1 && buf[bytes - 1] == '$')
+			if(buf[0] != '$' && bytes > 1 && buf[bytes - 1] == '$')
 			{
 				buf[0] = '$';
 				bytes = 1;
