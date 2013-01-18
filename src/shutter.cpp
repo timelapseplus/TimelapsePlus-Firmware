@@ -579,6 +579,7 @@ char shutter::task()
                     uint8_t nextISO = iso;
                     int8_t tmpShift = 0;
 
+                    // Check for too long bulb time //
                     while(bulb_length > BulbMax)
                     {
                         nextISO = camera.isoUp(iso);
@@ -606,6 +607,30 @@ char shutter::task()
                     bt.send(STR("Bulb Length (adjusted): "));
                     sendHex((char *) &bulb_length);
 
+                    // Check for too short bulb time //
+                    while(bulb_length < 99)
+                    {
+                        nextISO = camera.isoDown(iso);
+                        if(nextISO != iso)
+                        {
+                            evShift -= iso - nextISO;
+                            tmpShift -= iso - nextISO;
+
+                            bt.send(STR("   ISO DOWN:"));
+                            sendByte((uint8_t)evShift);
+                            bt.send(STR("   ISO Val:"));
+                            sendByte((uint8_t)nextISO);
+                        }
+                        else
+                        {
+                            bt.send(STR("   Reached ISO Min!!!\r\n"));
+                            break;
+                        }
+                        bt.send(STR("   Done!\r\n\r\n"));
+                        bulb_length = camera.shiftBulb(exp, tmpShift);
+                    }
+
+                    // Change the ISO //
                     shutter_off();
                     if(camera.iso() != nextISO)
                     {
@@ -617,22 +642,6 @@ char shutter::task()
                     }
                     shutter_half();
 
-/*
-                    while(bulb_length < 99)
-                    {
-                        if(camera.isoDown(iso) <= camera.isoMin())
-                        {
-                            evShift -= iso - camera.isoDown(iso);
-                            iso = camera.isoDown(iso);
-                            camera.setISO(iso);
-                        }
-                        else
-                        {
-                            break;
-                        }
-                        bulb_length = camera.shiftBulb(exp, evShift);
-                    }
-  */
                 }
                 
                 if(conf.devMode)

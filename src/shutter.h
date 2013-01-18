@@ -140,5 +140,6 @@ uint8_t bracketDown(uint8_t ev);
 uint8_t hdrExpsUp(uint8_t hdr_exps);
 uint8_t hdrExpsDown(uint8_t hdr_exps);
 uint8_t hdrExpsName(char name[8], uint8_t hdr_exps);
+void calcBulbMax(void);
 #endif
 
