@@ -30,6 +30,8 @@ volatile char shutter_addKeyframe(char key, char first);
 volatile char shutter_removeKeyframe(char key, char first);
 volatile char shutter_saveAs(char key, char first);
 volatile char shutter_load(char key, char first);
+volatile char shutter_delete(char key, char first);
+volatile char shutter_rename(char key, char first);
 volatile char lighteningTrigger(char key, char first);
 volatile char motionTrigger(char key, char first);
 volatile char btFloodTest(char key, char first);

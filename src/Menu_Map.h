@@ -55,7 +55,7 @@ const char STR_HALF_PRESS[]PROGMEM = "Shutter half press";
 const menu_item menu_options[]PROGMEM =
 {
     { "Stop Timer  ", 'F', (void*)&timerStop, 0, 0, (void*)&timer.running },
-    { "Remote Info ", 'F', (void*)&timerStatusRemote, 0, 0, (void*)&remote.connected },
+    { "Remote Info ", 'F', (void*)&timerStatusRemote, 0, 0, (void*)&showRemoteInfo },
     { "Start Remote", 'F', (void*)&timerRemoteStart, 0, 0, (void*)&showRemoteStart },
     { "Add Keyframe", 'F', (void*)&shutter_addKeyframe, 0, 0, (void*)&modeRampKeyAdd },
     { "Del Keyframe", 'F', (void*)&shutter_removeKeyframe, 0, 0, (void*)&modeRampKeyDel },
@@ -209,6 +209,13 @@ const menu_item menu_connect[]PROGMEM =
     { "Bluetooth   ", 'F', (void*)btConnect, 0, 0, &bt.present },
     { "USB         ", 'F', (void*)usbPlug, 0, 0, 0 },
     { "\0           ", 'V', 0, 0, 0 }
+};
+
+const menu_item menu_saved_options[]PROGMEM =
+{
+    { "Rename      ", 'F', (void*)shutter_rename, 0, 0, 0 },
+    { "Delete      ", 'F', (void*)shutter_delete, 0, 0, 0 },
+    { "\0OPTIONS\0   ", 'F', (void*)&menuBack, (void*)STR_RETURN, 0, (void*)STR_NULL }
 };
 
 const menu_item menu_development[]PROGMEM =

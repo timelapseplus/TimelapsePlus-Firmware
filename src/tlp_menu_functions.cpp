@@ -44,6 +44,7 @@ volatile uint8_t bulb2 = 0;
 volatile uint8_t bulb3 = 0;
 volatile uint8_t bulb4 = 0;
 volatile uint8_t showRemoteStart = 0;
+volatile uint8_t showRemoteInfo = 0;
 
 extern uint8_t battery_percent;
 extern settings conf;
@@ -90,6 +91,7 @@ void updateConditions()
 	bulb4 = timer.current.Keyframes > 4 && modeRamp;
 	showGap = timer.current.Photos != 1 && modeTimelapse;
 	showRemoteStart = (remote.connected && !remote.running && remote.model == REMOTE_MODEL_TLP);	
+	showRemoteInfo = (remote.connected && remote.model == REMOTE_MODEL_TLP);
 	clock.sleepOk = timerNotRunning && !timer.cableIsConnected() && bt.state != BT_ST_CONNECTED && sleepOk;
 }
 
@@ -1552,12 +1554,10 @@ volatile char runHandler(char key, char first)
 		return FN_JUMP;
 	}
 
-	menu.push();
-	menu.select(0);
-	menu.init((menu_item*)menu_options);
-	lcd.update();
+	menu.push(0);
+	menu.submenu((void*)menu_options);
 
-	return FN_CANCEL;
+	return FN_JUMP;
 }
 
 /******************************************************************
@@ -1638,7 +1638,10 @@ volatile char timerStop(char key, char first)
 volatile char menuBack(char key, char first)
 {
 	if(key == FL_KEY)
+	{
 		menu.back();
+		return FN_CANCEL;
+	}
 
 	return FN_CANCEL;
 }
@@ -1791,12 +1794,13 @@ volatile char shutter_saveAs(char key, char first)
  *
  *
  ******************************************************************/
+static uint8_t itemSelected;
 
 volatile char shutter_load(char key, char first)
 {
 	static char menuSize;
 	static char menuSelected;
-	static char itemSelected;
+
 	uint8_t c;
 	char ch, update, menuScroll;
 
@@ -1861,7 +1865,10 @@ volatile char shutter_load(char key, char first)
 		lcd.drawHighlight(2, 7 + 9 * (menuSelected - menuScroll), 81, 7 + 9 * (menuSelected - menuScroll) + 8);
 
 		menu.setTitle(TEXT("Load Saved"));
-		menu.setBar(TEXT("CANCEL"), TEXT("LOAD"));
+		if(itemSelected > 0)
+			menu.setBar(TEXT("OPTIONS"), TEXT("LOAD"));
+		else
+			menu.setBar(BLANK_STR, TEXT("LOAD"));
 
 		lcd.drawLine(0, 3, 0, 40);
 		lcd.drawLine(83, 3, 83, 40);
@@ -1872,6 +1879,10 @@ volatile char shutter_load(char key, char first)
 	switch(key)
 	{
 	   case FL_KEY:
+	   		menu.push(1);
+		   	menu.submenu((menu_item*)menu_saved_options);
+		   	return FN_JUMP;
+
 	   case LEFT_KEY:
 		   return FN_CANCEL;
 
@@ -1886,3 +1897,81 @@ volatile char shutter_load(char key, char first)
 
 	return FN_CONTINUE;
 }
+
+volatile char shutter_delete(char key, char first)
+{
+	if(first)
+	{
+		lcd.cls();
+
+		menu.setTitle(TEXT("Delete"));
+		menu.setBar(TEXT("CANCEL"), TEXT("DELETE"));
+
+		lcd.writeString(15, 8 + 5, TEXT("Delete"));
+		uint8_t c, lastChar = 0;
+		for(c = 0; c < MENU_NAME_LEN - 2; c++) // Write settings item text //
+		{
+			char ch = eeprom_read_byte((uint8_t*)&stored[itemSelected].Name[c]);
+
+			if(ch == 0) break;
+
+			if((ch < 'A' || ch > 'Z') && (ch < '0' || ch > '9'))
+				ch = ' ';
+			else
+				lastChar = c;
+
+			lcd.writeChar(8 + c * 6, 8 + 15, ch);
+		}
+		lcd.writeChar(8 + lastChar * 6 + 6, 8 + 15, '?');
+
+		lcd.update();
+	}
+
+	if(key == FL_KEY)
+	{
+		return FN_CANCEL;
+	}
+	else if(key == FR_KEY)
+	{
+		eeprom_write_byte((uint8_t*)&stored[itemSelected].Name[0], 255);
+		if(itemSelected > 0) itemSelected--;
+    	menu.message(TEXT("Deleted"));
+		menu.back();
+		return FN_CANCEL;
+	}
+	else
+	{
+		return FN_CONTINUE;
+	}
+}
+
+
+volatile char shutter_rename(char key, char first)
+{
+	static char name[MENU_NAME_LEN - 1];
+	uint8_t c;
+
+	if(first)
+	{
+		for(c = 0; c < MENU_NAME_LEN - 1; c++)
+		{
+			name[c] = eeprom_read_byte((uint8_t*)&stored[itemSelected].Name[c]);
+		}
+	}
+
+	char ret = menu.editText(key, name, TEXT("Rename"), first);
+
+	if(ret == FN_SAVE)
+	{
+		name[MENU_NAME_LEN - 2] = 0;
+		for(c = 0; c < MENU_NAME_LEN - 1; c++)
+		{
+			eeprom_write_byte((uint8_t*)&stored[itemSelected].Name[c], name[c]);
+		}
+		menu.message(TEXT("Renamed"));
+		menu.back();
+	}
+
+	return ret;
+}
+
