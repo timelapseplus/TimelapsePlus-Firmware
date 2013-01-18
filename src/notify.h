@@ -4,6 +4,7 @@ struct watched_item_struct
 {
     void *item;
     uint8_t chksum;
+    uint8_t chkxsum;
     void *handler;
     uint8_t size;
     uint8_t active;

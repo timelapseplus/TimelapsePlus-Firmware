@@ -23,14 +23,16 @@ void Notify::task()
     {
         if(watchedItems[i].active)
         {
-            uint8_t x, sum = 0;
+            uint8_t x, sum = 0, xsum = 0;
             for(x = 0; x < watchedItems[i].size; x++)
             {
-                sum ^= ((char *) watchedItems[i].item)[x];
+                xsum ^= ((char *) watchedItems[i].item)[x];
+                sum += ((char *) watchedItems[i].item)[x];
             }
-            if(sum != watchedItems[i].chksum)
+            if(sum != watchedItems[i].chksum || xsum != watchedItems[i].chkxsum)
             {
                 watchedItems[i].chksum = sum;
+                watchedItems[i].chkxsum = xsum;
                 // Run Notification Handler
                 ((void (*)(uint8_t))watchedItems[i].handler)(watchedItems[i].id);
             }
@@ -41,6 +43,7 @@ void Notify::task()
 void Notify::watch(uint8_t id, void * item, uint8_t size, void (handler)(uint8_t))
 {
     uint8_t i;
+    unWatch(id, handler);
     for(i = 0; i < MAX_ITEMS_WATCHED; i++)
     {
         if(!watchedItems[i].active)
@@ -50,9 +53,14 @@ void Notify::watch(uint8_t id, void * item, uint8_t size, void (handler)(uint8_t
             watchedItems[i].size = size;
             watchedItems[i].item = item;
             watchedItems[i].handler = (void*)handler;
-            uint8_t x, sum = 0;
-            for(x = 0; x < size; x++) sum ^= ((char *) item)[x];
+            uint8_t x, sum = 0, xsum = 0;
+            for(x = 0; x < size; x++)
+            {
+                xsum ^= ((char *) item)[x];
+                sum += ((char *) item)[x];
+            }
             watchedItems[i].chksum = sum;
+            watchedItems[i].chkxsum = xsum;
             return;
         }
     }
