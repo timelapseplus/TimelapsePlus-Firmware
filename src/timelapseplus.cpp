@@ -61,6 +61,7 @@ extern volatile uint8_t bulb2;
 extern volatile uint8_t bulb3;
 extern volatile uint8_t bulb4;
 extern volatile uint8_t showRemoteStart;
+extern volatile uint8_t showRemoteInfo;
 
 volatile uint8_t connectUSBcamera = 0;
 
@@ -243,6 +244,15 @@ int main()
 				   debug('E');
 				   break;
 
+			   case 'M':
+			   	    debug(STR("REMOTE_MODEL: "));
+				    debug(remote.model);
+				    debug_nl();
+			   	    debug(STR("REMOTE_CONNECTED: "));
+				    debug(remote.connected);
+				    debug_nl();
+				    break;
+
 			   case 'B':
 				   bt.init();
 				   break;
@@ -366,7 +376,15 @@ void message_notify(uint8_t id)
 			}
 			else
 			{
-				if(PTP_Error) menu.spawn((void*)usbPlug); else menu.message(STR("Disconnected"));
+				if(PTP_Error)
+				{
+					timerStop(0, 1);
+					menu.spawn((void*)usbPlug);
+				}
+				else
+				{
+					menu.message(STR("Disconnected"));
+				}
 				camera.close();
 				menu.refresh();
 			}
