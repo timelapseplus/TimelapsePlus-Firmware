@@ -91,7 +91,7 @@ void updateConditions()
 	bulb4 = timer.current.Keyframes > 4 && modeRamp;
 	showGap = timer.current.Photos != 1 && modeTimelapse;
 	showRemoteStart = (remote.connected && !remote.running && remote.model == REMOTE_MODEL_TLP);	
-	showRemoteInfo = (remote.connected && remote.model == REMOTE_MODEL_TLP);
+	showRemoteInfo = (remote.connected && (remote.model == REMOTE_MODEL_TLP || remote.model == REMOTE_MODEL_IPHONE));
 	clock.sleepOk = timerNotRunning && !timer.cableIsConnected() && bt.state != BT_ST_CONNECTED && sleepOk;
 }
 
