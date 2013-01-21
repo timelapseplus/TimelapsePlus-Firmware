@@ -1011,12 +1011,18 @@ uint8_t PTP::capture()
 	return PTP_Transaction(EOS_OC_CAPTURE, 0, 0, NULL);
 }
 
+uint8_t PTP::bulbMode()
+{
+	if(modePTP != 0x04) return setParameter(EOS_DPC_MODE, 0x04); // Bulb Mode
+	return 0;
+}
+
 uint8_t PTP::bulbStart()
 {
 	bulb = true;
 	busy = true;
 	preBulbMode = modePTP;
-	if(modePTP != 0x04) setParameter(EOS_DPC_MODE, 0x04); // Bulb Mode
+	bulbMode();
 	if(PTP_Transaction(EOS_OC_SETUILOCK, 0, 0, NULL)) return 1; // SetUILock
 	if(PTP_Transaction(EOS_OC_BULBSTART, 0, 0, NULL)) return 1; // Bulb Start
 	return 0;

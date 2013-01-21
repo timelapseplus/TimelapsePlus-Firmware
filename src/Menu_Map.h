@@ -52,6 +52,9 @@ const char STR_BT_SLEEP[]PROGMEM = "Connect menu to enable";
 const char STR_BT_DISCOVERABLE[]PROGMEM = "Uses more power";
 const char STR_HALF_PRESS[]PROGMEM = "Shutter half press";
 
+const char STR_BULB_OFFSET[]PROGMEM = "Offset in ms";
+
+
 const menu_item menu_options[]PROGMEM =
 {
     { "Stop Timer  ", 'F', (void*)&timerStop, 0, 0, (void*)&timer.running },
@@ -221,7 +224,7 @@ const menu_item menu_saved_options[]PROGMEM =
 const menu_item menu_development[]PROGMEM =
 {
     { "Shutter Test", 'F', (void*)shutterTest, 0, 0, (void*)&timerNotRunning },
-    { "Shutter Lag ", 'F', (void*)shutterLagTest, 0, 0, (void*)&timerNotRunning },
+    { "Calc BOffset", 'F', (void*)shutterLagTest, 0, 0, (void*)&timerNotRunning },
 //    { "4 Hour Light", 'F', (void*)lightTest, 0, 0, (void*)&timerNotRunning },
     { "Sys Status  ", 'F', (void*)sysStatus, 0, 0, 0 },
     { "Battery     ", 'F', (void*)batteryStatus, 0, 0, 0 },
@@ -346,6 +349,7 @@ const menu_item menu_settings[]PROGMEM =
     { "Bulb Mode   ", 'S', (void*)menu_settings_bulb_mode, (void*)&conf.bulbMode, (void*)settings_update, 0 },
     { "Camera FPS  ", 'S', (void*)menu_settings_camera_fps, (void*)&conf.cameraFPS, (void*)settings_update, 0 },
     { "Camera Make ", 'S', (void*)menu_settings_camera_make, (void*)&conf.cameraMake, (void*)settings_update, 0 },
+    { "Bulb Offset ", 'C', (void*)&conf.bulbOffset, (void*)STR_BULB_OFFSET, (void*)settings_update, 0 },
     { "AUX Port    ", 'S', (void*)menu_settings_aux_port, (void*)&conf.auxPort, (void*)settings_update, 0 },
     { "BT Default  ", 'S', (void*)menu_settings_bt_default, (void*)&conf.btMode, (void*)settings_update, 0 },
     { "Half press  ", 'S', (void*)menu_settings_half_press, (void*)&conf.halfPress, (void*)settings_update, 0 },

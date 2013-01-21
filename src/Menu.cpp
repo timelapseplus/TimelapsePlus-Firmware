@@ -265,7 +265,7 @@ void MENU::init(menu_item *newmenu)
             type = pgm_read_byte(&menu[i].type);
             c = pgm_read_byte(&menu[i].name[MENU_NAME_LEN - 2]);
 
-            if(type == 'E' || type == 'P') // Edit variable type //
+            if(type == 'E' || type == 'P')  // Edit variable type //
             {
                 unsigned int *var;
                 unsigned int val;
@@ -278,7 +278,7 @@ void MENU::init(menu_item *newmenu)
                     var = &val;
                 }
                 
-                var_len = lcd->writeNumber(2 + MENU_NAME_LEN * 6, 8 + 9 * menuSize - menuScroll, *var, c, 'R');
+                if(type != 'C') var_len = lcd->writeNumber(2 + MENU_NAME_LEN * 6, 8 + 9 * menuSize - menuScroll, *var, c, 'R');
             }
 
             if(type == 'S' && c == '*') // Display setting selection in place of menu text
@@ -579,6 +579,7 @@ void MENU::click()
                state = ST_FUNC;
                break;
 
+           case 'C':
            case 'E':
            case 'P': // Edit Variable
                {

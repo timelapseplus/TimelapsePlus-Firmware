@@ -748,7 +748,7 @@ char shutter::task()
             }
             else
             {
-                clock.job(&shutter_bulbStart, &shutter_bulbEnd, bulb_length);
+                clock.job(&shutter_bulbStart, &shutter_bulbEnd, bulb_length + conf.bulbOffset);
             }
         }
         else if(!clock.jobRunning && !camera.busy)

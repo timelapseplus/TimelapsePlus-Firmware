@@ -33,6 +33,7 @@ struct settings
     char auxPort;
     char btMode;
     char halfPress;
+    uint16_t bulbOffset;
     char test0;
     char test1;
     char test2;

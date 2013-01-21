@@ -97,6 +97,7 @@ void settings_default()
     conf.auxPort = AUX_MODE_DISABLED;
     conf.btMode = BT_MODE_SLEEP;
     conf.halfPress = HALF_PRESS_ENABLED;
+    conf.bulbOffset = 75;
     settings_save();
     settings_load();
 }

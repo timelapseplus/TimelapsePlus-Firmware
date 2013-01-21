@@ -401,17 +401,18 @@ volatile char shutterLagTest(char key, char first)
 
 	if(first)
 	{
-//    cable = 0;
 		lcd.cls();
-		menu.setTitle(TEXT("Shutter Lag Test"));
-		menu.setBar(TEXT("Test 1"), TEXT("Test 2 "));
+		menu.setTitle(TEXT("Calc BOffset"));
+		menu.setBar(TEXT("Return"), TEXT("Test"));
 		lcd.update();
 	}
 
-	if(key == FL_KEY || key == FR_KEY)
+	if(key == FR_KEY)
 	{
-		lcd.eraseBox(10, 18, 80, 38);
-		lcd.writeString(10, 18, TEXT("Result:"));
+		lcd.eraseBox(10, 8, 80, 38);
+		lcd.writeString(10,  8, TEXT("    In:"));
+		lcd.writeString(10, 18, TEXT("   Out:"));
+		lcd.writeString(10, 28, TEXT("Offset:"));
 
 		ENABLE_SHUTTER;
 		ENABLE_MIRROR;
@@ -449,8 +450,9 @@ volatile char shutterLagTest(char key, char first)
 
 		end_lag = (uint16_t)clock.eventMs();
 
-		lcd.writeNumber(56, 18, start_lag, 'U', 'L');
-		lcd.writeNumber(56, 28, end_lag, 'U', 'L');
+		lcd.writeNumber(56, 8, start_lag, 'U', 'L');
+		lcd.writeNumber(56, 18, end_lag, 'U', 'L');
+		lcd.writeNumber(56, 28, start_lag - end_lag, 'U', 'L');
 
 		lcd.update();
 	}
