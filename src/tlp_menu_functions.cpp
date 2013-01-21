@@ -457,7 +457,7 @@ volatile char shutterLagTest(char key, char first)
 		lcd.update();
 	}
 
-	if(key == LEFT_KEY)
+	if(key == FL_KEY || key == LEFT_KEY)
 		return FN_CANCEL;
 
 	return FN_CONTINUE;
