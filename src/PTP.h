@@ -57,6 +57,7 @@ public:
     uint32_t bulbTime(int8_t ev);
     uint32_t bulbTime(float ev);
     uint8_t bulbMode(void);
+    uint8_t manualMode(void);
     uint32_t shiftBulb(uint32_t ms, int8_t ev);
 
     static uint8_t isoName(char name[8], uint8_t ev);

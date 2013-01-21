@@ -138,6 +138,13 @@ void shutter_off(void)
     ir_shutter_state = 0;
     shutter_state = 0;
 }
+void shutter_off_quick(void)
+{
+    SHUTTER_CLOSE;
+    MIRROR_DOWN;
+    ir_shutter_state = 0;
+    shutter_state = 0;
+}
 
 /******************************************************************
  *

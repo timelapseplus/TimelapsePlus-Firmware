@@ -3,6 +3,7 @@
 #include "PTP_Driver.h"
 #include "PTP.h"
 #include "PTP_Codes.h"
+#include "shutter.h"
 #include "tldefs.h"
 #ifdef PTP_DEBUG
 #include "bluetooth.h"
@@ -1007,6 +1008,7 @@ uint8_t PTP::close()
 
 uint8_t PTP::capture()
 {
+	if(modePTP == 0x04) manualMode();
 	busy = true;
 	return PTP_Transaction(EOS_OC_CAPTURE, 0, 0, NULL);
 }
@@ -1014,6 +1016,12 @@ uint8_t PTP::capture()
 uint8_t PTP::bulbMode()
 {
 	if(modePTP != 0x04) return setParameter(EOS_DPC_MODE, 0x04); // Bulb Mode
+	return 0;
+}
+
+uint8_t PTP::manualMode()
+{
+	if(modePTP != 0x03) return setParameter(EOS_DPC_MODE, 0x03); // Bulb Mode
 	return 0;
 }
 
@@ -1047,7 +1055,7 @@ uint8_t PTP::setISO(uint8_t ev)
 uint8_t PTP::setShutter(uint8_t ev)
 {
 	if(ev == 0xff) return 0;
-	if(modePTP == 0x04) setParameter(EOS_DPC_MODE, 0x03); // Manual Mode
+	manualMode();
 	return setParameter(EOS_DPC_SHUTTER, shutterEvPTP(ev));
 }
 
@@ -1059,6 +1067,7 @@ uint8_t PTP::setAperture(uint8_t ev)
 
 uint8_t PTP::setParameter(uint16_t param, uint8_t value)
 {
+	shutter_off_quick(); // Can't set parameters while half-pressed
 	data[0] = 0x0000000C;
 	data[1] = (uint32_t) param;
 	data[2] = (uint32_t) value;

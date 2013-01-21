@@ -120,6 +120,7 @@ private:
 
 void check_cable();
 void shutter_off(void);
+void shutter_off_quick(void);
 void shutter_half(void);
 void shutter_half_delayed(void);
 void shutter_full(void);
