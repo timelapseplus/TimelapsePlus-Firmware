@@ -1048,20 +1048,20 @@ uint8_t PTP::bulbEnd()
 
 uint8_t PTP::setISO(uint8_t ev)
 {
-	if(ev == 0xff) return 0;
+	if(ev == 0xff) return 1;
 	return setParameter(EOS_DPC_ISO, isoEvPTP(ev));
 }
 
 uint8_t PTP::setShutter(uint8_t ev)
 {
-	if(ev == 0xff) return 0;
+	if(ev == 0xff) return 1;
 	manualMode();
 	return setParameter(EOS_DPC_SHUTTER, shutterEvPTP(ev));
 }
 
 uint8_t PTP::setAperture(uint8_t ev)
 {
-	if(ev == 0xff) return 0;
+	if(ev == 0xff) return 1;
 	return setParameter(EOS_DPC_APERTURE, apertureEvPTP(ev));
 }
 
