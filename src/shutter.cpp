@@ -1165,7 +1165,7 @@ uint8_t hdrExpsUp(uint8_t hdr_exps)
 
 uint8_t hdrExpsDown(uint8_t hdr_exps)
 {
-    if(hdr_exps > 1) hdr_exps--; else hdr_exps = 3;
+    if(hdr_exps > 3) hdr_exps--; else hdr_exps = 3;
     return hdr_exps;
 }
 

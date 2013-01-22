@@ -1706,6 +1706,7 @@ volatile char timerRevert(char key, char first)
 
 	menu.message(TEXT("Reverted"));
 	menu.back();
+    menu.select(0);
 	return FN_CANCEL;
 }
 
@@ -1783,6 +1784,7 @@ volatile char shutter_saveAs(char key, char first)
 		name[MENU_NAME_LEN - 2] = 0;
 		strcpy((char*)timer.current.Name, name);
 		timer.save(newId);
+		name[0] = 0;
 		menu.message(TEXT("Saved"));
 		menu.back();
 	}
@@ -1864,6 +1866,8 @@ volatile char shutter_load(char key, char first)
 			menuSize++;
 		}
 
+		if(menuSelected > menuSize - 1 && menuSelected > 0) menuSelected--;
+
 		lcd.drawHighlight(2, 7 + 9 * (menuSelected - menuScroll), 81, 7 + 9 * (menuSelected - menuScroll) + 8);
 
 		menu.setTitle(TEXT("Load Saved"));
@@ -1881,9 +1885,13 @@ volatile char shutter_load(char key, char first)
 	switch(key)
 	{
 	   case FL_KEY:
-	   		menu.push(1);
-		   	menu.submenu((menu_item*)menu_saved_options);
-		   	return FN_JUMP;
+	   		if(itemSelected > 0)
+	   		{
+		   		menu.push(1);
+			   	menu.submenu((menu_item*)menu_saved_options);
+			   	return FN_JUMP;
+	   		}
+	   		break;
 
 	   case LEFT_KEY:
 		   return FN_CANCEL;

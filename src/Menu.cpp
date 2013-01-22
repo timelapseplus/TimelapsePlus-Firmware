@@ -522,12 +522,17 @@ char *MENU::menuName(char *str)
 
         index = stack[stack_counter - 1].index;;
 
+        uint8_t j = 0;
+
         for(i = 0; i < MENU_NAME_LEN - 1; i++) // read name //
         {
-            *(str + i) = pgm_read_byte(&cmenu[index].name[i]);
+            char c = pgm_read_byte(&cmenu[index].name[i]);
+            if(j == 0 &&  (c == ' ' || c == '-')) continue;
+            *(str + j) = pgm_read_byte(&cmenu[index].name[i]);
+            j++;
         }
         
-        for(i = MENU_NAME_LEN - 2; i > 1; i--) // trim //
+        for(i = j - 1; i > 1; i--) // trim //
         {
             if(*(str + i) != ' ')
             {
@@ -556,7 +561,6 @@ void MENU::click()
     if(menuSelected >= 0 && menuSelected < menuSize)
     {
         uint8_t index = 0;
-        //, i = 0;
 
         index = getIndex(menu, menuSelected);
 
@@ -585,11 +589,13 @@ void MENU::click()
                {
                    unsigned char *desc_addr;
 
-                   uint8_t b = 0;
+                   uint8_t b = 0, i = 0;
 
                    while(b < MENU_NAME_LEN - 3)
                    {
-                       name[b] = pgm_read_byte(&menu[index].name[b]);
+                       name[b] = pgm_read_byte(&menu[index].name[i]);
+                       i++;
+                       if(b == 0 && (name[b] == ' ' || name[b] == '-')) continue;
 
                        if(name[b] == ' ') 
                            break;
@@ -630,12 +636,14 @@ void MENU::click()
 
            case 'S': // Settings List Variable
            case 'D': // Dynamic Settings List Variable
-               uint8_t b = 0;
+               uint8_t b = 0, i = 0;
                
                while(b < MENU_NAME_LEN - 2)
                {
-                   name[b] = pgm_read_byte(&menu[index].name[b]);
-                   
+                   name[b] = pgm_read_byte(&menu[index].name[i]);
+                   i++;
+                   if(b == 0 && (name[b] == ' ' || name[b] == '-')) continue;
+
                    if(name[b] == ' ') 
                        break;
                    
