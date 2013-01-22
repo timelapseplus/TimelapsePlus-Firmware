@@ -1784,7 +1784,7 @@ volatile char shutter_saveAs(char key, char first)
 		name[MENU_NAME_LEN - 2] = 0;
 		strcpy((char*)timer.current.Name, name);
 		timer.save(newId);
-		name[0] = 0;
+		for(uint8_t i = 0; i < MENU_NAME_LEN - 1; i++) name[i] = 0;
 		menu.message(TEXT("Saved"));
 		menu.back();
 	}
