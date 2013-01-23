@@ -13,9 +13,14 @@
 #include "timelapseplus.h"
 #include "tlp_menu_functions.h"
 #include "settings.h"
+#include "shutter.h"
+#include "bluetooth.h"
+#include "remote.h"
 #include "tldefs.h"
 
 extern settings conf;
+extern Remote remote;
+extern BT bt;
 
 /******************************************************************
  *
@@ -27,7 +32,27 @@ extern settings conf;
 void debug(char *s)
 {
     if(conf.devMode == 0) return;
-    VirtualSerial_PutString(s);
+    if(VirtualSerial_connected)
+        VirtualSerial_PutString(s);
+    else if(remote.connected && remote.model == REMOTE_MODEL_TLP)
+        remote.debug(s);
+//    else if(bt.state == BT_ST_CONNECTED)
+//        bt.send(s);
+}
+
+/******************************************************************
+ *
+ *   debug_remote
+ *
+ *
+ ******************************************************************/
+
+void debug_remote(char *s)
+{
+    if(VirtualSerial_connected)
+    {
+        VirtualSerial_PutString(s);
+    }
 }
 
 /******************************************************************
@@ -85,21 +110,68 @@ void debug(uint16_t n)
  *
  ******************************************************************/
 
+void debug(float n)
+{
+    if(conf.devMode == 0) return;
+
+    debug((int16_t)n);
+    n -= (float)((int16_t)n);
+    if(n < 0) n = 0 - n;
+    debug('.');
+    n *= 10.0;
+    debug((uint8_t)n);
+    n -= (float)((int16_t)n);
+    n *= 10.0;
+    debug((uint8_t)n);
+    n -= (float)((int16_t)n);
+    n *= 10.0;
+    debug((uint8_t)n);
+}
+
+/******************************************************************
+ *
+ *   debug
+ *
+ *
+ ******************************************************************/
+
+void debug(int16_t n)
+{
+    if(conf.devMode == 0) return;
+    char buf[7];
+
+    buf[0] = '+';
+    if(n < 0)
+    {
+        n = 0 - n;
+        buf[0] = '-';
+    }
+    int_to_str(n, &buf[1]);
+    debug((char*)buf);
+}
+
+/******************************************************************
+ *
+ *   debug
+ *
+ *
+ ******************************************************************/
+
 void debug(uint32_t n)
 {
     if(conf.devMode == 0) return;
 
     uint8_t i = 9;
     char buf[10];
-    buf[9] = '\0';
-    while(n)
+    buf[i] = '\0';
+    while(i > 0 && n > 0)
     {
         i--;
-        buf[i] = (char)(n % 10) + '0';
+        buf[i] = ((char)(n % 10)) + '0';
         n -= n % 10;
         n /= 10;
     }
-    while(i--) debug((char*)&buf[i]);
+    debug((char*)&buf[i]);
 }
 
 /******************************************************************

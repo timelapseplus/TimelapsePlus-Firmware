@@ -17,6 +17,8 @@
 #define REMOTE_CAMERA_FPS 14
 #define REMOTE_CAMERA_MAKE 15
 
+#define REMOTE_DEBUG 16
+
 #define REMOTE_TYPE_SEND 0
 #define REMOTE_TYPE_REQUEST 1
 #define REMOTE_TYPE_SET 2
@@ -32,6 +34,7 @@ public:
     Remote(void);
     uint8_t request(uint8_t id);
     uint8_t set(uint8_t id);
+    uint8_t debug(char *str);
     uint8_t watch(uint8_t id);
     uint8_t unWatch(uint8_t id);
     static uint8_t send(uint8_t id, uint8_t type);

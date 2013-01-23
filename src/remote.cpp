@@ -62,6 +62,13 @@ uint8_t Remote::set(uint8_t id)
 	return send(id, REMOTE_TYPE_SET);
 }
 
+uint8_t Remote::debug(char *str)
+{
+	uint8_t len = 0;
+	while(*(str + len) != '\0' && len < 255) len++;
+	return bt.sendDATA(REMOTE_DEBUG, REMOTE_TYPE_SEND, (void *) str, len);
+}
+
 uint8_t Remote::send(uint8_t id, uint8_t type)
 {
 	switch(id)
@@ -187,6 +194,13 @@ void Remote::event()
 					if(bt.dataType == REMOTE_TYPE_REQUEST) send(bt.dataId, REMOTE_TYPE_SEND);
 					if(bt.dataType == REMOTE_TYPE_NOTIFY_WATCH) notify.watch(REMOTE_CAMERA_MAKE, (void *)&conf.cameraMake, sizeof(conf.cameraMake), &remote_notify);
 					if(bt.dataType == REMOTE_TYPE_NOTIFY_UNWATCH) notify.unWatch(REMOTE_CAMERA_MAKE, &remote_notify);
+					break;
+				case REMOTE_DEBUG:
+					if(bt.dataType == REMOTE_TYPE_SEND)
+					{
+						bt.data[bt.dataSize] = 0;
+						debug_remote(bt.data);
+					}
 					break;
 				default:
 					return;
