@@ -1788,6 +1788,10 @@ volatile char shutter_saveAs(char key, char first)
 		menu.message(TEXT("Saved"));
 		menu.back();
 	}
+	else if(ret == FN_CANCEL)
+	{
+		for(uint8_t i = 0; i < MENU_NAME_LEN - 1; i++) name[i] = 0;
+	}
 
 	return ret;
 }

@@ -1455,6 +1455,7 @@ char MENU::editText(char key, char text[MENU_NAME_LEN], char *name, char first)
 
     if(first)
     {
+        i = 0;
         lcd->cls();
         setTitle(name);
         setBar(TEXT("CANCEL"), TEXT("SAVE"));
