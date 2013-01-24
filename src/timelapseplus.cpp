@@ -267,7 +267,7 @@ int main()
 				       for(uint8_t i = 0; i < LCD_WIDTH; i++)
 				       {
 				           char b = lcd.screen[i][j];
-				           debug(b);
+				           VirtualSerial_PutChar(b);
 				       }
 				    }
 			}
