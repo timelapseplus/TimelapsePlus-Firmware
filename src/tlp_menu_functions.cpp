@@ -141,7 +141,46 @@ volatile char firmwareUpdated(char key, char first)
 	{
 	   case FL_KEY:
 	   case LEFT_KEY:
-		   return FN_CANCEL;
+	   		if(settings_reset)
+	   		{
+	   			menu.spawn((void*)&firstSetup);
+	   			return FN_JUMP;
+	   		}
+		    return FN_CANCEL;
+	}
+
+	return FN_CONTINUE;
+}
+
+/******************************************************************
+ *
+ *   firstSetup
+ *	 - shown once after settings version changes
+ *
+ ******************************************************************/
+
+volatile char firstSetup(char key, char first)
+{
+	if(first)
+	{
+		lcd.cls();
+		menu.setTitle(TEXT("First Setup"));
+
+		lcd.writeStringTiny(2, 8, TEXT(" Please go to the "));
+		lcd.writeStringTiny(2, 14, TEXT(" Settings Menu and"));
+		lcd.writeStringTiny(2, 20, TEXT(" set Camera Make  "));
+		lcd.writeStringTiny(2, 26, TEXT(" and Camera FPS   "));
+		lcd.writeStringTiny(2, 32, TEXT(" before using     "));
+
+		menu.setBar(TEXT("OK"), BLANK_STR);
+		lcd.update();
+	}
+
+	switch(key)
+	{
+	   case FL_KEY:
+	   case LEFT_KEY:
+		    return FN_CANCEL;
 	}
 
 	return FN_CONTINUE;

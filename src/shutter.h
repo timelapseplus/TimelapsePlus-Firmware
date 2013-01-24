@@ -57,6 +57,8 @@
 //#define CHECK_CABLE if(getPin(CHECK_CABLE_PIN) || getPin(SHUTTER_SENSE_PIN)) cable_connected = 1; else cable_connected = 0
 #define CHECK_CABLE if(getPin(CHECK_CABLE_PIN)) cable_connected = 1; else cable_connected = 0
 
+#define SHUTTER_VERSION 20130124
+
 struct program
 {
     char Name[12];            // 12 bytes

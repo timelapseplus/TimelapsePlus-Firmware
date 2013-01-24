@@ -8,7 +8,7 @@
  *
  */
  
-#define SETTINGS_VERSION 20130123
+#define SETTINGS_VERSION 20130124
 
 #define BT_MODE_SLEEP 0
 #define BT_MODE_DISCOVERABLE 1
@@ -20,7 +20,7 @@ struct settings
     char cameraFPS;
     char warnTime;      // 2 bytes
     char mirrorTime;    // 2 bytes
-    char sysName[10];           // 10 bytes
+    char sysName[10];   // 10 bytes
     char bulbMode;
     char cameraMake;
     char lcdColor;
@@ -28,6 +28,7 @@ struct settings
     char sysOffTime;
     char flashlightOffTime;
     uint32_t settingsVersion;
+    uint32_t shutterVersion;
     char devMode;
     uint32_t firmwareVersion;
     char auxPort;
@@ -52,3 +53,4 @@ void settings_default(void);
 void settings_update(void);
 void settings_init(void);
 
+extern uint8_t settings_reset;

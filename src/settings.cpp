@@ -21,6 +21,7 @@
 
 settings conf_eep EEMEM;
 volatile settings conf;
+uint8_t settings_reset = 0;
 
 extern LCD lcd;
 extern IR ir;
@@ -90,6 +91,7 @@ void settings_default()
     conf.lcdColor = 0;
     conf.cameraMake = CANON;
     conf.settingsVersion = SETTINGS_VERSION;
+    conf.shutterVersion = SHUTTER_VERSION;
     conf.lcdBacklightTime = 3;
     conf.sysOffTime = 12;
     conf.flashlightOffTime = 3;
@@ -112,12 +114,20 @@ void settings_default()
 void settings_init()
 {
     settings_load();
-
-    if(eeprom_read_byte((const uint8_t*)&conf_eep) == 255 || conf.settingsVersion != SETTINGS_VERSION)
+    uint8_t need_save = 0;
+    if(conf.shutterVersion != SHUTTER_VERSION)
+    {
+        timer.setDefault();
+        conf.shutterVersion = SHUTTER_VERSION;
+        need_save = 1;
+    }
+    if(conf.settingsVersion != SETTINGS_VERSION)
     {
         settings_default();
-
+        need_save = 0;
+        settings_reset = 1;
         // This is where we'd put a setup wizard
     }
+    if(need_save) settings_save();
 }
 
