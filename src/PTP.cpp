@@ -133,6 +133,7 @@ const propertyDescription_t EOS_ISO_List[] PROGMEM = {
 //419430400
 
 const bulbSettings_t Bulb_List[] PROGMEM = {
+    {" Camera", 0,  0 },
     {"   1/10", 99, 47 },
     {"    1/8", 125, 46 },
     {"    1/6", 157, 45 },
@@ -197,9 +198,11 @@ uint8_t modePTP;
 
 uint8_t preBulbMode;
 
+uint8_t static_ready;
 
 PTP::PTP(void)
 {
+	static_ready = 0;
 	ready = 0;
 	isoAvailCount = 0;
 	apertureAvailCount = 0;
@@ -213,7 +216,7 @@ uint8_t PTP::bulbMax() // 7
 
 uint8_t PTP::bulbMin() // 47
 {
-	return pgm_read_byte(&Bulb_List[0].ev);
+	return pgm_read_byte(&Bulb_List[1].ev);
 }
 
 uint8_t PTP::isoMax() // 13
@@ -318,6 +321,10 @@ uint8_t PTP::shutterUp(uint8_t ev)
 	}
 	if(PTP::shutterType(ev))
 	{
+		if(static_ready == 0)
+		{
+			return pgm_read_byte(&Bulb_List[0].ev);
+		}
 		return ev;
 	}
 	else
@@ -328,7 +335,7 @@ uint8_t PTP::shutterUp(uint8_t ev)
 		}
 		else
 		{
-			return pgm_read_byte(&Bulb_List[0].ev);
+			return pgm_read_byte(&Bulb_List[1].ev);
 		}
 	}
 }
@@ -352,6 +359,7 @@ uint8_t PTP::shutterDown(uint8_t ev)
 			return pgm_read_byte(&Bulb_List[i].ev);
 		}
 	}
+	if(ev == 0) ev = pgm_read_byte(&Bulb_List[1].ev);
 	if(PTP::shutterType(ev))
 	{
 		return ev;
@@ -364,7 +372,7 @@ uint8_t PTP::shutterDown(uint8_t ev)
 		}
 		else
 		{
-			return pgm_read_byte(&Bulb_List[0].ev);
+			return pgm_read_byte(&Bulb_List[1].ev);
 		}
 	}
 }
@@ -384,7 +392,7 @@ uint8_t PTP::bulbUp(uint8_t ev)
 	}
 	else
 	{
-		return pgm_read_byte(&Bulb_List[0].ev);
+		return pgm_read_byte(&Bulb_List[1].ev);
 	}
 }
 
@@ -403,7 +411,7 @@ uint8_t PTP::bulbDown(uint8_t ev)
 	}
 	else
 	{
-		return pgm_read_byte(&Bulb_List[0].ev);
+		return pgm_read_byte(&Bulb_List[1].ev);
 	}
 }
 
@@ -615,6 +623,7 @@ uint8_t PTP::shutterType(uint8_t ev)
 
 uint32_t PTP::bulbTime(float ev)
 {
+	if(ev == 0) return 0;
 	int8_t d = (int8_t)floor(ev);
 	float ms = (float) bulbTime(d);
 	ev -= (float)d;
@@ -638,6 +647,7 @@ uint32_t PTP::bulbTime(float ev)
 
 uint32_t PTP::bulbTime(int8_t ev)
 {
+	if(ev == 0) return 0;
 	uint32_t ms = 0;
 	for(uint8_t i = 0; i < sizeof(Bulb_List) / sizeof(Bulb_List[0]); i++)
 	{
@@ -737,6 +747,7 @@ uint8_t PTP::init()
 	aperturePTP = 0xFF;
 	shutterPTP = 0xFF;
 
+	static_ready = 1;
 	ready = 1;
 	checkEvent();
 
@@ -986,6 +997,7 @@ void sendByte(char byte)
 
 uint8_t PTP::close()
 {
+	static_ready = 0;
 	ready = 0;
 	busy = false;
 	bulb = false;
