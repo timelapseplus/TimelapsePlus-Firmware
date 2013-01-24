@@ -622,14 +622,14 @@ uint32_t PTP::bulbTime(float ev)
 	d = (int8_t)floor(ev);
 	for(int8_t i = 0; i < d; i++)
 	{
-		ms *= THIRTIETH_ROOT_OF_2;
+		ms /= THIRTIETH_ROOT_OF_2;
 	}
 	ev -= (float)d;
 	ev *= 10;
 	d = (int8_t)floor(ev);
 	for(int8_t i = 0; i < d; i++)
 	{
-		ms *= THREE_HUNDREDTH_ROOT_OF_2;
+		ms /= THREE_HUNDREDTH_ROOT_OF_2;
 	}
 
 	return ms;
