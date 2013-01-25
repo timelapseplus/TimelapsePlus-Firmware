@@ -117,13 +117,13 @@ void Remote::event()
 	{
 		case BT_EVENT_DISCONNECT:
 			notify.unWatch(&remote_notify); // stop all active notifications
-			debug(STR("REMOTE::EVENT: Disconnected\r\n"));
+			//debug(STR("REMOTE::EVENT: Disconnected\r\n"));
 			connected = 0;
 			break;
 
 		case BT_EVENT_CONNECT:
 			connected = 1;
-			debug(STR("REMOTE::EVENT: Connected\r\n"));
+			//debug(STR("REMOTE::EVENT: Connected\r\n"));
 			request(REMOTE_MODEL);
 			break;
 
