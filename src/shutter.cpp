@@ -229,7 +229,10 @@ void shutter_bulbStart(void)
     {
         shutter_full();
         shutter_state = 1;
-        clock.in(SHUTTER_PRESS_TIME, &shutter_half);
+        if(camera.ready)
+            clock.in(SHUTTER_PRESS_TIME, &shutter_off);
+        else
+            clock.in(SHUTTER_PRESS_TIME, &shutter_half);
     }
 #endif
 }
@@ -472,7 +475,7 @@ char shutter::task()
             if(((unsigned long)clock.event_ms / 1000) + settings_mirror_up_time >= current.Delay)
             {
                 // Mirror Up //
-                shutter_half();
+                shutter_half(); // This is to wake up the camera (even if USB is connected)
             }
 
             if((settings_warn_time > 0) && (((unsigned long)clock.event_ms / 1000) + settings_warn_time >= current.Delay))
@@ -506,7 +509,7 @@ char shutter::task()
             exps++;
             capture();
             
-            if(current.Gap <= settings_mirror_up_time) 
+            if(current.Gap <= settings_mirror_up_time && !camera.ready) 
                 shutter_half(); // Mirror Up //
 
             run_state = RUN_NEXT;
@@ -664,8 +667,6 @@ char shutter::task()
                             return CONTINUE;
                         }
                     }
-                    shutter_half();
-
                 }
                 
                 if(conf.devMode)
@@ -782,7 +783,7 @@ char shutter::task()
 
             _delay_ms(50);
 
-            if(current.Gap <= settings_mirror_up_time) 
+            if(current.Gap <= settings_mirror_up_time && !camera.ready) 
                 shutter_half(); // Mirror Up //
 
             run_state = RUN_NEXT;
@@ -858,7 +859,7 @@ char shutter::task()
             if((cms - last_photo_ms) / 100 + (uint32_t)settings_mirror_up_time * 10 >= current.Gap)
             {
                 // Mirror Up //
-                shutter_half();
+                if(!camera.ready) shutter_half(); // Don't do half-press if the camera is connected by USB
             }
         }
     }
