@@ -418,7 +418,9 @@ char shutter::task()
         exps = 0;
         if(current.Mode & RAMP)
         {
-            current.Photos = (current.Duration * 10) / current.Gap;
+            uint32_t tmp = (uint32_t)current.Duration * 10;
+            tmp /= (uint32_t) current.Gap;
+            current.Photos = (uint16_t) tmp;
             calcBulbMax();
         }
         if(conf.devMode)
