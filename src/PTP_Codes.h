@@ -15,17 +15,20 @@
 #define EOS_OC_RESETUILOCK 0x911C
 #define EOS_OC_BULBSTART 0x9125
 #define EOS_OC_BULBEND 0x9126
+#define EOS_OC_KeepDeviceOn 0x9003
+#define EOS_OC_DepthOfFieldPreview 0x9156
+#define EOS_OC_MoveFocus 0x9155
 
 #define EOS_DPC_APERTURE 0xD101
 #define EOS_DPC_SHUTTER 0xD102
 #define EOS_DPC_ISO 0xD103
 #define EOS_DPC_MODE 0xD105
+#define EOS_DPC_LiveView 0xD1B0
 
 #define EOS_EC_PROPERTY_CHANGE 0xC189
 #define EOS_EC_PROPERTY_VALUES 0xC18A
 #define EOS_EC_OBJECT_CREATED 0xC181
-
-
+#define EOS_EC_WillShutdownSoon 0xc18d
 
 
 
