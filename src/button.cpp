@@ -10,13 +10,18 @@
  
 #include <avr/pgmspace.h>
 #include <avr/wdt.h>
+#include <avr/interrupt.h>
 #include "button.h"
+#include "5110LCD.h"
+#include "menu.h"
 #include "clock.h"
 #include "hardware.h"
+#include "tldefs.h"
 // The followinging are interrupt-driven keypad reading functions
 //  which includes DEBOUNCE ON/OFF mechanism, and continuous pressing detection
 
 extern Clock clock;
+extern MENU menu;
 
 const unsigned char PROGMEM button_pins[] = { 4, 2, 4, 5, 7, 6 };
 
@@ -106,11 +111,24 @@ volatile void Button::poll()
                     button_status[i] = 1; //button debounced to 'pressed' status
                     button_count[i] = DEBOUNCE_REPEAT_DELAY - DEBOUNCE_REPEAT_SPEED;
                 }
+                else if(i + 1 == FL_KEY)
+                {
+                    off_count++;
+                    if(off_count > POWER_OFF_TIME)
+                    {
+                        menu.message(TEXT("Power Off"));
+                        menu.task();
+                        cli();
+                        while(getBit(p, FB_PIN) == LOW) wdt_reset();
+                        hardware_off();
+                    }
+                }
             }
 
         } 
         else // no button pressed
         {
+            if(i + 1 == FL_KEY) off_count = 0;
             if(button_count[i] > 0)
             {
                 button_flag[i] = 0;

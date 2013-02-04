@@ -24,6 +24,7 @@
 
 #define NUM_KEYS 6
 
+#define POWER_OFF_TIME 2000
 
 class Button
 {
@@ -42,6 +43,7 @@ private:
     char button_status[NUM_KEYS];
     // button on flags for user program
     char button_flag[NUM_KEYS];
+    uint16_t off_count;
 };
 
 
