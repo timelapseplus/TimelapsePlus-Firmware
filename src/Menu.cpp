@@ -314,6 +314,10 @@ void MENU::init(menu_item *newmenu)
                         lcd->writeChar(2 + b * 6, 8 + 9 * menuSize - menuScroll, ch);
                     }
                 }
+                if(type == 'M')
+                {
+                  lcd->writeChar(2 + (MENU_NAME_LEN - 1) * 6, 8 + 9 * menuSize - menuScroll, '>');
+                }
             }
             
             if(type == 'S' && c == '+') // Write setting selection over menu text
