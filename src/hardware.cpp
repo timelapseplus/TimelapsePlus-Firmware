@@ -94,7 +94,7 @@ void hardware_off(void)
     {
         if(timer.cableIsConnected())
         {
-            menu.message(STR("Error: Camera"));
+            menu.message(STR("Error: Cable"));
         }
         else
         {
