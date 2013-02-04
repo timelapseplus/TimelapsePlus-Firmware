@@ -41,7 +41,8 @@ public:
     uint8_t checkEvent(void);
     uint8_t close(void);
     uint8_t capture(void);
-    uint8_t checkCaptureDone(void);
+    uint8_t liveView(uint8_t on);
+    uint8_t moveFocus(uint16_t step);
     uint8_t bulbStart(void);
     uint8_t bulbEnd(void);
     uint8_t setParameter(uint16_t param, uint8_t value);
@@ -80,7 +81,7 @@ public:
     static uint8_t bulbUp(uint8_t ev);
     static uint8_t bulbDown(uint8_t ev);
 
-    uint8_t ready, busy, bulb;
+    uint8_t ready, busy, bulb_open, liveViewOn;
 
     CameraSupports_t supports;
 

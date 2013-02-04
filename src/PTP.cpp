@@ -5,6 +5,7 @@
 #include "PTP_Codes.h"
 #include "shutter.h"
 #include "tldefs.h"
+#include "debug.h"
 #ifdef PTP_DEBUG
 #include "bluetooth.h"
 #endif
@@ -133,7 +134,10 @@ const propertyDescription_t EOS_ISO_List[] PROGMEM = {
 //419430400
 
 const bulbSettings_t Bulb_List[] PROGMEM = {
-    {" Camera", 0,  0 },
+    {" Camera", 0,  254 },
+    {"   1/20", 49, 50 },
+    {"   1/15", 62, 49 },
+    {"   1/13", 79, 48 },
     {"   1/10", 99, 47 },
     {"    1/8", 125, 46 },
     {"    1/6", 157, 45 },
@@ -703,7 +707,7 @@ uint32_t PTP::shiftBulb(uint32_t ms, int8_t ev)
 uint8_t PTP::init()
 {
 	busy = false;
-	bulb = false;
+	bulb_open = false;
 	isoAvailCount = 0;
 	apertureAvailCount = 0;
 	shutterAvailCount = 0;
@@ -749,15 +753,16 @@ uint8_t PTP::init()
 
 	static_ready = 1;
 	ready = 1;
+	liveViewOn = false;
 	checkEvent();
 
 	return 0;
 }
 
-uint8_t PTP::checkCaptureDone() // Doesn't work
+uint8_t PTP::liveView(uint8_t on)
 {
 	if(ready == 0) return 0;
-	uint8_t ret = PTP_Transaction(0x9012, 2, 0, NULL);
+	uint8_t ret = setParameter(EOS_DPC_LiveView, (on) ? 2 : 0);
 	if(ret == PTP_RETURN_ERROR)
 	{
 		#ifdef PTP_DEBUG
@@ -765,13 +770,36 @@ uint8_t PTP::checkCaptureDone() // Doesn't work
 		#endif
 		return 1;	
 	}
-
-	#ifdef PTP_DEBUG
-	bt.send(STR("\r\nCaptureStatus:"));
-	sendHex((char *)&PTP_Bytes_Received);
-	#endif
-
+/*	if(on)
+	{
+		ret = setParameter(0xD1B3, 0);
+		if(ret == PTP_RETURN_ERROR)
+		{
+			#ifdef PTP_DEBUG
+			bt.send(STR("ERROR!\r\n"));
+			#endif
+			return 1;	
+		}
+		liveViewOn = true;
+		debug(STR("LiveView ON\r\n"));
+	}
+	else
+	{
+		liveViewOn = false;
+		debug(STR("LiveView OFF\r\n"));
+	}
+*/
 	return 0;	
+}
+
+uint8_t PTP::moveFocus(uint16_t step)
+{
+	if(!liveViewOn) // Only works in live view mode
+	{
+		liveView(true);
+	}
+	data[0] = step;
+	return PTP_Transaction(EOS_OC_MoveFocus, 0, 1, data);
 }
 
 uint8_t PTP::checkEvent()
@@ -938,13 +966,24 @@ uint8_t PTP::checkEvent()
 				bt.send(STR("\r\n Photo!\r\n"));
 				#endif
 			}
+			else if(event_type == EOS_EC_WillShutdownSoon)
+			{
+//				debug(STR("Keeping camera on\r\n"));
+//				PTP_Transaction(EOS_OC_KeepDeviceOn, 0, 0, NULL);
+			}
 			else if(event_type > 0)
 			{
 				#ifdef PTP_DEBUG
-				//bt.send(STR("\r\n Unknown: "));
-				//sendHex((char *)&event_type);
-				//bt.send(STR("\r\n    Size: "));
-				//sendHex((char *)&event_size);
+				bt.send(STR("\r\n Unknown: "));
+				sendHex((char *)&event_type);
+				bt.send(STR("\r\n    Size: "));
+				sendHex((char *)&event_size);
+				bt.send(STR("\r\n  Value1: "));
+				sendHex((char *)&event_value);
+				bt.send(STR("\r\n  Value2: "));
+				sendHex((char *)(&event_value+4));
+				bt.send(STR("\r\n  Value3: "));
+				sendHex((char *)(&event_value+8));
 				#endif
 			}
 			i += event_size;
@@ -997,10 +1036,11 @@ void sendByte(char byte)
 
 uint8_t PTP::close()
 {
+	debug(STR("PTP Closed\r\n"));
 	static_ready = 0;
 	ready = 0;
 	busy = false;
-	bulb = false;
+	bulb_open = false;
 	return 0;
 	supports = (CameraSupports_t)
 	{
@@ -1039,7 +1079,8 @@ uint8_t PTP::manualMode()
 
 uint8_t PTP::bulbStart()
 {
-	bulb = true;
+	if(bulb_open) return 1;
+	bulb_open = true;
 	busy = true;
 	preBulbMode = modePTP;
 	bulbMode();
@@ -1050,8 +1091,8 @@ uint8_t PTP::bulbStart()
 
 uint8_t PTP::bulbEnd()
 {
-	if(!bulb) return 1;
-	bulb = false;
+	if(bulb_open == false) return 1;
+	bulb_open = false;
 	if(PTP_Transaction(EOS_OC_BULBEND, 0, 0, NULL)) return 1; // Bulb End
 	if(PTP_Transaction(EOS_OC_RESETUILOCK, 0, 0, NULL)) return 1; // ResetUILock
 	busy = true;
