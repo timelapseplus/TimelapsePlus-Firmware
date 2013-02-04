@@ -212,7 +212,6 @@ void shutter_bulbStart(void)
     {
         if(camera.supports.bulb)
         {
-            ir_shutter_state = 1;
             camera.bulbStart();
         }
         else
@@ -250,22 +249,25 @@ void shutter::bulbEnd(void)
 }
 void shutter_bulbEnd(void)
 {
+    debug(STR("Bulb End: "));
 #ifndef DEBUG_MODE
-    if(cable_connected == 0 && ir_shutter_state == 1)
+    if(camera.bulb_open || ir_shutter_state == 1)
     {
-        if(camera.supports.bulb)
+        if(camera.bulb_open)
         {
-            ir_shutter_state = 0;
+            debug(STR("USB "));
             camera.bulbEnd();
         }
         else
         {
-            ir_shutter_state = 0;
+            debug(STR("IR "));
             ir.bulbEnd();
         }
+        ir_shutter_state = 0;
     } 
     if(conf.bulbMode == 0)
     {
+        debug(STR("CABLE "));
         shutter_off();
     }
     else if(conf.bulbMode == 1 && shutter_state == 1)
@@ -275,6 +277,7 @@ void shutter_bulbEnd(void)
         clock.in(SHUTTER_PRESS_TIME, &shutter_off);
     }
 #endif
+    debug_nl();
 }
 
 /******************************************************************
@@ -635,7 +638,7 @@ char shutter::task()
                     }
 
                     // Check for too short bulb time //
-                    while(bulb_length < 99)
+                    while(bulb_length < camera.bulbTime((int8_t)camera.bulbMin()))
                     {
                         nextISO = camera.isoDown(iso);
                         if(nextISO != iso)
