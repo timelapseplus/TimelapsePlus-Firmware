@@ -1001,6 +1001,13 @@ volatile char sysInfo(char key, char first)
 			lcd.writeStringTiny(3, 30 + SY, TEXT("BT FW Version:"));
 		}
 
+		val = (uint16_t)battery_percent;
+		int_to_str(val, buf);
+		text = buf;
+		l = lcd.measureStringTiny(text);
+		lcd.writeStringTiny(80 - l, 24 + SY, text);
+		lcd.writeStringTiny(3, 24 + SY, TEXT("Battery:"));
+
 		menu.setTitle(TEXT("System Info"));
 		menu.setBar(TEXT("RETURN"), BLANK_STR);
 		lcd.update();
@@ -1525,10 +1532,12 @@ volatile char usbPlug(char key, char first)
 	}
 	else if(key == UP_KEY)
 	{
+//		if(PTP_Ready) camera.moveFocus(1);
 		if(PTP_Ready) camera.setISO(camera.isoUp(camera.iso()));
 	}
 	else if(key == DOWN_KEY)
 	{
+//		if(PTP_Ready) camera.moveFocus(0x8001);
 		if(PTP_Ready) camera.setISO(camera.isoDown(camera.iso()));
 	}
 
