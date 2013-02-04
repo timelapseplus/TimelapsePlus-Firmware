@@ -221,20 +221,6 @@ const menu_item menu_saved_options[]PROGMEM =
     { "\0OPTIONS\0   ", 'F', (void*)&menuBack, (void*)STR_RETURN, 0, (void*)STR_NULL }
 };
 
-const menu_item menu_development[]PROGMEM =
-{
-    { "Shutter Test", 'F', (void*)shutterTest, 0, 0, (void*)&timerNotRunning },
-    { "Calc BOffset", 'F', (void*)shutterLagTest, 0, 0, (void*)&timerNotRunning },
-//    { "4 Hour Light", 'F', (void*)lightTest, 0, 0, (void*)&timerNotRunning },
-    { "Sys Status  ", 'F', (void*)sysStatus, 0, 0, 0 },
-    { "Battery     ", 'F', (void*)batteryStatus, 0, 0, 0 },
-    { "Light Meter ", 'F', (void*)lightMeter, 0, 0, 0 },
-//    { "BT Flood    ", 'F', (void*)btFloodTest, 0, 0, 0 },
-    { "Reset All   ", 'F', (void*)factoryReset, 0, 0, 0 },
-    { "DFU Mode    ", 'F', (void*)hardware_bootloader, 0, 0, 0 },
-    { "\0           ", 'V', 0, 0, 0 }
-};
-
 const settings_item menu_settings_bulb_mode[]PROGMEM =
 {
     { "Standard    ", 0, (void*)STR_BULB_MODE_0 },
@@ -339,21 +325,53 @@ const settings_item menu_settings_camera_fps[]PROGMEM =
     { "\0           ", 0, 0 }
 };
 
-const menu_item menu_settings[]PROGMEM =
+const menu_item menu_settings_system[]PROGMEM =
 {
-    { "System Info ", 'F', (void*)sysInfo, 0, 0, 0 },
     { "LCD Color   ", 'S', (void*)menu_settings_lcd_color, (void*)&conf.lcdColor, (void*)settings_update, 0 },
     { "LCD BL Time ", 'S', (void*)menu_settings_backlight_time, (void*)&conf.lcdBacklightTime, (void*)settings_update, 0 },
     { "PWR Auto Off", 'S', (void*)menu_settings_power_off_time, (void*)&conf.sysOffTime, (void*)settings_update, 0 },
     { "LED Auto Off", 'S', (void*)menu_settings_flashlight_time, (void*)&conf.flashlightOffTime, (void*)settings_update, 0 },
-    { "Bulb Mode   ", 'S', (void*)menu_settings_bulb_mode, (void*)&conf.bulbMode, (void*)settings_update, 0 },
-    { "Camera FPS  ", 'S', (void*)menu_settings_camera_fps, (void*)&conf.cameraFPS, (void*)settings_update, 0 },
+    { "\0           ", 'V', 0, 0, 0 }
+};
+
+const menu_item menu_settings_camera[]PROGMEM =
+{
     { "Camera Make ", 'S', (void*)menu_settings_camera_make, (void*)&conf.cameraMake, (void*)settings_update, 0 },
+    { "Camera FPS  ", 'S', (void*)menu_settings_camera_fps, (void*)&conf.cameraFPS, (void*)settings_update, 0 },
+    { "Bulb Mode   ", 'S', (void*)menu_settings_bulb_mode, (void*)&conf.bulbMode, (void*)settings_update, 0 },
     { "Bulb Offset ", 'C', (void*)&conf.bulbOffset, (void*)STR_BULB_OFFSET, (void*)settings_update, 0 },
+    { "Half press  ", 'S', (void*)menu_settings_half_press, (void*)&conf.halfPress, (void*)settings_update, 0 },
+    { "\0           ", 'V', 0, 0, 0 }
+};
+
+const menu_item menu_settings_auxiliary[]PROGMEM =
+{
     { "AUX Port    ", 'S', (void*)menu_settings_aux_port, (void*)&conf.auxPort, (void*)settings_update, 0 },
     { "BT Default  ", 'S', (void*)menu_settings_bt_default, (void*)&conf.btMode, (void*)settings_update, 0 },
-    { "Half press  ", 'S', (void*)menu_settings_half_press, (void*)&conf.halfPress, (void*)settings_update, 0 },
+    { "\0           ", 'V', 0, 0, 0 }
+};
+
+const menu_item menu_development[]PROGMEM =
+{
     { "Dev Mode LED", 'S', (void*)menu_settings_dev_mode, (void*)&conf.devMode, (void*)settings_update, 0 },
+    { "Shutter Test", 'F', (void*)shutterTest, 0, 0, (void*)&timerNotRunning },
+    { "Calc BOffset", 'F', (void*)shutterLagTest, 0, 0, (void*)&timerNotRunning },
+//    { "4 Hour Light", 'F', (void*)lightTest, 0, 0, (void*)&timerNotRunning },
+    { "Sys Status  ", 'F', (void*)sysStatus, 0, 0, 0 },
+    { "Battery     ", 'F', (void*)batteryStatus, 0, 0, 0 },
+    { "Light Meter ", 'F', (void*)lightMeter, 0, 0, 0 },
+//    { "BT Flood    ", 'F', (void*)btFloodTest, 0, 0, 0 },
+    { "Reset All   ", 'F', (void*)factoryReset, 0, 0, 0 },
+    { "DFU Mode    ", 'F', (void*)hardware_bootloader, 0, 0, 0 },
+    { "\0           ", 'V', 0, 0, 0 }
+};
+
+const menu_item menu_settings[]PROGMEM =
+{
+    { "System Info ", 'F', (void*)sysInfo, 0, 0, 0 },
+    { "System      ", 'M', (void*)menu_settings_system, 0, 0, 0 },
+    { "Camera      ", 'M', (void*)menu_settings_camera, 0, 0, 0 },
+    { "Auxiliary   ", 'M', (void*)menu_settings_auxiliary, 0, 0, 0 },
     { "Development ", 'M', (void*)menu_development, 0, 0, 0 },
     { "\0           ", 'V', 0, 0, 0, 0 }
 };
