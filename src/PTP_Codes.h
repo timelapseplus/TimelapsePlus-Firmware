@@ -34,6 +34,8 @@
 #define EOS_EC_WillShutdownSoon 0xC18D
 
 
+#define NIKON_OC_CAPTURE 0x90C0
+
 #define PTP_OC_CAPTURE 0x100E
 #define PTP_OC_PROPERTY_SET 0x1016
 #define PTP_OC_PROPERTY_GET 0x1015

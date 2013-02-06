@@ -1093,6 +1093,10 @@ uint8_t PTP::capture()
 	{
 		return PTP_Transaction(EOS_OC_CAPTURE, 0, 0, NULL, 0, NULL);
 	}
+	else if(PTP_protocol == PROTOCOL_NIKON)
+	{
+		return PTP_Transaction(NIKON_OC_CAPTURE, 0, 0, NULL, 0, NULL);
+	}
 	else
 	{
 		data[0] = 0x00000000;
