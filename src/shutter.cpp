@@ -641,7 +641,12 @@ char shutter::task()
                     while(bulb_length < camera.bulbTime((int8_t)camera.bulbMin()))
                     {
                         nextISO = camera.isoDown(iso);
-                        if(nextISO != iso)
+                        if(nextISO > 127) // Invalid setting
+                        {
+                            nextISO = iso;
+                            bulb_length = camera.bulbTime((int8_t)camera.bulbMin()); // Coerce to min as fallback
+                        }
+                        else if(nextISO != iso)
                         {
                             evShift -= iso - nextISO;
                             tmpShift -= iso - nextISO;
