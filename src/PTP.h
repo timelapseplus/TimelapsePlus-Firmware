@@ -11,7 +11,8 @@
 struct propertyDescription_t
 {
     char name[8];
-    uint8_t eos;
+    uint32_t eos;
+    uint32_t nikon;
     uint8_t ev; // 1/3 stop increments
 };
 
@@ -30,6 +31,7 @@ struct CameraSupports_t
     bool iso;
     bool shutter;
     bool aperture;
+    bool focus;
 };
 
 class PTP
@@ -45,7 +47,10 @@ public:
     uint8_t moveFocus(uint16_t step);
     uint8_t bulbStart(void);
     uint8_t bulbEnd(void);
-    uint8_t setParameter(uint16_t param, uint8_t value);
+    uint8_t setEosParameter(uint16_t param, uint32_t value);
+    uint8_t setPtpParameter(uint16_t param, uint32_t value);
+    uint8_t setPtpParameter(uint16_t param, uint16_t value);
+    uint8_t setPtpParameter(uint16_t param, uint8_t  value);
     
     uint8_t iso(void);
     uint8_t shutter(void);
@@ -88,15 +93,16 @@ public:
 private:
     uint32_t data[3];
 
-    static uint8_t isoEv(uint8_t id);
-    static uint8_t shutterEv(uint8_t id);
-    static uint8_t apertureEv(uint8_t id);
-    static uint8_t isoEvPTP(uint8_t ev);
-    static uint8_t shutterEvPTP(uint8_t ev);
-    static uint8_t apertureEvPTP(uint8_t ev);
+    static uint8_t isoEv(uint32_t id);
+    static uint8_t shutterEv(uint32_t id);
+    static uint8_t apertureEv(uint32_t id);
+    static uint32_t isoEvPTP(uint8_t ev);
+    static uint32_t shutterEvPTP(uint8_t ev);
+    static uint32_t apertureEvPTP(uint8_t ev);
 
 };
 
 void sendHex(char *hex);
 void sendByte(char byte);
 
+uint32_t pgm_read_u32(const uint32_t *addr);

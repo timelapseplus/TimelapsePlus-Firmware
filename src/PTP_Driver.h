@@ -74,7 +74,7 @@ void EVENT_USB_Host_DeviceUnattached(void);
 void EVENT_USB_Host_DeviceEnumerationFailed(const uint8_t ErrorCode,
                                             const uint8_t SubErrorCode);
 void EVENT_USB_Host_DeviceEnumerationComplete(void);
-uint8_t PTP_Transaction(uint16_t opCode, uint8_t mode, uint8_t paramCount, uint32_t *params);
+uint8_t PTP_Transaction(uint16_t opCode, uint8_t receive_data, uint8_t paramCount, uint32_t *params, uint8_t dataBytes, uint8_t *data);
 uint8_t PTP_FetchData(uint16_t offset);
 uint8_t PTP_OpenSession(void);
 uint8_t PTP_CloseSession(void);
@@ -85,6 +85,7 @@ void UnicodeToASCII(char *UnicodeString,
 extern char PTP_Buffer[PTP_BUFFER_SIZE];
 extern uint16_t PTP_Bytes_Received;
 extern char PTP_CameraModel[23];
+extern char PTP_CameraMake[23];
 extern uint8_t PTP_Ready, PTP_Connected;
 extern uint16_t PTP_Error;
 extern uint16_t supportedOperationsCount;

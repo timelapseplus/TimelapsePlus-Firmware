@@ -59,6 +59,7 @@ USB_ClassInfo_SI_Host_t DigitalCamera_SI_Interface =
 char PTP_Buffer[PTP_BUFFER_SIZE];
 uint16_t PTP_Bytes_Received, PTP_Bytes_Remaining;
 char PTP_CameraModel[23];
+char PTP_CameraMake[23];
 PIMA_Container_t PIMA_Block;
 uint8_t PTP_Ready, PTP_Connected, configured;
 uint16_t PTP_Error;
@@ -123,30 +124,30 @@ void PTP_Disable(void)
 }
 
 
-uint8_t PTP_Transaction(uint16_t opCode, uint8_t mode, uint8_t paramCount, uint32_t *params)
+uint8_t PTP_Transaction(uint16_t opCode, uint8_t receive_data, uint8_t paramCount, uint32_t *params, uint8_t dataBytes, uint8_t *data)
 {
     if(PTP_Error) return PTP_RETURN_ERROR;
     if(PTP_Bytes_Remaining > 0) return PTP_FetchData(0);
 
-    if(mode == 1)
-        SI_Host_SendCommand(&DigitalCamera_SI_Interface, CPU_TO_LE16(opCode), 0, NULL);
-    else
+    if(paramCount > 0 && params)
         SI_Host_SendCommand(&DigitalCamera_SI_Interface, CPU_TO_LE16(opCode), paramCount, params);
+    else
+        SI_Host_SendCommand(&DigitalCamera_SI_Interface, CPU_TO_LE16(opCode), 0, NULL);
 
-    if(mode == 1 && paramCount > 0 && params) // send data
+    if(dataBytes > 0 && data) // send data
     {
         DigitalCamera_SI_Interface.State.TransactionID--;
 
         PIMA_Block = (PIMA_Container_t)
         {
-            .DataLength = CPU_TO_LE32(PIMA_DATA_SIZE(sizeof(uint32_t) * paramCount)),
+            .DataLength = CPU_TO_LE32(PIMA_DATA_SIZE(dataBytes)),
             .Type = CPU_TO_LE16(PIMA_CONTAINER_DataBlock),
             .Code = CPU_TO_LE16(opCode)
         };
-        memcpy(&PIMA_Block.Params, params, sizeof(uint32_t) * paramCount);
+        memcpy(&PIMA_Block.Params, data, dataBytes);
         SI_Host_SendBlockHeader(&DigitalCamera_SI_Interface, &PIMA_Block);
     }
-    else if(mode == 2) // receive data
+    else if(receive_data) // receive data
     {
         PTP_Bytes_Received = 0;
         SI_Host_ReceiveBlockHeader(&DigitalCamera_SI_Interface, &PIMA_Block);
@@ -161,8 +162,6 @@ uint8_t PTP_Transaction(uint16_t opCode, uint8_t mode, uint8_t paramCount, uint3
             SI_Host_ReadData(&DigitalCamera_SI_Interface, PTP_Buffer, PTP_Bytes_Received);
             #ifdef PTP_DEBUG
 //            printf_P(PSTR("   Chunk Size: %d\r\n"), PTP_Bytes_Received);
-            #endif
-            #ifdef PTP_DEBUG
 //            printf_P(PSTR("   (Bytes PTP_Bytes_Remaining: %d)\r\n\r\n"), PTP_Bytes_Remaining);
             #endif
             return PTP_RETURN_DATA_REMAINING;
@@ -253,7 +252,7 @@ uint8_t PTP_CloseSession()
 
 uint8_t PTP_GetDeviceInfo()
 {
-    if(PTP_Transaction(PIMA_OPERATION_GETDEVICEINFO, 2, 0, NULL)) return PTP_RETURN_ERROR;
+    if(PTP_Transaction(PIMA_OPERATION_GETDEVICEINFO, 1, 0, NULL, 0, NULL)) return PTP_RETURN_ERROR;
     char *DeviceInfoPos = PTP_Buffer;
 
     /* Skip over the data before the unicode device information strings */
@@ -271,6 +270,7 @@ uint8_t PTP_GetDeviceInfo()
     /* Extract and convert the Manufacturer Unicode string to ASCII and print it through the USART */
     char Manufacturer[*DeviceInfoPos];
     UnicodeToASCII(DeviceInfoPos, Manufacturer);
+    strncpy(PTP_CameraMake, Manufacturer, 22);
     #ifdef PTP_DEBUG
     printf_P(PSTR("   Manufacturer: %s\r\n"), Manufacturer);
     #endif
@@ -282,7 +282,7 @@ uint8_t PTP_GetDeviceInfo()
     strncpy(PTP_CameraModel, Model, 22);
     for(uint8_t c = 0; c < 22; c++)
     {
-        if(strncmp(&PTP_CameraModel[c], "Mark", 4) == 0)
+        if(strncmp(&PTP_CameraModel[c], "Mark", 4) == 0) // Shorten "Mark" to "Mk"
         {
             for(uint8_t c2 = c + 1; c2 < 22; c2++)
             {
