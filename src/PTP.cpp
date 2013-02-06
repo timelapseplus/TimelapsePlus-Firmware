@@ -805,6 +805,7 @@ uint8_t PTP::moveFocus(uint16_t step)
 uint8_t PTP::checkEvent()
 {
 	if(ready == 0) return 0;
+	if(bulb_open) return 0; // Because the bulb is closed asynchronously (by the clock), this prevents collisions
 	uint8_t ret;
 	do {
 		ret = PTP_Transaction(EOS_OC_EVENT_GET, 2, 0, NULL);
