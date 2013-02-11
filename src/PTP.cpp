@@ -254,6 +254,32 @@ uint8_t PTP::isoMin() // 46
 	return 0;
 }
 
+uint8_t PTP::apertureMax() // 13
+{
+	if(apertureAvailCount > 0)
+	{
+		for(uint8_t i = 1; i <= apertureAvailCount; i++)
+		{
+			uint8_t tmp = apertureAvail[apertureAvailCount - i];
+			if(tmp > 0 && tmp < 128) return tmp;
+		}
+	}
+	return 0;
+}
+
+uint8_t PTP::apertureMin() // 2
+{
+	if(apertureAvailCount > 0)
+	{
+		for(uint8_t i = 0; i < apertureAvailCount; i++)
+		{
+			uint8_t tmp = apertureAvail[i];
+			if(tmp > 0 && tmp < 128) return tmp;
+		}
+	}
+	return 0;
+}
+
 uint8_t PTP::shutterMax() // 7
 {
 	return bulbMax();

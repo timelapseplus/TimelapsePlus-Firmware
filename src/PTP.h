@@ -75,6 +75,8 @@ public:
     static uint8_t bulbMin(void);
     static uint8_t isoMax(void);
     static uint8_t isoMin(void);
+    static uint8_t apertureMax(void);
+    static uint8_t apertureMin(void);
     static uint8_t shutterMax(void);
     static uint8_t shutterMin(void);
     static uint8_t isoUp(uint8_t ev);
