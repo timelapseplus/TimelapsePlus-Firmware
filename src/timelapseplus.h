@@ -8,9 +8,22 @@
  *
  */
 
-#define VERSION 20130203
-//#define PROTOTYPE
-//#define PRODUCTION
+#define VERSION 20130211
+
+
+#define TYPE_DEFAULT 0
+#define TYPE_PROTOTYPE 1
+#define TYPE_PRODUCTION 2
+
+#ifndef SYSTEM_TYPE
+ #define SYSTEM_TYPE TYPE_DEFAULT
+#endif
+
+#if SYSTEM_TYPE==TYPE_PROTOTYPE
+	#define PROTOTYPE
+#elif SYSTEM_TYPE==TYPE_PRODUCTION
+	#define PRODUCTION
+#endif
 
 #define NOTIFY_CHARGE 1
 #define NOTIFY_BT 2
