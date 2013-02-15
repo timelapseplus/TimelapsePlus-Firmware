@@ -1533,12 +1533,14 @@ volatile char usbPlug(char key, char first)
 	else if(key == UP_KEY)
 	{
 //		if(PTP_Ready) camera.moveFocus(1);
-		if(PTP_Ready) camera.setISO(camera.isoUp(camera.iso()));
+//		if(PTP_Ready) camera.setISO(camera.isoUp(camera.iso()));
+		if(PTP_Ready) camera.setShutter(camera.shutterUp(camera.shutter()));
 	}
 	else if(key == DOWN_KEY)
 	{
 //		if(PTP_Ready) camera.moveFocus(0x8001);
-		if(PTP_Ready) camera.setISO(camera.isoDown(camera.iso()));
+//		if(PTP_Ready) camera.setISO(camera.isoDown(camera.iso()));
+		if(PTP_Ready) camera.setShutter(camera.shutterDown(camera.shutter()));
 	}
 
 	return FN_CONTINUE;
@@ -2035,5 +2037,81 @@ volatile char shutter_rename(char key, char first)
 	}
 
 	return ret;
+}
+
+volatile char bramp_monitor(char key, char first)
+{
+	if(first)
+	{
+		lcd.cls();
+		menu.setBar(TEXT("RETURN"), BLANK_STR);
+
+		lcd.writeStringTiny(2, 1, TEXT("BULB RAMP"));
+
+		lcd.drawHighlight(0, 0, 53, 6);
+
+		// Outline //
+		lcd.drawLine(0, 0, 0, 47);
+		lcd.drawLine(0, 0, 83, 0);
+		lcd.drawLine(83, 0, 83, 47);
+		lcd.drawLine(0, 47, 83, 47);
+
+		// Grid //
+		lcd.drawLine(28, 7, 28, 15);
+		lcd.drawLine(1, 16, 53, 16);
+		lcd.drawLine(53, 7, 53, 41);
+		lcd.drawLine(61, 1, 61, 41);
+		lcd.drawLine(61, 20, 83, 20);
+		lcd.drawLine(61, 28, 83, 28);
+		lcd.drawLine(61, 29, 83, 29);
+
+		// Battery //
+		lcd.drawLine(30, 9, 30, 14);
+		lcd.drawLine(31, 8, 31, 14);
+		lcd.drawLine(32, 8, 32, 14);
+		lcd.drawLine(33, 9, 33, 14);
+
+		lcd.writeString(34, 8, TEXT("70%"));
+		lcd.writeString(1, 8, TEXT("+20"));
+
+		// Up/Down //
+		lcd.setPixel(23, 8);
+		lcd.drawLine(22, 9, 24, 9);
+		lcd.drawLine(21, 10, 25, 10);
+		lcd.drawLine(21, 12, 25, 12);
+		lcd.drawLine(22, 13, 24, 13);
+		lcd.setPixel(23, 14);
+
+		lcd.writeStringTiny(63, 2, TEXT("f5.6"));
+		lcd.writeStringTiny(63, 2+6, TEXT("41s"));
+		lcd.writeStringTiny(63, 2+12, TEXT("1600"));
+
+		lcd.writeStringTiny(63, 22, TEXT("+2.01"));
+
+		lcd.writeString(63, 32, TEXT("235"));
+
+		// Interval Bar //
+		lcd.drawLine(56, 7, 56, 41);
+		lcd.drawLine(57, 7, 57, 41);
+		lcd.drawLine(58, 7, 58, 41);
+
+		// Interval Position //
+		lcd.drawLine(54, 10, 54, 10+2);
+		lcd.drawLine(60, 10, 60, 10+2);
+		lcd.setPixel(55, 10+1);
+		lcd.setPixel(59, 10+1);
+
+		lcd.update();
+	}
+
+
+	if(key == FL_KEY)
+	{
+		return FN_CANCEL;
+	}
+	else
+	{
+		return FN_CONTINUE;
+	}
 }
 
