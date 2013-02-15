@@ -44,14 +44,18 @@ public:
     uint8_t close(void);
     uint8_t capture(void);
     uint8_t liveView(uint8_t on);
-    uint8_t moveFocus(uint16_t step);
+    uint8_t moveFocus(int16_t step);
     uint8_t bulbStart(void);
     uint8_t bulbEnd(void);
     uint8_t setEosParameter(uint16_t param, uint32_t value);
     uint8_t setPtpParameter(uint16_t param, uint32_t value);
     uint8_t setPtpParameter(uint16_t param, uint16_t value);
     uint8_t setPtpParameter(uint16_t param, uint8_t  value);
-    
+    uint8_t getPtpParameterList(uint16_t param, uint8_t *count, uint16_t *list, uint16_t *current);
+    uint8_t getPtpParameterList(uint16_t param, uint8_t *count, uint32_t *list, uint32_t *current);
+    uint8_t getPtpParameter(uint16_t param, uint16_t *value);
+    uint8_t updatePtpParameters(void);
+
     uint8_t iso(void);
     uint8_t shutter(void);
     uint8_t aperture(void);
@@ -107,4 +111,4 @@ private:
 void sendHex(char *hex);
 void sendByte(char byte);
 
-uint32_t pgm_read_u32(const uint32_t *addr);
+uint32_t pgm_read_u32(const void *addr);

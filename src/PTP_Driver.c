@@ -153,7 +153,7 @@ uint8_t PTP_Transaction(uint16_t opCode, uint8_t receive_data, uint8_t paramCoun
         SI_Host_ReceiveBlockHeader(&DigitalCamera_SI_Interface, &PIMA_Block);
         PTP_Bytes_Received = (PIMA_Block.DataLength - PIMA_COMMAND_SIZE(0));
         #ifdef PTP_DEBUG
-//        printf_P(PSTR("   Bytes received: %d\r\n\r\n"), PTP_Bytes_Received);
+        printf_P(PSTR("   Bytes received: %d\r\n\r\n"), PTP_Bytes_Received);
         #endif
         if(PTP_Bytes_Received > PTP_BUFFER_SIZE)
         {
@@ -169,7 +169,7 @@ uint8_t PTP_Transaction(uint16_t opCode, uint8_t receive_data, uint8_t paramCoun
         else
         {
             PTP_Bytes_Remaining = 0;
-            SI_Host_ReadData(&DigitalCamera_SI_Interface, PTP_Buffer, PTP_Bytes_Received);
+            if(PTP_Bytes_Received > 0) SI_Host_ReadData(&DigitalCamera_SI_Interface, PTP_Buffer, PTP_Bytes_Received);
         }
     }
 

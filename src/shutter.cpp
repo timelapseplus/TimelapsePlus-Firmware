@@ -207,7 +207,7 @@ void shutter::bulbStart(void)
 }
 void shutter_bulbStart(void)
 {
-#ifndef DEBUG_MODE
+    camera.bulbMode();
     if(cable_connected == 0 && ir_shutter_state != 1)
     {
         if(camera.supports.bulb)
@@ -219,7 +219,7 @@ void shutter_bulbStart(void)
             ir_shutter_state = 1;
             ir.bulbStart();
         }
-    } 
+    }
     if(conf.bulbMode == 0)
     {
         shutter_full();
@@ -233,7 +233,6 @@ void shutter_bulbStart(void)
         else
             clock.in(SHUTTER_PRESS_TIME, &shutter_half);
     }
-#endif
 }
 
 /******************************************************************
