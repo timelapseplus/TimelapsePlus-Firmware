@@ -249,6 +249,13 @@ int main()
 				   debug('E');
 				   break;
 
+			   case 'C': // Capture
+				   {
+			   	       debug(STR("Taking picture...\r\n"));
+			   	       timer.capture();
+					   break;
+				   }
+
 			   case 'M':
 			   	    debug(STR("REMOTE_MODEL: "));
 				    debug(remote.model);

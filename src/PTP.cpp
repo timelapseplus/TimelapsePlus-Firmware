@@ -1363,7 +1363,7 @@ uint8_t PTP::getPtpParameter(uint16_t param, uint16_t *value)
 uint8_t PTP::updatePtpParameters(void)
 {
 	PTP_need_update = 0;
-	if(PTP_protocol != PROTOCOL_EOS)
+	if(PTP_protocol == PROTOCOL_NIKON)
 	{
 		data[0] = (uint32_t)NIKON_DPC_ISO;
 		PTP_Transaction(PTP_OC_PROPERTY_LIST, 1, 1, data, 0, NULL);
@@ -1378,6 +1378,7 @@ uint8_t PTP::updatePtpParameters(void)
 			{
 				memcpy(&tmp16, &PTP_Buffer[12 + i * sizeof(uint16_t)], sizeof(uint16_t));
 				isoAvail[i] = PTP::isoEv((uint32_t)tmp16);
+				if(i > 32) break;
 			}
 		}
 
@@ -1394,6 +1395,7 @@ uint8_t PTP::updatePtpParameters(void)
 			{
 				memcpy(&tmp16, &PTP_Buffer[12 + i * sizeof(uint16_t)], sizeof(uint16_t));
 				apertureAvail[i] = PTP::apertureEv((uint32_t)tmp16);
+				if(i > 32) break;
 			}
 		}
 
@@ -1409,6 +1411,7 @@ uint8_t PTP::updatePtpParameters(void)
 				uint32_t tmp32;
 				memcpy(&tmp32, &PTP_Buffer[16 + i * sizeof(uint32_t)], sizeof(uint32_t));
 				shutterAvail[i] = PTP::shutterEv(tmp32);
+				if(i > 64) break;
 			}
 		}
 	}
