@@ -355,19 +355,22 @@ uint8_t PTP::isoDown(uint8_t ev)
 
 uint8_t PTP::shutterUp(uint8_t ev)
 {
-	for(uint8_t i = 0; i < shutterAvailCount; i++)
+	if(ev < 128)
 	{
-		if(shutterAvail[i] == ev + 1)
+		for(uint8_t i = 0; i < shutterAvailCount; i++)
 		{
-			return shutterAvail[i];
+			if(shutterAvail[i] == ev + 1)
+			{
+				return shutterAvail[i];
+			}
 		}
-	}
-	for(uint8_t i = 0; i < sizeof(Bulb_List) / sizeof(Bulb_List[0]); i++)
-	{
-		if(pgm_read_byte(&Bulb_List[i].ev) == ev + 1)
+		for(uint8_t i = 0; i < sizeof(Bulb_List) / sizeof(Bulb_List[0]); i++)
 		{
-			return pgm_read_byte(&Bulb_List[i].ev);
-		}
+			if(pgm_read_byte(&Bulb_List[i].ev) == ev + 1)
+			{
+				return pgm_read_byte(&Bulb_List[i].ev);
+			}
+		}	
 	}
 	if(PTP::shutterType(ev))
 	{
@@ -385,7 +388,7 @@ uint8_t PTP::shutterUp(uint8_t ev)
 		}
 		else
 		{
-			return pgm_read_byte(&Bulb_List[1].ev);
+			return pgm_read_byte(&Bulb_List[0].ev);
 		}
 	}
 }
@@ -661,7 +664,7 @@ uint8_t PTP::shutterType(uint8_t ev)
 	{
 		if(pgm_read_byte(&Bulb_List[i].ev) == ev)
 		{
-			ret |= SHUTTER_MODE_BULB;
+			if(ev < 128) ret |= SHUTTER_MODE_BULB;
 			break;
 		}
 	}
@@ -1151,6 +1154,7 @@ uint8_t PTP::close()
 
 uint8_t PTP::capture()
 {
+	if(!static_ready) return 0;
 	if(modePTP == 0x04 || preBulbShutter) manualMode();
 	busy = true;
 	if(PTP_protocol == PROTOCOL_EOS)
@@ -1206,6 +1210,7 @@ uint8_t PTP::manualMode()
 
 uint8_t PTP::bulbStart()
 {
+	if(!static_ready) return 0;
 	if(bulb_open) return 1;
 	bulb_open = true;
 	busy = true;
@@ -1224,6 +1229,7 @@ uint8_t PTP::bulbStart()
 
 uint8_t PTP::bulbEnd()
 {
+	if(!static_ready) return 0;
 	if(bulb_open == false) return 1;
 	busy = true;
 	if(PTP_protocol == PROTOCOL_EOS)
@@ -1363,14 +1369,15 @@ uint8_t PTP::updatePtpParameters(void)
 		PTP_Transaction(PTP_OC_PROPERTY_LIST, 1, 1, data, 0, NULL);
 		if(PTP_Bytes_Received > 10)
 		{
-			isoAvailCount = (uint8_t)PTP_Buffer[14];
+			isoAvailCount = (uint8_t)PTP_Buffer[10];
 			if(isoAvailCount > 0) supports.iso = true; else supports.iso = false;
-			memcpy(&isoPTP, &PTP_Buffer[9], sizeof(uint32_t));
+			uint16_t tmp16;
+			memcpy(&tmp16, &PTP_Buffer[7], sizeof(uint16_t));
+			isoPTP = tmp16;
 			for(uint8_t i = 0; i < isoAvailCount; i++)
 			{
-				uint32_t tmp32;
-				memcpy(&tmp32, &PTP_Buffer[16 + i * sizeof(uint32_t)], sizeof(uint32_t));
-				isoAvail[i] = PTP::isoEv(tmp32);
+				memcpy(&tmp16, &PTP_Buffer[12 + i * sizeof(uint16_t)], sizeof(uint16_t));
+				isoAvail[i] = PTP::isoEv((uint32_t)tmp16);
 			}
 		}
 
@@ -1378,14 +1385,15 @@ uint8_t PTP::updatePtpParameters(void)
 		PTP_Transaction(PTP_OC_PROPERTY_LIST, 1, 1, data, 0, NULL);
 		if(PTP_Bytes_Received > 10)
 		{
-			apertureAvailCount = (uint8_t)PTP_Buffer[14];
+			apertureAvailCount = (uint8_t)PTP_Buffer[10];
 			if(apertureAvailCount > 0) supports.aperture = true; else supports.aperture = false;
-			memcpy(&aperturePTP, &PTP_Buffer[9], sizeof(uint32_t));
+			uint16_t tmp16;
+			memcpy(&tmp16, &PTP_Buffer[7], sizeof(uint16_t));
+			aperturePTP = tmp16;
 			for(uint8_t i = 0; i < apertureAvailCount; i++)
 			{
-				uint32_t tmp32;
-				memcpy(&tmp32, &PTP_Buffer[16 + i * sizeof(uint32_t)], sizeof(uint32_t));
-				apertureAvail[i] = PTP::apertureEv(tmp32);
+				memcpy(&tmp16, &PTP_Buffer[12 + i * sizeof(uint16_t)], sizeof(uint16_t));
+				apertureAvail[i] = PTP::apertureEv((uint32_t)tmp16);
 			}
 		}
 
