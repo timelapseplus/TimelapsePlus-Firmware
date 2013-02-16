@@ -12,8 +12,21 @@
 
 #define BT_MODE_SLEEP 0
 #define BT_MODE_DISCOVERABLE 1
+
 #define HALF_PRESS_ENABLED 0
 #define HALF_PRESS_DISABLED 1
+
+#define INTERFACE_AUTO      0b111
+#define INTERFACE_USB_CABLE 0b101
+#define INTERFACE_USB       0b100
+#define INTERFACE_IR        0b010
+#define INTERFACE_CABLE     0b001
+
+#define BRAMP_MODE_ALL      0b111
+#define BRAMP_MODE_BULB_ISO 0b011
+#define BRAMP_MODE_ISO      0b010
+#define BRAMP_MODE_APERTURE 0b100
+#define BRAMP_MODE_BULB     0b001
 
 struct settings
 {
@@ -35,8 +48,8 @@ struct settings
     char btMode;
     char halfPress;
     uint16_t bulbOffset;
-    char test0;
-    char test1;
+    uint8_t brampMode;
+    uint8_t interface;
     char test2;
     char test3;
     char test4;

@@ -177,6 +177,11 @@ int main()
 
     if(conf.firmwareVersion != VERSION)
     {
+    	if(conf.firmwareVersion <= 20120212)
+    	{
+    		conf.interface = INTERFACE_AUTO;
+		    conf.brampMode = BRAMP_MODE_ALL;
+    	}
         conf.firmwareVersion = VERSION;
         settings_save();
         menu.spawn((void*)firmwareUpdated);

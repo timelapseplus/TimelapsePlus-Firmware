@@ -299,6 +299,30 @@ const settings_item menu_settings_half_press[]PROGMEM =
     { "\0           ", 0, 0 }
 };
 
+const char STR_INTERFACE[]PROGMEM = "Camera Interface";
+
+const settings_item menu_settings_interface[]PROGMEM =
+{
+    { "Auto        ", INTERFACE_AUTO, (void*)STR_INTERFACE },
+    { "USB + Cable ", INTERFACE_USB_CABLE, (void*)STR_INTERFACE },
+    { "USB Only    ", INTERFACE_USB, (void*)STR_INTERFACE },
+    { "Cable Only  ", INTERFACE_IR, (void*)STR_INTERFACE },
+    { "IR Only     ", INTERFACE_CABLE, (void*)STR_INTERFACE },
+    { "\0           ", 0, 0 }
+};
+
+const char STR_BRAMP_ALL[]PROGMEM = "Bulb Aperture ISO";
+const char STR_BRAMP_BULB_ISO[]PROGMEM = "Bulb and ISO only";
+const char STR_BRAMP_BULB[]PROGMEM = "Only ramp bulb";
+
+const settings_item menu_settings_bramp_mode[]PROGMEM =
+{
+    { "Bulb,A,ISO  ", BRAMP_MODE_ALL, (void*)STR_BRAMP_ALL },
+    { "Bulb, ISO   ", BRAMP_MODE_BULB_ISO, (void*)STR_BRAMP_BULB_ISO },
+    { "Bulb only   ", BRAMP_MODE_BULB, (void*)STR_BRAMP_BULB },
+    { "\0           ", 0, 0 }
+};
+
 const settings_item menu_settings_flashlight_time[]PROGMEM =
 {
     { "10 Minutes  ", 60, (void*)STR_FLASHLIGHT_TIME },
@@ -341,6 +365,8 @@ const menu_item menu_settings_camera[]PROGMEM =
     { "Bulb Mode   ", 'S', (void*)menu_settings_bulb_mode, (void*)&conf.bulbMode, (void*)settings_update, 0 },
     { "Bulb Offset ", 'C', (void*)&conf.bulbOffset, (void*)STR_BULB_OFFSET, (void*)settings_update, 0 },
     { "Half press  ", 'S', (void*)menu_settings_half_press, (void*)&conf.halfPress, (void*)settings_update, 0 },
+    { "Interface   ", 'S', (void*)menu_settings_interface, (void*)&conf.interface, (void*)settings_update, 0 },
+    { "Bramp Mode  ", 'S', (void*)menu_settings_bramp_mode, (void*)&conf.brampMode, (void*)settings_update, 0 },
     { "\0           ", 'V', 0, 0, 0 }
 };
 

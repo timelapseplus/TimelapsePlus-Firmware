@@ -292,23 +292,28 @@ void shutter::capture(void)
 }
 void shutter_capture(void)
 {
-#ifndef DEBUG_MODE    
-    shutter_full();
-    clock.in(SHUTTER_PRESS_TIME, &shutter_off);
-    ir_shutter_state = 0;
-    shutter_state = 0;
-    if(cable_connected == 0)
+    if(conf.interface & (INTERFACE_CABLE | INTERFACE_USB))
     {
-        if(camera.supports.capture)
+        shutter_full();
+        clock.in(SHUTTER_PRESS_TIME, &shutter_off);
+        ir_shutter_state = 0;
+        shutter_state = 0;
+        if(cable_connected == 0)
         {
-            camera.capture();
+            if(camera.supports.capture)
+            {
+                camera.capture();
+            }
+            else
+            {
+                if(conf.interface & INTERFACE_IR) ir.shutterNow();
+            }
         }
-        else
-        {
-            ir.shutterNow();
-        }
-    } 
-#endif
+    }
+    else if(conf.interface == INTERFACE_IR)
+    {
+        ir.shutterNow();
+    }
 }
 
 /******************************************************************
@@ -534,8 +539,8 @@ char shutter::task()
             }
             strcpy((char *) status.textStatus, TEXT("Bulb"));
 
-            exp = camera.bulbTime((int8_t)current.Exp);
             m = camera.shutterType(current.Exp);
+            if(m & SHUTTER_MODE_BULB) exp = camera.bulbTime((int8_t)current.Exp);
 
             if(current.Mode & RAMP)
             {
@@ -616,129 +621,146 @@ char shutter::task()
                     uint8_t iso = camera.iso();
                     uint8_t nextISO = iso;
 
-                    // Check for too long bulb time and adjust Aperture //
-                    while(bulb_length > BulbMax)
+                    if(conf.brampMode & BRAMP_MODE_APERTURE)
                     {
-                        nextAperture = camera.apertureDown(aperture);
-                        if(nextAperture != aperture)
+                        // Check for too long bulb time and adjust Aperture //
+                        while(bulb_length > BulbMax)
                         {
-                            evShift += nextAperture - aperture;
-                            tmpShift += nextAperture - aperture;
-                            aperture = nextAperture;
+                            nextAperture = camera.apertureDown(aperture);
+                            if(nextAperture != aperture)
+                            {
+                                evShift += nextAperture - aperture;
+                                tmpShift += nextAperture - aperture;
+                                aperture = nextAperture;
 
-                            debug(STR("   Aperture UP:"));
-                            debug(evShift);
-                            debug(STR("   Aperture Val:"));
-                            debug(nextAperture);
-                        }
-                        else
-                        {
-                            debug(STR("   Reached Aperture Max!!!\r\n"));
-                            break;
-                        }
-                        debug(STR("   Done!\r\n\r\n"));
-                        bulb_length = camera.shiftBulb(exp, tmpShift);
-                    }
-
-                    // Check for too long bulb time and adjust ISO //
-                    while(bulb_length > BulbMax)
-                    {
-                        nextISO = camera.isoUp(iso);
-                        if(nextISO != iso)
-                        {
-                            evShift += nextISO - iso;
-                            tmpShift += nextISO - iso;
-                            iso = nextISO;
-
-                            debug(STR("   ISO UP:"));
-                            debug(evShift);
-                            debug(STR("   ISO Val:"));
-                            debug(nextISO);
-                        }
-                        else
-                        {
-                            debug(STR("   Reached ISO Max!!!\r\n"));
-                            break;
-                        }
-                        debug(STR("   Done!\r\n\r\n"));
-                        bulb_length = camera.shiftBulb(exp, tmpShift);
-                    }
-
-                    // Check for too short bulb time and adjust Aperture //
-                    while(bulb_length < camera.bulbTime((int8_t)camera.bulbMin()))
-                    {
-                        nextAperture = camera.apertureUp(aperture);
-                        if(nextAperture > 127) // Invalid setting
-                        {
-                            nextAperture = aperture;
-                            bulb_length = camera.bulbTime((int8_t)camera.bulbMin()); // Coerce to min as fallback
-                        }
-                        else if(nextAperture != aperture)
-                        {
-                            evShift -= aperture - nextAperture;
-                            tmpShift -= aperture - nextAperture;
-
-                            debug(STR("   Aperture DOWN:"));
-                            debug(evShift);
-                            debug(STR("   Aperture Val:"));
-                            debug(nextAperture);
-                        }
-                        else
-                        {
-                            debug(STR("   Reached Aperture Min!!!\r\n"));
-                            break;
-                        }
-                        debug(STR("   Done!\r\n\r\n"));
-                        bulb_length = camera.shiftBulb(exp, tmpShift);
-                    }
-
-                    // Check for too short bulb time and adjust ISO //
-                    while(bulb_length < camera.bulbTime((int8_t)camera.bulbMin()))
-                    {
-                        nextISO = camera.isoDown(iso);
-                        if(nextISO > 127) // Invalid setting
-                        {
-                            nextISO = iso;
-                            bulb_length = camera.bulbTime((int8_t)camera.bulbMin()); // Coerce to min as fallback
-                        }
-                        else if(nextISO != iso)
-                        {
-                            evShift -= iso - nextISO;
-                            tmpShift -= iso - nextISO;
-
-                            debug(STR("   ISO DOWN:"));
-                            debug(evShift);
-                            debug(STR("   ISO Val:"));
-                            debug(nextISO);
-                        }
-                        else
-                        {
-                            debug(STR("   Reached ISO Min!!!\r\n"));
-                            break;
-                        }
-                        debug(STR("   Done!\r\n\r\n"));
-                        bulb_length = camera.shiftBulb(exp, tmpShift);
-                    }
-
-                    // Change the Aperture //
-                    shutter_off_quick();
-                    if(camera.aperture() != nextAperture)
-                    {
-                        if(camera.setAperture(nextAperture) == PTP_RETURN_ERROR)
-                        {
-                            run_state = RUN_ERROR;
-                            return CONTINUE;
+                                debug(STR("   Aperture UP:"));
+                                debug(evShift);
+                                debug(STR("   Aperture Val:"));
+                                debug(nextAperture);
+                            }
+                            else
+                            {
+                                debug(STR("   Reached Aperture Max!!!\r\n"));
+                                break;
+                            }
+                            debug(STR("   Done!\r\n\r\n"));
+                            bulb_length = camera.shiftBulb(exp, tmpShift);
                         }
                     }
 
-                    // Change the ISO //
-                    shutter_off_quick();
-                    if(camera.iso() != nextISO)
+                    if(conf.brampMode & BRAMP_MODE_ISO)
                     {
-                        if(camera.setISO(nextISO) == PTP_RETURN_ERROR)
+                        // Check for too long bulb time and adjust ISO //
+                        while(bulb_length > BulbMax)
                         {
-                            run_state = RUN_ERROR;
-                            return CONTINUE;
+                            nextISO = camera.isoUp(iso);
+                            if(nextISO != iso)
+                            {
+                                evShift += nextISO - iso;
+                                tmpShift += nextISO - iso;
+                                iso = nextISO;
+
+                                debug(STR("   ISO UP:"));
+                                debug(evShift);
+                                debug(STR("   ISO Val:"));
+                                debug(nextISO);
+                            }
+                            else
+                            {
+                                debug(STR("   Reached ISO Max!!!\r\n"));
+                                break;
+                            }
+                            debug(STR("   Done!\r\n\r\n"));
+                            bulb_length = camera.shiftBulb(exp, tmpShift);
+                        }
+                    }
+
+                    if(conf.brampMode & BRAMP_MODE_APERTURE)
+                    {
+                        // Check for too short bulb time and adjust Aperture //
+                        while(bulb_length < camera.bulbTime((int8_t)camera.bulbMin()))
+                        {
+                            nextAperture = camera.apertureUp(aperture);
+                            if(nextAperture > 127) // Invalid setting
+                            {
+                                nextAperture = aperture;
+                                bulb_length = camera.bulbTime((int8_t)camera.bulbMin()); // Coerce to min as fallback
+                            }
+                            else if(nextAperture != aperture)
+                            {
+                                evShift -= aperture - nextAperture;
+                                tmpShift -= aperture - nextAperture;
+
+                                debug(STR("   Aperture DOWN:"));
+                                debug(evShift);
+                                debug(STR("   Aperture Val:"));
+                                debug(nextAperture);
+                            }
+                            else
+                            {
+                                debug(STR("   Reached Aperture Min!!!\r\n"));
+                                break;
+                            }
+                            debug(STR("   Done!\r\n\r\n"));
+                            bulb_length = camera.shiftBulb(exp, tmpShift);
+                        }
+                    }
+
+                    if(conf.brampMode & BRAMP_MODE_ISO)
+                    {
+                        // Check for too short bulb time and adjust ISO //
+                        while(bulb_length < camera.bulbTime((int8_t)camera.bulbMin()))
+                        {
+                            nextISO = camera.isoDown(iso);
+                            if(nextISO > 127) // Invalid setting
+                            {
+                                nextISO = iso;
+                                bulb_length = camera.bulbTime((int8_t)camera.bulbMin()); // Coerce to min as fallback
+                            }
+                            else if(nextISO != iso)
+                            {
+                                evShift -= iso - nextISO;
+                                tmpShift -= iso - nextISO;
+
+                                debug(STR("   ISO DOWN:"));
+                                debug(evShift);
+                                debug(STR("   ISO Val:"));
+                                debug(nextISO);
+                            }
+                            else
+                            {
+                                debug(STR("   Reached ISO Min!!!\r\n"));
+                                break;
+                            }
+                            debug(STR("   Done!\r\n\r\n"));
+                            bulb_length = camera.shiftBulb(exp, tmpShift);
+                        }
+                    }
+
+                    if(conf.brampMode & BRAMP_MODE_APERTURE)
+                    {
+                        // Change the Aperture //
+                        shutter_off_quick();
+                        if(camera.aperture() != nextAperture)
+                        {
+                            if(camera.setAperture(nextAperture) == PTP_RETURN_ERROR)
+                            {
+                                run_state = RUN_ERROR;
+                                return CONTINUE;
+                            }
+                        }
+                    }
+                    if(conf.brampMode & BRAMP_MODE_ISO)
+                    {
+                        // Change the ISO //
+                        shutter_off_quick();
+                        if(camera.iso() != nextISO)
+                        {
+                            if(camera.setISO(nextISO) == PTP_RETURN_ERROR)
+                            {
+                                run_state = RUN_ERROR;
+                                return CONTINUE;
+                            }
                         }
                     }
                 }
@@ -841,14 +863,15 @@ char shutter::task()
                 }
             }
 
-            if(m & SHUTTER_MODE_PTP)
+            if(m & SHUTTER_MODE_BULB)
             {
-                camera.capture();
-                //clock.job(0, 0, bulb_length);
+                //debug(STR("Running BULB\r\n"));
+                clock.job(&shutter_bulbStart, &shutter_bulbEnd, bulb_length + conf.bulbOffset);
             }
             else
             {
-                clock.job(&shutter_bulbStart, &shutter_bulbEnd, bulb_length + conf.bulbOffset);
+                //debug(STR("Running Capture\r\n"));
+                shutter_capture();
             }
         }
         else if(!clock.jobRunning && !camera.busy)
@@ -861,6 +884,11 @@ char shutter::task()
                 shutter_half(); // Mirror Up //
 
             run_state = RUN_NEXT;
+        }
+        else
+        {
+            //if(clock.jobRunning) debug(STR("Waiting on clock  "));
+            //if(camera.busy) debug(STR("Waiting on camera  "));
         }
     }
     
@@ -1105,9 +1133,17 @@ uint8_t stopUp(uint8_t stop)
 
     if(ev < 30*3) ev++; else ev = 30*3;
 
+    int8_t bulbRange = 0;
+    int8_t isoRange = 0;
+    int8_t apertureRange = 0;
+
+    if(conf.brampMode & BRAMP_MODE_BULB) bulbRange = (int8_t)timer.current.BulbStart - (int8_t)BulbMaxEv;
+    if(conf.brampMode & BRAMP_MODE_ISO) isoRange = (int8_t)camera.iso() - (int8_t)camera.isoMax();
+    if(conf.brampMode & BRAMP_MODE_APERTURE) apertureRange = (int8_t)camera.aperture() - (int8_t)camera.apertureMin();
+
 //                                             36                                                                                                                   25
 //                              46                          10                        18                           2                               47                      22
-    int8_t evMax = ((int8_t)camera.iso() - (int8_t)camera.isoMax()) + ((int8_t)camera.aperture() - (int8_t)camera.apertureMin()) + ((int8_t)timer.current.BulbStart - (int8_t)BulbMaxEv);
+    int8_t evMax = isoRange + apertureRange + bulbRange;
 
     debug(STR("evMax: "));
     debug(evMax);
@@ -1122,7 +1158,16 @@ uint8_t stopDown(uint8_t stop)
 
     if(ev > -30*3) ev--; else ev = -30*3;
 
-    int8_t evMin = 0 - ((int8_t)camera.isoMin() - (int8_t)camera.iso() + ((int8_t)camera.apertureMax() - (int8_t)camera.aperture()) + (camera.bulbMin() - (int8_t)timer.current.BulbStart));
+    int8_t bulbRange = 0;
+    int8_t isoRange = 0;
+    int8_t apertureRange = 0;
+
+    if(conf.brampMode & BRAMP_MODE_BULB) bulbRange = (int8_t)camera.bulbMin() - (int8_t)timer.current.BulbStart;
+    if(conf.brampMode & BRAMP_MODE_ISO) isoRange = (int8_t)camera.isoMin() - (int8_t)camera.iso();
+    if(conf.brampMode & BRAMP_MODE_APERTURE) apertureRange = (int8_t)camera.apertureMax() - (int8_t)camera.aperture();
+
+    int8_t evMin = 0 - (isoRange + apertureRange + bulbRange);
+
 //    int8_t evMin = 0 - ((int8_t)camera.isoMin() - (int8_t)camera.iso() + (camera.bulbMin() - (int8_t)timer.current.BulbStart));
 
     debug(STR("evMin: "));
