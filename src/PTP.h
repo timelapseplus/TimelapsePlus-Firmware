@@ -55,6 +55,7 @@ public:
     uint8_t getPtpParameterList(uint16_t param, uint8_t *count, uint32_t *list, uint32_t *current);
     uint8_t getPtpParameter(uint16_t param, uint16_t *value);
     uint8_t updatePtpParameters(void);
+    uint8_t getThumb(uint32_t handle);
 
     uint8_t iso(void);
     uint8_t shutter(void);
