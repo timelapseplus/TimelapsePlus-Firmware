@@ -273,6 +273,7 @@ CPPFLAGS += -fno-exceptions
 CPPFLAGS += -Wall
 CPPFLAGS += -Wundef
 CPPFLAGS += -Werror
+CPPFLAGS += -fno-strict-aliasing
 #CPPFLAGS += -mshort-calls
 #CPPFLAGS += -fno-unit-at-a-time
 #CPPFLAGS += -Wstrict-prototypes

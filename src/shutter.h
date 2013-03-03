@@ -31,6 +31,12 @@
 #define MODE_BULB_RAMP (RAMP | TIMELAPSE)
 #define MODE_HDR_RAMP (RAMP | HDR | TIMELAPSE)
 
+#define BRAMP_METHOD_KEYFRAME 0
+#define BRAMP_METHOD_GUIDED 1
+#define BRAMP_METHOD_AUTO 2
+
+#define BRAMP_INTERVAL_MIN 70
+
 #define MAX_KEYFRAMES 5
 
 #define DISABLE_SHUTTER setIn(SHUTTER_FULL_PIN);  _delay_ms(50); setLow(SHUTTER_FULL_PIN)
@@ -57,7 +63,7 @@
 //#define CHECK_CABLE if(getPin(CHECK_CABLE_PIN) || getPin(SHUTTER_SENSE_PIN)) cable_connected = 1; else cable_connected = 0
 #define CHECK_CABLE if(getPin(CHECK_CABLE_PIN)) cable_connected = 1; else cable_connected = 0
 
-#define SHUTTER_VERSION 20130124
+#define SHUTTER_VERSION 20130302
 
 struct program
 {
@@ -70,10 +76,12 @@ struct program
     unsigned int Exps;        // 2 bytes
     unsigned int Exp;         // 2 bytes
     unsigned int Bracket;     // 2 bytes
-    unsigned int BulbStart;   // 20 bytes
+    unsigned int BulbStart;   // 2 bytes
     unsigned int Bulb[10];    // 20 bytes
     unsigned int Key[10];     // 20 bytes
     unsigned int Keyframes;   // 2 bytes
+    unsigned int brampMethod; // 2 bytes
+    unsigned int Integration; // 2 bytes
     uint8_t infinitePhotos;   // 1 byte  
 };
 
@@ -85,6 +93,10 @@ struct timer_status
     unsigned int photosRemaining;
     unsigned int nextPhoto;
     uint8_t infinitePhotos;
+    float rampStops;
+    uint16_t bulbLength;
+    int8_t rampMax;
+    int8_t rampMin;
 };
 
 extern program stored[MAX_STORED]EEMEM;
@@ -115,6 +127,10 @@ public:
     volatile char running;  // 0 = not running, 1 = running (shutter closed), 2 = running (shutter open)
     volatile int8_t currentId;
     volatile uint16_t length; // in Seconds
+    volatile int8_t rampRate;
+    volatile uint32_t last_photo_ms;
+    volatile float lightReading;
+    volatile float lightStart;
 
 private:
     double test;
@@ -144,5 +160,9 @@ uint8_t hdrExpsUp(uint8_t hdr_exps);
 uint8_t hdrExpsDown(uint8_t hdr_exps);
 uint8_t hdrExpsName(char name[8], uint8_t hdr_exps);
 void calcBulbMax(void);
+int8_t calcRampMax();
+int8_t calcRampMin();
+uint8_t rampTvUp(uint8_t ev);
+uint8_t rampTvDown(uint8_t ev);
 #endif
 

@@ -170,11 +170,11 @@ const bulbSettings_t Bulb_List[] PROGMEM = {
     {"    1/6", 157, 51 },
     {"    1/5", 198, 50 },
     {"    1/4", 250, 49 },
-    {"    0.3", 315, 48 },
-    {"    0.4", 397, 47 },
-    {"    0.5", 500, 46 },
-    {"    0.6", 630, 45 },
-    {"    0.8", 794, 44 },
+    {"   0.3s", 315, 48 },
+    {"   0.4s", 397, 47 },
+    {"   0.5s", 500, 46 },
+    {"   0.6s", 630, 45 },
+    {"   0.8s", 794, 44 },
     {"     1s", 1000, 43 },
     {"   1.3s", 1260, 42 },
     {"   1.6s", 1587, 41 },
@@ -658,6 +658,24 @@ uint8_t PTP::shutterName(char name[8], uint8_t ev)
 	for(uint8_t i = 0; i < sizeof(Bulb_List) / sizeof(Bulb_List[0]); i++)
 	{
 		if(pgm_read_byte(&Bulb_List[i].ev) == ev)
+		{
+			if(name)
+			{
+				for(uint8_t b = 0; b < 8; b++) name[b] = pgm_read_byte(&Bulb_List[i].name[b]);
+			}
+			return 2;
+		}
+	}
+	return 0;
+}
+
+uint8_t PTP::bulbName(char name[8], uint16_t bulb_time)
+{
+	name[0] = '\0';
+	if(bulb_time == 0) return 0;
+	for(uint8_t i = 0; i < sizeof(Bulb_List) / sizeof(Bulb_List[0]); i++)
+	{
+		if(pgm_read_word(&Bulb_List[i].ms) >= bulb_time)
 		{
 			if(name)
 			{

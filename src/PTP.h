@@ -74,6 +74,7 @@ public:
     static uint8_t isoName(char name[8], uint8_t ev);
     static uint8_t apertureName(char name[8], uint8_t ev);
     static uint8_t shutterName(char name[8], uint8_t ev);
+    static uint8_t bulbName(char name[8], uint16_t bulb_time);
     static uint8_t shutterType(uint8_t ev);
 
     static uint8_t bulbMax(void);

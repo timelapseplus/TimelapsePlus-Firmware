@@ -41,9 +41,6 @@
 #include "notify.h"
 #include "PTP.h"
 
-unsigned char I2C_Buf[4];
-#define I2C_ADDR  0b1000100
-
 char system_tested EEMEM;
 
 extern volatile uint8_t showGap;
@@ -62,6 +59,9 @@ extern volatile uint8_t bulb3;
 extern volatile uint8_t bulb4;
 extern volatile uint8_t showRemoteStart;
 extern volatile uint8_t showRemoteInfo;
+extern volatile uint8_t brampKeyframe;
+extern volatile uint8_t brampGuided;
+extern volatile uint8_t brampAuto;
 
 volatile uint8_t connectUSBcamera = 0;
 
@@ -193,7 +193,6 @@ int main()
 
     }
 
-	timer.current.Keyframes = 1;
 	uint16_t count = 0;
 
 	notify.watch(NOTIFY_CHARGE, (void *)&charge_status, sizeof(charge_status), &message_notify);
@@ -269,8 +268,22 @@ int main()
 				   bt.init();
 				   break;
 
+			   case 'I':
+			   	   hardware_light_start();
+			   	   hardware_light_set_range(0);
+			   	   debug(STR("Light Sensor INIT\r\n"));
+				   break;
+
 			   case 'L':
-				   readLightTest();
+			   	   debug(STR("Raw: "));
+			   	   debug(hardware_light_read_raw());
+				   debug_nl();
+			   	   debug(STR("Lux: "));
+			   	   debug(hardware_light_read_lux());
+				   debug_nl();
+			   	   debug(STR("Ev: "));
+			   	   debug(hardware_light_read_ev());
+				   debug_nl();
 				   break;
 
 			   case 'S': // Screen dump

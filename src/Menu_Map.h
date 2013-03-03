@@ -54,6 +54,10 @@ const char STR_HALF_PRESS[]PROGMEM = "Shutter half press";
 
 const char STR_BULB_OFFSET[]PROGMEM = "Offset in ms";
 
+const char STR_BRAMP_METHOD_KEYFRAME[]PROGMEM = "Keyframe based";
+const char STR_BRAMP_METHOD_GUIDED[]PROGMEM = "Manually Guided";
+const char STR_BRAMP_METHOD_AUTO[]PROGMEM = "Based on Light";
+const char STR_AUTO_BRAMP_INTEGRATION[]PROGMEM = "Light Average";
 
 const menu_item menu_options[]PROGMEM =
 {
@@ -79,9 +83,27 @@ const settings_item settings_timer_mode[]PROGMEM =
     { "HDR Photo   ", MODE_HDR_PHOTO, (void*)STR_HDR_PHOTO },
     { "Bulb Photo  ", MODE_BULB_PHOTO, (void*)STR_BULB_PHOTO },
     { "Bulb-ramp   ", MODE_BULB_RAMP, (void*)STR_BULB_RAMP },
-//  {"Auto-ramp   ", MODE_AUTO_RAMP, (void *) STR_AUTO_RAMP},
-//  {"HDR Ramp    ", MODE_HDR_RAMP, (void *) STR_HDR_RAMP},
-//  {"Auto HDRRamp", MODE_AUTO_HDR_RAMP, (void *) STR_AUTO_HDR_RAMP},
+//  { "HDR Ramp    ", MODE_HDR_RAMP, (void *) STR_HDR_RAMP},
+    { "\0           ", 0, 0 }
+};
+
+
+const settings_item settings_bramp_method[]PROGMEM =
+{
+    { "Keyframe    ", BRAMP_METHOD_KEYFRAME, (void*)STR_BRAMP_METHOD_KEYFRAME },
+    { "Guided      ", BRAMP_METHOD_GUIDED, (void*)STR_BRAMP_METHOD_GUIDED },
+    { "Automatic   ", BRAMP_METHOD_AUTO, (void *) STR_BRAMP_METHOD_AUTO},
+    { "\0           ", 0, 0 }
+};
+
+const settings_item settings_auto_bramp_integration[]PROGMEM =
+{
+    { "10 Minutes  ", 10, (void*)STR_AUTO_BRAMP_INTEGRATION },
+    { "15 Minutes  ", 15, (void*)STR_AUTO_BRAMP_INTEGRATION },
+    { "20 Minutes  ", 20, (void*)STR_AUTO_BRAMP_INTEGRATION },
+    { "30 Minutes  ", 30, (void*)STR_AUTO_BRAMP_INTEGRATION },
+    { "45 Minutes  ", 45, (void*)STR_AUTO_BRAMP_INTEGRATION },
+    { "60 Minutes  ", 60, (void*)STR_AUTO_BRAMP_INTEGRATION },
     { "\0           ", 0, 0 }
 };
 
@@ -130,8 +152,8 @@ const dynamicItem_t dyn_stops PROGMEM =
 
 const dynamicItem_t dyn_bulb PROGMEM =
 {
-    (void*)PTP::bulbUp,
-    (void*)PTP::bulbDown,
+    (void*)rampTvUp,
+    (void*)rampTvDown,
     (void*)PTP::shutterName,
     (void*)STR_TV
 };
@@ -163,6 +185,7 @@ const dynamicItem_t dyn_hdr_exps PROGMEM =
 const menu_item menu_timelapse[]PROGMEM =
 {
     { "Mode       *", 'S', (void*)settings_timer_mode, (void*)&timer.current.Mode, 0, 0 },
+    { "Method     *", 'S', (void*)settings_bramp_method, (void*)&timer.current.brampMethod, 0, (void*)&modeRamp },
     { "Delay      T", 'E', (void*)&timer.current.Delay, (void*)STR_TIME, 0, 0 },
     { "Length     T", 'E', (void*)&timer.current.Duration, (void*)STR_TIME, 0, (void*)&modeRamp },
     { "Frames     U", 'E', (void*)&timer.current.Photos, (void*)STR_PHOTOS, 0, (void*)&modeNoRamp },
@@ -172,8 +195,9 @@ const menu_item menu_timelapse[]PROGMEM =
     { "Tv         +", 'D', (void*)&dyn_tv,            (void*)&timer.current.Exp, 0, (void*)&modeStandard },
     { "Bracket    +", 'D', (void*)&dyn_bracket,            (void*)&timer.current.Bracket, 0, (void*)&modeHDR },
     { "StartTv    +", 'D', (void*)&dyn_bulb, (void*)&timer.current.BulbStart, 0, (void*)&modeRamp },
-    { "-By        T", 'E', (void*)&timer.current.Key[0], (void*)STR_TIME_SINCE_START, 0, (void*)&modeRamp },
-    { "  Ramp     +", 'D', (void*)&dyn_stops, (void*)&timer.current.Bulb[0], 0, (void*)&modeRamp },
+    { "Integration ", 'S', (void*)settings_auto_bramp_integration, (void*)&timer.current.Integration, 0, (void*)&brampAuto },
+    { "-By        T", 'E', (void*)&timer.current.Key[0], (void*)STR_TIME_SINCE_START, 0, (void*)&brampKeyframe },
+    { "  Ramp     +", 'D', (void*)&dyn_stops, (void*)&timer.current.Bulb[0], 0, (void*)&brampKeyframe },
     { "-By        T", 'E', (void*)&timer.current.Key[1], (void*)STR_TIME_SINCE_START, 0, (void*)&bulb1 },
     { "  Ramp     +", 'D', (void*)&dyn_stops, (void*)&timer.current.Bulb[1], 0, (void*)&bulb1 },
     { "-By        T", 'E', (void*)&timer.current.Key[2], (void*)STR_TIME_SINCE_START, 0, (void*)&bulb2 },

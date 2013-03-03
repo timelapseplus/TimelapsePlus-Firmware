@@ -102,13 +102,15 @@ void shutter::setDefault()
     current.Gap = 20;
     current.Exps = 3;
     current.Mode = MODE_TIMELAPSE;
-    current.Exp = 40;
+    current.Exp = 46;
     current.Bracket = 6;
     current.Keyframes = 1;
     current.Duration = 3600;
-    current.BulbStart = 47;
+    current.BulbStart = 53;
     current.Bulb[0] = 36;
     current.Key[0] = 3600;
+    current.brampMethod = BRAMP_METHOD_KEYFRAME;
+    current.Integration = 30;
     save(0);
 
     uint8_t i;
@@ -404,7 +406,7 @@ char shutter::task()
     static uint8_t enter, exps, run_state = RUN_DELAY, old_state = 255;
     static int8_t evShift;
     static uint16_t photos;
-    static uint32_t last_photo_ms, last_photo_end_ms;
+    static uint32_t last_photo_end_ms;
 
     if(MIRROR_IS_DOWN)
     {
@@ -428,10 +430,16 @@ char shutter::task()
         exps = 0;
         if(current.Mode & RAMP)
         {
+            hardware_light_start();
             uint32_t tmp = (uint32_t)current.Duration * 10;
             tmp /= (uint32_t) current.Gap;
             current.Photos = (uint16_t) tmp;
             calcBulbMax();
+            status.rampMax = calcRampMax();
+            status.rampMin = calcRampMin();
+            rampRate = 0;
+            status.rampStops = 0;
+            lightReading = lightStart = hardware_light_read_integrated_ev(current.Integration);
         }
         if(conf.devMode)
         {
@@ -550,63 +558,103 @@ char shutter::task()
                 m = SHUTTER_MODE_BULB;
                 shutter_off();
 
-                // Bulb ramp algorithm goes here
-                for(i = 0; i < current.Keyframes; i++)
+
+                if(current.brampMethod == BRAMP_METHOD_KEYFRAME) //////////////////////////////// KEYFRAME RAMP /////////////////////////////////////
                 {
-                    if(clock.Seconds() <= current.Key[i])
+                    // Bulb ramp algorithm goes here
+                    for(i = 0; i < current.Keyframes; i++)
                     {
-                        found = 1;
-                        if(i == 0)
+                        if(clock.Seconds() <= current.Key[i])
                         {
-                            key2 = key1 = (float)(current.BulbStart);
+                            found = 1;
+                            if(i == 0)
+                            {
+                                key2 = key1 = (float)(current.BulbStart);
+                            }
+                            else if(i == 1)
+                            {
+                                key1 = (float)(current.BulbStart);
+                                key2 = (float)((int8_t)current.BulbStart - *((int8_t*)&current.Bulb[i - 1]));
+                            }
+                            else
+                            {
+                                key1 = (float)((int8_t)current.BulbStart - *((int8_t*)&current.Bulb[i - 2]));
+                                key2 = (float)((int8_t)current.BulbStart - *((int8_t*)&current.Bulb[i - 1]));
+                            }
+                            key3 = (float)((int8_t)current.BulbStart - *((int8_t*)&current.Bulb[i]));
+                            key4 = (float)((int8_t)current.BulbStart - *((int8_t*)&current.Bulb[i < (current.Keyframes - 1) ? i + 1 : i]));
+                            break;
                         }
-                        else if(i == 1)
-                        {
-                            key1 = (float)(current.BulbStart);
-                            key2 = (float)((int8_t)current.BulbStart - *((int8_t*)&current.Bulb[i - 1]));
-                        }
-                        else
-                        {
-                            key1 = (float)((int8_t)current.BulbStart - *((int8_t*)&current.Bulb[i - 2]));
-                            key2 = (float)((int8_t)current.BulbStart - *((int8_t*)&current.Bulb[i - 1]));
-                        }
-                        key3 = (float)((int8_t)current.BulbStart - *((int8_t*)&current.Bulb[i]));
-                        key4 = (float)((int8_t)current.BulbStart - *((int8_t*)&current.Bulb[i < (current.Keyframes - 1) ? i + 1 : i]));
-                        break;
+                    }
+                    
+                    if(found)
+                    {
+                        uint32_t var1 = clock.Seconds();
+                        uint32_t var2 = (i > 0 ? current.Key[i - 1] : 0);
+                        uint32_t var3 = current.Key[i];
+
+                        float t = (float)(var1 - var2) / (float)(var3 - var2);
+                        float curveEv = curve(key1, key2, key3, key4, t);
+                        status.rampStops = (float)current.BulbStart - curveEv;
+                        exp = camera.bulbTime(curveEv - (float)evShift);
+                        debug(STR("   Keyframe: "));
+                        debug(i);
+                        debug_nl();
+                        debug(STR("    Percent: "));
+                        debug(t);
+                        debug_nl();
+                        debug(STR("    CurveEv: "));
+                        debug(curveEv);
+                        debug_nl();
+                        debug(STR("CorrectedEv: "));
+                        debug(curveEv - (float)evShift);
+                        debug_nl();
+                        debug(STR("   Exp (ms): "));
+                        debug(exp);
+                        debug_nl();
+                        debug(STR("    evShift: "));
+                        debug(evShift);
+                        debug_nl();
+                    }
+                    else
+                    {
+                        status.rampStops = (float)((int8_t)(current.BulbStart - (current.BulbStart - *((int8_t*)&current.Bulb[current.Keyframes - 1]))));
+                        exp = camera.bulbTime((int8_t)(current.BulbStart - *((int8_t*)&current.Bulb[current.Keyframes - 1]) - (float)evShift));
                     }
                 }
-                
-                if(found)
+                else if(current.brampMethod == BRAMP_METHOD_GUIDED) //////////////////////////////// GUIDED RAMP /////////////////////////////////////
                 {
-                    uint32_t var1 = clock.Seconds();
-                    uint32_t var2 = (i > 0 ? current.Key[i - 1] : 0);
-                    uint32_t var3 = current.Key[i];
-
-                    float t = (float)(var1 - var2) / (float)(var3 - var2);
-                    float curveEv = curve(key1, key2, key3, key4, t);
-                    exp = camera.bulbTime(curveEv - (float)evShift);
-                    debug(STR("   Keyframe: "));
-                    debug(i);
-                    debug_nl();
-                    debug(STR("    Percent: "));
-                    debug(t);
-                    debug_nl();
-                    debug(STR("    CurveEv: "));
-                    debug(curveEv);
-                    debug_nl();
-                    debug(STR("CorrectedEv: "));
-                    debug(curveEv - (float)evShift);
-                    debug_nl();
-                    debug(STR("   Exp (ms): "));
-                    debug(exp);
-                    debug_nl();
-                    debug(STR("    evShift: "));
-                    debug(evShift);
-                    debug_nl();
+                    status.rampStops += ((float)rampRate / 1800.0) * ((float)current.Gap / 10.0);
+                    if(status.rampStops >= status.rampMax)
+                    {
+                        rampRate = 0;
+                        status.rampStops = status.rampMax;
+                    }
+                    else if(status.rampStops <= status.rampMin)
+                    {
+                        rampRate = 0;
+                        status.rampStops = status.rampMin;
+                    }
+                    exp = camera.bulbTime(current.BulbStart - status.rampStops - (float)evShift);
                 }
-                else
+                else if(current.brampMethod == BRAMP_METHOD_AUTO) //////////////////////////////// AUTO RAMP /////////////////////////////////////
                 {
-                    exp = camera.bulbTime((int8_t)(current.BulbStart - *((int8_t*)&current.Bulb[current.Keyframes - 1]) - (float)evShift));
+                    status.rampStops = (lightStart - lightReading);
+                    debug(STR("     lightStart: "));
+                    debug(lightStart);
+                    debug_nl();
+                    debug(STR("   lightReading: "));
+                    debug(lightReading);
+                    debug_nl();
+                    if(status.rampStops >= status.rampMax)
+                    {
+                        status.rampStops = status.rampMax;
+                    }
+                    else if(status.rampStops <= status.rampMin)
+                    {
+                        status.rampStops = status.rampMin;
+                    }
+                    exp = camera.bulbTime(current.BulbStart - status.rampStops - (float)evShift);
                 }
 
                 bulb_length = exp;
@@ -643,9 +691,9 @@ char shutter::task()
                                 debug(STR("   Reached Aperture Max!!!\r\n"));
                                 break;
                             }
-                            debug(STR("   Done!\r\n\r\n"));
                             bulb_length = camera.shiftBulb(exp, tmpShift);
                         }
+                        debug(STR("   Done!\r\n\r\n"));
                     }
 
                     if(conf.brampMode & BRAMP_MODE_ISO)
@@ -670,9 +718,9 @@ char shutter::task()
                                 debug(STR("   Reached ISO Max!!!\r\n"));
                                 break;
                             }
-                            debug(STR("   Done!\r\n\r\n"));
                             bulb_length = camera.shiftBulb(exp, tmpShift);
                         }
+                        debug(STR("   Done!\r\n\r\n"));
                     }
 
                     if(conf.brampMode & BRAMP_MODE_APERTURE)
@@ -701,9 +749,9 @@ char shutter::task()
                                 debug(STR("   Reached Aperture Min!!!\r\n"));
                                 break;
                             }
-                            debug(STR("   Done!\r\n\r\n"));
                             bulb_length = camera.shiftBulb(exp, tmpShift);
                         }
+                        debug(STR("   Done!\r\n\r\n"));
                     }
 
                     if(conf.brampMode & BRAMP_MODE_ISO)
@@ -732,15 +780,15 @@ char shutter::task()
                                 debug(STR("   Reached ISO Min!!!\r\n"));
                                 break;
                             }
-                            debug(STR("   Done!\r\n\r\n"));
                             bulb_length = camera.shiftBulb(exp, tmpShift);
                         }
+                        debug(STR("   Done!\r\n\r\n"));
                     }
 
+                    shutter_off_quick(); // Can't change parameters when half-pressed
                     if(conf.brampMode & BRAMP_MODE_APERTURE)
                     {
                         // Change the Aperture //
-                        shutter_off_quick();
                         if(camera.aperture() != nextAperture)
                         {
                             if(camera.setAperture(nextAperture) == PTP_RETURN_ERROR)
@@ -753,7 +801,6 @@ char shutter::task()
                     if(conf.brampMode & BRAMP_MODE_ISO)
                     {
                         // Change the ISO //
-                        shutter_off_quick();
                         if(camera.iso() != nextISO)
                         {
                             if(camera.setISO(nextISO) == PTP_RETURN_ERROR)
@@ -775,10 +822,7 @@ char shutter::task()
                     debug_nl();
                     debug(STR("BulbLength: "));
                     debug((uint16_t)bulb_length);
-
-                    if(found) 
-                        debug(STR(" (calculated)"));
-                    
+                    if(found) debug(STR(" (calculated)"));
                     debug_nl();
 
                     /*
@@ -803,9 +847,6 @@ char shutter::task()
 
             if(current.Mode & HDR)
             {
-                //uint32_t tmp = (exps - (current.Exps >> 1)) * current.Bracket;
-                //bulb_length = (tmp < (2^32/2)) ? exp * (1 << tmp) : exp / (1 << (0 - tmp));
-
                 uint8_t tv_offset = ((current.Exps - 1) / 2) * current.Bracket - exps * current.Bracket;
                 if(current.Mode & RAMP)
                 {
@@ -863,6 +904,8 @@ char shutter::task()
                 }
             }
 
+            status.bulbLength = bulb_length;
+
             if(m & SHUTTER_MODE_BULB)
             {
                 //debug(STR("Running BULB\r\n"));
@@ -877,6 +920,8 @@ char shutter::task()
         else if(!clock.jobRunning && !camera.busy)
         {
             exps++;
+
+            lightReading = hardware_light_read_integrated_ev(0);
 
             _delay_ms(50);
 
@@ -985,8 +1030,9 @@ char shutter::task()
         camera.bulbEnd();
 
         hardware_flashlight((uint8_t) clock.Seconds() % 2);
+        hardware_light_stop();
 
-        return RUN_ERROR;
+        return CONTINUE;
     }
 
     if(run_state == RUN_END)
@@ -1007,6 +1053,7 @@ char shutter::task()
         shutter_off();
         camera.bulbEnd();
         hardware_flashlight(0);
+        hardware_light_stop();
 
         return DONE;
     }
@@ -1129,9 +1176,27 @@ uint8_t stopUp(uint8_t stop)
 {
     int8_t ev = *((int8_t*)&stop);
 
-    calcBulbMax();
+    int8_t evMax = calcRampMax();
 
     if(ev < 30*3) ev++; else ev = 30*3;
+
+    if(ev <= evMax) return ev; else return evMax;
+}
+
+uint8_t stopDown(uint8_t stop)
+{
+    int8_t ev = *((int8_t*)&stop);
+
+    int8_t evMin = calcRampMin();
+
+    if(ev > -30*3) ev--; else ev = -30*3;
+
+    if(ev >= evMin) return ev; else return evMin;
+}
+
+int8_t calcRampMax()
+{
+    calcBulbMax();
 
     int8_t bulbRange = 0;
     int8_t isoRange = 0;
@@ -1141,23 +1206,11 @@ uint8_t stopUp(uint8_t stop)
     if(conf.brampMode & BRAMP_MODE_ISO) isoRange = (int8_t)camera.iso() - (int8_t)camera.isoMax();
     if(conf.brampMode & BRAMP_MODE_APERTURE) apertureRange = (int8_t)camera.aperture() - (int8_t)camera.apertureMin();
 
-//                                             36                                                                                                                   25
-//                              46                          10                        18                           2                               47                      22
-    int8_t evMax = isoRange + apertureRange + bulbRange;
-
-    debug(STR("evMax: "));
-    debug(evMax);
-    debug_nl();
-
-    if(ev <= evMax) return ev; else return evMax;
+    return isoRange + apertureRange + bulbRange;
 }
 
-uint8_t stopDown(uint8_t stop)
+int8_t calcRampMin()
 {
-    int8_t ev = *((int8_t*)&stop);
-
-    if(ev > -30*3) ev--; else ev = -30*3;
-
     int8_t bulbRange = 0;
     int8_t isoRange = 0;
     int8_t apertureRange = 0;
@@ -1166,15 +1219,7 @@ uint8_t stopDown(uint8_t stop)
     if(conf.brampMode & BRAMP_MODE_ISO) isoRange = (int8_t)camera.isoMin() - (int8_t)camera.iso();
     if(conf.brampMode & BRAMP_MODE_APERTURE) apertureRange = (int8_t)camera.apertureMax() - (int8_t)camera.aperture();
 
-    int8_t evMin = 0 - (isoRange + apertureRange + bulbRange);
-
-//    int8_t evMin = 0 - ((int8_t)camera.isoMin() - (int8_t)camera.iso() + (camera.bulbMin() - (int8_t)timer.current.BulbStart));
-
-    debug(STR("evMin: "));
-    debug(evMin);
-    debug_nl();
-
-    if(ev >= evMin) return ev; else return evMin;
+    return 0 - (isoRange + apertureRange + bulbRange);
 }
 
 uint8_t checkHDR(uint8_t exps, uint8_t mid, uint8_t bracket)
@@ -1333,5 +1378,21 @@ uint8_t hdrExpsName(char name[8], uint8_t hdr_exps)
 
     return 1;
 }
+
+uint8_t rampTvUp(uint8_t ev)
+{
+    uint8_t tmp = PTP::bulbUp(ev);
+    if(tmp > camera.bulbMin()) tmp = camera.bulbMin();
+    return tmp;
+}
+
+uint8_t rampTvDown(uint8_t ev)
+{
+    calcBulbMax();
+    uint8_t tmp = PTP::bulbDown(ev);
+    if(tmp < BulbMaxEv) tmp = BulbMaxEv;
+    return tmp;
+}
+
 
 

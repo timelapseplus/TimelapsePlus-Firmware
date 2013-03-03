@@ -45,6 +45,9 @@ volatile uint8_t bulb3 = 0;
 volatile uint8_t bulb4 = 0;
 volatile uint8_t showRemoteStart = 0;
 volatile uint8_t showRemoteInfo = 0;
+volatile uint8_t brampKeyframe = 0;
+volatile uint8_t brampGuided = 0;
+volatile uint8_t brampAuto = 0;
 
 extern uint8_t battery_percent;
 extern settings conf;
@@ -83,16 +86,24 @@ void updateConditions()
 	modeStandard = (!modeHDR && !modeRamp);
 	modeRamp = (timer.current.Mode & RAMP);
 	modeNoRamp = !modeRamp && modeTimelapse;
-	modeRampKeyAdd = (modeRamp && (timer.current.Keyframes < MAX_KEYFRAMES));
-	modeRampKeyDel = (modeRamp && (timer.current.Keyframes > 1));
-	bulb1 = timer.current.Keyframes > 1 && modeRamp;
-	bulb2 = timer.current.Keyframes > 2 && modeRamp;
-	bulb3 = timer.current.Keyframes > 3 && modeRamp;
-	bulb4 = timer.current.Keyframes > 4 && modeRamp;
+	brampAuto = timer.current.brampMethod == BRAMP_METHOD_AUTO && modeRamp;
+	brampGuided = timer.current.brampMethod == BRAMP_METHOD_GUIDED && modeRamp;
+	brampKeyframe = timer.current.brampMethod == BRAMP_METHOD_KEYFRAME && modeRamp;
+	modeRampKeyAdd = (brampKeyframe && (timer.current.Keyframes < MAX_KEYFRAMES));
+	modeRampKeyDel = (brampKeyframe && (timer.current.Keyframes > 1));
+	bulb1 = timer.current.Keyframes > 1 && brampKeyframe;
+	bulb2 = timer.current.Keyframes > 2 && brampKeyframe;
+	bulb3 = timer.current.Keyframes > 3 && brampKeyframe;
+	bulb4 = timer.current.Keyframes > 4 && brampKeyframe;
 	showGap = timer.current.Photos != 1 && modeTimelapse;
 	showRemoteStart = (remote.connected && !remote.running && remote.model == REMOTE_MODEL_TLP);	
 	showRemoteInfo = (remote.connected && (remote.model == REMOTE_MODEL_TLP || remote.model == REMOTE_MODEL_IPHONE));
 	clock.sleepOk = timerNotRunning && !timer.cableIsConnected() && bt.state != BT_ST_CONNECTED && sleepOk;
+	if(modeRamp && timer.current.Gap < BRAMP_INTERVAL_MIN)
+	{
+		timer.current.Gap = BRAMP_INTERVAL_MIN;
+		menu.refresh();
+	}
 }
 
 /******************************************************************
@@ -772,33 +783,41 @@ volatile char sysStatus(char key, char first)
 volatile char timerStatus(char key, char first)
 {
 	static uint8_t counter;
-	if(first)
+
+	if(modeRamp)
 	{
-		counter = 0;
+		return bramp_monitor(key, first);
 	}
-
-	if(counter++ > 3)
+	else
 	{
-		counter = 0;
-		lcd.cls();
+		if(first)
+		{
+			counter = 0;
+		}
 
-		displayTimerStatus(0);
+		if(counter++ > 3)
+		{
+			counter = 0;
+			lcd.cls();
 
-		menu.setTitle(TEXT("Running"));
-		menu.setBar(TEXT(""), TEXT("STOP"));
-		lcd.update();
+			displayTimerStatus(0);
+
+			menu.setTitle(TEXT("Running"));
+			menu.setBar(TEXT(""), TEXT("STOP"));
+			lcd.update();
+		}
+
+		if(!timer.running) return FN_CANCEL;
+
+		if(key == FR_KEY)
+		{
+			menu.push();
+			menu.spawn((void*)timerStop);
+			return FN_JUMP;
+		}
+
+		return FN_CONTINUE;
 	}
-
-	if(!timer.running) return FN_CANCEL;
-
-	if(key == FR_KEY)
-	{
-		menu.push();
-		menu.spawn((void*)timerStop);
-		return FN_JUMP;
-	}
-
-	return FN_CONTINUE;
 }
 
 /******************************************************************
@@ -2041,10 +2060,20 @@ volatile char shutter_rename(char key, char first)
 
 volatile char bramp_monitor(char key, char first)
 {
+	#define CHART_Y_TOP (18 + 1)
+	#define CHART_Y_BOTTOM (39 - 1)
+	#define CHART_Y_SPAN (CHART_Y_BOTTOM - CHART_Y_TOP)
+	#define CHART_X_TOP 2
+	#define CHART_X_BOTTOM 51 + 1
+	#define CHART_X_SPAN (CHART_X_BOTTOM - CHART_X_TOP)
+
+    static uint8_t rampHistory[CHART_X_SPAN], skip_message = 0;
+	char buf[8];
+	first = 1;
+	uint8_t waiting = strcmp(timer.status.textStatus, STR("Delay")) == 0;
 	if(first)
 	{
 		lcd.cls();
-		menu.setBar(TEXT("RETURN"), BLANK_STR);
 
 		lcd.writeStringTiny(2, 1, TEXT("BULB RAMP"));
 
@@ -2071,47 +2100,323 @@ volatile char bramp_monitor(char key, char first)
 		lcd.drawLine(32, 8, 32, 14);
 		lcd.drawLine(33, 9, 33, 14);
 
-		lcd.writeString(34, 8, TEXT("70%"));
-		lcd.writeString(1, 8, TEXT("+20"));
+		int16_t b = (uint16_t)battery_percent;
+		if(b > 99) b = 99;
+		buf[1] = b % 10 + '0';
+		b /= 10;
+		buf[0] = b % 10 + '0';
+		buf[2] = '%';
+		buf[3] = '\0';
+		lcd.writeString(34, 8, buf); // Battery Level
 
-		// Up/Down //
-		lcd.setPixel(23, 8);
-		lcd.drawLine(22, 9, 24, 9);
-		lcd.drawLine(21, 10, 25, 10);
-		lcd.drawLine(21, 12, 25, 12);
-		lcd.drawLine(22, 13, 24, 13);
-		lcd.setPixel(23, 14);
+		if(timer.current.brampMethod == BRAMP_METHOD_GUIDED)
+		{
+			b = (int16_t)timer.rampRate;
+			if(b > 99) b = 99;
+			if(b < -99) b = -99;
 
-		lcd.writeStringTiny(63, 2, TEXT("f5.6"));
-		lcd.writeStringTiny(63, 2+6, TEXT("41s"));
-		lcd.writeStringTiny(63, 2+12, TEXT("1600"));
+			if(b > 0)
+			{
+				buf[0] = '+';
+			}
+			else if(b < 0)
+			{
+				b = 0 - b;
+				buf[0] = '-';
+			}
+			else
+			{
+				buf[0] = ' ';
+			}
 
-		lcd.writeStringTiny(63, 22, TEXT("+2.01"));
+			buf[2] = '0' + b % 10;
+			b /= 10;
+			buf[1] = '0' + b;
+			if(buf[1] == '0') buf[1] = ' ';
+			buf[3] = '\0';
 
-		lcd.writeString(63, 32, TEXT("235"));
+			lcd.writeString(1, 8, buf); // Current Bramp Rate (stops/hour)
+
+			// Up/Down //
+			if(timer.status.rampStops < timer.status.rampMax || timer.rampRate < 0)
+			{
+				lcd.setPixel(23, 8);
+				lcd.drawLine(22, 9, 24, 9);
+				lcd.drawLine(21, 10, 25, 10);
+			}
+			if(timer.status.rampStops > timer.status.rampMin || timer.rampRate > 0)
+			{
+				lcd.drawLine(21, 12, 25, 12);
+				lcd.drawLine(22, 13, 24, 13);
+				lcd.setPixel(23, 14);
+			}
+		}
+		else if(timer.current.brampMethod == BRAMP_METHOD_KEYFRAME)
+		{
+			lcd.writeString(1, 8, STR("KeyF"));
+		}
+		else if(timer.current.brampMethod == BRAMP_METHOD_AUTO)
+		{
+			lcd.writeString(1, 8, STR("Auto"));
+		}
+
+		if(camera.supports.aperture)
+		{
+			camera.apertureName(buf, camera.aperture());
+			for(b = 0; b < (int16_t)sizeof(buf); b++)
+			{
+				if(buf[b] == 'f')
+				{
+					buf[b + 1] = 'f';
+					break;
+				}
+			}
+			lcd.writeStringTiny(63, 2, &buf[b + 1]); // Aperture
+		}
+		if(camera.supports.iso)
+		{
+			camera.isoName(buf, camera.iso());
+			lcd.writeStringTiny(63, 2+12, &buf[2]); // ISO
+		}
+
+		camera.bulbName(buf, timer.status.bulbLength);
+		lcd.writeStringTiny(63, 2+6, &buf[3]); // Bulb Length
+
+		float f = timer.status.rampStops;
+		if(f > 0.0)
+		{
+			buf[0] = '+';
+		}
+		else if(f < 0.0)
+		{
+			f = 0.0 - f;
+			buf[0] = '-';
+		}
+		else
+		{
+			buf[0] = ' ';
+		}
+		b = (uint16_t) (f * 10.0 / 3.0);
+		if(b > 999) b = 999;
+		if(b < -999) b = -999;
+		buf[4] = '0' + b % 10;
+		b /= 10;
+		buf[3] = '.';
+		buf[2] = '0' + b % 10;
+		b /= 10;
+		buf[1] = '0' + b % 10;
+		buf[5] = '\0';
+		lcd.writeStringTiny(63, 22, buf); // Ramp Stops from start
+
+		b = timer.status.photosTaken;
+		if(b > 999) b = 999;
+		buf[2] = '0' + b % 10;
+		b /= 10;
+		buf[1] = '0' + b % 10;
+		b /= 10;
+		buf[0] = '0' + b % 10;
+		buf[3] = '\0';
+		lcd.writeString(63, 32, buf); // Photos Taken
 
 		// Interval Bar //
-		lcd.drawLine(56, 7, 56, 41);
-		lcd.drawLine(57, 7, 57, 41);
-		lcd.drawLine(58, 7, 58, 41);
+		#define INT_BAR_TOP 1
+		#define INT_BAR_BOTTOM 40
+		#define INT_BAR_SPAN (INT_BAR_BOTTOM - INT_BAR_TOP)
+
+		uint8_t top = INT_BAR_BOTTOM - (uint8_t)((float)INT_BAR_SPAN / ((float)timer.current.Gap / (float)(timer.status.bulbLength / 100))); // Exposure Bar
+
+		lcd.drawLine(56, top, 56, 41);
+		lcd.drawLine(57, top, 57, 41);
+		lcd.drawLine(58, top, 58, 41);
 
 		// Interval Position //
-		lcd.drawLine(54, 10, 54, 10+2);
-		lcd.drawLine(60, 10, 60, 10+2);
-		lcd.setPixel(55, 10+1);
-		lcd.setPixel(59, 10+1);
+		top = INT_BAR_BOTTOM - (uint8_t)((float)INT_BAR_SPAN / ((float)timer.current.Gap / (float)((clock.Ms() - timer.last_photo_ms) / 100))); // Position Markers
+
+		if(timer.running)
+		{
+			lcd.drawLine(54, top, 54, top+2);
+			lcd.drawLine(60, top, 60, top+2);
+			lcd.setPixel(55, top+1);
+			lcd.setPixel(59, top+1);
+			lcd.xorPixel(57, top+1);
+		}
+
+
+
+		// Plot Chart //
+		if(timer.current.brampMethod == BRAMP_METHOD_KEYFRAME)
+		{
+			for(uint8_t x = 0; x < CHART_X_SPAN; x++)
+			{
+				uint16_t s = (uint16_t)(((float)timer.current.Duration / (float)CHART_X_SPAN) * (float)x);
+	            float key1 = 1, key2 = 1, key3 = 1, key4 = 1;
+	            char found = 0;
+	            uint8_t i;
+
+	            for(i = 0; i < timer.current.Keyframes; i++)
+	            {
+	                if(s <= timer.current.Key[i])
+	                {
+	                    found = 1;
+	                    if(i == 0)
+	                    {
+	                        key2 = key1 = (float)(timer.current.BulbStart);
+	                    }
+	                    else if(i == 1)
+	                    {
+	                        key1 = (float)(timer.current.BulbStart);
+	                        key2 = (float)((int8_t)timer.current.BulbStart - *((int8_t*)&timer.current.Bulb[i - 1]));
+	                    }
+	                    else
+	                    {
+	                        key1 = (float)((int8_t)timer.current.BulbStart - *((int8_t*)&timer.current.Bulb[i - 2]));
+	                        key2 = (float)((int8_t)timer.current.BulbStart - *((int8_t*)&timer.current.Bulb[i - 1]));
+	                    }
+	                    key3 = (float)((int8_t)timer.current.BulbStart - *((int8_t*)&timer.current.Bulb[i]));
+	                    key4 = (float)((int8_t)timer.current.BulbStart - *((int8_t*)&timer.current.Bulb[i < (timer.current.Keyframes - 1) ? i + 1 : i]));
+	                    break;
+	                }
+	            }
+	            
+	            if(found)
+	            {
+	                uint32_t var1 = s;
+	                uint32_t var2 = (i > 0 ? timer.current.Key[i - 1] : 0);
+	                uint32_t var3 = timer.current.Key[i];
+
+	                float t = (float)(var1 - var2) / (float)(var3 - var2);
+	                float curveEv = curve(key1, key2, key3, key4, t);
+	                key1 = (float)timer.current.BulbStart - curveEv;
+	            }
+	            else
+	            {
+	                key1 = (float)((int8_t)(timer.current.BulbStart - (timer.current.BulbStart - *((int8_t*)&timer.current.Bulb[timer.current.Keyframes - 1]))));
+	            }
+
+	            int8_t y = ((((float)key1 - (float)timer.status.rampMin) / (float)(timer.status.rampMax - timer.status.rampMin)) * (float)CHART_Y_SPAN);
+
+				if(y >= 0 && y <= CHART_Y_SPAN) lcd.setPixel(x + CHART_X_TOP, CHART_Y_SPAN + CHART_Y_TOP - y);
+			}
+		}
+		else if(timer.current.brampMethod == BRAMP_METHOD_GUIDED)
+		{
+			uint8_t x = 0;
+			uint16_t s, completedS = 0;
+			
+			if(!waiting)
+			{
+				for(x = 0; x < CHART_X_SPAN; x++)
+				{
+					s = (uint16_t)(((float)timer.current.Duration / (float)CHART_X_SPAN) * (float)x);
+
+					if(s >= clock.Seconds()) rampHistory[x] = ((((float)timer.status.rampStops - (float)timer.status.rampMin) / (float)(timer.status.rampMax - timer.status.rampMin)) * (float)CHART_Y_SPAN);
+
+		            lcd.setPixel(x + CHART_X_TOP, CHART_Y_SPAN + CHART_Y_TOP - rampHistory[x]);
+					
+					if(s >= clock.Seconds()) break; 
+				}
+				completedS = s;
+			}
+			for(x++; x < CHART_X_SPAN; x++)
+			{
+				s = (uint16_t)(((float)timer.current.Duration / (float)CHART_X_SPAN) * (float)x);
+
+				s -= completedS;
+
+				float futureRamp = timer.status.rampStops + ((float)timer.rampRate / 1800.0) * (float)s;
+
+				int16_t y = ((((float)futureRamp - (float)timer.status.rampMin) / (float)(timer.status.rampMax - timer.status.rampMin)) * (float)CHART_Y_SPAN);
+
+				if(y < 0) y = 0;
+				if(y > CHART_Y_SPAN) y = CHART_Y_SPAN;
+
+				lcd.setPixel(x + CHART_X_TOP, CHART_Y_SPAN + CHART_Y_TOP - y);
+			}
+		}
+		else if(timer.current.brampMethod == BRAMP_METHOD_AUTO)
+		{
+			uint8_t x;
+			uint16_t s;
+			if(!waiting)
+			{
+				for(x = 0; x < CHART_X_SPAN; x++)
+				{
+					s = (uint16_t)(((float)timer.current.Duration / (float)CHART_X_SPAN) * (float)x);
+
+					if(s >= clock.Seconds()) rampHistory[x] = ((((float)timer.status.rampStops - (float)timer.status.rampMin) / (float)(timer.status.rampMax - timer.status.rampMin)) * (float)CHART_Y_SPAN);
+
+		            lcd.setPixel(x + CHART_X_TOP, CHART_Y_SPAN + CHART_Y_TOP - rampHistory[x]);
+					
+					if(s >= clock.Seconds()) break; 
+				}
+			}
+		}
+
+		// Progress Bar //
+		if(!waiting)
+		{
+			static float lastSec;
+			if(timer.running) lastSec = (float)clock.Seconds();
+			uint8_t x = (uint8_t)(((float)lastSec / (float)timer.current.Duration) * (float)(CHART_X_SPAN + 1));
+			if(x > CHART_X_SPAN + 1) x = CHART_X_SPAN + 1;
+	//		lcd.drawLine(x + CHART_X_TOP, CHART_Y_TOP - 1, x + CHART_X_TOP, CHART_Y_BOTTOM + 1);
+			lcd.drawHighlight(CHART_X_TOP - 1, CHART_Y_TOP - 1, x + CHART_X_TOP, CHART_Y_BOTTOM + 1);
+		}
+
+		if(!timer.running)
+		{
+			if(!skip_message)
+			{
+		        uint8_t l = strlen(timer.status.textStatus) * 6 / 2;
+		        lcd.eraseBox(41 - l - 2, 12, 41 + l + 2, 24);
+		        lcd.drawBox(41 - l - 1, 13, 41 + l + 1, 23);
+		        lcd.writeString(41 - l, 15, timer.status.textStatus);
+			}
+			menu.setBar(TEXT("RETURN"), BLANK_STR);
+		}
+		else 
+		{
+			skip_message = 0;
+			menu.setBar(BLANK_STR, TEXT("CANCEL"));
+			if(waiting)
+			{
+				char message_text[13];
+				strcpy(message_text, STR("Waiting ("));
+				int_to_str(timer.status.nextPhoto, buf);
+				strcat(message_text, buf);
+				strcat(message_text, STR(")"));
+		        uint8_t l = strlen(message_text) * 6 / 2;
+		        lcd.eraseBox(41 - l - 2, 12, 41 + l + 2, 24);
+		        lcd.drawBox(41 - l - 1, 13, 41 + l + 1, 23);
+		        lcd.writeString(41 - l, 15, message_text);
+			}
+		}
 
 		lcd.update();
 	}
 
 
-	if(key == FL_KEY)
+	if(!timer.running && key != 0) skip_message = 1;
+
+	if(key == FL_KEY && !timer.running)
 	{
 		return FN_CANCEL;
 	}
-	else
+	else if(key == FR_KEY && timer.running)
 	{
-		return FN_CONTINUE;
+			menu.push();
+			menu.spawn((void*)timerStop);
+			return FN_JUMP;
 	}
+	else if(key == UP_KEY && timer.running)
+	{
+		if(timer.rampRate < 50 && (timer.status.rampStops < timer.status.rampMax || timer.rampRate < 0)) timer.rampRate++;
+	}
+	else if(key == DOWN_KEY && timer.running)
+	{
+		if(timer.rampRate > -50 && (timer.status.rampStops > timer.status.rampMin || timer.rampRate > 0)) timer.rampRate--;
+	}
+
+	return FN_CONTINUE;
 }
 

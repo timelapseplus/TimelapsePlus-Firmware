@@ -19,14 +19,13 @@
 
 #include <avr/interrupt.h>
 #include <avr/io.h>
+#include "hardware.h"
 #include "TWI_Master.h"
 
 static unsigned char TWI_buf[TWI_BUFFER_SIZE];    // Transceiver buffer
 static unsigned char TWI_msgSize;                   // Number of bytes to be transmitted.
 static unsigned char SavedMsgSize;                   // For multiple memory reads.
 static unsigned char TWI_state = TWI_NO_STATE;      // State byte. Default set to TWI_NO_STATE.
-
-void TWI_Start_Transceiver(void);
 
 union TWI_statusReg TWI_statusReg = { 0 };            // TWI_statusReg is defined in TWI_Master.h
 
@@ -37,6 +36,10 @@ Requires 4MHz clock rate.
 ****************************************************************************/
 void TWI_Master_Initialise(void)
 {
+    setIn(SDA_PIN);
+    setIn(SCL_PIN);
+    setHigh(SDA_PIN);
+    setHigh(SCL_PIN);
     TWBR = TWI_TWBR;                                  // Set bit rate register (Baudrate). Defined in header file.
 // TWSR = TWI_TWPS;                                  // Not used. Driver presumes prescaler to be 00.
     TWDR = 0xFF;                                      // Default content = SDA released.

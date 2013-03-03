@@ -28,6 +28,7 @@
 #define BRAMP_MODE_APERTURE 0b100
 #define BRAMP_MODE_BULB     0b001
 
+
 struct settings
 {
     char cameraFPS;

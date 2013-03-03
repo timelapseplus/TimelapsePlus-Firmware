@@ -15,9 +15,9 @@
 /****************************************************************************
   TWI Status/Control register definitions
 ****************************************************************************/
-#define TWI_BUFFER_SIZE 18   // Slave Address + Memory start address + 16 data bytes (message size)
+#define TWI_BUFFER_SIZE 4   // Slave Address + Memory start address + 16 data bytes (message size)
 
-#define TWI_TWBR            0x0C        // TWI Bit rate Register setting.
+#define TWI_TWBR            0x20        // TWI Bit rate Register setting.
 // See Application note for detailed
 // information on setting this value.
 // Not used defines!
@@ -52,6 +52,7 @@ unsigned char TWI_Get_State_Info(void);
 void TWI_Start_Random_Read(unsigned char*, unsigned char);
 void TWI_Start_Read_Write(unsigned char*, unsigned char);
 unsigned char TWI_Read_Data_From_Buffer(unsigned char*, unsigned char);
+void TWI_Start_Transceiver(void);
 
 /****************************************************************************
   Bit and byte definitions

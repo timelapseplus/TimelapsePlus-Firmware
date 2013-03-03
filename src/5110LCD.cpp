@@ -321,7 +321,19 @@ char LCD::measureStringTiny(char *s)
         } 
         else if(*s == '.')
         {
-            l += 0;
+            l += 1;
+        } 
+        else if(*s == '+')
+        {
+            l += 3;
+        } 
+        else if(*s == '-')
+        {
+            l += 3;
+        } 
+        else if(*s == '/')
+        {
+            l += 5;
         } 
         else if(*s >= '0' && *s <= '9')
         {
@@ -361,8 +373,37 @@ unsigned char LCD::writeCharTiny(unsigned char x, unsigned char y, unsigned char
     if(c == ' ') 
         return 2;
     
-    if(c == '.') 
-        return 0;
+    if(c == '.')
+    {
+        setPixel(x, y + 4);
+        return 1;
+    }
+
+    if(c == '+')
+    {
+        setPixel(x,   y + 2);
+        setPixel(x+1, y + 2);
+        setPixel(x+1, y + 1);
+        setPixel(x+1, y + 3);
+        setPixel(x+2, y + 2);
+        return 3;
+    }
+    if(c == '-')
+    {
+        setPixel(x,   y + 2);
+        setPixel(x+1, y + 2);
+        setPixel(x+2, y + 2);
+        return 3;
+    }
+    if(c == '/')
+    {
+        setPixel(x+4, y + 0);
+        setPixel(x+3, y + 1);
+        setPixel(x+2, y + 2);
+        setPixel(x+1, y + 3);
+        setPixel(x,   y + 4);
+        return 5;
+    }
 
     if(c >= '0' && c <= '9')
     {
@@ -378,9 +419,8 @@ unsigned char LCD::writeCharTiny(unsigned char x, unsigned char y, unsigned char
         if(c > 'Z') 
             return 0;
     }
-
-    line = 0; // todo BUG -- line used here but not initialized. Setting it to 0 for now - John
     
+    line = 0;
     len = pgm_read_byte(pFont + c * 6 + line);
     
     for(line = 0; line < len; line++)
