@@ -159,6 +159,7 @@ CPPSRC = src/$(TARGET).cpp 	                \
 			src/tlp_menu_functions.cpp 	    \
 			src/notify.cpp 			        \
 			src/PTP.cpp 			        \
+			src/light.cpp 			        \
 			src/debug.cpp
 
 
