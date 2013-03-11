@@ -97,12 +97,12 @@ void hardware_off(void)
     hardware_flashlight(0);
     if(battery_status() == 0)
     {
-        if(timer.cableIsConnected())
-        {
-            menu.message(STR("Error: Cable"));
-        }
-        else
-        {
+        //if(timer.cableIsConnected())
+        //{
+        //    menu.message(STR("Error: Cable"));
+        //}
+        //else
+        //{
             shutter_off();
 
             // If USB is used, detach from the bus
@@ -119,7 +119,7 @@ void hardware_off(void)
             setHigh(POWER_HOLD_PIN);
 
             FOREVER;
-        }
+        //}
     } 
     else // Plugged in
     {

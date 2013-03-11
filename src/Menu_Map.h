@@ -58,6 +58,7 @@ const char STR_BRAMP_METHOD_KEYFRAME[]PROGMEM = "Keyframe based";
 const char STR_BRAMP_METHOD_GUIDED[]PROGMEM = "Manually Guided";
 const char STR_BRAMP_METHOD_AUTO[]PROGMEM = "Based on Light";
 const char STR_AUTO_BRAMP_INTEGRATION[]PROGMEM = "Light Average";
+const char STR_BRAMP_TARGET[]PROGMEM = "Darkest Point";
 
 const menu_item menu_options[]PROGMEM =
 {
@@ -90,9 +91,18 @@ const settings_item settings_timer_mode[]PROGMEM =
 
 const settings_item settings_bramp_method[]PROGMEM =
 {
-    { "Keyframe    ", BRAMP_METHOD_KEYFRAME, (void*)STR_BRAMP_METHOD_KEYFRAME },
-    { "Guided      ", BRAMP_METHOD_GUIDED, (void*)STR_BRAMP_METHOD_GUIDED },
     { "Automatic   ", BRAMP_METHOD_AUTO, (void *) STR_BRAMP_METHOD_AUTO},
+    { "Guided      ", BRAMP_METHOD_GUIDED, (void*)STR_BRAMP_METHOD_GUIDED },
+    { "Keyframe    ", BRAMP_METHOD_KEYFRAME, (void*)STR_BRAMP_METHOD_KEYFRAME },
+    { "\0           ", 0, 0 }
+};
+
+const settings_item settings_bramp_target[]PROGMEM =
+{
+    { "Automatic   ", BRAMP_TARGET_AUTO, (void*)STR_BRAMP_TARGET },
+    { "Starlight   ", BRAMP_TARGET_STARS, (void*)STR_BRAMP_TARGET },
+    { "Half Moon   ", BRAMP_TARGET_HALFMOON, (void *) STR_BRAMP_TARGET },
+    { "Full Moon   ", BRAMP_TARGET_FULLMOON, (void*)STR_BRAMP_TARGET },
     { "\0           ", 0, 0 }
 };
 
@@ -196,6 +206,7 @@ const menu_item menu_timelapse[]PROGMEM =
     { "Bracket    +", 'D', (void*)&dyn_bracket,            (void*)&timer.current.Bracket, 0, (void*)&modeHDR },
     { "StartTv    +", 'D', (void*)&dyn_bulb, (void*)&timer.current.BulbStart, 0, (void*)&modeRamp },
     { "Integration ", 'S', (void*)settings_auto_bramp_integration, (void*)&timer.current.Integration, 0, (void*)&brampAuto },
+//    { "Night Sky   ", 'S', (void*)settings_bramp_target, (void*)&timer.current.NightSky, 0, (void*)&brampAuto },
     { "-By        T", 'E', (void*)&timer.current.Key[0], (void*)STR_TIME_SINCE_START, 0, (void*)&brampKeyframe },
     { "  Ramp     +", 'D', (void*)&dyn_stops, (void*)&timer.current.Bulb[0], 0, (void*)&brampKeyframe },
     { "-By        T", 'E', (void*)&timer.current.Key[1], (void*)STR_TIME_SINCE_START, 0, (void*)&bulb1 },
@@ -397,14 +408,13 @@ const menu_item menu_settings_camera[]PROGMEM =
 const menu_item menu_settings_auxiliary[]PROGMEM =
 {
     { "AUX Port    ", 'S', (void*)menu_settings_aux_port, (void*)&conf.auxPort, (void*)settings_update, 0 },
-    { "BT Default  ", 'S', (void*)menu_settings_bt_default, (void*)&conf.btMode, (void*)settings_update, 0 },
+    { "BT Default  ", 'S', (void*)menu_settings_bt_default, (void*)&conf.btMode, (void*)settings_update, &bt.present },
     { "\0           ", 'V', 0, 0, 0 }
 };
 
 const menu_item menu_development[]PROGMEM =
 {
     { "Dev Mode LED", 'S', (void*)menu_settings_dev_mode, (void*)&conf.devMode, (void*)settings_update, 0 },
-    { "BrampMonitor", 'F', (void*)bramp_monitor, 0, 0, 0 },
     { "Shutter Test", 'F', (void*)shutterTest, 0, 0, (void*)&timerNotRunning },
     { "Calc BOffset", 'F', (void*)shutterLagTest, 0, 0, (void*)&timerNotRunning },
 //    { "4 Hour Light", 'F', (void*)lightTest, 0, 0, (void*)&timerNotRunning },

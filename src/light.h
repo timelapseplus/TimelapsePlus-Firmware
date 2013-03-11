@@ -18,10 +18,10 @@ public:
 	int8_t readEv();
 	float readIntegratedEv();
 	float readIntegratedSlope();
-	void integrationStart(uint8_t integration_minutes);
+	void integrationStart(uint8_t integration_minutes, int8_t darkOffset);
 	float readLux();
 
-
+	uint8_t method;
 
 private:
     int8_t iev[LIGHT_INTEGRATION_COUNT];

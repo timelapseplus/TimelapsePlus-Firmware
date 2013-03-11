@@ -40,6 +40,7 @@
 #include "tlp_menu_functions.h"
 #include "notify.h"
 #include "PTP.h"
+#include "light.h"
 
 char system_tested EEMEM;
 
@@ -81,6 +82,7 @@ IR ir = IR();
 Remote remote = Remote();
 Notify notify = Notify();
 PTP camera = PTP();
+Light light = Light();
 
 #include "Menu_Map.h"
 
@@ -115,9 +117,13 @@ void setup()
 	hardware_init();
 	settings_init();
 
-	clock.init();
 
 	lcd.init();
+    lcd.writeString(12, 15, STR("Timelapse+"));
+    lcd.writeString(33, 25, STR("..."));
+    lcd.update();
+
+	clock.init();
 
 	menu.lcd = &lcd;
 	menu.button = &button;
@@ -127,14 +133,7 @@ void setup()
 
 	battery_percent = battery_read();
 
-	menu.init((menu_item*)menu_main);
-
-	lcd.update();
-
 	VirtualSerial_Init();
-
-	// Configure I2C //
-	TWI_Master_Initialise();
 
 	bt.init();
 	if(!bt.present)
@@ -175,6 +174,8 @@ int main()
 
 	setup();
 
+	menu.init((menu_item*)menu_main);
+
     if(conf.firmwareVersion != VERSION)
     {
     	if(conf.firmwareVersion <= 20120212)
@@ -192,6 +193,8 @@ int main()
 			hardware_off(); // If it was just plugged in, show the charging screen
 
     }
+
+	lcd.update();
 
 	uint16_t count = 0;
 
@@ -224,11 +227,12 @@ int main()
 					   while(version)
 					   {
 						   c = (char)(version % 10);
-						   debug((char)(c + '0'));
+						   VirtualSerial_PutChar((char)(c + '0'));
 						   version -= (uint32_t)c;
 						   version /= 10;
 					   }
-					   debug_nl();
+					   VirtualSerial_PutChar('\r');
+					   VirtualSerial_PutChar('\n');
 					   break;
 				   }
 
@@ -237,15 +241,15 @@ int main()
 					   uint32_t v = VERSION;
 					   char *ptr;
 					   ptr = (char*) &v;
-					   debug(*ptr);
-					   debug(*(ptr+1));
-					   debug(*(ptr+2));
-					   debug(*(ptr+3));
+					   VirtualSerial_PutChar(*ptr);
+					   VirtualSerial_PutChar(*(ptr+1));
+					   VirtualSerial_PutChar(*(ptr+2));
+					   VirtualSerial_PutChar(*(ptr+3));
 					   break;
 				   }
 
 			   case 'T':
-				   debug('E');
+				   VirtualSerial_PutChar('E');
 				   break;
 
 			   case 'C': // Capture
@@ -268,21 +272,33 @@ int main()
 				   bt.init();
 				   break;
 
-			   case 'I':
-			   	   hardware_light_start();
-			   	   hardware_light_set_range(0);
+			   case 'L':
+			   	   light.start();
+			   	   light.setRange(0);
 			   	   debug(STR("Light Sensor INIT\r\n"));
 				   break;
 
-			   case 'L':
+			   case 'I':
+			   	   light.integrationStart(30, 0);
+			   	   light.setRange(0);
+			   	   debug(STR("Light Sensor Integration Start\r\n"));
+				   break;
+
+			   case 'l':
 			   	   debug(STR("Raw: "));
-			   	   debug(hardware_light_read_raw());
+			   	   debug(light.readRaw());
 				   debug_nl();
 			   	   debug(STR("Lux: "));
-			   	   debug(hardware_light_read_lux());
+			   	   debug(light.readLux());
 				   debug_nl();
 			   	   debug(STR("Ev: "));
-			   	   debug(hardware_light_read_ev());
+			   	   debug(light.readEv());
+				   debug_nl();
+			   	   debug(STR("IntEv: "));
+			   	   debug(light.readIntegratedEv());
+				   debug_nl();
+			   	   debug(STR("IntSlpope: "));
+			   	   debug(light.readIntegratedSlope());
 				   debug_nl();
 				   break;
 
@@ -309,6 +325,7 @@ int main()
 		clock.task();
 		bt.task();
 		notify.task();
+		light.task();
 
 		if(USBmode == 1)
 			PTP_Task();
@@ -401,7 +418,7 @@ void message_notify(uint8_t id)
 			}
 			else
 			{
-				if(PTP_Error)
+				if(PTP_Error && timer.running)
 				{
 					timerStop(0, 1);
 					menu.spawn((void*)usbPlug);

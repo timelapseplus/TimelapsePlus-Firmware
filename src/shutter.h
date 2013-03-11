@@ -37,6 +37,11 @@
 
 #define BRAMP_INTERVAL_MIN 70
 
+#define BRAMP_TARGET_AUTO 0
+#define BRAMP_TARGET_STARS 9
+#define BRAMP_TARGET_HALFMOON 3
+#define BRAMP_TARGET_FULLMOON 1
+
 #define MAX_KEYFRAMES 5
 
 #define DISABLE_SHUTTER setIn(SHUTTER_FULL_PIN);  _delay_ms(50); setLow(SHUTTER_FULL_PIN)
@@ -82,6 +87,7 @@ struct program
     unsigned int Keyframes;   // 2 bytes
     unsigned int brampMethod; // 2 bytes
     unsigned int Integration; // 2 bytes
+    unsigned int NightSky; // 2 bytes
     uint8_t infinitePhotos;   // 1 byte  
 };
 
@@ -131,6 +137,7 @@ public:
     volatile uint32_t last_photo_ms;
     volatile float lightReading;
     volatile float lightStart;
+    volatile float internalRampStops;
 
 private:
     double test;

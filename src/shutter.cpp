@@ -30,6 +30,7 @@
 #include "PTP_Driver.h"
 #include "PTP.h"
 #include "timelapseplus.h"
+#include "light.h"
 
 #define DEBUG
 
@@ -48,8 +49,9 @@ extern PTP camera;
 extern settings conf;
 extern shutter timer;
 extern BT bt;
-
 extern Clock clock;
+extern Light light;
+
 volatile unsigned char state;
 const uint16_t settings_warn_time = 0;
 const uint16_t settings_mirror_up_time = 1;
@@ -109,7 +111,7 @@ void shutter::setDefault()
     current.BulbStart = 53;
     current.Bulb[0] = 36;
     current.Key[0] = 3600;
-    current.brampMethod = BRAMP_METHOD_KEYFRAME;
+    current.brampMethod = BRAMP_METHOD_AUTO;
     current.Integration = 30;
     save(0);
 
@@ -222,6 +224,10 @@ void shutter_bulbStart(void)
             ir.bulbStart();
         }
     }
+    else
+    {
+        if(camera.supports.capture) camera.busy = true;
+    }
     if(conf.bulbMode == 0)
     {
         shutter_full();
@@ -310,6 +316,10 @@ void shutter_capture(void)
             {
                 if(conf.interface & INTERFACE_IR) ir.shutterNow();
             }
+        }
+        else
+        {
+            if(camera.supports.capture) camera.busy = true;
         }
     }
     else if(conf.interface == INTERFACE_IR)
@@ -430,7 +440,6 @@ char shutter::task()
         exps = 0;
         if(current.Mode & RAMP)
         {
-            hardware_light_start();
             uint32_t tmp = (uint32_t)current.Duration * 10;
             tmp /= (uint32_t) current.Gap;
             current.Photos = (uint16_t) tmp;
@@ -439,7 +448,9 @@ char shutter::task()
             status.rampMin = calcRampMin();
             rampRate = 0;
             status.rampStops = 0;
-            lightReading = lightStart = hardware_light_read_integrated_ev(current.Integration);
+            internalRampStops = 0;
+            light.integrationStart(current.Integration, current.NightSky);
+            lightReading = lightStart = light.readIntegratedEv();
         }
         if(conf.devMode)
         {
@@ -639,7 +650,8 @@ char shutter::task()
                 }
                 else if(current.brampMethod == BRAMP_METHOD_AUTO) //////////////////////////////// AUTO RAMP /////////////////////////////////////
                 {
-                    status.rampStops = (lightStart - lightReading);
+                    internalRampStops += ((float)rampRate / 1800.0) * ((float)current.Gap / 10.0);
+                    status.rampStops = (lightStart - lightReading) + internalRampStops;
                     debug(STR("     lightStart: "));
                     debug(lightStart);
                     debug_nl();
@@ -723,6 +735,38 @@ char shutter::task()
                         debug(STR("   Done!\r\n\r\n"));
                     }
 
+                    if(conf.brampMode & BRAMP_MODE_ISO)
+                    {
+                        //nextISO = camera.isoDown(iso);
+                        // Check for too short bulb time and adjust ISO //
+                        while(bulb_length < camera.bulbTime((int8_t)camera.bulbMin()))
+                        {
+                            nextISO = camera.isoDown(iso);
+                            if(nextISO > 127) // Invalid setting
+                            {
+                                nextISO = iso;
+                                bulb_length = camera.bulbTime((int8_t)camera.bulbMin()); // Coerce to min as fallback
+                            }
+                            else if(nextISO != iso)
+                            {
+                                evShift -= iso - nextISO;
+                                tmpShift -= iso - nextISO;
+
+                                debug(STR("   ISO DOWN:"));
+                                debug(evShift);
+                                debug(STR("   ISO Val:"));
+                                debug(nextISO);
+                            }
+                            else
+                            {
+                                debug(STR("   Reached ISO Min!!!\r\n"));
+                                break;
+                            }
+                            bulb_length = camera.shiftBulb(exp, tmpShift);
+                        }
+                        debug(STR("   Done!\r\n\r\n"));
+                    }
+
                     if(conf.brampMode & BRAMP_MODE_APERTURE)
                     {
                         // Check for too short bulb time and adjust Aperture //
@@ -747,37 +791,6 @@ char shutter::task()
                             else
                             {
                                 debug(STR("   Reached Aperture Min!!!\r\n"));
-                                break;
-                            }
-                            bulb_length = camera.shiftBulb(exp, tmpShift);
-                        }
-                        debug(STR("   Done!\r\n\r\n"));
-                    }
-
-                    if(conf.brampMode & BRAMP_MODE_ISO)
-                    {
-                        // Check for too short bulb time and adjust ISO //
-                        while(bulb_length < camera.bulbTime((int8_t)camera.bulbMin()))
-                        {
-                            nextISO = camera.isoDown(iso);
-                            if(nextISO > 127) // Invalid setting
-                            {
-                                nextISO = iso;
-                                bulb_length = camera.bulbTime((int8_t)camera.bulbMin()); // Coerce to min as fallback
-                            }
-                            else if(nextISO != iso)
-                            {
-                                evShift -= iso - nextISO;
-                                tmpShift -= iso - nextISO;
-
-                                debug(STR("   ISO DOWN:"));
-                                debug(evShift);
-                                debug(STR("   ISO Val:"));
-                                debug(nextISO);
-                            }
-                            else
-                            {
-                                debug(STR("   Reached ISO Min!!!\r\n"));
                                 break;
                             }
                             bulb_length = camera.shiftBulb(exp, tmpShift);
@@ -854,18 +867,20 @@ char shutter::task()
                 }
                 else
                 {
+                    shutter_off_quick(); // Can't change parameters when half-pressed
                     m = camera.shutterType(current.Exp - tv_offset);
                     if(m == 0) m = SHUTTER_MODE_PTP;
 
                     if(m & SHUTTER_MODE_PTP)
                     {
-                        bt.send(STR("Shutter Mode PTP\r\n"));
+                        debug(STR("Shutter Mode PTP\r\n"));
                         camera.setShutter(current.Exp - tv_offset);
                         bulb_length = camera.bulbTime((int8_t)(current.Exp - tv_offset));
                     }
                     else
                     {
-                        bt.send(STR("Shutter Mode BULB\r\n"));
+                        camera.bulbMode();
+                        debug(STR("Shutter Mode BULB\r\n"));
                         m = SHUTTER_MODE_BULB;
                         bulb_length = camera.bulbTime((int8_t)(current.Exp - tv_offset));
                     }
@@ -900,6 +915,8 @@ char shutter::task()
                 bulb_length = exp;
                 if(m & SHUTTER_MODE_PTP)
                 {
+                    shutter_off_quick(); // Can't change parameters when half-pressed
+                    camera.manualMode();
                     camera.setShutter(current.Exp);
                 }
             }
@@ -921,7 +938,7 @@ char shutter::task()
         {
             exps++;
 
-            lightReading = hardware_light_read_integrated_ev(0);
+            lightReading = light.readIntegratedEv();
 
             _delay_ms(50);
 
@@ -956,23 +973,27 @@ char shutter::task()
             photos++;
             clock.tare();
             run_state = RUN_GAP;
-        } 
+        }
+        else if(camera.busy)
+        {
+            run_state = RUN_NEXT;
+        }
         else
         {
             clock.tare();
             run_state = RUN_PHOTO;
-        }
         
-        if(current.infinitePhotos == 0)
-        {
-            if(photos >= current.Photos || (((current.Mode & TIMELAPSE) == 0) && photos >= 1))
+            if(current.infinitePhotos == 0)
             {
-                run_state = RUN_END;
+                if(photos >= current.Photos || (((current.Mode & TIMELAPSE) == 0) && photos >= 1))
+                {
+                    run_state = RUN_END;
+                }
             }
-        }
-        else
-        {
-            run_state = RUN_GAP;
+            else
+            {
+                run_state = RUN_GAP;
+            }
         }
 
         status.photosRemaining = current.Photos - photos;
@@ -1030,7 +1051,7 @@ char shutter::task()
         camera.bulbEnd();
 
         hardware_flashlight((uint8_t) clock.Seconds() % 2);
-        hardware_light_stop();
+        light.stop();
 
         return CONTINUE;
     }
@@ -1053,7 +1074,7 @@ char shutter::task()
         shutter_off();
         camera.bulbEnd();
         hardware_flashlight(0);
-        hardware_light_stop();
+        light.stop();
 
         return DONE;
     }
@@ -1064,8 +1085,6 @@ char shutter::task()
     {
         run_state = RUN_END;
     }
-
-    //	Show_Number(clock.seconds);
 
     return CONTINUE;
 }

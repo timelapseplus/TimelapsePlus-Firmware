@@ -27,6 +27,7 @@
 #include "math.h"
 #include "selftest.h"
 #include "remote.h"
+#include "light.h"
 #include "tlp_menu_functions.h"
 
 volatile uint8_t showGap = 0;
@@ -63,6 +64,7 @@ extern BT bt;
 extern IR ir;
 extern Remote remote;
 extern PTP camera;
+extern Light light;
 
 uint8_t sleepOk = 1;
 
@@ -1051,6 +1053,7 @@ volatile char lightMeter(char key, char first)
 
 	if(first)
 	{
+		light.start();
 		lcd.backlight(0);
 		hardware_flashlight(0);
 	}
@@ -1075,6 +1078,13 @@ volatile char lightMeter(char key, char first)
 		uint16_t val;
 		char* text;
 
+		val = (uint16_t)light.method;
+		int_to_str(val, buf);
+		text = buf;
+		l = lcd.measureStringTiny(text);
+		lcd.writeStringTiny(80 - l, 6 + SY, text);
+		lcd.writeStringTiny(3, 6 + SY, TEXT("Method:"));
+
 		val = (uint16_t)hardware_readLight(0);
 		int_to_str(val, buf);
 		text = buf;
@@ -1096,6 +1106,13 @@ volatile char lightMeter(char key, char first)
 		lcd.writeStringTiny(80 - l, 24 + SY, text);
 		lcd.writeStringTiny(3, 24 + SY, TEXT("Level 3:"));
 
+		val = (uint16_t)(light.readEv());
+		int_to_str(val, buf);
+		text = buf;
+		l = lcd.measureStringTiny(text);
+		lcd.writeStringTiny(80 - l, 30 + SY, text);
+		lcd.writeStringTiny(3, 30 + SY, TEXT("    I2C:"));
+
 		lcd.update();
 		_delay_ms(10);
 	}
@@ -1107,6 +1124,7 @@ volatile char lightMeter(char key, char first)
 
 	if(key == FL_KEY)
 	{
+		light.stop();
 		lcd.backlight(255);
 		return FN_CANCEL;
 	}
@@ -2109,7 +2127,7 @@ volatile char bramp_monitor(char key, char first)
 		buf[3] = '\0';
 		lcd.writeString(34, 8, buf); // Battery Level
 
-		if(timer.current.brampMethod == BRAMP_METHOD_GUIDED)
+		if(timer.current.brampMethod == BRAMP_METHOD_GUIDED || timer.rampRate != 0)
 		{
 			b = (int16_t)timer.rampRate;
 			if(b > 99) b = 99;
@@ -2335,8 +2353,8 @@ volatile char bramp_monitor(char key, char first)
 		}
 		else if(timer.current.brampMethod == BRAMP_METHOD_AUTO)
 		{
-			uint8_t x;
-			uint16_t s;
+			uint8_t x = 0;
+			uint16_t s, completedS = 0;
 			if(!waiting)
 			{
 				for(x = 0; x < CHART_X_SPAN; x++)
@@ -2349,6 +2367,23 @@ volatile char bramp_monitor(char key, char first)
 					
 					if(s >= clock.Seconds()) break; 
 				}
+				completedS = s;
+			}
+			float intSlope = 0 - light.readIntegratedSlope();
+			for(x++; x < CHART_X_SPAN; x += timer.rampRate == 0 ? 2 : 1)
+			{
+				s = (uint16_t)(((float)timer.current.Duration / (float)CHART_X_SPAN) * (float)x);
+
+				s -= completedS;
+
+				float futureRamp = timer.status.rampStops + ((intSlope + timer.rampRate) / 1800.0) * (float)s;
+
+				int16_t y = ((((float)futureRamp - (float)timer.status.rampMin) / (float)(timer.status.rampMax - timer.status.rampMin)) * (float)CHART_Y_SPAN);
+
+				if(y < 0) y = 0;
+				if(y > CHART_Y_SPAN) y = CHART_Y_SPAN;
+
+				lcd.setPixel(x + CHART_X_TOP, CHART_Y_SPAN + CHART_Y_TOP - y);
 			}
 		}
 
@@ -2359,7 +2394,6 @@ volatile char bramp_monitor(char key, char first)
 			if(timer.running) lastSec = (float)clock.Seconds();
 			uint8_t x = (uint8_t)(((float)lastSec / (float)timer.current.Duration) * (float)(CHART_X_SPAN + 1));
 			if(x > CHART_X_SPAN + 1) x = CHART_X_SPAN + 1;
-	//		lcd.drawLine(x + CHART_X_TOP, CHART_Y_TOP - 1, x + CHART_X_TOP, CHART_Y_BOTTOM + 1);
 			lcd.drawHighlight(CHART_X_TOP - 1, CHART_Y_TOP - 1, x + CHART_X_TOP, CHART_Y_BOTTOM + 1);
 		}
 

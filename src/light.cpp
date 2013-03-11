@@ -124,17 +124,23 @@ int8_t Light::readEv()
     float lux;
     lux = readLux();
     lux *= 2^5;
+	method = 0;
     int8_t ev = (int8_t)ilog2(lux);
     ev *= 3;
     ev += 30;
-    if(ev <= 11)
+    if(ev <= 12)
     {
-    	uint16_t tmp = hardware_readLight(2) - 4;
-    	if(tmp <= 8)
+    	uint16_t tmp = hardware_readLight(2);
+    	if(tmp < 10)
     	{
-	    	ev = (int8_t)ilog2(tmp);
-	    	ev *= 3;
-	    	ev += 5;
+    		//if(tmp > 4) tmp -= 4; else tmp = 0;
+	    	//ev = (int8_t)ilog2(tmp);
+	    	//if(ev < 0) ev = 0;
+	    	//ev *= 3;
+	    	//ev += 3;
+        ev = tmp + 3;
+	    	debug(STR("Using Analog"));
+	    	method = 1;
     	}
     }
     return ev;
@@ -173,7 +179,7 @@ void Light::task()
     }
 }
 
-void Light::integrationStart(uint8_t integration_minutes)
+void Light::integrationStart(uint8_t integration_minutes, int8_t darkOffset)
 {
 	start();
     integration = integration_minutes;
