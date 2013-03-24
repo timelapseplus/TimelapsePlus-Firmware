@@ -967,33 +967,33 @@ char shutter::task()
             old_state = run_state;
         }
 
-        if((exps >= current.Exps && (current.Mode & HDR)) || (current.Mode & HDR) == 0)
+        if(camera.busy && !(photos >= current.Photos))
+        {
+            run_state = RUN_NEXT;
+        }
+        else if((exps >= current.Exps && (current.Mode & HDR)) || (current.Mode & HDR) == 0)
         {
             exps = 0;
             photos++;
             clock.tare();
             run_state = RUN_GAP;
         }
-        else if(camera.busy)
-        {
-            run_state = RUN_NEXT;
-        }
         else
         {
             clock.tare();
             run_state = RUN_PHOTO;
-        
-            if(current.infinitePhotos == 0)
+        }
+    
+        if(!current.infinitePhotos)
+        {
+            if(photos >= current.Photos || (((current.Mode & TIMELAPSE) == 0) && photos >= 1))
             {
-                if(photos >= current.Photos || (((current.Mode & TIMELAPSE) == 0) && photos >= 1))
-                {
-                    run_state = RUN_END;
-                }
+                run_state = RUN_END;
             }
-            else
-            {
-                run_state = RUN_GAP;
-            }
+        }
+        else
+        {
+            run_state = RUN_GAP;
         }
 
         status.photosRemaining = current.Photos - photos;
