@@ -463,12 +463,12 @@ void hardware_bootloader(void)
 
 /******************************************************************
  *
- *   hardware_lightening_enable
+ *   hardware_lightning_enable
  *
  *
  ******************************************************************/
 
-void hardware_lightening_enable()
+void hardware_lightning_enable()
 {
     // Need to power off lights //
     backlightVal = lcd.getBacklight();
@@ -506,12 +506,12 @@ void hardware_lightening_enable()
 
 /******************************************************************
  *
- *   hardware_lightening_disable
+ *   hardware_lightning_disable
  *  Sets up an interrupt to trigger from the analog light sensor
  *
  ******************************************************************/
 
-void hardware_lightening_disable()
+void hardware_lightning_disable()
 {
     EIMSK &= ~_BV(INT6);      // Interrupt disable
     shutter_off();

@@ -237,7 +237,7 @@ const menu_item menu_trigger[]PROGMEM =
     { "Cable Remote", 'F', (void*)cableRelease, 0, 0, (void*)&timerNotRunning },
     { "IR Remote   ", 'F', (void*)IRremote, 0, 0, (void*)&timerNotRunning },
     { "BT Remote   ", 'F', (void*)cableReleaseRemote, 0, 0, (void*)&showRemoteStart },
-    { "Lightening  ", 'F', (void*)lighteningTrigger, 0, 0, (void*)&timerNotRunning },
+    { "Lightning  ", 'F', (void*)lightningTrigger, 0, 0, (void*)&timerNotRunning },
     { "Motion      ", 'F', (void*)motionTrigger, 0, 0, (void*)&timerNotRunning },
     { "\0           ", 'V', 0, 0, 0 }
 };
