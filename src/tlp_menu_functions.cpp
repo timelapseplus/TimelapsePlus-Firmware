@@ -1585,19 +1585,19 @@ volatile char usbPlug(char key, char first)
 
 /******************************************************************
  *
- *   lighteningTrigger
+ *   lightningTrigger
  *
  *
  ******************************************************************/
 
-volatile char lighteningTrigger(char key, char first)
+volatile char lightningTrigger(char key, char first)
 {
 	if(first)
 	{
 		sleepOk = 0;
-		hardware_lightening_enable();
+		hardware_lightning_enable();
 		lcd.cls();
-		menu.setTitle(TEXT("Lightening"));
+		menu.setTitle(TEXT("Lightning"));
 		lcd.writeString(25, 20, TEXT("READY"));
 		menu.setBar(TEXT("RETURN"), TEXT("CALIBRATE"));
 		lcd.update();
@@ -1606,13 +1606,13 @@ volatile char lighteningTrigger(char key, char first)
 	if(key == FL_KEY || key == LEFT_KEY)
 	{
 		sleepOk = 1;
-		hardware_lightening_disable();
+		hardware_lightning_disable();
 		return FN_CANCEL;
 	}
 	if(key == FR_KEY)
 	{
 		menu.message(TEXT("Calibrating"));
-		hardware_lightening_disable();
+		hardware_lightning_disable();
 	}
 
 	return FN_CONTINUE;
