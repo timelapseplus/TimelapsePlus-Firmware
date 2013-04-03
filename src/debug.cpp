@@ -36,8 +36,8 @@ void debug(char *s)
         VirtualSerial_PutString(s);
 //    else if(remote.connected && remote.model == REMOTE_MODEL_TLP)
 //        remote.debug(s);
-//    else if(bt.state == BT_ST_CONNECTED && remote.model == 0)
-//       bt.send(s);
+    else if(bt.state == BT_ST_CONNECTED && remote.model == 0)
+       bt.send(s);
 }
 
 /******************************************************************
