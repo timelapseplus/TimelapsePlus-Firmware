@@ -1,4 +1,14 @@
-Timelapse--Firmware
+      ===========================
+     ||   _________       _     ||
+     ||  |__   __  |    _| |_   ||
+     ||     | |  | |   |_   _|  ||
+     ||     | |  | |____ |_|    ||
+     ||     |_|  |______|       ||
+     ||                         ||
+      ===========================
+
+
+Timelapse+ Firmware
 ===================
 
 Official Firmware for the Timelapse+ Intervalometer
