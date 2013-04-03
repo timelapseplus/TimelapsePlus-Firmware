@@ -68,7 +68,7 @@
 //#define CHECK_CABLE if(getPin(CHECK_CABLE_PIN) || getPin(SHUTTER_SENSE_PIN)) cable_connected = 1; else cable_connected = 0
 #define CHECK_CABLE if(getPin(CHECK_CABLE_PIN)) cable_connected = 1; else cable_connected = 0
 
-#define SHUTTER_VERSION 20130302
+#define SHUTTER_VERSION 20130403
 
 struct program
 {
@@ -105,7 +105,7 @@ struct timer_status
     int8_t rampMin;
 };
 
-extern program stored[MAX_STORED]EEMEM;
+extern program stored[MAX_STORED+1]EEMEM;
 
 class shutter
 {
@@ -117,6 +117,9 @@ public:
     void load(char id);
     void setDefault(void);
     int8_t nextId(void);
+
+    void saveCurrent(void);
+    void restoreCurrent(void);
 
     void off(void);
     void half(void);

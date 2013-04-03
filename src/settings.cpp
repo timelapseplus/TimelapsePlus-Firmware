@@ -38,6 +38,7 @@ extern BT bt;
 
 void settings_save()
 {
+    if(conf.cameraMake == PANASONIC) conf.halfPress = HALF_PRESS_DISABLED;
     eeprom_write_block((const void*)&conf, &conf_eep, sizeof(settings));
 }
 

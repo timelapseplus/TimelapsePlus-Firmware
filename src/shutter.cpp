@@ -59,7 +59,7 @@ volatile char cable_connected; // 1 = cable connected, 0 = disconnected
 
 char shutter_state, ir_shutter_state; // used only for momentary toggle mode //
 uint16_t BulbMax; // calculated during bulb ramp mode
-program stored[MAX_STORED]EEMEM;
+program stored[MAX_STORED+1]EEMEM;
 uint8_t BulbMaxEv;
 
 /******************************************************************
@@ -74,7 +74,7 @@ shutter::shutter()
     if(eeprom_read_byte((const uint8_t*)&stored[0].Name[0]) == 255) 
         setDefault();
     
-    load(0); // Default Program //
+    restoreCurrent(); // Default Program //
     ENABLE_MIRROR;
     ENABLE_SHUTTER;
     CHECK_CABLE;
@@ -120,6 +120,8 @@ void shutter::setDefault()
     {
         eeprom_write_byte((uint8_t*)&stored[i].Name[0],  255);
     }
+
+    saveCurrent();
 }
 
 /******************************************************************
@@ -355,6 +357,15 @@ void shutter::save(char id)
 {
     eeprom_write_block((const void*)&current, &stored[(uint8_t)id], sizeof(program));
     currentId = id;
+}
+
+void shutter::saveCurrent()
+{
+    eeprom_write_block((const void*)&current, &stored[MAX_STORED], sizeof(program));
+}
+void shutter::restoreCurrent()
+{
+    eeprom_read_block((void*)&current, &stored[MAX_STORED], sizeof(program));
 }
 
 /******************************************************************

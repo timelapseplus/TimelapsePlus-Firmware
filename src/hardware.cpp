@@ -105,6 +105,9 @@ void hardware_off(void)
         //{
             shutter_off();
 
+            // Save the current time-lapse settings to nv-mem
+            timer.saveCurrent();
+
             // If USB is used, detach from the bus
             USB_Detach();
 
