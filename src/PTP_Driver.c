@@ -45,6 +45,27 @@ USB_ClassInfo_SI_Host_t DigitalCamera_SI_Interface =
     {
         .Config =
             {
+                .DataINPipe             =
+                    {
+                        .Address        = (PIPE_DIR_IN  | 1),
+                        .Banks          = 1,
+                    },
+                .DataOUTPipe            =
+                    {
+                        .Address        = (PIPE_DIR_OUT | 2),
+                        .Banks          = 1,
+                    },
+                .EventsPipe             =
+                    {
+                        .Address        = (PIPE_DIR_IN  | 3),
+                        .Banks          = 1,
+                    },
+            },
+    };
+/*USB_ClassInfo_SI_Host_t DigitalCamera_SI_Interface =
+    {
+        .Config =
+            {
                 .DataINPipeNumber       = 1,
                 .DataINPipeDoubleBank   = false,
 
@@ -55,7 +76,7 @@ USB_ClassInfo_SI_Host_t DigitalCamera_SI_Interface =
                 .EventsPipeDoubleBank   = false,
             },
     };
-
+*/
 char PTP_Buffer[PTP_BUFFER_SIZE];
 uint16_t PTP_Bytes_Received, PTP_Bytes_Remaining;
 char PTP_CameraModel[23];

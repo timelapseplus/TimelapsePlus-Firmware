@@ -45,6 +45,33 @@ char VirtualSerial_connected;
  */
 USB_ClassInfo_CDC_Device_t VirtualSerial_CDC_Interface =
 {
+  .Config =
+    {
+      .ControlInterfaceNumber   = 0,
+      .DataINEndpoint           =
+        {
+          .Address          = CDC_TX_EPADDR,
+          .Size             = CDC_TXRX_EPSIZE,
+          .Banks            = 1,
+        },
+      .DataOUTEndpoint =
+        {
+          .Address          = CDC_RX_EPADDR,
+          .Size             = CDC_TXRX_EPSIZE,
+          .Banks            = 1,
+        },
+      .NotificationEndpoint =
+        {
+          .Address          = CDC_NOTIFICATION_EPADDR,
+          .Size             = CDC_NOTIFICATION_EPSIZE,
+          .Banks            = 1,
+        },
+    },
+};
+
+/*
+USB_ClassInfo_CDC_Device_t VirtualSerial_CDC_Interface =
+{
     .Config =
     {
         .ControlInterfaceNumber = 0,
@@ -62,7 +89,7 @@ USB_ClassInfo_CDC_Device_t VirtualSerial_CDC_Interface =
         .NotificationEndpointDoubleBank = false,
     },
 };
-
+*/
 /** Standard file stream for the CDC interface when set up, so that the virtual CDC COM port can be
  *  used like any regular character stream in the C APIs
  */
