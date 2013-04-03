@@ -24,6 +24,9 @@
 #define EOS_OC_DepthOfFieldPreview 0x9156
 #define EOS_OC_MoveFocus 0x9155
 
+#define EOS_OC_VIDEO_START 0x9133
+#define EOS_OC_VIDEO_STOP 0x9134
+
 #define EOS_DPC_APERTURE 0xD101
 #define EOS_DPC_SHUTTER 0xD102
 #define EOS_DPC_ISO 0xD103

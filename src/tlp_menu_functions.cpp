@@ -235,6 +235,49 @@ volatile char IRremote(char key, char first)
 
 /******************************************************************
  *
+ *   Videoremote
+ *
+ *
+ ******************************************************************/
+
+volatile char videoRemote(char key, char first)
+{
+	static uint8_t recording = false;
+
+	lcd.cls();
+	menu.setTitle(TEXT("Video"));
+	if(recording)
+		menu.setBar(TEXT("Return"), TEXT("Stop"));
+	else
+		menu.setBar(TEXT("Return"), TEXT("Start"));
+
+	lcd.update();
+
+	switch(key)
+	{
+	   case FR_KEY:
+	   		if(recording)
+	   		{
+	   			camera.videoStop();
+	   			recording = false;
+	   		}
+	   		else
+	   		{
+	   			camera.videoStart();
+	   			recording = true;
+	   		}
+			break;
+
+	   case FL_KEY:
+	   case LEFT_KEY:
+		   return FN_CANCEL;
+	}
+
+	return FN_CONTINUE;
+}
+
+/******************************************************************
+ *
  *   shutterTest
  *
  *

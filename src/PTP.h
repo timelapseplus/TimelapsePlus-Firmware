@@ -32,6 +32,7 @@ struct CameraSupports_t
     bool shutter;
     bool aperture;
     bool focus;
+    bool video;
 };
 
 class PTP
@@ -47,6 +48,8 @@ public:
     uint8_t moveFocus(int16_t step);
     uint8_t bulbStart(void);
     uint8_t bulbEnd(void);
+    uint8_t videoStart(void);
+    uint8_t videoStop(void);
     uint8_t setEosParameter(uint16_t param, uint32_t value);
     uint8_t setPtpParameter(uint16_t param, uint32_t value);
     uint8_t setPtpParameter(uint16_t param, uint16_t value);

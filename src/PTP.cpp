@@ -803,7 +803,8 @@ uint8_t PTP::init()
 		.iso = false,
 		.shutter = false,
 		.aperture = false,
-		.focus = false
+		.focus = false,
+		.video = false
 	};
 
 	if(strncmp(PTP_CameraMake, "Canon", 5) == 0) // This should be done with VendorID instead
@@ -848,6 +849,9 @@ uint8_t PTP::init()
 	    		case EOS_OC_CAPTURE:
 	    			supports.capture = true;
 	    			break;
+	    		case EOS_OC_VIDEO_START:
+	    			supports.video = true;
+	    			break;
 //				case EOS_OC_SETUILOCK:
 //				case EOS_OC_RESETUILOCK:
 //				case EOS_OC_BULBSTART:
@@ -878,6 +882,7 @@ uint8_t PTP::init()
     }
     if(supports.capture) debug(STR("Supports CAPTURE\r\n"));
     if(supports.bulb) debug(STR("Supports BULB\r\n"));
+    if(supports.video) debug(STR("Supports VIDEO\r\n"));
 
     if(PTP_protocol == PROTOCOL_EOS)
     {
@@ -1216,6 +1221,32 @@ uint8_t PTP::capture()
 		data[1] = 0x00000000;
 		return PTP_Transaction(PTP_OC_CAPTURE, 0, 2, data, 0, NULL);
 	}
+}
+
+uint8_t PTP::videoStart()
+{
+	if(!static_ready) return 0;
+	if(!supports.video) return PTP_RETURN_ERROR;
+	if(PTP_protocol == PROTOCOL_EOS)
+	{
+		busy = true;
+		PTP_Transaction(EOS_OC_VIDEO_START, 0, 0, NULL, 0, NULL);
+		//liveView(true);
+	}
+	return 0;
+}
+
+uint8_t PTP::videoStop()
+{
+	if(!static_ready) return 0;
+	if(!supports.video) return PTP_RETURN_ERROR;
+	if(PTP_protocol == PROTOCOL_EOS)
+	{
+		busy = false;
+		PTP_Transaction(EOS_OC_VIDEO_STOP, 0, 0, NULL, 0, NULL);
+		//liveView(false);
+	}
+	return 0;
 }
 
 uint8_t PTP::bulbMode()
