@@ -56,6 +56,21 @@
 
 /** Size in bytes of the CDC data IN and OUT endpoints. */
 #define CDC_TXRX_EPSIZE                16
+ 
+    /** Endpoint address of the CDC device-to-host notification IN endpoint. */
+    #define CDC_NOTIFICATION_EPADDR        (ENDPOINT_DIR_IN  | 2)
+
+    /** Endpoint address of the CDC device-to-host data IN endpoint. */
+    #define CDC_TX_EPADDR                  (ENDPOINT_DIR_IN  | 3)
+
+    /** Endpoint address of the CDC host-to-device data OUT endpoint. */
+    #define CDC_RX_EPADDR                  (ENDPOINT_DIR_OUT | 4)
+
+    /** Size in bytes of the CDC device-to-host notification IN endpoint. */
+    #define CDC_NOTIFICATION_EPSIZE        8
+
+    /** Size in bytes of the CDC data IN and OUT endpoints. */
+    #define CDC_TXRX_EPSIZE                16
 
 /* Type Defines: */
 /** Type define for the device configuration descriptor structure. This must be defined in the
