@@ -18,6 +18,8 @@
 #define EOS_OC_RESETUILOCK 0x911C
 #define EOS_OC_BULBSTART 0x9125
 #define EOS_OC_BULBEND 0x9126
+#define EOS_OC_REMOTE_RELEASE_ON 0x9128
+#define EOS_OC_REMOTE_RELEASE_OFF 0x9129
 #define EOS_OC_KeepDeviceOn 0x9003
 #define EOS_OC_DepthOfFieldPreview 0x9156
 #define EOS_OC_MoveFocus 0x9155

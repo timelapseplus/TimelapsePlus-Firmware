@@ -830,6 +830,11 @@ uint8_t PTP::init()
 	    PTP_propertyOffset = (uint16_t)(((uint8_t*)&PTP_ISO_List[0].nikon) - (uint8_t *)&PTP_ISO_List[0].name[0]);
 	}
 
+//TEMP FIX////
+//    PTP_propertyOffset = (uint16_t)(((uint8_t*)&PTP_ISO_List[0].eos) - (uint8_t *)&PTP_ISO_List[0].name[0]);
+//    PTP_protocol = PROTOCOL_EOS;
+//////////////
+
 	uint8_t bulb_support = 0;
     for(uint16_t i = 0; i < supportedOperationsCount; i++)
     {
@@ -843,12 +848,14 @@ uint8_t PTP::init()
 	    		case EOS_OC_CAPTURE:
 	    			supports.capture = true;
 	    			break;
-				case EOS_OC_SETUILOCK:
-				case EOS_OC_RESETUILOCK:
-				case EOS_OC_BULBSTART:
-				case EOS_OC_BULBEND:
+//				case EOS_OC_SETUILOCK:
+//				case EOS_OC_RESETUILOCK:
+//				case EOS_OC_BULBSTART:
+//				case EOS_OC_BULBEND:
+				case EOS_OC_REMOTE_RELEASE_ON:
+				case EOS_OC_REMOTE_RELEASE_OFF:
 					bulb_support++;
-					if(bulb_support == 4) supports.bulb = true;
+					if(bulb_support == 2) supports.bulb = true;
 					break;
 	    	}
 		
@@ -1255,8 +1262,11 @@ uint8_t PTP::bulbStart()
 	bulbMode();
 	if(PTP_protocol == PROTOCOL_EOS)
 	{
-		if(PTP_Transaction(EOS_OC_SETUILOCK, 0, 0, NULL, 0, NULL)) return 1; // SetUILock
-		if(PTP_Transaction(EOS_OC_BULBSTART, 0, 0, NULL, 0, NULL)) return 1; // Bulb Start
+		data[0] = 0x03;
+		data[1] = 0x00;
+//		if(PTP_Transaction(EOS_OC_SETUILOCK, 0, 0, NULL, 0, NULL)) return 1; // SetUILock
+//		if(PTP_Transaction(EOS_OC_BULBSTART, 0, 0, NULL, 0, NULL)) return 1; // Bulb Start
+		if(PTP_Transaction(EOS_OC_REMOTE_RELEASE_ON, 0, 2, data, 0, NULL)) return 1; // Bulb Start
 	}
 	else
 	{
@@ -1272,8 +1282,10 @@ uint8_t PTP::bulbEnd()
 	busy = true;
 	if(PTP_protocol == PROTOCOL_EOS)
 	{
-		if(PTP_Transaction(EOS_OC_BULBEND, 0, 0, NULL, 0, NULL)) return 1; // Bulb End
-		if(PTP_Transaction(EOS_OC_RESETUILOCK, 0, 0, NULL, 0, NULL)) return 1; // ResetUILock
+		data[0] = 0x03;
+//		if(PTP_Transaction(EOS_OC_BULBEND, 0, 0, NULL, 0, NULL)) return 1; // Bulb End
+//		if(PTP_Transaction(EOS_OC_RESETUILOCK, 0, 0, NULL, 0, NULL)) return 1; // ResetUILock
+		if(PTP_Transaction(EOS_OC_REMOTE_RELEASE_OFF, 0, 1, data, 0, NULL)) return 1; // Bulb End
 	}
 	else
 	{
@@ -1403,6 +1415,15 @@ uint8_t PTP::updatePtpParameters(void)
 	PTP_need_update = 0;
 	if(PTP_protocol == PROTOCOL_NIKON)
 	{
+		/*
+		getPropertyInfo(NIKON_DPC_ISO, sizeof(uint16_t), (uint16_t*)&isoAvailCount, (uint8_t*)&isoPTP, (uint8_t*)&isoAvail);
+		if(isoAvailCount > 0) supports.iso = true; else supports.iso = false;
+		getPropertyInfo(NIKON_DPC_APERTURE, sizeof(uint16_t), (uint16_t*)&apertureAvailCount, (uint8_t*)&aperturePTP, (uint8_t*)&apertureAvail);
+		if(apertureAvailCount > 0) supports.aperture = true; else supports.aperture = false;
+		getPropertyInfo(NIKON_DPC_SHUTTER, sizeof(uint32_t), (uint16_t*)&shutterAvailCount, (uint8_t*)&shutterPTP, (uint8_t*)&shutterAvail);
+		if(shutterAvailCount > 0) supports.shutter = true; else supports.shutter = false;
+		*/
+		
 		data[0] = (uint32_t)NIKON_DPC_ISO;
 		PTP_Transaction(PTP_OC_PROPERTY_LIST, 1, 1, data, 0, NULL);
 		if(PTP_Bytes_Received > 10 && PTP_Buffer[2] == 4)
@@ -1452,9 +1473,170 @@ uint8_t PTP::updatePtpParameters(void)
 				shutterAvail[i] = PTP::shutterEv(tmp32);
 			}
 		}
+		
 	}
 	return 0;
 }
+
+	// This method still needs work... //
+uint8_t PTP::getPropertyInfo(uint16_t prop_code, uint8_t expected_size, uint16_t *count, uint8_t *current, uint8_t *list)
+{
+
+	//First check that the prop_code is in the list of supported properties (not implemented)
+
+	// Send a command to the device to describe this property.
+	data[0] = (uint32_t)prop_code;
+	PTP_Transaction(PTP_OC_PROPERTY_LIST, 1, 1, data, 0, NULL);
+
+	// data[0]
+	// data[1] -- Property code back
+	uint16_t prop;
+	memcpy(&prop, &PTP_Buffer[0], sizeof(uint16_t));
+    if(prop != prop_code) return PTP_RETURN_ERROR;
+
+	debug(STR("PROP="));
+	debug(prop);
+	debug_nl();
+
+	// data[2]
+	// data[3] -- data type code
+	// Setting the type code for the property also turns its
+	// support flag on.
+    uint16_t type = 0;
+	memcpy(&type, &PTP_Buffer[2], sizeof(uint16_t));
+
+	debug(STR("TYPE="));
+	debug(type);
+	debug_nl();
+
+	// data[4] -- GetSet flag
+    //uint8_t getset = PTP_Buffer[4];
+
+    uint16_t index = 5;
+	// Starting at data[5]...
+	//   -- Factory Default value
+	//   -- Current value
+      switch (type) {
+	  case 0:  // UNDEFINED
+	  case 1:  // INT8
+	  case 2:  // UINT8
+	  	if(expected_size != sizeof(uint8_t)) return PTP_RETURN_ERROR;
+		memcpy(current, &PTP_Buffer[index], sizeof(uint8_t));
+		index += sizeof(uint8_t) * 2;
+	    break;
+	  case 3:  // INT16
+	  case 4:  // UINT16
+	  	if(expected_size != sizeof(uint16_t)) return PTP_RETURN_ERROR;
+		memcpy(current, &PTP_Buffer[index], sizeof(uint16_t));
+		index += sizeof(uint16_t) * 2;
+	    break;
+	  case 5:  // INT32
+	  case 6:  // UINT32
+	  	if(expected_size != sizeof(uint32_t)) return PTP_RETURN_ERROR;
+		memcpy(current, &PTP_Buffer[index], sizeof(uint32_t));
+		index += sizeof(uint32_t) * 2;
+	    break;
+	  case 7:  // INT64
+	  case 8:  // UINT64
+	  case 9:  // INT128;
+	  case 10: // UINT128;
+	  	return PTP_RETURN_ERROR;
+	    break;
+	  case 0xffff: // String
+	  	return PTP_RETURN_ERROR;
+	    break;
+	  default:
+	  	return PTP_RETURN_ERROR;
+	    break;
+      }
+
+	debug(STR("CURRENT="));
+	debug(*((uint16_t*)current));
+	debug_nl();
+
+	// The form flag...
+    uint8_t form = PTP_Buffer[index];
+    index++;
+
+	debug(STR("FORM="));
+	debug(form);
+	debug_nl();
+
+      if (form == 1) { // RANGE
+	      // The range description includes 3 values: the minimum
+	      // value, the maximum value and the step.
+	    switch (type) {
+		case 1:  // INT8
+		case 2: { // UINT8
+			uint8_t *range = (uint8_t*)list;
+		    range[0] = PTP_Buffer[index];
+			index++;
+		    range[1] = PTP_Buffer[index];
+			index++;
+		    range[2] = PTP_Buffer[index];
+			index++;
+		      break;
+		}
+		default: {
+		      break;
+		}
+	    }
+
+      } else if (form == 2) { // ENUM
+	      // An enumeration is a complete list of the possible
+	      // value that the property can take.
+		uint16_t enum_count;
+		memcpy(&enum_count, &PTP_Buffer[index], sizeof(uint16_t));
+		index += sizeof(uint16_t);
+		*count = enum_count;
+
+		debug(STR("COUNT="));
+		debug(*count);
+		debug_nl();
+
+
+	    switch (type) {
+		case 1: // INT8
+		case 2: // UINT8
+		{
+		  for (uint16_t idx = 0 ; idx < enum_count ; idx++)
+		  {
+			memcpy(&list[idx * sizeof(uint8_t)], &PTP_Buffer[index], sizeof(uint8_t));
+			index += sizeof(uint8_t);
+		  }
+		  break;
+		}
+		case 3: // INT16
+		case 4: // UINT16
+		{
+		  for (uint16_t idx = 0 ; idx < enum_count ; idx++)
+		  {
+			memcpy(&list[idx * sizeof(uint16_t)], &PTP_Buffer[index], sizeof(uint16_t));
+			index += sizeof(uint16_t);
+		  }
+		  break;
+		}
+		case 5: // INT32
+		case 6: // UINT32
+		{
+		  for (uint16_t idx = 0 ; idx < enum_count ; idx++)
+		  {
+			memcpy(&list[idx * sizeof(uint32_t)], &PTP_Buffer[index], sizeof(uint32_t));
+			index += sizeof(uint32_t);
+		  }
+		  break;
+		}
+		case 0xffff: // String
+		  break;
+		default:
+		  break;
+	    }
+      } else {
+      }
+
+      return 0;
+}
+
 
 uint8_t PTP::getThumb(uint32_t handle)
 {
