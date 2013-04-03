@@ -102,6 +102,7 @@ void settings_default()
     conf.bulbOffset = 75;
     conf.interface = INTERFACE_AUTO;
     conf.brampMode = BRAMP_MODE_ALL;
+    conf.autoRun = AUTO_RUN_OFF;
     settings_save();
     settings_load();
 }

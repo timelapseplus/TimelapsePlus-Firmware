@@ -28,6 +28,8 @@
 #define BRAMP_MODE_APERTURE 0b100
 #define BRAMP_MODE_BULB     0b001
 
+#define AUTO_RUN_OFF 0
+#define AUTO_RUN_ON 1
 
 struct settings
 {
@@ -51,7 +53,7 @@ struct settings
     uint16_t bulbOffset;
     uint8_t brampMode;
     uint8_t interface;
-    char test2;
+    uint8_t autoRun;
     char test3;
     char test4;
     char test5;

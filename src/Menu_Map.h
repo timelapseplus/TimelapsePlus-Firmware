@@ -60,6 +60,10 @@ const char STR_BRAMP_METHOD_AUTO[]PROGMEM = "Based on Light";
 const char STR_AUTO_BRAMP_INTEGRATION[]PROGMEM = "Light Average";
 const char STR_BRAMP_TARGET[]PROGMEM = "Darkest Point";
 
+const char STR_AUTO_RUN_ON[]PROGMEM = "Auto-run TL on pwr";
+const char STR_AUTO_RUN_OFF[]PROGMEM = "Normal Operation";
+
+
 const menu_item menu_options[]PROGMEM =
 {
     { "Stop Timer  ", 'F', (void*)&timerStop, 0, 0, (void*)&timer.running },
@@ -237,8 +241,9 @@ const menu_item menu_trigger[]PROGMEM =
     { "Cable Remote", 'F', (void*)cableRelease, 0, 0, (void*)&timerNotRunning },
     { "IR Remote   ", 'F', (void*)IRremote, 0, 0, (void*)&timerNotRunning },
     { "BT Remote   ", 'F', (void*)cableReleaseRemote, 0, 0, (void*)&showRemoteStart },
-    { "Lightning  ", 'F', (void*)lightningTrigger, 0, 0, (void*)&timerNotRunning },
+    { "Lightning   ", 'F', (void*)lightningTrigger, 0, 0, (void*)&timerNotRunning },
     { "Motion      ", 'F', (void*)motionTrigger, 0, 0, (void*)&timerNotRunning },
+//    { "Video       ", 'F', (void*)videoRemote, 0, 0, (void*)&camera.supports.video },
     { "\0           ", 'V', 0, 0, 0 }
 };
 
@@ -334,6 +339,13 @@ const settings_item menu_settings_half_press[]PROGMEM =
     { "\0           ", 0, 0 }
 };
 
+const settings_item menu_settings_auto_run[]PROGMEM =
+{
+    { "Disabled    ", AUTO_RUN_OFF, (void*)STR_AUTO_RUN_OFF },
+    { "Run on Pwr  ", AUTO_RUN_ON, (void*)STR_AUTO_RUN_ON },
+    { "\0           ", 0, 0 }
+};
+
 const char STR_INTERFACE[]PROGMEM = "Camera Interface";
 
 const settings_item menu_settings_interface[]PROGMEM =
@@ -402,6 +414,7 @@ const menu_item menu_settings_camera[]PROGMEM =
     { "Half press  ", 'S', (void*)menu_settings_half_press, (void*)&conf.halfPress, (void*)settings_update, 0 },
     { "Interface   ", 'S', (void*)menu_settings_interface, (void*)&conf.interface, (void*)settings_update, 0 },
     { "Bramp Mode  ", 'S', (void*)menu_settings_bramp_mode, (void*)&conf.brampMode, (void*)settings_update, 0 },
+    { "Run on PwrOn", 'S', (void*)menu_settings_auto_run, (void*)&conf.autoRun, (void*)settings_update, 0 },
     { "\0           ", 'V', 0, 0, 0 }
 };
 

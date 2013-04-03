@@ -202,6 +202,13 @@ int main()
 	notify.watch(NOTIFY_BT, (void *)&remote.connected, sizeof(remote.connected), &message_notify);
 	notify.watch(NOTIFY_CAMERA, (void *)&PTP_Ready, sizeof(PTP_Ready), &message_notify);
 
+	if(conf.autoRun)
+	{
+		menu.message(TEXT("Auto Started"));
+		timer.begin();
+		menu.spawn((void*)timerStatus);	
+	}
+
 	/****************************
 	   Main Loop
 	*****************************/
