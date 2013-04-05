@@ -27,15 +27,6 @@
 
 #define IR_PIN 7, B
 
-#define ALL -1
-#define CANON 0
-#define NIKON 1
-#define SONY 2
-#define MINOLTA 3
-#define OLYMPUS 4
-#define PENTAX 5
-#define PANASONIC 6
-#define OTHER 100 
 
 class IR
 {

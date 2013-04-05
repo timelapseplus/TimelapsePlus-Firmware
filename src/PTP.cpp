@@ -4,11 +4,14 @@
 #include "PTP.h"
 #include "PTP_Codes.h"
 #include "shutter.h"
+#include "settings.h"
 #include "tldefs.h"
 #include "debug.h"
 #ifdef PTP_DEBUG
 #include "bluetooth.h"
 #endif
+
+extern settings conf;
 
 const propertyDescription_t PTP_Aperture_List[] PROGMEM = {
     {"  Error", 0xFF, 0xFF, 255 },
@@ -807,7 +810,8 @@ uint8_t PTP::init()
 		.video = false
 	};
 
-	if(strncmp(PTP_CameraMake, "Canon", 5) == 0) // This should be done with VendorID instead
+//	if(strncmp(PTP_CameraMake, "Canon", 5) == 0) // This should be done with VendorID instead
+	if(conf.cameraMake == CANON) // This should be done with VendorID instead
 	{
 		debug(STR("Using Canon EOS PTP Protocol\r\n"));
 	    PTP_propertyOffset = (uint16_t)(((uint8_t*)&PTP_ISO_List[0].eos) - (uint8_t *)&PTP_ISO_List[0].name[0]);
@@ -816,7 +820,8 @@ uint8_t PTP::init()
 	    debug_nl();
 	    PTP_protocol = PROTOCOL_EOS;
 	}
-	else if(strncmp(PTP_CameraMake, "Nikon", 5) == 0)
+	//else if(strncmp(PTP_CameraMake, "Nikon", 5) == 0)
+	else if(conf.cameraMake == NIKON)
 	{
 		debug(STR("Using Nikon PTP Protocol\r\n"));
 	    PTP_protocol = PROTOCOL_NIKON;

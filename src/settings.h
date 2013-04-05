@@ -10,6 +10,16 @@
  
 #define SETTINGS_VERSION 20130124
 
+#define ALL -1
+#define CANON 0
+#define NIKON 1
+#define SONY 2
+#define MINOLTA 3
+#define OLYMPUS 4
+#define PENTAX 5
+#define PANASONIC 6
+#define OTHER 100 
+
 #define BT_MODE_SLEEP 0
 #define BT_MODE_DISCOVERABLE 1
 
@@ -70,3 +80,6 @@ void settings_update(void);
 void settings_init(void);
 
 extern uint8_t settings_reset;
+
+
+

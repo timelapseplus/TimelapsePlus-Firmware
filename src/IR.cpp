@@ -27,6 +27,7 @@
 #include <util/delay.h>
 #include <avr/interrupt.h>
 #include "hardware.h"
+#include "settings.h"
 #include "clock.h"
 
 extern Clock clock;
