@@ -104,6 +104,8 @@ void settings_default()
     conf.interface = INTERFACE_AUTO;
     conf.brampMode = BRAMP_MODE_ALL;
     conf.autoRun = AUTO_RUN_OFF;
+    conf.modeSwitch = USB_CHANGE_MODE_ENABLED;
+    conf.dollyPulse = 100;
     settings_save();
     settings_load();
 }

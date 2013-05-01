@@ -98,7 +98,7 @@ public:
     static uint8_t bulbUp(uint8_t ev);
     static uint8_t bulbDown(uint8_t ev);
 
-    uint8_t ready, busy, bulb_open, liveViewOn;
+    uint8_t ready, busy, bulb_open, modeLiveView, recording;
 
     CameraSupports_t supports;
 

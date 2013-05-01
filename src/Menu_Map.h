@@ -53,6 +53,7 @@ const char STR_BT_DISCOVERABLE[]PROGMEM = "Uses more power";
 const char STR_HALF_PRESS[]PROGMEM = "Shutter half press";
 
 const char STR_BULB_OFFSET[]PROGMEM = "Offset in ms";
+const char STR_DOLLY_PULSE[]PROGMEM = "Pulse len ms";
 
 const char STR_BRAMP_METHOD_KEYFRAME[]PROGMEM = "Keyframe based";
 const char STR_BRAMP_METHOD_GUIDED[]PROGMEM = "Manually Guided";
@@ -113,6 +114,7 @@ const settings_item settings_bramp_target[]PROGMEM =
 const settings_item settings_auto_bramp_integration[]PROGMEM =
 {
     { "10 Minutes  ", 10, (void*)STR_AUTO_BRAMP_INTEGRATION },
+    { "12 Minutes  ", 12, (void*)STR_AUTO_BRAMP_INTEGRATION },
     { "15 Minutes  ", 15, (void*)STR_AUTO_BRAMP_INTEGRATION },
     { "20 Minutes  ", 20, (void*)STR_AUTO_BRAMP_INTEGRATION },
     { "30 Minutes  ", 30, (void*)STR_AUTO_BRAMP_INTEGRATION },
@@ -140,7 +142,8 @@ const settings_item settings_bracket_stops[]PROGMEM =
 
 const settings_item settings_hdr_exposures[]PROGMEM =
 {
-    { "         12 ", 12, (void*)STR_HDR_EXPOSURES },
+    { "         13 ", 13, (void*)STR_HDR_EXPOSURES },
+    { "         11 ", 11, (void*)STR_HDR_EXPOSURES },
     { "          9 ", 9, (void*)STR_HDR_EXPOSURES },
     { "          7 ", 7, (void*)STR_HDR_EXPOSURES },
     { "          5 ", 5, (void*)STR_HDR_EXPOSURES },
@@ -243,7 +246,7 @@ const menu_item menu_trigger[]PROGMEM =
     { "BT Remote   ", 'F', (void*)cableReleaseRemote, 0, 0, (void*)&showRemoteStart },
     { "Lightning   ", 'F', (void*)lightningTrigger, 0, 0, (void*)&timerNotRunning },
     { "Motion      ", 'F', (void*)motionTrigger, 0, 0, (void*)&timerNotRunning },
-//    { "Video       ", 'F', (void*)videoRemote, 0, 0, (void*)&camera.supports.video },
+    { "Video       ", 'F', (void*)videoRemote, 0, 0, (void*)&camera.supports.video },
     { "\0           ", 'V', 0, 0, 0 }
 };
 
@@ -370,6 +373,16 @@ const settings_item menu_settings_bramp_mode[]PROGMEM =
     { "\0           ", 0, 0 }
 };
 
+const char STR_MODE_SWITCH_ENABLED[]PROGMEM = "Auto change via USB";
+const char STR_MODE_SWITCH_DISABLED[]PROGMEM = "Disabled";
+
+const settings_item menu_settings_mode_switch[]PROGMEM =
+{
+    { "Enabled     ", USB_CHANGE_MODE_ENABLED, (void*)STR_MODE_SWITCH_ENABLED },
+    { "Disabled    ", USB_CHANGE_MODE_DISABLED, (void*)STR_MODE_SWITCH_DISABLED },
+    { "\0           ", 0, 0 }
+};
+
 const settings_item menu_settings_flashlight_time[]PROGMEM =
 {
     { "10 Minutes  ", 60, (void*)STR_FLASHLIGHT_TIME },
@@ -414,6 +427,7 @@ const menu_item menu_settings_camera[]PROGMEM =
     { "Half press  ", 'S', (void*)menu_settings_half_press, (void*)&conf.halfPress, (void*)settings_update, 0 },
     { "Interface   ", 'S', (void*)menu_settings_interface, (void*)&conf.interface, (void*)settings_update, 0 },
     { "Bramp Mode  ", 'S', (void*)menu_settings_bramp_mode, (void*)&conf.brampMode, (void*)settings_update, 0 },
+    { "Mode Switch ", 'S', (void*)menu_settings_mode_switch, (void*)&conf.modeSwitch, (void*)settings_update, 0 },
     { "Run on PwrOn", 'S', (void*)menu_settings_auto_run, (void*)&conf.autoRun, (void*)settings_update, 0 },
     { "\0           ", 'V', 0, 0, 0 }
 };
@@ -421,6 +435,7 @@ const menu_item menu_settings_camera[]PROGMEM =
 const menu_item menu_settings_auxiliary[]PROGMEM =
 {
     { "AUX Port    ", 'S', (void*)menu_settings_aux_port, (void*)&conf.auxPort, (void*)settings_update, 0 },
+    { "Dolly Pulse ", 'C', (void*)&conf.dollyPulse, (void*)STR_DOLLY_PULSE, (void*)settings_update, &conf.auxPort },
     { "BT Default  ", 'S', (void*)menu_settings_bt_default, (void*)&conf.btMode, (void*)settings_update, &bt.present },
     { "\0           ", 'V', 0, 0, 0 }
 };

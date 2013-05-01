@@ -345,7 +345,7 @@ int main()
 		*****************************/
 		
 		count++;
-		if(count > 9)
+		if(count > 5)
 		{
 			count = 0;
 			charge_status = battery_status();

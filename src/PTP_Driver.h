@@ -43,7 +43,7 @@
 #define PTP_RETURN_ERROR 1
 #define PTP_RETURN_DATA_REMAINING 2
 
-#define PTP_BUFFER_SIZE 1024
+#define PTP_BUFFER_SIZE 1280
 
 /* Includes: */
 #include <avr/io.h>

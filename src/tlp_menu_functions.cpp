@@ -242,29 +242,38 @@ volatile char IRremote(char key, char first)
 
 volatile char videoRemote(char key, char first)
 {
-	static uint8_t recording = false;
-
 	lcd.cls();
 	menu.setTitle(TEXT("Video"));
-	if(recording)
-		menu.setBar(TEXT("Return"), TEXT("Stop"));
+	if(camera.modeLiveView)
+	{
+		if(camera.recording)
+			menu.setBar(TEXT("Return"), TEXT("Stop"));
+		else
+			menu.setBar(TEXT("Return"), TEXT("Start"));
+	}
 	else
-		menu.setBar(TEXT("Return"), TEXT("Start"));
-
+	{
+		menu.setBar(TEXT("Return"), TEXT("LiveView"));
+	}
 	lcd.update();
 
 	switch(key)
 	{
 	   case FR_KEY:
-	   		if(recording)
+	   		if(camera.modeLiveView)
 	   		{
-	   			camera.videoStop();
-	   			recording = false;
+		   		if(camera.recording)
+		   		{
+		   			camera.videoStop();
+		   		}
+		   		else
+		   		{
+		   			camera.videoStart();
+		   		}
 	   		}
 	   		else
 	   		{
-	   			camera.videoStart();
-	   			recording = true;
+	   			camera.liveView(true);
 	   		}
 			break;
 

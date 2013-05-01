@@ -112,7 +112,7 @@ void shutter::setDefault()
     current.Bulb[0] = 36;
     current.Key[0] = 3600;
     current.brampMethod = BRAMP_METHOD_AUTO;
-    current.Integration = 30;
+    current.Integration = 10;
     save(0);
 
     uint8_t i;
@@ -1086,6 +1086,7 @@ char shutter::task()
         camera.bulbEnd();
         hardware_flashlight(0);
         light.stop();
+        aux_off();
 
         return DONE;
     }
@@ -1108,7 +1109,8 @@ void check_cable()
 void aux_pulse()
 {
     aux_on();
-    clock.in(100, &aux_off);
+    if(conf.dollyPulse == 65535) conf.dollyPulse = 100;
+    clock.in(conf.dollyPulse, &aux_off);
 }
 
 void aux_on()

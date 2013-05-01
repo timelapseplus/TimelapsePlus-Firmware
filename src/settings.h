@@ -38,6 +38,9 @@
 #define BRAMP_MODE_APERTURE 0b100
 #define BRAMP_MODE_BULB     0b001
 
+#define USB_CHANGE_MODE_ENABLED 0
+#define USB_CHANGE_MODE_DISABLED 1
+
 #define AUTO_RUN_OFF 0
 #define AUTO_RUN_ON 1
 
@@ -64,9 +67,8 @@ struct settings
     uint8_t brampMode;
     uint8_t interface;
     uint8_t autoRun;
-    char test3;
-    char test4;
-    char test5;
+    uint8_t modeSwitch;
+    uint16_t dollyPulse;
     char test6;
     char test7;
     char test8;

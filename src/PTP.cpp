@@ -15,13 +15,13 @@ extern settings conf;
 
 const propertyDescription_t PTP_Aperture_List[] PROGMEM = {
     {"  Error", 0xFF, 0xFF, 255 },
-    {"  f/1.2", 0x0c, 120, 2 },
+    {"  f/1.2", 0x0d, 120, 2 },
     {"  f/1.4", 0x10, 140, 3 },
     {"  f/1.6", 0x13, 160, 4 },
-    {"  f/1.8", 0x14, 180, 5 },
+    {"  f/1.8", 0x15, 180, 5 },
     {"  f/2.0", 0x18, 200, 6 },
     {"  f/2.2", 0x1b, 220, 7 },
-    {"  f/2.5", 0x1c, 250, 8 },
+    {"  f/2.5", 0x1d, 250, 8 },
     {"  f/2.8", 0x20, 280, 9 },
     {"  f/3.2", 0x23, 320, 10 },
     {"  f/3.5", 0x25, 350, 11 },
@@ -41,10 +41,10 @@ const propertyDescription_t PTP_Aperture_List[] PROGMEM = {
     {"   f/18", 0x4b, 1800, 25 },
     {"   f/20", 0x4d, 2000, 26 },
     {"   f/22", 0x50, 2200, 27 },
-    {"   f/25", 0x00, 2500, 28 },
-    {"   f/29", 0x00, 2900, 29 },
-    {"   f/32", 0x00, 3200, 30 },
-    {"   f/36", 0x00, 3600, 31 }
+    {"   f/25", 0x53, 2500, 28 },
+    {"   f/29", 0x55, 2900, 29 },
+    {"   f/32", 0x58, 3200, 30 },
+    {"   f/36", 0x5b, 3600, 31 }
 };
 
 const propertyDescription_t PTP_Shutter_List[] PROGMEM = {
@@ -261,7 +261,7 @@ uint8_t PTP::bulbMax() // 7
 	return pgm_read_byte(&Bulb_List[sizeof(Bulb_List) / sizeof(Bulb_List[0]) - 1].ev);
 }
 
-uint8_t PTP::bulbMin() // 47
+uint8_t PTP::bulbMin() // 56
 {
 	return pgm_read_byte(&Bulb_List[1].ev);
 }
@@ -841,7 +841,7 @@ uint8_t PTP::init()
 //    PTP_protocol = PROTOCOL_EOS;
 //////////////
 
-	uint8_t bulb_support = 0;
+	uint8_t bulb_support = 0;//, pc_connect = 0;
     for(uint16_t i = 0; i < supportedOperationsCount; i++)
     {
     	if(PTP_protocol == PROTOCOL_EOS)
@@ -865,6 +865,10 @@ uint8_t PTP::init()
 				case EOS_OC_REMOTE_RELEASE_OFF:
 					bulb_support++;
 					if(bulb_support == 2) supports.bulb = true;
+					break;
+				case EOS_OC_PC_CONNECT:
+					debug(STR("Using PC Connect Mode\r\n"));
+					//pc_connect = 1;
 					break;
 	    	}
 		
@@ -903,7 +907,8 @@ uint8_t PTP::init()
 
 	static_ready = 1;
 	ready = 1;
-	liveViewOn = false;
+	modeLiveView = false;
+	recording = false;
 	checkEvent();
 
 	return 0;
@@ -912,29 +917,29 @@ uint8_t PTP::init()
 uint8_t PTP::liveView(uint8_t on)
 {
 	if(ready == 0) return 0;
-	uint8_t ret = setEosParameter(EOS_DPC_LiveView, (on) ? 2 : 0);
+	uint8_t ret;
+	if(true)
+	{
+		ret = setEosParameter(EOS_DPC_LiveView, (on) ? 2 : 0);
+	}
+	else
+	{
+		if(on)
+			ret = PTP_Transaction(EOS_OC_LV_START, 0, 0, NULL, 0, NULL);
+		else
+			ret = PTP_Transaction(EOS_OC_LV_STOP, 0, 0, NULL, 0, NULL);
+	}
+	
 	if(ret == PTP_RETURN_ERROR)
 	{
 		debug(STR("ERROR!\r\n"));
 		return 1;	
 	}
-/*	if(on)
-	{
-		ret = setParameter(0xD1B3, 0);
-		if(ret == PTP_RETURN_ERROR)
-		{
-			debug(STR("ERROR!\r\n"));
-			return 1;	
-		}
-		liveViewOn = true;
-		debug(STR("LiveView ON\r\n"));
-	}
 	else
 	{
-		liveViewOn = false;
-		debug(STR("LiveView OFF\r\n"));
+		modeLiveView = on;
 	}
-*/
+
 	return 0;	
 }
 
@@ -942,7 +947,7 @@ uint8_t PTP::moveFocus(int16_t step)
 {
 	if(PTP_protocol == PROTOCOL_EOS)
 	{
-		if(!liveViewOn) // Only works in live view mode
+		if(!modeLiveView) // Only works in live view mode
 		{
 			liveView(true);
 		}
@@ -993,6 +998,22 @@ uint8_t PTP::checkEvent()
 		}
 		while(i < PTP_Bytes_Received)
 		{
+			if(i + sizeof(uint32_t) >= PTP_BUFFER_SIZE)
+			{
+				if(ret == PTP_RETURN_DATA_REMAINING)
+				{
+					debug(STR("Pre-fetching next data packet... \r\n"));
+					ret = PTP_FetchData(PTP_BUFFER_SIZE - i);
+					if(ret == PTP_RETURN_ERROR) return ret;
+					i = 0;
+					continue;
+				}
+				else
+				{
+					debug(STR("Pre-fetch Incomplete! \r\n"));
+					return PTP_RETURN_ERROR;
+				}
+			}
 			memcpy(&event_size, &PTP_Buffer[i], sizeof(uint32_t));
 			if(event_size == 0)
 			{
@@ -1011,6 +1032,10 @@ uint8_t PTP::checkEvent()
 						debug(STR(" i: "));
 						debug(i);
 						debug_nl();
+						for(uint8_t x = 0; x < 12; x++)
+						{
+							sendByte(PTP_Buffer[i + x - 4]);
+						}
 						while(event_size > PTP_BUFFER_SIZE && ret == PTP_RETURN_DATA_REMAINING)
 						{
 							ret = PTP_FetchData(0);
@@ -1021,6 +1046,7 @@ uint8_t PTP::checkEvent()
 					}
 					else
 					{
+						debug(STR("Fetching next data packet... \r\n"));
 						ret = PTP_FetchData(PTP_BUFFER_SIZE - i);
 						if(ret == PTP_RETURN_ERROR) return ret;
 						i = 0;
@@ -1030,15 +1056,29 @@ uint8_t PTP::checkEvent()
 				}
 				else
 				{
+					debug(STR("Incomplete! \r\n"));
 					return PTP_RETURN_ERROR;
 				}
 			}
 
 			memcpy(&event_type, &PTP_Buffer[i + sizeof(uint32_t) * 1], sizeof(uint32_t));
 			memcpy(&event_item, &PTP_Buffer[i + sizeof(uint32_t) * 2], sizeof(uint32_t));
-			memcpy(&event_value, &PTP_Buffer[i + sizeof(uint32_t) * 3], sizeof(uint32_t));
+
+			//debug(STR(" Event: "));
+			//debug(i);
+			//debug_nl();
+			//sendHex((char *) &event_size);
+			//debug(STR("        "));
+			//sendHex((char *) &event_type);
+			//debug(STR("        "));
+			//sendHex((char *) &event_item);
+			//debug(STR("        "));
+			//sendHex((char *) &event_value);
+			//debug_nl();
+
 			if(event_type == EOS_EC_PROPERTY_CHANGE)
 			{
+				memcpy(&event_value, &PTP_Buffer[i + sizeof(uint32_t) * 3], sizeof(uint32_t));
 				switch(event_item)
 				{
 					case EOS_DPC_ISO:
@@ -1078,6 +1118,10 @@ uint8_t PTP::checkEvent()
 			}
 			else if(event_type == EOS_EC_PROPERTY_VALUES)
 			{
+				//debug(STR(" Value List: "));
+				//sendHex((char *)&event_item);
+				//debug_nl();
+
 				uint32_t x;
 				switch(event_item)
 				{
@@ -1088,9 +1132,9 @@ uint8_t PTP::checkEvent()
 						}
 						isoAvailCount = x;
 						supports.iso = isoAvailCount > 0;
-						debug(STR("\r\n ISO Avail Count: 0x"));
-						debug(isoAvailCount);
-						debug_nl();
+						//debug(STR("\r\n ISO Avail Count: 0x"));
+						//debug(isoAvailCount);
+						//debug_nl();
 						break;
 					case EOS_DPC_SHUTTER:
 						for(x = 0; x < event_size / sizeof(uint32_t) - 5; x++)
@@ -1099,9 +1143,9 @@ uint8_t PTP::checkEvent()
 						}
 						shutterAvailCount = x;
 						supports.shutter = shutterAvailCount > 0;
-						debug(STR("\r\n Shutter Avail Count: 0x"));
-						debug(shutterAvailCount);
-						debug_nl();
+						//debug(STR("\r\n Shutter Avail Count: 0x"));
+						//debug(shutterAvailCount);
+						//debug_nl();
 						break;
 					case EOS_DPC_APERTURE:
 						for(x = 0; x < event_size / sizeof(uint32_t) - 5; x++)
@@ -1110,16 +1154,16 @@ uint8_t PTP::checkEvent()
 						}
 						apertureAvailCount = x;
 						supports.aperture = apertureAvailCount > 0;
-						debug(STR("\r\n Aperture Avail Count: "));
-						debug(apertureAvailCount);
-						debug_nl();
+						//debug(STR("\r\n Aperture Avail Count: "));
+						//debug(apertureAvailCount);
+						//debug_nl();
 						break;
 				}
 			}
 			else if(event_type == EOS_EC_OBJECT_CREATED)
 			{
 				busy = false;
-				debug(STR("\r\n Photo!\r\n"));
+				//debug(STR("\r\n Photo!\r\n"));
 			}
 			else if(event_type == EOS_EC_WillShutdownSoon)
 			{
@@ -1128,19 +1172,20 @@ uint8_t PTP::checkEvent()
 			}
 			else if(event_type > 0)
 			{
-				debug(STR("\r\n Unknown: "));
-				sendHex((char *)&event_type);
-				debug(STR("\r\n    Size: "));
-				debug(event_size);
-				debug_nl();
-				debug(STR("\r\n  Value1: "));
-				sendHex((char *)&event_value);
-				debug(STR("\r\n  Value2: "));
-				sendHex((char *)(&event_value+4));
-				debug(STR("\r\n  Value3: "));
-				sendHex((char *)(&event_value+8));
+				//debug(STR("\r\n Unknown: "));
+				//sendHex((char *)&event_type);
+				//debug(STR("\r\n    Size: "));
+				//debug(event_size);
+				//debug_nl();
+				//debug(STR("\r\n  Value1: "));
+				//sendHex((char *)&event_value);
+				//debug(STR("\r\n  Value2: "));
+				//sendHex((char *)(&event_value+4));
+				//debug(STR("\r\n  Value3: "));
+				//sendHex((char *)(&event_value+8));
 			}
 			i += event_size;
+			wdt_reset();
 		}
 	} while(ret == PTP_RETURN_DATA_REMAINING);
 	return 0;
@@ -1232,11 +1277,11 @@ uint8_t PTP::videoStart()
 {
 	if(!static_ready) return 0;
 	if(!supports.video) return PTP_RETURN_ERROR;
-	if(PTP_protocol == PROTOCOL_EOS)
+	if(PTP_protocol == PROTOCOL_EOS && modeLiveView)
 	{
+		recording = true;
 		busy = true;
-		PTP_Transaction(EOS_OC_VIDEO_START, 0, 0, NULL, 0, NULL);
-		//liveView(true);
+		setEosParameter(EOS_DPC_Video, 0x04);
 	}
 	return 0;
 }
@@ -1245,17 +1290,18 @@ uint8_t PTP::videoStop()
 {
 	if(!static_ready) return 0;
 	if(!supports.video) return PTP_RETURN_ERROR;
-	if(PTP_protocol == PROTOCOL_EOS)
+	if(PTP_protocol == PROTOCOL_EOS && recording)
 	{
 		busy = false;
-		PTP_Transaction(EOS_OC_VIDEO_STOP, 0, 0, NULL, 0, NULL);
-		//liveView(false);
+		recording  = false;
+		setEosParameter(EOS_DPC_Video, 0x00);
 	}
 	return 0;
 }
 
 uint8_t PTP::bulbMode()
 {
+	if(conf.modeSwitch == USB_CHANGE_MODE_DISABLED) return 0;
 	if(PTP_protocol == PROTOCOL_EOS)
 	{
 		if(modePTP != 0x04) return setEosParameter(EOS_DPC_MODE, 0x04); // Bulb Mode
@@ -1270,6 +1316,7 @@ uint8_t PTP::bulbMode()
 
 uint8_t PTP::manualMode()
 {
+	if(conf.modeSwitch == USB_CHANGE_MODE_DISABLED) return 0;
 	if(PTP_protocol == PROTOCOL_EOS)
 	{
 		if(modePTP != 0x03) return setEosParameter(EOS_DPC_MODE, 0x03); // Manual Mode
