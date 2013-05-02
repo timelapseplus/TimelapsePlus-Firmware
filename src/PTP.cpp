@@ -7,9 +7,8 @@
 #include "settings.h"
 #include "tldefs.h"
 #include "debug.h"
-#ifdef PTP_DEBUG
-#include "bluetooth.h"
-#endif
+
+//#define EXTENDED_DEBUG
 
 extern settings conf;
 
@@ -221,16 +220,14 @@ const bulbSettings_t Bulb_List[] PROGMEM = {
 };
 
 
-#ifdef PTP_DEBUG
-extern BT bt;
-#endif
-
 uint8_t isoAvail[32];
 uint8_t isoAvailCount;
 uint8_t shutterAvail[64];
 uint8_t shutterAvailCount;
 uint8_t apertureAvail[32];
 uint8_t apertureAvailCount;
+uint8_t modeAvail[20];
+uint8_t modeAvailCount;
 
 uint8_t PTP_need_update = 1;
 
@@ -989,12 +986,28 @@ uint8_t PTP::checkEvent()
 		return ret;
 	}
 
+	ret = PTP_FIRST_TIME;
 	do {
-		ret = PTP_Transaction(EOS_OC_EVENT_GET, 1, 0, NULL, 0, NULL);
-		if(ret == PTP_RETURN_ERROR)
+		if(ret == PTP_FIRST_TIME)
 		{
-			debug(STR("ERROR!\r\n"));
-			return 1;	
+			ret = PTP_Transaction(EOS_OC_EVENT_GET, 1, 0, NULL, 0, NULL);
+			i = 0;
+			if(ret == PTP_RETURN_ERROR)
+			{
+				debug(STR("ERROR checking events!\r\n"));
+				return 1;	
+			}
+		}
+		else
+		{
+			debug(STR("Fetching next data packet... \r\n"));
+			ret = PTP_FetchData(0);
+			if(ret == PTP_RETURN_ERROR)
+			{
+				debug(STR("Error fetching packet!"));
+				return ret;	
+			}
+			i = 0;
 		}
 		while(i < PTP_Bytes_Received)
 		{
@@ -1046,7 +1059,7 @@ uint8_t PTP::checkEvent()
 					}
 					else
 					{
-						debug(STR("Fetching next data packet... \r\n"));
+						debug(STR("Fetching next data packet (2)... \r\n"));
 						ret = PTP_FetchData(PTP_BUFFER_SIZE - i);
 						if(ret == PTP_RETURN_ERROR) return ret;
 						i = 0;
@@ -1064,17 +1077,22 @@ uint8_t PTP::checkEvent()
 			memcpy(&event_type, &PTP_Buffer[i + sizeof(uint32_t) * 1], sizeof(uint32_t));
 			memcpy(&event_item, &PTP_Buffer[i + sizeof(uint32_t) * 2], sizeof(uint32_t));
 
-			//debug(STR(" Event: "));
-			//debug(i);
-			//debug_nl();
-			//sendHex((char *) &event_size);
-			//debug(STR("        "));
-			//sendHex((char *) &event_type);
-			//debug(STR("        "));
-			//sendHex((char *) &event_item);
-			//debug(STR("        "));
-			//sendHex((char *) &event_value);
-			//debug_nl();
+			#ifdef EXTENDED_DEBUG
+			if(i > 1200)
+			{
+			debug(STR(" Event: "));
+			debug(i);
+			debug_nl();
+			sendHex((char *) &event_size);
+			debug(STR("        "));
+			sendHex((char *) &event_type);
+			debug(STR("        "));
+			sendHex((char *) &event_item);
+			debug(STR("        "));
+			sendHex((char *) &event_value);
+			debug_nl();
+			}
+			#endif
 
 			if(event_type == EOS_EC_PROPERTY_CHANGE)
 			{
@@ -1105,22 +1123,15 @@ uint8_t PTP::checkEvent()
 						debug(event_value);
 						debug_nl();
 						break;
-/*					default:
-						if(!supports.iso) break;
-						#ifdef PTP_DEBUG
-						bt.send(STR(" UNKNOWN: "));
-						sendHex((char *) &event_item);
-						bt.send(STR(", "));
-						sendHex((char *) &event_value);
-						#endif
-						break;*/
 				}
 			}
 			else if(event_type == EOS_EC_PROPERTY_VALUES)
 			{
+				#ifdef EXTENDED_DEBUG
 				//debug(STR(" Value List: "));
 				//sendHex((char *)&event_item);
 				//debug_nl();
+				#endif
 
 				uint32_t x;
 				switch(event_item)
@@ -1132,9 +1143,13 @@ uint8_t PTP::checkEvent()
 						}
 						isoAvailCount = x;
 						supports.iso = isoAvailCount > 0;
-						//debug(STR("\r\n ISO Avail Count: 0x"));
-						//debug(isoAvailCount);
-						//debug_nl();
+
+						#ifdef EXTENDED_DEBUG
+						debug(STR("\r\n ISO Avail Count: 0x"));
+						debug(isoAvailCount);
+						debug_nl();
+						#endif
+
 						break;
 					case EOS_DPC_SHUTTER:
 						for(x = 0; x < event_size / sizeof(uint32_t) - 5; x++)
@@ -1143,9 +1158,13 @@ uint8_t PTP::checkEvent()
 						}
 						shutterAvailCount = x;
 						supports.shutter = shutterAvailCount > 0;
-						//debug(STR("\r\n Shutter Avail Count: 0x"));
-						//debug(shutterAvailCount);
-						//debug_nl();
+						
+						#ifdef EXTENDED_DEBUG
+						debug(STR("\r\n Shutter Avail Count: 0x"));
+						debug(shutterAvailCount);
+						debug_nl();
+						#endif
+
 						break;
 					case EOS_DPC_APERTURE:
 						for(x = 0; x < event_size / sizeof(uint32_t) - 5; x++)
@@ -1154,9 +1173,13 @@ uint8_t PTP::checkEvent()
 						}
 						apertureAvailCount = x;
 						supports.aperture = apertureAvailCount > 0;
-						//debug(STR("\r\n Aperture Avail Count: "));
-						//debug(apertureAvailCount);
-						//debug_nl();
+
+						#ifdef EXTENDED_DEBUG
+						debug(STR("\r\n Aperture Avail Count: "));
+						debug(apertureAvailCount);
+						debug_nl();
+						#endif
+
 						break;
 				}
 			}
