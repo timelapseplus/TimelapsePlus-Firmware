@@ -34,7 +34,7 @@ uint8_t x, y;
 
 void termInit()
 {
-    lcd.init();
+    lcd.init(0xf, 0x7, 0x4);
     termClear();
 }
 

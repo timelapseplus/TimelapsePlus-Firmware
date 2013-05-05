@@ -47,9 +47,9 @@
 struct settings
 {
     char cameraFPS;
-    char warnTime;      // 2 bytes
-    char mirrorTime;    // 2 bytes
-    char sysName[10];   // 10 bytes
+    char warnTime;
+    char mirrorTime;
+    char sysName[10];
     char bulbMode;
     char cameraMake;
     char lcdColor;
@@ -69,9 +69,9 @@ struct settings
     uint8_t autoRun;
     uint8_t modeSwitch;
     uint16_t dollyPulse;
-    char test6;
-    char test7;
-    char test8;
+    uint8_t lcdContrast;
+    uint8_t lcdCoefficent;
+    uint8_t lcdBias;
     char test9;
 };
 

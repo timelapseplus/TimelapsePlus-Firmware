@@ -409,12 +409,60 @@ const settings_item menu_settings_camera_fps[]PROGMEM =
     { "\0           ", 0, 0 }
 };
 
+const char STR_LCD_CONTRAST[]PROGMEM = "LCD Contrast";
+const settings_item menu_settings_lcd_contrast[]PROGMEM =
+{
+    { "Contrast: 1 ", 0xf, (void*)STR_LCD_CONTRAST },
+    { "Contrast: 2 ", 0xe, (void*)STR_LCD_CONTRAST },
+    { "Contrast: 3 ", 0xd, (void*)STR_LCD_CONTRAST },
+    { "Contrast: 4 ", 0xc, (void*)STR_LCD_CONTRAST },
+    { "Contrast: 5 ", 0xb, (void*)STR_LCD_CONTRAST },
+    { "Contrast: 6 ", 0xa, (void*)STR_LCD_CONTRAST },
+    { "Contrast: 7 ", 0x9, (void*)STR_LCD_CONTRAST },
+    { "Contrast: 8 ", 0x8, (void*)STR_LCD_CONTRAST },
+    { "Contrast: 9 ", 0x7, (void*)STR_LCD_CONTRAST },
+    { "Contrast:10 ", 0x6, (void*)STR_LCD_CONTRAST },
+    { "Contrast:11 ", 0x5, (void*)STR_LCD_CONTRAST },
+    { "Contrast:12 ", 0x4, (void*)STR_LCD_CONTRAST },
+    { "Contrast:13 ", 0x3, (void*)STR_LCD_CONTRAST },
+    { "Contrast:14 ", 0x2, (void*)STR_LCD_CONTRAST },
+    { "Contrast:15 ", 0x1, (void*)STR_LCD_CONTRAST },
+    { "\0           ", 0, 0 }
+};
+
+const char STR_LCD_COEFFICENT[]PROGMEM = "LCD Temp Coeff.";
+const settings_item menu_settings_lcd_coefficent[]PROGMEM =
+{
+    { "Coefficent3 ", 0x3, (void*)STR_LCD_COEFFICENT },
+    { "Coefficent4 ", 0x4, (void*)STR_LCD_COEFFICENT },
+    { "Coefficent5 ", 0x5, (void*)STR_LCD_COEFFICENT },
+    { "Coefficent6 ", 0x6, (void*)STR_LCD_COEFFICENT },
+    { "Coefficent7 ", 0x7, (void*)STR_LCD_COEFFICENT },
+    { "\0           ", 0, 0 }
+};
+
+const char STR_LCD_BIAS[]PROGMEM = "LCD Bias Mode";
+const settings_item menu_settings_lcd_bias[]PROGMEM =
+{
+    { "Bias Mode 3 ", 0x3, (void*)STR_LCD_BIAS },
+    { "Bias Mode 4 ", 0x4, (void*)STR_LCD_BIAS },
+    { "\0           ", 0, 0 }
+};
+
 const menu_item menu_settings_system[]PROGMEM =
 {
-    { "LCD Color   ", 'S', (void*)menu_settings_lcd_color, (void*)&conf.lcdColor, (void*)settings_update, 0 },
-    { "LCD BL Time ", 'S', (void*)menu_settings_backlight_time, (void*)&conf.lcdBacklightTime, (void*)settings_update, 0 },
     { "PWR Auto Off", 'S', (void*)menu_settings_power_off_time, (void*)&conf.sysOffTime, (void*)settings_update, 0 },
     { "LED Auto Off", 'S', (void*)menu_settings_flashlight_time, (void*)&conf.flashlightOffTime, (void*)settings_update, 0 },
+    { "\0           ", 'V', 0, 0, 0 }
+};
+
+const menu_item menu_settings_display[]PROGMEM =
+{
+    { "BackLt Color", 'S', (void*)menu_settings_lcd_color, (void*)&conf.lcdColor, (void*)settings_update, 0 },
+    { "BackLt Time ", 'S', (void*)menu_settings_backlight_time, (void*)&conf.lcdBacklightTime, (void*)settings_update, 0 },
+    { "Contrast    ", 'S', (void*)menu_settings_lcd_contrast, (void*)&conf.lcdContrast, (void*)settings_update, 0 },
+    { "T Coefficent", 'S', (void*)menu_settings_lcd_coefficent, (void*)&conf.lcdCoefficent, (void*)settings_update, 0 },
+    { "Bias Mode   ", 'S', (void*)menu_settings_lcd_bias, (void*)&conf.lcdBias, (void*)settings_update, 0 },
     { "\0           ", 'V', 0, 0, 0 }
 };
 
@@ -459,6 +507,7 @@ const menu_item menu_settings[]PROGMEM =
 {
     { "System Info ", 'F', (void*)sysInfo, 0, 0, 0 },
     { "System      ", 'M', (void*)menu_settings_system, 0, 0, 0 },
+    { "Display     ", 'M', (void*)menu_settings_display, 0, 0, 0 },
     { "Camera      ", 'M', (void*)menu_settings_camera, 0, 0, 0 },
     { "Auxiliary   ", 'M', (void*)menu_settings_auxiliary, 0, 0, 0 },
     { "Development ", 'M', (void*)menu_development, 0, 0, 0 },

@@ -106,7 +106,7 @@ void setup()
 #ifdef PRODUCTION
 	if(battery_status() == 0 && getPin(BUTTON_FL_PIN)) // Looks like it's connected to the programmer
 	{
-		lcd.init();
+		lcd.init(0xf, 0x7, 0x4);
 		termInit();
 		termPrintStr(TEXT("\n  Programming\n  Successful\n\n  Move to test\n  station\n"));
 		wdt_disable();
@@ -118,7 +118,7 @@ void setup()
 	settings_init();
 
 
-	lcd.init();
+	lcd.init(conf.lcdContrast, conf.lcdCoefficent, conf.lcdBias);
     lcd.writeString(12, 15, STR("Timelapse+"));
     lcd.writeString(33, 25, STR("..."));
     lcd.update();

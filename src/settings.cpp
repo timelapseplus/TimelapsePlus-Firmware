@@ -40,6 +40,8 @@ void settings_save()
 {
     if(conf.cameraMake == PANASONIC) conf.halfPress = HALF_PRESS_DISABLED;
     eeprom_write_block((const void*)&conf, &conf_eep, sizeof(settings));
+    lcd.init(conf.lcdContrast, conf.lcdCoefficent, conf.lcdBias);
+    lcd.update();
 }
 
 /******************************************************************
@@ -52,6 +54,9 @@ void settings_save()
 void settings_load()
 {
     eeprom_read_block((void*)&conf, &conf_eep, sizeof(settings));
+    if(conf.lcdContrast > 0xf || conf.lcdContrast < 0x1) conf.lcdContrast = 0x8;
+    if(conf.lcdCoefficent > 0x7 || conf.lcdCoefficent < 0x3) conf.lcdCoefficent = 0x7;
+    if(conf.lcdBias > 0x4 || conf.lcdBias < 0x3) conf.lcdBias = 0x4;
     lcd.color(conf.lcdColor);
     ir.make = conf.cameraMake;
     if(conf.auxPort != AUX_MODE_DISABLED) aux_off();
@@ -106,6 +111,9 @@ void settings_default()
     conf.autoRun = AUTO_RUN_OFF;
     conf.modeSwitch = USB_CHANGE_MODE_ENABLED;
     conf.dollyPulse = 100;
+    conf.lcdContrast = 0xf;
+    conf.lcdCoefficent = 0x7;
+    conf.lcdBias = 0x4;
     settings_save();
     settings_load();
 }

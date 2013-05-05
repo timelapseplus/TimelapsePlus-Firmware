@@ -37,9 +37,9 @@ public:
     void writeCharBig(unsigned char x, unsigned char y, unsigned char c);
     void drawBMP(unsigned char x, unsigned char y, unsigned char *pBMP);
     void update();
-    void init();
-    void off();
-    void cls();
+    void init(uint8_t contrast, uint8_t coefficent, uint8_t bias);
+    void off(void);
+    void cls(void);
     void color(int8_t red);
     void backlight(unsigned char amount);
     unsigned char getBacklight();

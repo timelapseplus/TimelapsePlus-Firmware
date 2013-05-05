@@ -851,7 +851,7 @@ void LCD::update()
  *
  ******************************************************************/
 
-void LCD::init(void)
+void LCD::init(uint8_t contrast, uint8_t coefficent, uint8_t bias)
 {
     // LCD_RST = 0;
     setOut(SPI_CS);
@@ -881,17 +881,25 @@ void LCD::init(void)
 
     SPCR = 0x51;   // enable SPI master, fosc/16 = 1MH
 
-    writeByte(0x21, 0);
+    writeByte(0x21, 0); // Begin Extended Commands
+    writeByte(0xb0 | (0xf & contrast), 0); // Contrast (1-f)
     writeByte(0xc0, 0);
-    writeByte(0x06, 0);
-    writeByte(0x13, 0);
-    writeByte(0x20, 0);
+    writeByte(0x00 | (0xf & coefficent), 0); // Temp coefficent (3-7)
+    writeByte(0x10 | (0xf & bias), 0); // Bias Mode (2-5)
+    writeByte(0x20, 0); // End Extended Commands
     clear();
-    writeByte(0x0c, 0);
+    writeByte(0x0c, 0); // 0c = Normal, 0d = Inverted
     backlight(255);
 
     disableUpdate = 0;
 }
+
+//  LcdWrite(0, 0x21); //Tell LCD that extended commands follow
+//  LcdWrite(0, 0xB9); //Set LCD Vop (Contrast): Try 0xB1(good @ 3.3V) or 0xBF if your display is too dark
+//  LcdWrite(0, 0x04); //Set Temp coefficent
+//  LcdWrite(0, 0x14); //LCD bias mode 1:48: Try 0x13 or 0x14
+//  LcdWrite(0, 0x20); //We must send 0x20 before modifying the display control mode
+//  LcdWrite(0, 0x0C); //Set display control, normal mode. 0x0D for inverse
 
 /******************************************************************
  *
