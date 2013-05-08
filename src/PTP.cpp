@@ -877,6 +877,10 @@ uint8_t PTP::init()
 	    		case PTP_OC_CAPTURE:
 	    			supports.capture = true;
 	    			break;
+	    		case NIKON_OC_BULBSTART:
+	    		case NIKON_OC_BULBEND:
+	    			supports.bulb = true;
+	    			break;
 	    		case PTP_OC_PROPERTY_SET:
 	    			supports.iso = true;
 	    			supports.aperture = true;
@@ -1370,6 +1374,7 @@ uint8_t PTP::bulbStart()
 {
 	if(!static_ready) return 0;
 	if(bulb_open) return 1;
+	if(!supports.bulb) return 1;
 	bulb_open = true;
 	busy = true;
 	bulbMode();
@@ -1381,9 +1386,11 @@ uint8_t PTP::bulbStart()
 //		if(PTP_Transaction(EOS_OC_BULBSTART, 0, 0, NULL, 0, NULL)) return 1; // Bulb Start
 		if(PTP_Transaction(EOS_OC_REMOTE_RELEASE_ON, 0, 2, data, 0, NULL)) return 1; // Bulb Start
 	}
-	else
+	else if(PTP_protocol == PROTOCOL_NIKON)
 	{
-
+		data[0] = 0xFFFFFFFF;
+		data[1] = 0x00000001;
+		if(PTP_Transaction(NIKON_OC_BULBSTART, 0, 2, data, 0, NULL)) return 1; // Bulb Start
 	}
 	return 0;
 }
@@ -1392,6 +1399,7 @@ uint8_t PTP::bulbEnd()
 {
 	if(!static_ready) return 0;
 	if(bulb_open == false) return 1;
+	if(!supports.bulb) return 1;
 	busy = true;
 	if(PTP_protocol == PROTOCOL_EOS)
 	{
@@ -1400,9 +1408,11 @@ uint8_t PTP::bulbEnd()
 //		if(PTP_Transaction(EOS_OC_RESETUILOCK, 0, 0, NULL, 0, NULL)) return 1; // ResetUILock
 		if(PTP_Transaction(EOS_OC_REMOTE_RELEASE_OFF, 0, 1, data, 0, NULL)) return 1; // Bulb End
 	}
-	else
+	else if(PTP_protocol == PROTOCOL_NIKON)
 	{
-
+		data[0] = 0x0000D800;
+		data[1] = 0x00000001; // This parameter varies (0x01, 0x21) -- I don't know what it means
+		if(PTP_Transaction(NIKON_OC_BULBEND, 0, 2, data, 0, NULL)) return 1; // Bulb End
 	}
 	bulb_open = false;
 	return 0;
@@ -1751,14 +1761,12 @@ uint8_t PTP::getPropertyInfo(uint16_t prop_code, uint8_t expected_size, uint16_t
 }
 
 
-uint8_t PTP::getThumb(uint32_t handle)
+uint8_t* PTP::getThumb(uint32_t handle)
 {
-//	OperFlags	flags = { 1, 0, 0, 1, 1, 0 };
-
 	data[0] = handle;
-
-	return PTP_Transaction(PTP_OC_PROPERTY_LIST, 1, 1, data, 0, NULL);
-//	return Transaction(PTP_OC_GetThumb, &flags, params, parser);
+	//uint8_t ret = 
+	PTP_Transaction(PTP_OC_GET_THUMB, 1, 1, data, 0, NULL);
+	return (uint8_t*) PTP_Buffer;
 }
 
 uint32_t pgm_read_u32(const void *addr)
