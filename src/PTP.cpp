@@ -997,6 +997,13 @@ uint8_t PTP::checkEvent()
 				debug(STR("ERROR checking events!\r\n"));
 				return 1;	
 			}
+			else
+			{
+				if(PTP_Bytes_Received == 0)
+				{
+					busy = false;
+				}
+			}
 		}
 		else
 		{
