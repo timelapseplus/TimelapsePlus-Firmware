@@ -1,4 +1,4 @@
-#define REMOTE_VERSION 20130112
+#define REMOTE_VERSION 20130509
 
 #define REMOTE_STATUS 1
 #define REMOTE_PROGRAM 2
@@ -18,6 +18,14 @@
 #define REMOTE_CAMERA_MAKE 15
 
 #define REMOTE_DEBUG 16
+
+#define REMOTE_ISO 17
+#define REMOTE_APERTURE 18
+#define REMOTE_SHUTTER 19
+
+#define REMOTE_THUMBNAIL 20
+#define REMOTE_THUMBNAIL_SIZE 21
+// Note: REMOTE_THUMBNAIL_SIZE cannot be requested -- it only get sent before sending REMOTE_THUMBNAIL
 
 #define REMOTE_TYPE_SEND 0
 #define REMOTE_TYPE_REQUEST 1

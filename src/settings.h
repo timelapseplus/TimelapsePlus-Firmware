@@ -72,7 +72,9 @@ struct settings
     uint8_t lcdContrast;
     uint8_t lcdCoefficent;
     uint8_t lcdBias;
-    char test9;
+    uint8_t bulbMin;
+    uint8_t isoMax;
+    char pad[32];
 };
 
 void settings_load(void);

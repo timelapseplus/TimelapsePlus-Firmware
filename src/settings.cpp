@@ -114,6 +114,8 @@ void settings_default()
     conf.lcdContrast = 0xf;
     conf.lcdCoefficent = 0x7;
     conf.lcdBias = 0x4;
+    conf.bulbMin = 56;
+    conf.isoMax = 5;
     settings_save();
     settings_load();
 }

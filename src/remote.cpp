@@ -28,6 +28,7 @@
 #include "remote.h"
 #include "tlp_menu_functions.h"
 #include "notify.h"
+#include "PTP.h"
 
 extern BT bt;
 extern shutter timer;
@@ -35,6 +36,7 @@ extern MENU menu;
 extern uint8_t battery_percent;
 extern settings conf;
 extern Notify notify;
+extern PTP camera;
 
 Remote::Remote()
 {
@@ -105,6 +107,37 @@ uint8_t Remote::send(uint8_t id, uint8_t type)
 			return bt.sendDATA(id, type, (void *) &conf.cameraFPS, sizeof(conf.cameraFPS));
 		case REMOTE_CAMERA_MAKE:
 			return bt.sendDATA(id, type, (void *) &conf.cameraMake, sizeof(conf.cameraMake));
+		case REMOTE_ISO:
+		{
+			uint8_t tmp = camera.iso();
+			return bt.sendDATA(id, type, (void *) &tmp, sizeof(tmp));
+		}
+		case REMOTE_APERTURE:
+		{
+			uint8_t tmp = camera.aperture();
+			return bt.sendDATA(id, type, (void *) &tmp, sizeof(tmp));
+		}
+		case REMOTE_SHUTTER:
+		{
+			uint8_t tmp = camera.shutter();
+			return bt.sendDATA(id, type, (void *) &tmp, sizeof(tmp));
+		}
+		case REMOTE_THUMBNAIL:
+		{
+			menu.message(STR("Busy"));
+			//sendDATA(uint8_t id, uint8_t type, void* buffer, uint16_t bytes)
+			uint8_t ret = camera.getCurrentThumbStart();
+			if(ret != PTP_RETURN_ERROR)
+			{
+				bt.sendDATA(REMOTE_THUMBNAIL_SIZE, type, (void *) &PTP_Bytes_Total, sizeof(PTP_Bytes_Total));
+				bt.sendDATA(id, type, (void *) PTP_Buffer, PTP_Bytes_Received);
+				while(ret == PTP_RETURN_DATA_REMAINING)
+				{
+					ret = camera.getCurrentThumbContinued();
+					bt.sendDATA(id, type, (void *) PTP_Buffer, PTP_Bytes_Received);
+				}
+			}
+		}
 		default:
 			return bt.sendDATA(id, type, 0, 0);
 	}
@@ -201,6 +234,36 @@ void Remote::event()
 						bt.data[bt.dataSize] = 0;
 						debug_remote(bt.data);
 					}
+					break;
+				case REMOTE_ISO:
+					if(bt.dataType == REMOTE_TYPE_REQUEST) send(bt.dataId, REMOTE_TYPE_SEND);
+					if(bt.dataType == REMOTE_TYPE_SET && bt.dataSize == sizeof(uint8_t))
+					{
+						uint8_t tmp;
+						memcpy((void*)&tmp, bt.data, bt.dataSize);
+						camera.setISO(tmp);
+					}
+					break;
+				case REMOTE_APERTURE:
+					if(bt.dataType == REMOTE_TYPE_REQUEST) send(bt.dataId, REMOTE_TYPE_SEND);
+					if(bt.dataType == REMOTE_TYPE_SET && bt.dataSize == sizeof(uint8_t))
+					{
+						uint8_t tmp;
+						memcpy((void*)&tmp, bt.data, bt.dataSize);
+						camera.setAperture(tmp);
+					}
+					break;
+				case REMOTE_SHUTTER:
+					if(bt.dataType == REMOTE_TYPE_REQUEST) send(bt.dataId, REMOTE_TYPE_SEND);
+					if(bt.dataType == REMOTE_TYPE_SET && bt.dataSize == sizeof(uint8_t))
+					{
+						uint8_t tmp;
+						memcpy((void*)&tmp, bt.data, bt.dataSize);
+						camera.setShutter(tmp);
+					}
+					break;
+				case REMOTE_THUMBNAIL:
+					if(bt.dataType == REMOTE_TYPE_REQUEST) send(bt.dataId, REMOTE_TYPE_SEND);
 					break;
 				default:
 					return;

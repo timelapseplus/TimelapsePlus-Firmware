@@ -550,6 +550,7 @@ uint8_t BT::sendDATA(uint8_t id, uint8_t type, void* buffer, uint16_t bytes)
 					if(waitRTS()) break;
 					Serial_SendByte(*byte);
 					byte++;
+					wdt_reset();
 				}
 			}
 			return 1;
@@ -625,6 +626,55 @@ uint8_t BT::send(char* str)
 
 	return 1;
 }
+
+/******************************************************************
+ *
+ *   BT::sendByte
+ *
+ *
+ ******************************************************************/
+
+uint8_t BT::sendByte(char byte)
+{
+	if(!present)
+		return 1;
+
+	char i = 0;
+	if(!(BT_RTS) && state == BT_ST_SLEEP)
+	{
+		debug(STR("Waking up BT\r\n"));
+		state = BT_ST_IDLE;
+		while(!(BT_RTS))
+		{
+			Serial_SendByte('A');
+			if(++i > 250)
+			{
+				state = BT_ST_SLEEP;
+				break;
+			}
+			_delay_ms(1);
+		}
+		if(state == BT_ST_SLEEP)
+		{
+			debug(STR("ERROR: BT didn't wake up!\r\n"));
+			return 0; // wakeup failed
+		}
+	}
+
+	while(!(BT_RTS))
+	{
+		if(++i > 250) break;
+		_delay_ms(1);
+	}
+
+	if(BT_RTS)
+	{
+		Serial_SendByte(byte);
+	}
+
+	return 1;
+}
+
 
 /******************************************************************
  *

@@ -1622,14 +1622,18 @@ volatile char usbPlug(char key, char first)
 	else if(key == UP_KEY)
 	{
 //		if(PTP_Ready) camera.moveFocus(1);
-//		if(PTP_Ready) camera.setISO(camera.isoUp(camera.iso()));
-		if(PTP_Ready) camera.setShutter(camera.shutterUp(camera.shutter()));
+		if(PTP_Ready) camera.setISO(camera.isoUp(camera.iso()));
+//		if(PTP_Ready) camera.setShutter(camera.shutterUp(camera.shutter()));
 	}
 	else if(key == DOWN_KEY)
 	{
 //		if(PTP_Ready) camera.moveFocus(0x8001);
-//		if(PTP_Ready) camera.setISO(camera.isoDown(camera.iso()));
-		if(PTP_Ready) camera.setShutter(camera.shutterDown(camera.shutter()));
+		if(PTP_Ready) camera.setISO(camera.isoDown(camera.iso()));
+//		if(PTP_Ready) camera.setShutter(camera.shutterDown(camera.shutter()));
+	}
+	else if(key == RIGHT_KEY)
+	{
+		//remote.send(REMOTE_THUMBNAIL, REMOTE_TYPE_SEND);
 	}
 
 	return FN_CONTINUE;

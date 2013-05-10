@@ -226,8 +226,6 @@ uint8_t shutterAvail[64];
 uint8_t shutterAvailCount;
 uint8_t apertureAvail[32];
 uint8_t apertureAvailCount;
-uint8_t modeAvail[20];
-uint8_t modeAvailCount;
 
 uint8_t PTP_need_update = 1;
 
@@ -243,6 +241,9 @@ uint8_t static_ready;
 uint8_t PTP_protocol;
 uint16_t PTP_propertyOffset;
 
+uint32_t currentObject;
+
+
 PTP::PTP(void)
 {
 	static_ready = 0;
@@ -251,6 +252,7 @@ PTP::PTP(void)
 	apertureAvailCount = 0;
 	shutterAvailCount = 0;
 	PTP_protocol = 0;
+	currentObject = 0;
 }
 
 uint8_t PTP::bulbMax() // 7
@@ -258,22 +260,24 @@ uint8_t PTP::bulbMax() // 7
 	return pgm_read_byte(&Bulb_List[sizeof(Bulb_List) / sizeof(Bulb_List[0]) - 1].ev);
 }
 
-uint8_t PTP::bulbMin() // 56
+uint8_t PTP::bulbMin() // 56 (46 for IR)
 {
 	return pgm_read_byte(&Bulb_List[1].ev);
 }
 
 uint8_t PTP::isoMax() // 13
 {
+	uint8_t tmp = 0;
 	if(isoAvailCount > 0)
 	{
 		for(uint8_t i = 1; i <= isoAvailCount; i++)
 		{
-			uint8_t tmp = isoAvail[isoAvailCount - i];
-			if(tmp > 0 && tmp < 128) return tmp;
+			tmp = isoAvail[isoAvailCount - i];
+			if(tmp > 0 && tmp < 128) break;
 		}
 	}
-	return 0;
+	//conf.isoMax;
+	return tmp;
 }
 
 uint8_t PTP::isoMin() // 46
@@ -793,6 +797,7 @@ uint8_t PTP::init()
 	debug(STR("Initializing Camera...\r\n"));
 	busy = false;
 	bulb_open = false;
+	currentObject = 0;
 	isoAvailCount = 0;
 	apertureAvailCount = 0;
 	shutterAvailCount = 0;
@@ -978,19 +983,35 @@ uint8_t PTP::checkEvent()
 	if(ready == 0) return 0;
 	if(bulb_open) return 0; // Because the bulb is closed asynchronously (by the clock), this prevents collisions
 	
-	if(PTP_protocol != PROTOCOL_EOS) // NIKON
+	if(PTP_protocol != PROTOCOL_EOS) // NIKON =======================================================
 	{
 		ret = PTP_Transaction(NIKON_OC_EVENT_GET, 1, 0, NULL, 0, NULL);
+		uint16_t nevents, tevent;
+		memcpy(&nevents, &PTP_Buffer[i], sizeof(uint16_t));
+		i += sizeof(uint16_t);
 		while(i < PTP_Bytes_Received)
 		{
-			sendByte(PTP_Buffer[i]);
-			i++;
+			memcpy(&tevent, &PTP_Buffer[i], sizeof(uint16_t));
+			i += sizeof(uint16_t);
+			memcpy(&event_value, &PTP_Buffer[i], sizeof(uint32_t));
+			i += sizeof(uint32_t);
+			switch(tevent)
+			{
+				case PTP_EC_OBJECT_CREATED:
+					currentObject = event_value; // Save the object ID for later retrieving the thumbnail
+					debug(STR("\r\n Object added: "));
+					sendHex((char *)&currentObject);
+					break;
+				case PTP_EC_PROPERTY_CHANGED:
+					if(!PTP_need_update) updatePtpParameters();
+					break;
+			}
 		}
-		if(PTP_Bytes_Received > 8 || PTP_need_update) updatePtpParameters();
+		if(PTP_need_update) updatePtpParameters();
 		return ret;
 	}
 
-	ret = PTP_FIRST_TIME;
+	ret = PTP_FIRST_TIME; // CANON ==================================================================
 	do {
 		if(ret == PTP_FIRST_TIME)
 		{
@@ -1087,6 +1108,7 @@ uint8_t PTP::checkEvent()
 
 			memcpy(&event_type, &PTP_Buffer[i + sizeof(uint32_t) * 1], sizeof(uint32_t));
 			memcpy(&event_item, &PTP_Buffer[i + sizeof(uint32_t) * 2], sizeof(uint32_t));
+			memcpy(&event_value, &PTP_Buffer[i + sizeof(uint32_t) * 3], sizeof(uint32_t));
 
 			#ifdef EXTENDED_DEBUG
 			if(i > 1200)
@@ -1107,7 +1129,6 @@ uint8_t PTP::checkEvent()
 
 			if(event_type == EOS_EC_PROPERTY_CHANGE)
 			{
-				memcpy(&event_value, &PTP_Buffer[i + sizeof(uint32_t) * 3], sizeof(uint32_t));
 				switch(event_item)
 				{
 					case EOS_DPC_ISO:
@@ -1192,12 +1213,43 @@ uint8_t PTP::checkEvent()
 						#endif
 
 						break;
+					/*case EOS_DPC_MODE: // Always lists 0 since this is supposedly not writable
+						for(x = 0; x < event_size / sizeof(uint32_t) - 5; x++)
+						{
+							apertureAvail[x] = (uint8_t) PTP_Buffer[i+(x+5)*sizeof(uint32_t)];
+						}
+						modeAvailCount = x;
+						//supports.mode = modeAvailCount > 0;
+
+						//#ifdef EXTENDED_DEBUG
+						debug(STR("\r\n Mode Avail Count: "));
+						debug(modeAvailCount);
+						debug_nl();
+						//#endif
+
+						break;*/
 				}
 			}
 			else if(event_type == EOS_EC_OBJECT_CREATED)
 			{
 				busy = false;
-				//debug(STR("\r\n Photo!\r\n"));
+
+				//for(uint8_t x = 0; x < event_size / sizeof(uint32_t); x++)
+				//{
+				//	uint32_t tval;
+				//	tval = PTP_Buffer[i+x*sizeof(uint32_t)];
+				//	sendHex((char *)&tval);
+				//}
+				//for(uint8_t x = 0; x < event_size; x++)
+				//{
+				//	sendByte(PTP_Buffer[i+x]);
+				//}
+				memcpy(&currentObject, &PTP_Buffer[i + sizeof(uint32_t) * 11], sizeof(uint32_t)); // Save the object ID for later retrieving the thumbnail
+
+				debug(STR("\r\n Object added: "));
+				sendHex((char *)&currentObject);
+
+				//getThumb(currentObject);
 			}
 			else if(event_type == EOS_EC_WillShutdownSoon)
 			{
@@ -1760,13 +1812,37 @@ uint8_t PTP::getPropertyInfo(uint16_t prop_code, uint8_t expected_size, uint16_t
       return 0;
 }
 
-
-uint8_t* PTP::getThumb(uint32_t handle)
+uint8_t PTP::getCurrentThumbStart()
+{
+	if(!currentObject) return 0;
+	return getThumb(currentObject);
+}
+uint8_t PTP::getCurrentThumbContinued()
+{
+	uint8_t ret = PTP_FetchData(0);
+	if(ret == PTP_RETURN_ERROR)
+	{
+		debug(STR("Error Retrieving thumbnail (c)!\r\n"));
+		return 0;
+	}
+	return ret;
+}
+uint8_t PTP::getThumb(uint32_t handle)
 {
 	data[0] = handle;
-	//uint8_t ret = 
-	PTP_Transaction(PTP_OC_GET_THUMB, 1, 1, data, 0, NULL);
-	return (uint8_t*) PTP_Buffer;
+	uint8_t ret = PTP_Transaction(PTP_OC_GET_THUMB, 1, 1, data, 0, NULL);
+	if(ret == PTP_RETURN_ERROR)
+	{
+		debug(STR("Error Retrieving thumbnail!\r\n"));
+		return 0;
+	}
+	else
+	{
+		debug(STR("Obj Size: "));
+		debug(PTP_Bytes_Total);
+		debug_nl();
+		return ret;
+	}
 }
 
 uint32_t pgm_read_u32(const void *addr)

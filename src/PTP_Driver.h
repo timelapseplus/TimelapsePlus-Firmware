@@ -85,12 +85,13 @@ void UnicodeToASCII(char *UnicodeString,
 
 extern char PTP_Buffer[PTP_BUFFER_SIZE];
 extern uint16_t PTP_Bytes_Received;
+extern uint16_t PTP_Bytes_Total;
 extern char PTP_CameraModel[23];
 extern char PTP_CameraMake[23];
 extern uint8_t PTP_Ready, PTP_Connected;
 extern uint16_t PTP_Error;
 extern uint16_t supportedOperationsCount;
-extern uint16_t *supportedOperations; // note that is memory space is reused -- only available immediately after init
+extern uint16_t *supportedOperations; // note that this memory space is reused -- only available immediately after init
 
 
 #ifdef __cplusplus

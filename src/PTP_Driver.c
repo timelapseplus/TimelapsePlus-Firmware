@@ -78,7 +78,7 @@ USB_ClassInfo_SI_Host_t DigitalCamera_SI_Interface =
     };
 */
 char PTP_Buffer[PTP_BUFFER_SIZE];
-uint16_t PTP_Bytes_Received, PTP_Bytes_Remaining;
+uint16_t PTP_Bytes_Received, PTP_Bytes_Remaining, PTP_Bytes_Total;
 char PTP_CameraModel[23];
 char PTP_CameraMake[23];
 PIMA_Container_t PIMA_Block;
@@ -176,6 +176,7 @@ uint8_t PTP_Transaction(uint16_t opCode, uint8_t receive_data, uint8_t paramCoun
         #ifdef PTP_DEBUG
         printf_P(PSTR("   Bytes received: %d\r\n\r\n"), PTP_Bytes_Received);
         #endif
+        PTP_Bytes_Total = PTP_Bytes_Received;
         if(PTP_Bytes_Received > PTP_BUFFER_SIZE)
         {
             PTP_Bytes_Remaining = PTP_Bytes_Received - PTP_BUFFER_SIZE;
@@ -198,7 +199,7 @@ uint8_t PTP_Transaction(uint16_t opCode, uint8_t receive_data, uint8_t paramCoun
     if(error_code)
     {
         #ifdef PTP_DEBUG
-        printf_P(PSTR("PTP_Transaction Error (opCode: %x, Error:%x).\r\n"), opCode);
+        printf_P(PSTR("PTP_Transaction Error (opCode: %x, Error: %x ).\r\n"), opCode, error_code);
         #endif
         PTP_Error = opCode;
         PTP_Ready = 0;
