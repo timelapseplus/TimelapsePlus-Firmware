@@ -17,6 +17,9 @@
 #include "hardware.h"
 #include "bluetooth.h"
 #include "debug.h"
+#include "settings.h"
+
+extern settings conf;
 
 /******************************************************************
  *
@@ -67,7 +70,12 @@ uint8_t BT::init(void)
 	if(checkOK() == 0)
 		return 0;
 
-	sendCMD(STR("ATSN,Timelapse+\r")); // Set Name
+	char buf[8+14];
+	buf[0] = '\0';
+	strcat((char*)buf, STR("ATSN,TL+"));
+	strcat((char*)buf, conf.sysName);
+	strcat((char*)buf, STR("\r"));
+	sendCMD(buf); // Set Name
 
 	if(checkOK() == 0)
 		return 0;
