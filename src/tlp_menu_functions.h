@@ -38,5 +38,6 @@ volatile char motionTrigger(char key, char first);
 volatile char btFloodTest(char key, char first);
 volatile char bramp_monitor(char key, char first);
 volatile char videoRemote(char key, char first);
+volatile char system_name(char key, char first);
 void int_to_str(uint16_t n, char buf[6]);
 void updateConditions();

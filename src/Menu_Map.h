@@ -451,6 +451,7 @@ const settings_item menu_settings_lcd_bias[]PROGMEM =
 
 const menu_item menu_settings_system[]PROGMEM =
 {
+    { "System Name ", 'F', (void*)system_name, 0, 0, 0 },
     { "PWR Auto Off", 'S', (void*)menu_settings_power_off_time, (void*)&conf.sysOffTime, (void*)settings_update, 0 },
     { "LED Auto Off", 'S', (void*)menu_settings_flashlight_time, (void*)&conf.flashlightOffTime, (void*)settings_update, 0 },
     { "\0           ", 'V', 0, 0, 0 }

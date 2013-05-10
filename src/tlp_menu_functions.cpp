@@ -131,9 +131,7 @@ volatile char firmwareUpdated(char key, char first)
 
 		lcd.writeStringTiny(8, 28, TEXT("Version:"));
 		uint32_t version = VERSION;
-
 		l = 0;
-
 		while(version)
 		{
 			c = (char)(version % 10);
@@ -2131,6 +2129,35 @@ volatile char shutter_rename(char key, char first)
 
 	return ret;
 }
+
+volatile char system_name(char key, char first)
+{
+	static char name[MENU_NAME_LEN - 1];
+	if(first) memcpy(name, conf.sysName, MENU_NAME_LEN - 1);
+	char ret = menu.editText(key, name, TEXT("Sys Name"), first);
+
+	if(ret == FN_SAVE)
+	{
+		for(uint8_t i = MENU_NAME_LEN - 2; i > 0; i--)
+		{
+			if((name[i-1] >= '0' && name[i-1] <= '9') || (name[i-1] >= 'A' && name[i-1] <= 'Z'))
+			{
+				name[i] = '\0';
+				break;
+			}
+		}
+		memcpy(conf.sysName, name, MENU_NAME_LEN - 1);
+		settings_update();
+		menu.message(TEXT("Saved"));
+	}
+	else
+	{
+		settings_load();
+	}
+
+	return ret;
+}
+
 
 volatile char bramp_monitor(char key, char first)
 {

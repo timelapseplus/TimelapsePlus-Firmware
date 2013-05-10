@@ -25,7 +25,7 @@
 
 #define REMOTE_THUMBNAIL 20
 #define REMOTE_THUMBNAIL_SIZE 21
-// Note: REMOTE_THUMBNAIL_SIZE cannot be requested -- it only get sent before sending REMOTE_THUMBNAIL
+// Note: REMOTE_THUMBNAIL_SIZE cannot be requested -- it only gets sent before sending REMOTE_THUMBNAIL
 
 #define REMOTE_TYPE_SEND 0
 #define REMOTE_TYPE_REQUEST 1

@@ -8,7 +8,7 @@
  *
  */
  
-#define SETTINGS_VERSION 20130124
+#define SETTINGS_VERSION 20130510
 
 #define ALL -1
 #define CANON 0
@@ -49,7 +49,7 @@ struct settings
     char cameraFPS;
     char warnTime;
     char mirrorTime;
-    char sysName[10];
+    char sysName[13];
     char bulbMode;
     char cameraMake;
     char lcdColor;

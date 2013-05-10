@@ -120,7 +120,23 @@ void setup()
 
 	lcd.init(conf.lcdContrast, conf.lcdCoefficent, conf.lcdBias);
     lcd.writeString(12, 15, STR("Timelapse+"));
-    lcd.writeString(33, 25, STR("..."));
+    uint8_t l = lcd.measureStringTiny(conf.sysName) / 2;
+    lcd.writeStringTiny(41 - l, 25, conf.sysName);
+	uint32_t version = VERSION;
+	char buf[2], *text;
+	l = 0;
+	while(version)
+	{
+		char c = (char)(version % 10);
+		buf[0] = ((char)(c + '0'));
+		buf[1] = 0;
+		text = buf;
+		l += lcd.measureStringTiny(text) + 1;
+		lcd.writeStringTiny(57 - l, 40, text);
+
+		version -= (uint32_t)c;
+		version /= 10;
+	}
     lcd.update();
 
 	clock.init();
@@ -142,6 +158,8 @@ void setup()
 		bt.init(); // give it one more try
 	}
 	if(conf.btMode == BT_MODE_SLEEP) bt.sleep(); else bt.advertise();
+    
+    _delay_ms(300); // just a little more delay so splash screen can be read
 
 #ifdef PRODUCTION
 	// Check to see if system has passed self-test
