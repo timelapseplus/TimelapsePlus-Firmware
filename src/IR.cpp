@@ -31,24 +31,52 @@
 #include "clock.h"
 
 extern Clock clock;
+extern settings conf;
 
 IR::IR()
 {
-    setOut(IR_PIN);
-    setHigh(IR_PIN);
+    init();
+}
+
+void IR::init()
+{
+    if(conf.auxPort == AUX_MODE_IR)
+    {
+        setOut(AUX_OUT1_PIN);
+        setHigh(AUX_OUT1_PIN);
+    }
+    else
+    {
+        setOut(IR_PIN);
+        setHigh(IR_PIN);
+    }
 }
 
 void IR::high40(unsigned int time)
 {
     uint16_t count = 0;
         
-    while (count <= time / (1000 / 40))
+    if(conf.auxPort == AUX_MODE_IR)
     {
-        setLow(IR_PIN);
-        _delay_us((1000 / 40 / 2));
-        setHigh(IR_PIN);
-        _delay_us((1000 / 40 / 2));
-        count++;
+        while (count <= time / (1000 / 40))
+        {
+            setLow(AUX_OUT1_PIN);
+            _delay_us((1000 / 40 / 2));
+            setHigh(AUX_OUT1_PIN);
+            _delay_us((1000 / 40 / 2));
+            count++;
+        }
+    }
+    else
+    {
+        while (count <= time / (1000 / 40))
+        {
+            setLow(IR_PIN);
+            _delay_us((1000 / 40 / 2));
+            setHigh(IR_PIN);
+            _delay_us((1000 / 40 / 2));
+            count++;
+        }
     }
 }
 
@@ -56,13 +84,27 @@ void IR::high38(unsigned int time)
 {
     uint16_t count = 0;
     
-    while (count <= time / (1000 / 38))
+    if(conf.auxPort == AUX_MODE_IR)
     {
-        setLow(IR_PIN);
-        _delay_us((1000 / 38 / 2));
-        setHigh(IR_PIN);
-        _delay_us((1000 / 38 / 2));
-        count++;
+        while (count <= time / (1000 / 38))
+        {
+            setLow(AUX_OUT1_PIN);
+            _delay_us((1000 / 38 / 2));
+            setHigh(AUX_OUT1_PIN);
+            _delay_us((1000 / 38 / 2));
+            count++;
+        }
+    }
+    else
+    {
+        while (count <= time / (1000 / 38))
+        {
+            setLow(IR_PIN);
+            _delay_us((1000 / 38 / 2));
+            setHigh(IR_PIN);
+            _delay_us((1000 / 38 / 2));
+            count++;
+        }
     }
 }
 
@@ -71,22 +113,45 @@ void IR::shutterNow()
     if(make == CANON || make == ALL)
     {        
         cli();
-        for(int i = 0; i < 16; i++)
+        if(conf.auxPort == AUX_MODE_IR)
         {
-            setLow(IR_PIN);
-            _delay_us(15.24);
-            setHigh(IR_PIN);
-            _delay_us(15.24);
+            for(int i = 0; i < 16; i++)
+            {
+                setLow(AUX_OUT1_PIN);
+                _delay_us(15.24);
+                setHigh(AUX_OUT1_PIN);
+                _delay_us(15.24);
+            }
+            
+            _delay_ms(7.33);
+            
+            for(int i = 0; i < 16; i++)
+            {
+                setLow(AUX_OUT1_PIN);
+                _delay_us(15.24);
+                setHigh(AUX_OUT1_PIN);
+                _delay_us(15.24);
+            }
         }
-        
-        _delay_ms(7.33);
-        
-        for(int i = 0; i < 16; i++)
+        else
         {
-            setLow(IR_PIN);
-            _delay_us(15.24);
-            setHigh(IR_PIN);
-            _delay_us(15.24);
+            for(int i = 0; i < 16; i++)
+            {
+                setLow(IR_PIN);
+                _delay_us(15.24);
+                setHigh(IR_PIN);
+                _delay_us(15.24);
+            }
+            
+            _delay_ms(7.33);
+            
+            for(int i = 0; i < 16; i++)
+            {
+                setLow(IR_PIN);
+                _delay_us(15.24);
+                setHigh(IR_PIN);
+                _delay_us(15.24);
+            }
         }
         clock.advance((uint8_t) (7.33 + 0.01524 * 4 * 16));
         sei();
@@ -212,24 +277,46 @@ void IR::shutterDelayed()
     {
         cli();
         
-        for(int i = 0; i < 16; i++)
+        if(conf.auxPort == AUX_MODE_IR)
         {
-            setLow(IR_PIN);
-            _delay_us(15.24);
-            setHigh(IR_PIN);
-            _delay_us(15.24);
+            for(int i = 0; i < 16; i++)
+            {
+                setLow(AUX_OUT1_PIN);
+                _delay_us(15.24);
+                setHigh(AUX_OUT1_PIN);
+                _delay_us(15.24);
+            }
+            
+            _delay_ms(5.36);
+            
+            for(int i = 0; i < 16; i++)
+            {
+                setLow(AUX_OUT1_PIN);
+                _delay_us(15.24);
+                setHigh(AUX_OUT1_PIN);
+                _delay_us(15.24);
+            }
         }
-        
-        _delay_ms(5.36);
-        
-        for(int i = 0; i < 16; i++)
+        else
         {
-            setLow(IR_PIN);
-            _delay_us(15.24);
-            setHigh(IR_PIN);
-            _delay_us(15.24);
-        }
-        
+            for(int i = 0; i < 16; i++)
+            {
+                setLow(IR_PIN);
+                _delay_us(15.24);
+                setHigh(IR_PIN);
+                _delay_us(15.24);
+            }
+            
+            _delay_ms(5.36);
+            
+            for(int i = 0; i < 16; i++)
+            {
+                setLow(IR_PIN);
+                _delay_us(15.24);
+                setHigh(IR_PIN);
+                _delay_us(15.24);
+            }
+        }        
         sei();
     }
 

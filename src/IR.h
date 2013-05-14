@@ -25,13 +25,11 @@
 #ifndef IR_h
 #define IR_h
 
-#define IR_PIN 7, B
-
-
 class IR
 {
 public:
     IR();
+    void init();
     void shutterNow();
     void shutterDelayed();
     void bulbStart();
