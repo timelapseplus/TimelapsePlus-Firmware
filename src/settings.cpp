@@ -58,6 +58,7 @@ void settings_load()
     if(conf.lcdCoefficent > 0x7 || conf.lcdCoefficent < 0x3) conf.lcdCoefficent = 0x7;
     if(conf.lcdBias > 0x4 || conf.lcdBias < 0x3) conf.lcdBias = 0x4;
     lcd.color(conf.lcdColor);
+    ir.init();
     ir.make = conf.cameraMake;
     if(conf.auxPort != AUX_MODE_DISABLED) aux_off();
     if(bt.present && !remote.connected)
@@ -89,7 +90,7 @@ void settings_update()
 void settings_default()
 {
     timer.setDefault();
-    strcpy((char*)conf.sysName, "SYS01");
+    strcpy((char*)conf.sysName, "");
     conf.warnTime = 2;
     conf.mirrorTime = 2;
     conf.cameraFPS = 33;
@@ -107,15 +108,16 @@ void settings_default()
     conf.halfPress = HALF_PRESS_ENABLED;
     conf.bulbOffset = 75;
     conf.interface = INTERFACE_AUTO;
-    conf.brampMode = BRAMP_MODE_ALL;
+    conf.brampMode = BRAMP_MODE_BULB_ISO;
     conf.autoRun = AUTO_RUN_OFF;
-    conf.modeSwitch = USB_CHANGE_MODE_ENABLED;
+    conf.modeSwitch = USB_CHANGE_MODE_DISABLED;
     conf.dollyPulse = 100;
     conf.lcdContrast = 0xf;
     conf.lcdCoefficent = 0x7;
     conf.lcdBias = 0x4;
     conf.bulbMin = 56;
-    conf.isoMax = 5;
+    conf.isoMax = 10;
+    conf.apertureMax = 31;
     settings_save();
     settings_load();
 }
