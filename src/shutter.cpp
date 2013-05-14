@@ -671,13 +671,23 @@ char shutter::task()
                     debug_nl();
                     if(status.rampStops >= status.rampMax)
                     {
+                        debug(STR("   (ramp max)\n"));
                         status.rampStops = status.rampMax;
                     }
                     else if(status.rampStops <= status.rampMin)
                     {
+                        debug(STR("   (ramp min)\n"));
                         status.rampStops = status.rampMin;
                     }
-                    exp = camera.bulbTime(current.BulbStart - status.rampStops - (float)evShift);
+                    //                                   56        -     0            -    -6 
+                    float tmp_ev = (float)current.BulbStart - status.rampStops - (float)evShift;
+                    debug(STR("   bulbTime Ev: "));
+                    debug(tmp_ev);
+                    debug_nl();
+                    exp = camera.bulbTime(tmp_ev);
+                    debug(STR("   Exp (ms): "));
+                    debug(exp);
+                    debug_nl();
                 }
 
                 bulb_length = exp;
@@ -716,7 +726,7 @@ char shutter::task()
                             }
                             bulb_length = camera.shiftBulb(exp, tmpShift);
                         }
-                        debug(STR("   Done!\r\n\r\n"));
+                        debug(STR("Aperture Close: Done!\r\n\r\n"));
                     }
 
                     if(conf.brampMode & BRAMP_MODE_ISO)
@@ -743,71 +753,72 @@ char shutter::task()
                             }
                             bulb_length = camera.shiftBulb(exp, tmpShift);
                         }
-                        debug(STR("   Done!\r\n\r\n"));
+                        debug(STR("ISO Up: Done!\r\n\r\n"));
                     }
+
 
                     if(conf.brampMode & BRAMP_MODE_ISO)
                     {
-                        //nextISO = camera.isoDown(iso);
                         // Check for too short bulb time and adjust ISO //
-                        while(bulb_length < camera.bulbTime((int8_t)camera.bulbMin()))
+                        for(;;)
                         {
                             nextISO = camera.isoDown(iso);
-                            if(nextISO > 127) // Invalid setting
+                            if(nextISO != iso && nextISO < 127)
                             {
-                                nextISO = iso;
-                                bulb_length = camera.bulbTime((int8_t)camera.bulbMin()); // Coerce to min as fallback
+                                uint16_t bulb_length_test = camera.shiftBulb(exp, tmpShift + (nextISO - iso));
+                                if(bulb_length_test < BulbMax)
+                                {
+                                    evShift += nextISO - iso;
+                                    tmpShift += nextISO - iso;
+                                    iso = nextISO;
+                                    debug(STR("   ISO DOWN:"));
+                                    debug(evShift);
+                                    debug(STR("   ISO Val:"));
+                                    debug(nextISO);
+                                    bulb_length = bulb_length_test;
+                                    continue;
+                                }
                             }
-                            else if(nextISO != iso)
-                            {
-                                evShift -= iso - nextISO;
-                                tmpShift -= iso - nextISO;
-
-                                debug(STR("   ISO DOWN:"));
-                                debug(evShift);
-                                debug(STR("   ISO Val:"));
-                                debug(nextISO);
-                            }
-                            else
-                            {
-                                debug(STR("   Reached ISO Min!!!\r\n"));
-                                break;
-                            }
-                            bulb_length = camera.shiftBulb(exp, tmpShift);
+                            nextISO = iso;
+                            break;
                         }
-                        debug(STR("   Done!\r\n\r\n"));
+                        debug(STR("ISO Down: Done!\r\n\r\n"));
                     }
+
 
                     if(conf.brampMode & BRAMP_MODE_APERTURE)
                     {
                         // Check for too short bulb time and adjust Aperture //
-                        while(bulb_length < camera.bulbTime((int8_t)camera.bulbMin()))
+                        for(;;)
                         {
                             nextAperture = camera.apertureUp(aperture);
-                            if(nextAperture > 127) // Invalid setting
+                            if(nextAperture != aperture && nextAperture < 127)
                             {
-                                nextAperture = aperture;
-                                bulb_length = camera.bulbTime((int8_t)camera.bulbMin()); // Coerce to min as fallback
+                                uint16_t bulb_length_test = camera.shiftBulb(exp, tmpShift + (nextAperture - aperture) + 6); // two stops extra padding here
+                                if(bulb_length_test < BulbMax)
+                                {
+                                    evShift  += nextAperture - aperture;
+                                    tmpShift += nextAperture - aperture;
+                                    aperture = nextAperture;
+                                    debug(STR("Aperture DOWN:"));
+                                    debug(evShift);
+                                    debug(STR(" Aperture Val:"));
+                                    debug(nextAperture);
+                                    bulb_length = camera.shiftBulb(exp, tmpShift);
+                                    continue;
+                                }
                             }
-                            else if(nextAperture != aperture)
-                            {
-                                evShift -= aperture - nextAperture;
-                                tmpShift -= aperture - nextAperture;
-
-                                debug(STR("   Aperture DOWN:"));
-                                debug(evShift);
-                                debug(STR("   Aperture Val:"));
-                                debug(nextAperture);
-                            }
-                            else
-                            {
-                                debug(STR("   Reached Aperture Min!!!\r\n"));
-                                break;
-                            }
-                            bulb_length = camera.shiftBulb(exp, tmpShift);
+                            nextAperture = aperture;
+                            break;
                         }
-                        debug(STR("   Done!\r\n\r\n"));
+                        debug(STR("Aperture Open: Done!\r\n\r\n"));
                     }
+                    if(bulb_length < camera.bulbTime((int8_t)camera.bulbMin()))
+                    {
+                        debug(STR("   Reached Bulb Min!!!\r\n"));
+                        bulb_length = camera.bulbTime((int8_t)camera.bulbMin());
+                    }
+
 
                     shutter_off_quick(); // Can't change parameters when half-pressed
                     if(conf.brampMode & BRAMP_MODE_APERTURE)
@@ -1415,6 +1426,13 @@ uint8_t rampTvUp(uint8_t ev)
 {
     uint8_t tmp = PTP::bulbUp(ev);
     if(tmp > camera.bulbMin()) tmp = camera.bulbMin();
+    return tmp;
+}
+
+uint8_t rampTvUpStatic(uint8_t ev)
+{
+    uint8_t tmp = PTP::bulbUp(ev);
+    //if(tmp > camera.bulbMin()) tmp = camera.bulbMin();
     return tmp;
 }
 

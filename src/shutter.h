@@ -21,9 +21,6 @@
 #define HDR 0x0002
 #define RAMP 0x0004
 
-#define AUX_MODE_DISABLED 0
-#define AUX_MODE_DOLLY 1
-
 #define MODE_TIMELAPSE (TIMELAPSE)
 #define MODE_HDR_TIMELAPSE (HDR | TIMELAPSE)
 #define MODE_BULB_PHOTO 0
@@ -173,6 +170,7 @@ void calcBulbMax(void);
 int8_t calcRampMax();
 int8_t calcRampMin();
 uint8_t rampTvUp(uint8_t ev);
+uint8_t rampTvUpStatic(uint8_t ev);
 uint8_t rampTvDown(uint8_t ev);
 #endif
 
