@@ -1,6 +1,6 @@
 language: objective-c
 before_script:
-  - "brew update"
+#  - "brew update"
   - "brew tap larsimmisch/avr"
   - "brew install avr-libc"
   - "brew install dfu-programmer"
