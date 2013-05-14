@@ -8,7 +8,7 @@
       ===========================
 
 
-Timelapse+ Firmware
+Timelapse+ Firmware [![Build Status](https://travis-ci.org/timelapseplus/TimelapsePlus-Firmware.png)](https://travis-ci.org/timelapseplus/TimelapsePlus-Firmware)
 ===================
 
 Official Firmware for the Timelapse+ Intervalometer
