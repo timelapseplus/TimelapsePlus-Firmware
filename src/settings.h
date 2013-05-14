@@ -44,6 +44,11 @@
 #define AUTO_RUN_OFF 0
 #define AUTO_RUN_ON 1
 
+#define AUX_MODE_DISABLED 0
+#define AUX_MODE_DOLLY 1
+#define AUX_MODE_IR 2
+
+
 struct settings
 {
     char cameraFPS;
@@ -74,7 +79,8 @@ struct settings
     uint8_t lcdBias;
     uint8_t bulbMin;
     uint8_t isoMax;
-    char pad[32];
+    uint8_t apertureMax;
+    char pad[31];
 };
 
 void settings_load(void);
