@@ -98,7 +98,7 @@ void setup()
 {
 	wdt_reset();
 	wdt_disable();
-	wdt_enable(WDTO_2S);
+	wdt_enable(WDTO_4S);
 
 	setIn(BUTTON_FL_PIN);
 	setHigh(BUTTON_FL_PIN);
