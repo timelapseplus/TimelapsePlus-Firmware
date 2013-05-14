@@ -2,6 +2,12 @@ language: objective-c
 before_script:
 #  - "brew update"
   - "brew tap larsimmisch/avr"
-  - "brew install -v avr-libc"
-  - "brew install -v dfu-programmer"
+#  - "brew install avr-libc"
+  - "brew install avr-binutils"
+  - "brew install gmp"
+  - "brew install libmpc"
+  - "brew install mpfr"
+  - "brew install -v avr-gcc"
+  - "brew install avr-libc"
+  - "brew install dfu-programmer"
 script: make
