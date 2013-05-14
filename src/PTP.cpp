@@ -129,10 +129,20 @@ const propertyDescription_t PTP_ISO_List[] PROGMEM = {
     {"   4000", 0x73, 4000, 27 },
     {"   5000", 0x75, 5000, 26 },
     {"   6400", 0x78, 6400, 25 },
+    {"   8000", 0x7B, 8000, 24 },
+    {"  10000", 0x7D, 10000, 23 },
     {"  12800", 0x80, 12800, 22 },
+    {"  16000", 0x83, 16000, 21 },
+    {"  20000", 0x85, 20000, 20 },
     {"  25600", 0x88, 25600, 19 },
+    {"  32000", 0x8B, 32000, 18 },
+    {"  40000", 0x8D, 40000, 17 },
     {"  51200", 0x90, 51200, 16 },
+    {"  64000", 0x93, 64000, 15 },
+    {"  81000", 0x95, 81000, 14 },
     {" 102400", 0x98, 102400, 13 },
+    {" 129000", 0x9B, 129000, 12 },
+    {" 162000", 0x9D, 162000, 11 },
     {" 204800", 0xA0, 204800, 10 }
 }; 
 
@@ -262,7 +272,9 @@ uint8_t PTP::bulbMax() // 7
 
 uint8_t PTP::bulbMin() // 56 (46 for IR)
 {
-	return pgm_read_byte(&Bulb_List[1].ev);
+	uint8_t tmp = pgm_read_byte(&Bulb_List[1].ev);
+	if(tmp > conf.bulbMin) tmp = conf.bulbMin;
+	return tmp;
 }
 
 uint8_t PTP::isoMax() // 13
@@ -275,8 +287,8 @@ uint8_t PTP::isoMax() // 13
 			tmp = isoAvail[isoAvailCount - i];
 			if(tmp > 0 && tmp < 128) break;
 		}
+		if(tmp < conf.isoMax) tmp = conf.isoMax;
 	}
-	//conf.isoMax;
 	return tmp;
 }
 
@@ -295,15 +307,17 @@ uint8_t PTP::isoMin() // 46
 
 uint8_t PTP::apertureMax() // 13
 {
+	uint8_t tmp = 0;
 	if(apertureAvailCount > 0)
 	{
 		for(uint8_t i = 1; i <= apertureAvailCount; i++)
 		{
 			uint8_t tmp = apertureAvail[apertureAvailCount - i];
-			if(tmp > 0 && tmp < 128) return tmp;
+			if(tmp > 0 && tmp < 128) break;
 		}
+		if(tmp > conf.apertureMax) tmp = conf.apertureMax;
 	}
-	return 0;
+	return tmp;
 }
 
 uint8_t PTP::apertureMin() // 2
@@ -335,6 +349,58 @@ uint8_t PTP::shutterMin() // 76
 		}
 	}
 	return bulbMin();
+}
+
+uint8_t PTP::isoUpStatic(uint8_t ev)
+{
+	for(uint8_t i = 0; i < sizeof(PTP_ISO_List) / sizeof(PTP_ISO_List[0]); i++)
+	{
+		if(pgm_read_byte(&PTP_ISO_List[i].ev) == ev)
+		{
+			if(i - 1 > 1)
+			return pgm_read_byte(&PTP_ISO_List[i - 1].ev);
+		}
+	}
+	return pgm_read_byte(&PTP_ISO_List[2].ev);
+}
+
+uint8_t PTP::isoDownStatic(uint8_t ev)
+{
+	for(uint8_t i = 0; i < sizeof(PTP_ISO_List) / sizeof(PTP_ISO_List[0]); i++)
+	{
+		if(pgm_read_byte(&PTP_ISO_List[i].ev) == ev)
+		{
+			if(i + 1 < (uint8_t) (sizeof(PTP_ISO_List) / sizeof(PTP_ISO_List[0])))
+			return pgm_read_byte(&PTP_ISO_List[i + 1].ev);
+		}
+	}
+	return pgm_read_byte(&PTP_ISO_List[sizeof(PTP_ISO_List) / sizeof(PTP_ISO_List[0]) - 1].ev);
+}
+
+uint8_t PTP::apertureUpStatic(uint8_t ev)
+{
+	for(uint8_t i = 0; i < sizeof(PTP_Aperture_List) / sizeof(PTP_Aperture_List[0]); i++)
+	{
+		if(pgm_read_byte(&PTP_Aperture_List[i].ev) == ev)
+		{
+			if(i - 1 > 1)
+			return pgm_read_byte(&PTP_Aperture_List[i - 1].ev);
+		}
+	}
+	return pgm_read_byte(&PTP_Aperture_List[2].ev);
+}
+
+uint8_t PTP::apertureDownStatic(uint8_t ev)
+{
+	for(uint8_t i = 0; i < sizeof(PTP_Aperture_List) / sizeof(PTP_Aperture_List[0]); i++)
+	{
+		if(pgm_read_byte(&PTP_Aperture_List[i].ev) == ev)
+		{
+			if(i + 1 < (uint8_t) (sizeof(PTP_Aperture_List) / sizeof(PTP_Aperture_List[0])))
+			return pgm_read_byte(&PTP_Aperture_List[i + 1].ev);
+		}
+	}
+	return pgm_read_byte(&PTP_Aperture_List[sizeof(PTP_Aperture_List) / sizeof(PTP_Aperture_List[0]) - 1].ev);
 }
 
 uint8_t PTP::isoUp(uint8_t ev)
@@ -763,8 +829,8 @@ uint32_t PTP::bulbTime(int8_t ev)
 	}
 	else
 	{
-		int8_t diff = bulbMin() - ev;
-		return shiftBulb(bulbTime((int8_t)bulbMax()), diff);
+		int8_t diff = ev - bulbMin();
+		return shiftBulb(bulbTime((int8_t)bulbMin()), diff);
 	}
 }
 

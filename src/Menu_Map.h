@@ -27,6 +27,7 @@ const char STR_FLASHLIGHT_TIME[]PROGMEM = "LED auto off time";
 
 const char STR_AUX_DISABLED[]PROGMEM = "AUX port disabled";
 const char STR_AUX_DOLLY[]PROGMEM = "between frames";
+const char STR_AUX_IR[]PROGMEM = "IR signal out";
 
 const char STR_CAMERA_FPS[]PROGMEM = "Frames per Second";
 const char STR_DEV_MODE_ON[]PROGMEM = "Shutter lights LED";
@@ -64,6 +65,9 @@ const char STR_BRAMP_TARGET[]PROGMEM = "Darkest Point";
 const char STR_AUTO_RUN_ON[]PROGMEM = "Auto-run TL on pwr";
 const char STR_AUTO_RUN_OFF[]PROGMEM = "Normal Operation";
 
+const char STR_MIN_BULB[]PROGMEM = "Minimum Bulb";
+const char STR_MAX_ISO[]PROGMEM = "Maximum ISO";
+const char STR_MAX_APERTURE[]PROGMEM = "Max Aperture";
 
 const menu_item menu_options[]PROGMEM =
 {
@@ -113,6 +117,10 @@ const settings_item settings_bramp_target[]PROGMEM =
 
 const settings_item settings_auto_bramp_integration[]PROGMEM =
 {
+    { " 1 Minute   ",  1, (void*)STR_AUTO_BRAMP_INTEGRATION },
+    { " 4 Minutes  ",  4, (void*)STR_AUTO_BRAMP_INTEGRATION },
+    { " 6 Minutes  ",  6, (void*)STR_AUTO_BRAMP_INTEGRATION },
+    { " 8 Minutes  ",  8, (void*)STR_AUTO_BRAMP_INTEGRATION },
     { "10 Minutes  ", 10, (void*)STR_AUTO_BRAMP_INTEGRATION },
     { "12 Minutes  ", 12, (void*)STR_AUTO_BRAMP_INTEGRATION },
     { "15 Minutes  ", 15, (void*)STR_AUTO_BRAMP_INTEGRATION },
@@ -173,6 +181,30 @@ const dynamicItem_t dyn_bulb PROGMEM =
     (void*)rampTvDown,
     (void*)PTP::shutterName,
     (void*)STR_TV
+};
+
+const dynamicItem_t dyn_min_bulb PROGMEM =
+{
+    (void*)rampTvUpStatic,
+    (void*)rampTvDown,
+    (void*)PTP::shutterName,
+    (void*)STR_MIN_BULB
+};
+
+const dynamicItem_t dyn_max_iso PROGMEM =
+{
+    (void*)PTP::isoDownStatic,
+    (void*)PTP::isoUpStatic,
+    (void*)PTP::isoName,
+    (void*)STR_MAX_ISO
+};
+
+const dynamicItem_t dyn_max_aperture PROGMEM =
+{
+    (void*)PTP::apertureDownStatic,
+    (void*)PTP::apertureUpStatic,
+    (void*)PTP::apertureName,
+    (void*)STR_MAX_APERTURE
 };
 
 const dynamicItem_t dyn_hdr_tv PROGMEM =
@@ -323,6 +355,7 @@ const settings_item menu_settings_aux_port[]PROGMEM =
 {
     { "Disabled    ", AUX_MODE_DISABLED, (void*)STR_AUX_DISABLED },
     { "Dolly Out   ", AUX_MODE_DOLLY, (void*)STR_AUX_DOLLY },
+    { "IR Out      ", AUX_MODE_IR, (void*)STR_AUX_IR },
 //    { "2nd Camera  ", 60, (void*)STR_AUX_DOLLY },
 //    { "PC Sync In  ", 60, (void*)STR_AUX_DOLLY },
     { "\0           ", 0, 0 }
@@ -473,6 +506,9 @@ const menu_item menu_settings_camera[]PROGMEM =
     { "Camera FPS  ", 'S', (void*)menu_settings_camera_fps, (void*)&conf.cameraFPS, (void*)settings_update, 0 },
     { "Bulb Mode   ", 'S', (void*)menu_settings_bulb_mode, (void*)&conf.bulbMode, (void*)settings_update, 0 },
     { "Bulb Offset ", 'C', (void*)&conf.bulbOffset, (void*)STR_BULB_OFFSET, (void*)settings_update, 0 },
+    { "Bulb Min    ", 'D', (void*)&dyn_min_bulb, (void*)&conf.bulbMin, (void*)settings_update, 0 },
+    { "ISO Max     ", 'D', (void*)&dyn_max_iso, (void*)&conf.isoMax, (void*)settings_update, 0 },
+    { "Aperture Max", 'D', (void*)&dyn_max_aperture, (void*)&conf.apertureMax, (void*)settings_update, 0 },
     { "Half press  ", 'S', (void*)menu_settings_half_press, (void*)&conf.halfPress, (void*)settings_update, 0 },
     { "Interface   ", 'S', (void*)menu_settings_interface, (void*)&conf.interface, (void*)settings_update, 0 },
     { "Bramp Mode  ", 'S', (void*)menu_settings_bramp_mode, (void*)&conf.brampMode, (void*)settings_update, 0 },

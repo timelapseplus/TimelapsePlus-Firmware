@@ -91,6 +91,10 @@ public:
     static uint8_t apertureMin(void);
     static uint8_t shutterMax(void);
     static uint8_t shutterMin(void);
+    static uint8_t isoUpStatic(uint8_t ev);
+    static uint8_t isoDownStatic(uint8_t ev);
+    static uint8_t apertureUpStatic(uint8_t ev);
+    static uint8_t apertureDownStatic(uint8_t ev);
     static uint8_t isoUp(uint8_t ev);
     static uint8_t isoDown(uint8_t ev);
     static uint8_t shutterUp(uint8_t ev);
