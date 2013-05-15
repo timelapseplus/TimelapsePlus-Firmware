@@ -37,7 +37,7 @@
 #define _STILL_IMAGE_HOST_H_
 
 //When defined, this breaks BT functionality
-//#define PTP_DEBUG
+#define PTP_DEBUG
 
 #define PTP_RETURN_OK 0
 #define PTP_RETURN_ERROR 1
@@ -77,6 +77,7 @@ void EVENT_USB_Host_DeviceEnumerationFailed(const uint8_t ErrorCode,
 void EVENT_USB_Host_DeviceEnumerationComplete(void);
 uint8_t PTP_Transaction(uint16_t opCode, uint8_t receive_data, uint8_t paramCount, uint32_t *params, uint8_t dataBytes, uint8_t *data);
 uint8_t PTP_FetchData(uint16_t offset);
+uint8_t SI_Host_ReceiveResponseCode(USB_ClassInfo_SI_Host_t* const SIInterfaceInfo, PIMA_Container_t *PIMABlock);
 uint8_t PTP_OpenSession(void);
 uint8_t PTP_CloseSession(void);
 uint8_t PTP_GetDeviceInfo(void);
@@ -89,7 +90,7 @@ extern uint16_t PTP_Bytes_Total;
 extern char PTP_CameraModel[23];
 extern char PTP_CameraMake[23];
 extern uint8_t PTP_Ready, PTP_Connected;
-extern uint16_t PTP_Error;
+extern uint16_t PTP_Error, PTP_Response_Code;
 extern uint16_t supportedOperationsCount;
 extern uint16_t *supportedOperations; // note that this memory space is reused -- only available immediately after init
 

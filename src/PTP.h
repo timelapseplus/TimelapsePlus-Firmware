@@ -35,6 +35,30 @@ struct CameraSupports_t
     bool video;
 };
 
+
+struct ptp_object_info
+{
+    uint32_t storage_id;
+    uint16_t object_format;
+    uint16_t protection_status;
+    uint32_t object_compressed_size;
+    uint16_t thumb_format;
+    uint32_t thumb_compressed_size;
+    uint32_t thumb_pix_width;
+    uint32_t thumb_pix_height;
+    uint32_t image_pix_width;
+    uint32_t image_pix_height;
+    uint32_t image_bit_depth;
+    uint32_t parent_object;
+    uint16_t association_type;
+    uint32_t association_desc;
+    uint32_t sequence_number;
+    char     filename[10];
+    char     capture_date[2];
+    char     modified_date[2];
+    char     keywords[2];
+};
+
 class PTP
 {
 public:
@@ -62,6 +86,9 @@ public:
     uint8_t getThumb(uint32_t handle);
     uint8_t getCurrentThumbStart(void);
     uint8_t getCurrentThumbContinued(void);
+    uint8_t writeFile(char *name, uint8_t *data, uint16_t dataSize);
+    uint8_t sendObjectInfo(uint32_t *storage, uint32_t *parent, ptp_object_info *objectinfo);
+    uint8_t sendObject(uint8_t *data, uint16_t dataSize);
 
     uint8_t iso(void);
     uint8_t shutter(void);

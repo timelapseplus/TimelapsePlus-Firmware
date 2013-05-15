@@ -1310,7 +1310,8 @@ uint8_t PTP::checkEvent()
 				//{
 				//	sendByte(PTP_Buffer[i+x]);
 				//}
-				memcpy(&currentObject, &PTP_Buffer[i + sizeof(uint32_t) * 11], sizeof(uint32_t)); // Save the object ID for later retrieving the thumbnail
+																		 //11
+				memcpy(&currentObject, &PTP_Buffer[i + sizeof(uint32_t) * 2], sizeof(uint32_t)); // Save the object ID for later retrieving the thumbnail
 
 				debug(STR("\r\n Object added: "));
 				sendHex((char *)&currentObject);
@@ -1909,6 +1910,38 @@ uint8_t PTP::getThumb(uint32_t handle)
 		debug_nl();
 		return ret;
 	}
+}
+
+uint8_t PTP::writeFile(char *name, uint8_t *data, uint16_t dataSize)
+{
+	uint32_t parent = 0x0;
+	uint32_t storage = 0x0;
+
+    struct ptp_object_info objectinfo;
+    memset(&objectinfo,0,sizeof(objectinfo));
+
+    for(uint8_t i = 0; i < sizeof(objectinfo.filename); i += 2)
+    {
+    	objectinfo.filename[i] = name[i / 2];
+    	if(name[i / 2] == 0) break;
+    }
+
+    objectinfo.object_format = PTP_OFC_Text;
+	sendObjectInfo(&storage, &parent, &objectinfo);
+	sendObject(data, dataSize);
+	return 0;
+}
+
+uint8_t PTP::sendObjectInfo(uint32_t *storage, uint32_t *parent, ptp_object_info *objectinfo)
+{
+	data[0] = *storage;
+	data[1] = *parent;
+	return PTP_Transaction(PTP_OC_SendObjectInfo, 1, 2, data, sizeof(objectinfo), (uint8_t *)objectinfo);
+}
+
+uint8_t PTP::sendObject(uint8_t *data, uint16_t dataSize)
+{
+	return PTP_Transaction(PTP_OC_SendObject, 0, 0, NULL, dataSize, data);
 }
 
 uint32_t pgm_read_u32(const void *addr)

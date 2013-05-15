@@ -1535,17 +1535,30 @@ volatile char usbPlug(char key, char first)
 				lcd.cls();
 				lcd.writeString(3, 7,  TEXT(" PTP Error!  "));
 
-				lcd.writeChar(3+3*6, 15, '(');
+				lcd.writeChar(3+1*6, 15, '(');
 				char b, *c = (char*)&PTP_Error;
 				b = (c[1] >> 4) + '0'; if(b > '9') b += 7;
-				lcd.writeChar(3+4*6, 15, b);
+				lcd.writeChar(3+2*6, 15, b);
 				b = (c[1] & 0x0F) + '0'; if(b > '9') b += 7;
-				lcd.writeChar(3+5*6, 15, b);
+				lcd.writeChar(3+3*6, 15, b);
 				b = (c[0] >> 4) + '0'; if(b > '9') b += 7;
-				lcd.writeChar(3+6*6, 15, b);
+				lcd.writeChar(3+4*6, 15, b);
 				b = (c[0] & 0x0F) + '0'; if(b > '9') b += 7;
+				lcd.writeChar(3+5*6, 15, b);
+
+				lcd.writeChar(3+6*6, 15, ':');
+
+				c = (char*)&PTP_Response_Code;
+				b = (c[1] >> 4) + '0'; if(b > '9') b += 7;
 				lcd.writeChar(3+7*6, 15, b);
-				lcd.writeChar(3+8*6, 15, ')');
+				b = (c[1] & 0x0F) + '0'; if(b > '9') b += 7;
+				lcd.writeChar(3+8*6, 15, b);
+				b = (c[0] >> 4) + '0'; if(b > '9') b += 7;
+				lcd.writeChar(3+9*6, 15, b);
+				b = (c[0] & 0x0F) + '0'; if(b > '9') b += 7;
+				lcd.writeChar(3+10*6, 15, b);
+
+				lcd.writeChar(3+11*6, 15, ')');
 
 				lcd.writeString(3, 23, TEXT("Unplug camera"));
 				lcd.writeString(3, 31, TEXT("to reset...  "));
@@ -1631,7 +1644,9 @@ volatile char usbPlug(char key, char first)
 	}
 	else if(key == RIGHT_KEY)
 	{
-		//remote.send(REMOTE_THUMBNAIL, REMOTE_TYPE_SEND);
+		remote.send(REMOTE_THUMBNAIL, REMOTE_TYPE_SEND);
+		//uint8_t *file = (uint8_t *) STR("Test file contents");
+		//camera.writeFile(STR("test.txt"), file, 19);
 	}
 
 	return FN_CONTINUE;

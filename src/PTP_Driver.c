@@ -83,7 +83,7 @@ char PTP_CameraModel[23];
 char PTP_CameraMake[23];
 PIMA_Container_t PIMA_Block;
 uint8_t PTP_Ready, PTP_Connected, configured;
-uint16_t PTP_Error;
+uint16_t PTP_Error, PTP_Response_Code;
 uint16_t supportedOperationsCount;
 uint16_t *supportedOperations;
 
@@ -92,9 +92,9 @@ uint16_t *supportedOperations;
  */
 void PTP_Task(void)
 {
-    for(uint8_t i = 0; i < 100; i++)
-    {
-        USB_USBTask();
+//    for(uint8_t i = 0; i < 100; i++)
+//    {
+//        USB_USBTask();
         if(USB_HostState == HOST_STATE_Configured)
         {
             if(configured != USB_HostState)
@@ -109,7 +109,7 @@ void PTP_Task(void)
             configured = USB_HostState;
             PTP_Ready = 0;
         }
-    }
+//    }
 }
 
 /** Configures the board hardware and chip peripherals for the demo's functionality. */
@@ -195,11 +195,17 @@ uint8_t PTP_Transaction(uint16_t opCode, uint8_t receive_data, uint8_t paramCoun
         }
     }
 
-    uint8_t error_code = SI_Host_ReceiveResponse(&DigitalCamera_SI_Interface);
+    PTP_Response_Code = 0;
+    uint8_t error_code = SI_Host_ReceiveResponseCode(&DigitalCamera_SI_Interface, &PIMA_Block);
+    PTP_Response_Code = PIMA_Block.Code;
+    #ifdef PTP_DEBUG
+    printf_P(PSTR("   Response Code: %x\r\n\r\n"), PTP_Response_Code);
+    #endif
+
     if(error_code)
     {
         #ifdef PTP_DEBUG
-        printf_P(PSTR("PTP_Transaction Error (opCode: %x, Error: %x ).\r\n"), opCode, error_code);
+        printf_P(PSTR("PTP_Transaction Error (opCode: %x, Error: %x ).\r\n"), opCode, PTP_Response_Code);
         #endif
         PTP_Error = opCode;
         PTP_Ready = 0;
@@ -244,6 +250,21 @@ uint8_t PTP_FetchData(uint16_t offset)
     }
 }
 
+uint8_t SI_Host_ReceiveResponseCode(USB_ClassInfo_SI_Host_t* const SIInterfaceInfo, PIMA_Container_t *PIMABlock)
+{
+    uint8_t ErrorCode;
+
+    if ((USB_HostState != HOST_STATE_Configured) || !(SIInterfaceInfo->State.IsActive))
+      return PIPE_RWSTREAM_DeviceDisconnected;
+
+    if ((ErrorCode = SI_Host_ReceiveBlockHeader(SIInterfaceInfo, PIMABlock)) != PIPE_RWSTREAM_NoError)
+      return ErrorCode;
+
+    if ((PIMABlock->Type != CPU_TO_LE16(PIMA_CONTAINER_ResponseBlock)) || (PIMABlock->Code != CPU_TO_LE16(0x2001)))
+      return SI_ERROR_LOGICAL_CMD_FAILED;
+
+    return PIPE_RWSTREAM_NoError;
+}
 
 uint8_t PTP_OpenSession()
 {

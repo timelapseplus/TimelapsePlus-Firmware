@@ -1195,7 +1195,7 @@ uint8_t stopName(char name[8], uint8_t stop)
 
 void calcBulbMax()
 {
-    BulbMax = (timer.current.Gap / 10 - 5) * 1000;
+    BulbMax = (timer.current.Gap / 10 - 3) * 1000;
 
     BulbMaxEv = 1;
     for(uint8_t i = camera.bulbMax(); i < camera.bulbMin(); i++)

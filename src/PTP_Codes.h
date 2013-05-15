@@ -66,3 +66,10 @@
 #define NIKON_OC_BULBSTART 0x9207
 #define NIKON_OC_BULBEND 0x920C
 
+#define PTP_OFC_Text 0x3004
+#define PTP_OC_SendObjectInfo 0x100C
+#define PTP_OC_SendObject 0x100D
+
+
+
+

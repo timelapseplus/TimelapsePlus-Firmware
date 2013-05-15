@@ -472,6 +472,7 @@ ISR(TIMER2_COMPA_vect)
 {
 	clock.count();
 	button.poll();
+    USB_USBTask();
 }
 
 /******************************************************************

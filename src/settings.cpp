@@ -90,7 +90,7 @@ void settings_update()
 void settings_default()
 {
     timer.setDefault();
-    strcpy((char*)conf.sysName, "");
+    strcpy((char*)conf.sysName, "           ");
     conf.warnTime = 2;
     conf.mirrorTime = 2;
     conf.cameraFPS = 33;
