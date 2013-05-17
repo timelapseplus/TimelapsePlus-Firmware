@@ -1067,6 +1067,7 @@ uint8_t PTP::checkEvent()
 					currentObject = event_value; // Save the object ID for later retrieving the thumbnail
 					debug(STR("\r\n Object added: "));
 					sendHex((char *)&currentObject);
+					busy = false;
 					break;
 				case PTP_EC_PROPERTY_CHANGED:
 					if(!PTP_need_update) updatePtpParameters();
