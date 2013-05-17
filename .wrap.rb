@@ -11,7 +11,7 @@ trap(:CHLD) do
 end
 
 loop do
-  sleep 10
+  sleep 60
   begin
     Process.kill(0, pid)
     print '.'
