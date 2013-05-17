@@ -5,8 +5,9 @@ before_install:
   - brew install avr-binutils
   - brew install gmp
   - brew install libmpc
-  - brew install mpfr
+#  - brew install mpfr
   - ruby .wrap.rb brew install avr-gcc
   - brew install avr-libc
   - brew install dfu-programmer
+#  - brew install libusb
 script: make
