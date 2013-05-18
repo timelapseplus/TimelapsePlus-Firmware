@@ -1072,6 +1072,7 @@ uint8_t PTP::checkEvent()
 		i += sizeof(uint16_t);
 		while(i < PTP_Bytes_Received)
 		{
+			wdt_reset();
 			memcpy(&tevent, &PTP_Buffer[i], sizeof(uint16_t));
 			i += sizeof(uint16_t);
 			memcpy(&event_value, &PTP_Buffer[i], sizeof(uint32_t));
@@ -1087,6 +1088,7 @@ uint8_t PTP::checkEvent()
 					PTP_need_update = true;
 					break;
 			}
+			if(i >= PTP_BUFFER_SIZE) break;
 		}
 		if(PTP_need_update) updatePtpParameters();
 		return ret;
@@ -1672,7 +1674,6 @@ uint8_t PTP::getPtpParameter(uint16_t param, uint16_t *value)
 uint8_t PTP::updatePtpParameters(void)
 {
 	PTP_need_update = 0;
-	return 0; // temp test
 	if(PTP_protocol == PROTOCOL_NIKON)
 	{
 		/*
