@@ -875,7 +875,8 @@ uint8_t PTP::init()
 		.shutter = false,
 		.aperture = false,
 		.focus = false,
-		.video = false
+		.video = false,
+		.cameraReady = false
 	};
 
 //	if(strncmp(PTP_CameraMake, "Canon", 5) == 0) // This should be done with VendorID instead
@@ -956,6 +957,9 @@ uint8_t PTP::init()
 	    			supports.iso = true;
 	    			supports.aperture = true;
 	    			supports.shutter = true;
+	    			break;
+	    		case NIKON_OC_CAMERA_READY:
+	    			supports.cameraReady = true;
 	    			break;
 	    	}
 		
@@ -1051,14 +1055,17 @@ uint8_t PTP::checkEvent()
 	
 	if(PTP_protocol != PROTOCOL_EOS) // NIKON =======================================================
 	{
-		ret = PTP_Transaction(NIKON_OC_CAMERA_READY, 0, 0, NULL, 0, NULL);
-		if(PTP_Response_Code == 0x2019)
+		if(supports.cameraReady)
 		{
-			wdt_reset();
-			busy = true;
-			return 0;
+			ret = PTP_Transaction(NIKON_OC_CAMERA_READY, 0, 0, NULL, 0, NULL);
+			if(PTP_Response_Code == 0x2019)
+			{
+				wdt_reset();
+				busy = true;
+				return 0;
+			}
+			busy = false;
 		}
-		busy = false;
 		ret = PTP_Transaction(NIKON_OC_EVENT_GET, 1, 0, NULL, 0, NULL);
 		uint16_t nevents, tevent;
 		memcpy(&nevents, &PTP_Buffer[i], sizeof(uint16_t));
@@ -1403,7 +1410,9 @@ uint8_t PTP::close()
 		.iso = false,
 		.shutter = false,
 		.aperture = false,
-		.focus = false
+		.focus = false,
+		.video = false,
+		.cameraReady = false
 	};
 	isoPTP = 0xFF;
 	aperturePTP = 0xFF;

@@ -33,6 +33,7 @@ struct CameraSupports_t
     bool aperture;
     bool focus;
     bool video;
+    bool cameraReady;
 };
 
 
