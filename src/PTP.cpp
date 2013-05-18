@@ -1672,6 +1672,7 @@ uint8_t PTP::getPtpParameter(uint16_t param, uint16_t *value)
 uint8_t PTP::updatePtpParameters(void)
 {
 	PTP_need_update = 0;
+	return 0; // temp test
 	if(PTP_protocol == PROTOCOL_NIKON)
 	{
 		/*
