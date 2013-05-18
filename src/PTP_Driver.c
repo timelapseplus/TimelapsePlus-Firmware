@@ -198,6 +198,7 @@ uint8_t PTP_Transaction(uint16_t opCode, uint8_t receive_data, uint8_t paramCoun
     PTP_Response_Code = 0;
     uint8_t error_code = SI_Host_ReceiveResponseCode(&DigitalCamera_SI_Interface, &PIMA_Block);
     PTP_Response_Code = PIMA_Block.Code;
+    if(PTP_Response_Code == 0x2019) error_code = 0; // Ignore BUSY error
     #ifdef PTP_DEBUG
     printf_P(PSTR("   Response Code: %x\r\n\r\n"), PTP_Response_Code);
     #endif

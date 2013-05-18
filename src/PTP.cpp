@@ -1051,6 +1051,14 @@ uint8_t PTP::checkEvent()
 	
 	if(PTP_protocol != PROTOCOL_EOS) // NIKON =======================================================
 	{
+		ret = PTP_Transaction(NIKON_OC_CAMERA_READY, 0, 0, NULL, 0, NULL);
+		if(PTP_Response_Code == 0x2019)
+		{
+			wdt_reset();
+			busy = true;
+			return 0;
+		}
+		busy = false;
 		ret = PTP_Transaction(NIKON_OC_EVENT_GET, 1, 0, NULL, 0, NULL);
 		uint16_t nevents, tevent;
 		memcpy(&nevents, &PTP_Buffer[i], sizeof(uint16_t));
@@ -1067,10 +1075,9 @@ uint8_t PTP::checkEvent()
 					currentObject = event_value; // Save the object ID for later retrieving the thumbnail
 					debug(STR("\r\n Object added: "));
 					sendHex((char *)&currentObject);
-					busy = false;
 					break;
 				case PTP_EC_PROPERTY_CHANGED:
-					if(!PTP_need_update) updatePtpParameters();
+					PTP_need_update = true;
 					break;
 			}
 		}
