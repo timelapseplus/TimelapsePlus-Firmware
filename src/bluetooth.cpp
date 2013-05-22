@@ -530,6 +530,8 @@ uint8_t BT::sendDATA(uint8_t id, uint8_t type, void* buffer, uint16_t bytes)
 	debug(id);
 	debug(STR(", "));
 	debug(type);
+	debug(STR(", "));
+	debug(bytes);
 	debug_nl();
 	if(dataMode())
 	{
@@ -538,6 +540,9 @@ uint8_t BT::sendDATA(uint8_t id, uint8_t type, void* buffer, uint16_t bytes)
 		{
 			char* byte;
 
+			char s1 = (char)(bytes & 0xff);
+			char s2 = (char)((bytes >> 8) & 0xff);
+
 			if(waitRTS()) return 1;
 			Serial_SendByte('$');
 			if(waitRTS()) return 1;
@@ -545,9 +550,9 @@ uint8_t BT::sendDATA(uint8_t id, uint8_t type, void* buffer, uint16_t bytes)
 			if(waitRTS()) return 1;
 			Serial_SendByte((char) type);
 			if(waitRTS()) return 1;
-			Serial_SendByte((char) *(&bytes));
+			Serial_SendByte((char) s1);
 			if(waitRTS()) return 1;
-			Serial_SendByte((char) *(&bytes + 1));
+			Serial_SendByte((char) s2);
 			if(waitRTS()) return 1;
 			Serial_SendByte(':');
 
