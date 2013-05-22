@@ -68,6 +68,7 @@ const char STR_AUTO_RUN_OFF[]PROGMEM = "Normal Operation";
 const char STR_MIN_BULB[]PROGMEM = "Minimum Bulb";
 const char STR_MAX_ISO[]PROGMEM = "Maximum ISO";
 const char STR_MAX_APERTURE[]PROGMEM = "Max Aperture";
+const char STR_MIN_APERTURE[]PROGMEM = "Min Aperture";
 
 const menu_item menu_options[]PROGMEM =
 {
@@ -205,6 +206,14 @@ const dynamicItem_t dyn_max_aperture PROGMEM =
     (void*)PTP::apertureUpStatic,
     (void*)PTP::apertureName,
     (void*)STR_MAX_APERTURE
+};
+
+const dynamicItem_t dyn_min_aperture PROGMEM =
+{
+    (void*)PTP::apertureDownStatic,
+    (void*)PTP::apertureUpStatic,
+    (void*)PTP::apertureName,
+    (void*)STR_MIN_APERTURE
 };
 
 const dynamicItem_t dyn_hdr_tv PROGMEM =
@@ -509,6 +518,7 @@ const menu_item menu_settings_camera[]PROGMEM =
     { "Bulb Min    ", 'D', (void*)&dyn_min_bulb, (void*)&conf.bulbMin, (void*)settings_update, 0 },
     { "ISO Max     ", 'D', (void*)&dyn_max_iso, (void*)&conf.isoMax, (void*)settings_update, 0 },
     { "Aperture Max", 'D', (void*)&dyn_max_aperture, (void*)&conf.apertureMax, (void*)settings_update, 0 },
+    { "Aperture Min", 'D', (void*)&dyn_min_aperture, (void*)&conf.apertureMin, (void*)settings_update, 0 },
     { "Half press  ", 'S', (void*)menu_settings_half_press, (void*)&conf.halfPress, (void*)settings_update, 0 },
     { "Interface   ", 'S', (void*)menu_settings_interface, (void*)&conf.interface, (void*)settings_update, 0 },
     { "Bramp Mode  ", 'S', (void*)menu_settings_bramp_mode, (void*)&conf.brampMode, (void*)settings_update, 0 },

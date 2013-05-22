@@ -80,7 +80,8 @@ struct settings
     uint8_t bulbMin;
     uint8_t isoMax;
     uint8_t apertureMax;
-    char pad[31];
+    uint8_t apertureMin;
+    char pad[30];
 };
 
 void settings_load(void);

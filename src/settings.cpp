@@ -57,6 +57,7 @@ void settings_load()
     if(conf.lcdContrast > 0xf || conf.lcdContrast < 0x1) conf.lcdContrast = 0x8;
     if(conf.lcdCoefficent > 0x7 || conf.lcdCoefficent < 0x3) conf.lcdCoefficent = 0x7;
     if(conf.lcdBias > 0x4 || conf.lcdBias < 0x3) conf.lcdBias = 0x4;
+    if(conf.apertureMin > 100 || conf.apertureMin < 2) conf.apertureMin = 2;
     lcd.color(conf.lcdColor);
     ir.init();
     ir.make = conf.cameraMake;
@@ -118,6 +119,7 @@ void settings_default()
     conf.bulbMin = 56;
     conf.isoMax = 10;
     conf.apertureMax = 31;
+    conf.apertureMin = 2;
     settings_save();
     settings_load();
 }
