@@ -2468,20 +2468,23 @@ volatile char bramp_monitor(char key, char first)
 				completedS = s;
 			}
 			float intSlope = 0 - light.readIntegratedSlope();
-			for(x++; x < CHART_X_SPAN; x += timer.rampRate == 0 ? 2 : 1)
+			if(timer.running)
 			{
-				s = (uint16_t)(((float)timer.current.Duration / (float)CHART_X_SPAN) * (float)x);
+				for(x++; x < CHART_X_SPAN; x += timer.rampRate == 0 ? 2 : 1)
+				{
+					s = (uint16_t)(((float)timer.current.Duration / (float)CHART_X_SPAN) * (float)x);
 
-				s -= completedS;
+					s -= completedS;
 
-				float futureRamp = timer.status.rampStops + ((intSlope + timer.rampRate) / 1800.0) * (float)s;
+					float futureRamp = timer.status.rampStops + ((intSlope + timer.rampRate) / 1800.0) * (float)s;
 
-				int16_t y = ((((float)futureRamp - (float)timer.status.rampMin) / (float)(timer.status.rampMax - timer.status.rampMin)) * (float)CHART_Y_SPAN);
+					int16_t y = ((((float)futureRamp - (float)timer.status.rampMin) / (float)(timer.status.rampMax - timer.status.rampMin)) * (float)CHART_Y_SPAN);
 
-				if(y < 0) y = 0;
-				if(y > CHART_Y_SPAN) y = CHART_Y_SPAN;
+					if(y < 0) y = 0;
+					if(y > CHART_Y_SPAN) y = CHART_Y_SPAN;
 
-				lcd.setPixel(x + CHART_X_TOP, CHART_Y_SPAN + CHART_Y_TOP - y);
+					lcd.setPixel(x + CHART_X_TOP, CHART_Y_SPAN + CHART_Y_TOP - y);
+				}
 			}
 		}
 

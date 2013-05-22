@@ -30,6 +30,7 @@ Light::Light()
 	// Configure I2C //
 	TWI_Master_Initialise();
 	lastSeconds = 0;
+  initialized = 0;
 }
 
 uint16_t Light::readRaw()
@@ -82,11 +83,13 @@ void Light::start()
    I2C_Buf[1] = 0x00;
    I2C_Buf[2] = 0b10100000;
    TWI_Start_Read_Write(I2C_Buf, 3);
+   initialized = 1;
 }
 
 void Light::stop()
 {
    unsigned char I2C_Buf[3];
+   initialized = 0;
    I2C_Buf[0] = I2C_ADDR_WRITE;
    I2C_Buf[1] = 0x00;
    I2C_Buf[2] = 0x00;
@@ -109,6 +112,7 @@ void Light::setRangeAuto()
 {
     uint8_t range;
     uint16_t reading;
+    if(!initialized) return;
     lcd.backlight(0);
     _delay_ms(10);
     for(range = 0; range < 4; range++)
@@ -122,9 +126,10 @@ void Light::setRangeAuto()
 int8_t Light::readEv()
 {
     float lux;
+    if(!initialized) return 0;
     lux = readLux();
     lux *= 2^5;
-	method = 0;
+	  method = 0;
     int8_t ev = (int8_t)ilog2(lux);
     ev *= 3;
     ev += 30;
@@ -167,7 +172,7 @@ float Light::readIntegratedSlope()
 
 void Light::task()
 {
-	if(lastSeconds == 0) return;
+	if(lastSeconds == 0 || !initialized) return;
 
     if(clock.Seconds() > lastSeconds + ((integration * 60) / LIGHT_INTEGRATION_COUNT))
     {
@@ -197,6 +202,7 @@ float Light::readLux()
     uint8_t range;
     uint16_t reading;
     float lux;
+    if(!initialized) return 0.0;
     lcd.backlight(0);
     for(range = 0; range < 4; range++)
     {

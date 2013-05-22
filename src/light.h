@@ -28,4 +28,5 @@ private:
     int8_t pos;
     uint8_t integration;
     uint16_t lastSeconds;
+    uint8_t initialized;
 };
