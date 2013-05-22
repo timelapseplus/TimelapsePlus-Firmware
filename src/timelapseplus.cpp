@@ -277,6 +277,10 @@ int main()
 				   VirtualSerial_PutChar('E');
 				   break;
 
+			   case 't':
+			   		remote.send(REMOTE_THUMBNAIL, REMOTE_TYPE_SEND);
+			   		break;
+
 			   case 'C': // Capture
 				   {
 			   	       debug(STR("Taking picture...\r\n"));

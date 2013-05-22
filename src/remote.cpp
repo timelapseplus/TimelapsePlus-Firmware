@@ -29,6 +29,7 @@
 #include "tlp_menu_functions.h"
 #include "notify.h"
 #include "PTP.h"
+#include "thm-sample.h"
 
 extern BT bt;
 extern shutter timer;
@@ -64,7 +65,7 @@ uint8_t Remote::set(uint8_t id)
 	return send(id, REMOTE_TYPE_SET);
 }
 
-uint8_t Remote::debug(char *str)
+uint8_t Remote::debugMessage(char *str)
 {
 	uint8_t len = 0;
 	while(*(str + len) != '\0' && len < 255) len++;
@@ -125,7 +126,7 @@ uint8_t Remote::send(uint8_t id, uint8_t type)
 		case REMOTE_THUMBNAIL:
 		{
 			menu.message(STR("Busy"));
-			//sendDATA(uint8_t id, uint8_t type, void* buffer, uint16_t bytes)
+/*
 			uint8_t ret = camera.getCurrentThumbStart();
 			if(ret != PTP_RETURN_ERROR)
 			{
@@ -137,6 +138,26 @@ uint8_t Remote::send(uint8_t id, uint8_t type)
 					bt.sendDATA(id, type, (void *) PTP_Buffer, PTP_Bytes_Received);
 				}
 			}
+*/
+			///////////////////////// DEMO Code ////////////////////////////
+			PTP_Bytes_Total = sizeof(thm);
+			bt.sendDATA(REMOTE_THUMBNAIL_SIZE, type, (void *) &PTP_Bytes_Total, sizeof(PTP_Bytes_Total));
+			uint16_t total_sent = 0, i;
+			while(total_sent < PTP_Bytes_Total)
+			{
+				for(i = 0; i < PTP_BUFFER_SIZE; i++)
+				{
+					PTP_Buffer[i] = pgm_read_byte(&thm[i + total_sent]);
+					if(total_sent + i >= PTP_Bytes_Total) break;
+				}
+				PTP_Bytes_Received = i;
+				total_sent += PTP_Bytes_Received;
+				if(PTP_Bytes_Received == 0) break;
+				bt.sendDATA(id, type, (void *) PTP_Buffer, PTP_Bytes_Received);
+				if(total_sent >= PTP_Bytes_Total) break;
+			}
+			/////////////////////////////////////////////////////////////////
+			return 0;
 		}
 		default:
 			return bt.sendDATA(id, type, 0, 0);

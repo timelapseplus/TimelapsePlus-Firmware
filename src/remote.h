@@ -42,7 +42,7 @@ public:
     Remote(void);
     uint8_t request(uint8_t id);
     uint8_t set(uint8_t id);
-    uint8_t debug(char *str);
+    uint8_t debugMessage(char *str);
     uint8_t watch(uint8_t id);
     uint8_t unWatch(uint8_t id);
     static uint8_t send(uint8_t id, uint8_t type);
