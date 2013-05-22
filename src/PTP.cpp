@@ -312,7 +312,7 @@ uint8_t PTP::apertureMax() // 13
 	{
 		for(uint8_t i = 1; i <= apertureAvailCount; i++)
 		{
-			uint8_t tmp = apertureAvail[apertureAvailCount - i];
+			tmp = apertureAvail[apertureAvailCount - i];
 			if(tmp > 0 && tmp < 128) break;
 		}
 		if(tmp > conf.apertureMax) tmp = conf.apertureMax;
@@ -322,15 +322,17 @@ uint8_t PTP::apertureMax() // 13
 
 uint8_t PTP::apertureMin() // 2
 {
+	uint8_t tmp = 0;
 	if(apertureAvailCount > 0)
 	{
 		for(uint8_t i = 0; i < apertureAvailCount; i++)
 		{
-			uint8_t tmp = apertureAvail[i];
-			if(tmp > 0 && tmp < 128) return tmp;
+			tmp = apertureAvail[i];
+			if(tmp > 0 && tmp < 128) break;
 		}
+		if(tmp < conf.apertureMin) tmp = conf.apertureMin;
 	}
-	return 0;
+	return tmp;
 }
 
 uint8_t PTP::shutterMax() // 7
@@ -405,6 +407,7 @@ uint8_t PTP::apertureDownStatic(uint8_t ev)
 
 uint8_t PTP::isoUp(uint8_t ev)
 {
+	uint8_t tmp = isoAvail[isoAvailCount - 1];
 	if(isoAvailCount == 0) return ev;
 	for(uint8_t i = 0; i < isoAvailCount; i++)
 	{
@@ -412,7 +415,8 @@ uint8_t PTP::isoUp(uint8_t ev)
 		{
 			if(i < isoAvailCount - 1)
 			{
-				return isoAvail[i + 1];
+				tmp = isoAvail[i + 1];
+				break;
 			}
 			else
 			{
@@ -420,7 +424,8 @@ uint8_t PTP::isoUp(uint8_t ev)
 			}
 		}
 	}
-	return isoAvail[isoAvailCount - 1];
+	if(tmp > conf.isoMax) tmp = conf.isoMax;
+	return tmp;
 }
 
 uint8_t PTP::isoDown(uint8_t ev)
@@ -557,13 +562,15 @@ uint8_t PTP::bulbDown(uint8_t ev)
 
 uint8_t PTP::apertureUp(uint8_t ev)
 {
+	uint8_t tmp = apertureAvail[apertureAvailCount - 1];
 	for(uint8_t i = 0; i < apertureAvailCount; i++)
 	{
 		if(apertureAvail[i] == ev)
 		{
 			if(i < apertureAvailCount - 1)
 			{
-				return apertureAvail[i + 1];
+				tmp = apertureAvail[i + 1];
+				break;
 			}
 			else
 			{
@@ -571,18 +578,21 @@ uint8_t PTP::apertureUp(uint8_t ev)
 			}
 		}
 	}
-	return apertureAvail[apertureAvailCount - 1];
+	if(tmp > conf.apertureMax) tmp = conf.apertureMax;
+	return tmp;
 }
 
 uint8_t PTP::apertureDown(uint8_t ev)
 {
+	uint8_t tmp = apertureAvail[0];
 	for(uint8_t i = 0; i < apertureAvailCount; i++)
 	{
 		if(apertureAvail[i] == ev)
 		{
 			if(i > 0)
 			{
-				return apertureAvail[i - 1];
+				tmp = apertureAvail[i - 1];
+				break;
 			}
 			else
 			{
@@ -590,7 +600,8 @@ uint8_t PTP::apertureDown(uint8_t ev)
 			}
 		}
 	}
-	return apertureAvail[0];
+	if(tmp < conf.apertureMin) tmp = conf.apertureMin;
+	return tmp;
 }
 
 uint8_t PTP::iso()
