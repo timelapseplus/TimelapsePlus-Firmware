@@ -54,7 +54,7 @@ extern Light light;
 
 volatile unsigned char state;
 const uint16_t settings_warn_time = 0;
-const uint16_t settings_mirror_up_time = 1;
+const uint16_t settings_mirror_up_time = 3;
 volatile char cable_connected; // 1 = cable connected, 0 = disconnected
 
 char shutter_state, ir_shutter_state; // used only for momentary toggle mode //
@@ -619,24 +619,28 @@ char shutter::task()
                         float curveEv = curve(key1, key2, key3, key4, t);
                         status.rampStops = (float)current.BulbStart - curveEv;
                         exp = camera.bulbTime(curveEv - (float)evShift);
-                        debug(STR("   Keyframe: "));
-                        debug(i);
-                        debug_nl();
-                        debug(STR("    Percent: "));
-                        debug(t);
-                        debug_nl();
-                        debug(STR("    CurveEv: "));
-                        debug(curveEv);
-                        debug_nl();
-                        debug(STR("CorrectedEv: "));
-                        debug(curveEv - (float)evShift);
-                        debug_nl();
-                        debug(STR("   Exp (ms): "));
-                        debug(exp);
-                        debug_nl();
-                        debug(STR("    evShift: "));
-                        debug(evShift);
-                        debug_nl();
+
+                        if(conf.devMode)
+                        {
+                            debug(STR("   Keyframe: "));
+                            debug(i);
+                            debug_nl();
+                            debug(STR("    Percent: "));
+                            debug(t);
+                            debug_nl();
+                            debug(STR("    CurveEv: "));
+                            debug(curveEv);
+                            debug_nl();
+                            debug(STR("CorrectedEv: "));
+                            debug(curveEv - (float)evShift);
+                            debug_nl();
+                            debug(STR("   Exp (ms): "));
+                            debug(exp);
+                            debug_nl();
+                            debug(STR("    evShift: "));
+                            debug(evShift);
+                            debug_nl();
+                        }
                     }
                     else
                     {
@@ -663,31 +667,39 @@ char shutter::task()
                 {
                     internalRampStops += ((float)rampRate / 1800.0) * ((float)current.Gap / 10.0);
                     status.rampStops = (lightStart - lightReading) + internalRampStops;
-                    debug(STR("     lightStart: "));
-                    debug(lightStart);
-                    debug_nl();
-                    debug(STR("   lightReading: "));
-                    debug(lightReading);
-                    debug_nl();
-                    if(status.rampStops >= status.rampMax)
+                    
+                    if(status.rampStops > status.rampMax)
                     {
                         debug(STR("   (ramp max)\n"));
                         status.rampStops = status.rampMax;
                     }
-                    else if(status.rampStops <= status.rampMin)
+                    else if(status.rampStops < status.rampMin)
                     {
                         debug(STR("   (ramp min)\n"));
                         status.rampStops = status.rampMin;
                     }
                     //                                   56        -     0            -    -6 
                     float tmp_ev = (float)current.BulbStart - status.rampStops - (float)evShift;
-                    debug(STR("   bulbTime Ev: "));
-                    debug(tmp_ev);
-                    debug_nl();
-                    exp = camera.bulbTime(tmp_ev);
-                    debug(STR("   Exp (ms): "));
-                    debug(exp);
-                    debug_nl();
+
+                    if(conf.devMode)
+                    {
+                        debug(STR("     lightStart: "));
+                        debug(lightStart);
+                        debug_nl();
+                        debug(STR("   lightReading: "));
+                        debug(lightReading);
+                        debug_nl();
+                        debug(STR("  bulbStart Ev: "));
+                        debug(current.BulbStart);
+                        debug_nl();
+                        debug(STR("   bulbTime Ev: "));
+                        debug(tmp_ev);
+                        debug_nl();
+                        exp = camera.bulbTime(tmp_ev);
+                        debug(STR("   Exp (ms): "));
+                        debug(exp);
+                        debug_nl();                        
+                    }
                 }
 
                 bulb_length = exp;
@@ -1071,9 +1083,9 @@ char shutter::task()
         //running = 0;
         shutter_off();
         camera.bulbEnd();
+        light.stop();
 
         hardware_flashlight((uint8_t) clock.Seconds() % 2);
-        light.stop();
 
         return CONTINUE;
     }
@@ -1098,6 +1110,7 @@ char shutter::task()
         hardware_flashlight(0);
         light.stop();
         aux_off();
+        clock.awake();
 
         return DONE;
     }
@@ -1259,8 +1272,8 @@ int8_t calcRampMin()
     int8_t apertureRange = 0;
 
     if(conf.brampMode & BRAMP_MODE_BULB) bulbRange = (int8_t)camera.bulbMin() - (int8_t)timer.current.BulbStart;
-    if(conf.brampMode & BRAMP_MODE_ISO) isoRange = (int8_t)camera.isoMin() - (int8_t)camera.iso();
-    if(conf.brampMode & BRAMP_MODE_APERTURE) apertureRange = (int8_t)camera.apertureMax() - (int8_t)camera.aperture();
+    if((conf.brampMode & BRAMP_MODE_ISO) && camera.supports.iso) isoRange = (int8_t)camera.isoMin() - (int8_t)camera.iso();
+    if((conf.brampMode & BRAMP_MODE_APERTURE) && camera.supports.aperture) apertureRange = (int8_t)camera.apertureMax() - (int8_t)camera.aperture();
 
     return 0 - (isoRange + apertureRange + bulbRange);
 }
