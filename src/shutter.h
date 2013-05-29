@@ -141,6 +141,9 @@ public:
 
 private:
     double test;
+    uint8_t iso;
+    uint8_t aperture;
+
 };
 
 void check_cable();

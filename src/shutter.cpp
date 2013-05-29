@@ -449,6 +449,12 @@ char shutter::task()
         clock.tare();
         photos = 0;
         exps = 0;
+
+        // do sanity check here
+
+        if(camera.supports.aperture) aperture = camera.aperture();
+        if(camera.supports.iso) iso = camera.iso();
+
         if(current.Mode & RAMP)
         {
             uint32_t tmp = (uint32_t)current.Duration * 10;
@@ -680,6 +686,7 @@ char shutter::task()
                     }
                     //                                   56        -     0            -    -6 
                     float tmp_ev = (float)current.BulbStart - status.rampStops - (float)evShift;
+                    exp = camera.bulbTime(tmp_ev);
 
                     if(conf.devMode)
                     {
@@ -695,7 +702,6 @@ char shutter::task()
                         debug(STR("   bulbTime Ev: "));
                         debug(tmp_ev);
                         debug_nl();
-                        exp = camera.bulbTime(tmp_ev);
                         debug(STR("   Exp (ms): "));
                         debug(exp);
                         debug_nl();                        
@@ -704,17 +710,14 @@ char shutter::task()
 
                 bulb_length = exp;
 
-                if(camera.supports.iso)
+                if(camera.supports.iso || camera.supports.aperture)
                 {
-                    int8_t tmpShift = 0;
-
-                    uint8_t aperture = camera.aperture();
                     uint8_t nextAperture = aperture;
-
-                    uint8_t iso = camera.iso();
                     uint8_t nextISO = iso;
 
-                    if(conf.brampMode & BRAMP_MODE_APERTURE)
+                    int8_t tmpShift = 0;
+
+                    if(conf.brampMode & BRAMP_MODE_APERTURE && camera.supports.aperture)
                     {
                         // Check for too long bulb time and adjust Aperture //
                         while(bulb_length > BulbMax)
@@ -741,7 +744,7 @@ char shutter::task()
                         debug(STR("Aperture Close: Done!\r\n\r\n"));
                     }
 
-                    if(conf.brampMode & BRAMP_MODE_ISO)
+                    if(conf.brampMode & BRAMP_MODE_ISO && camera.supports.iso)
                     {
                         // Check for too long bulb time and adjust ISO //
                         while(bulb_length > BulbMax)
@@ -769,7 +772,7 @@ char shutter::task()
                     }
 
 
-                    if(conf.brampMode & BRAMP_MODE_ISO)
+                    if(conf.brampMode & BRAMP_MODE_ISO && camera.supports.iso)
                     {
                         // Check for too short bulb time and adjust ISO //
                         for(;;)
@@ -798,7 +801,7 @@ char shutter::task()
                     }
 
 
-                    if(conf.brampMode & BRAMP_MODE_APERTURE)
+                    if(conf.brampMode & BRAMP_MODE_APERTURE && camera.supports.aperture)
                     {
                         // Check for too short bulb time and adjust Aperture //
                         for(;;)
@@ -1208,7 +1211,7 @@ uint8_t stopName(char name[8], uint8_t stop)
 
 void calcBulbMax()
 {
-    BulbMax = (timer.current.Gap / 10 - 3) * 1000;
+    BulbMax = (timer.current.Gap / 10 - 4) * 1000;
 
     BulbMaxEv = 1;
     for(uint8_t i = camera.bulbMax(); i < camera.bulbMin(); i++)
