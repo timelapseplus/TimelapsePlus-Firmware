@@ -112,7 +112,7 @@ void hardware_off(void)
             USB_Detach();
 
             // Shutdown bluetooth
-            bt.disconnect();
+            bt.disconnect(BT_DISCONNECT_ALL);
             bt.sleep();
 
             // Disable all interrupts

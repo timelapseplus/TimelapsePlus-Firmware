@@ -1389,12 +1389,12 @@ volatile char btConnect(char key, char first)
 		sfirst = 0;
 
 		update = 1;
-		if(bt.state != BT_ST_CONNECTED)
-		{
+		//if(bt.state != BT_ST_CONNECTED)
+		//{
 			debug(STR("BT Advertising!\r\n"));
 			bt.advertise();
 			bt.scan();
-		}
+		//}
 	}
 
 	switch(key)
@@ -1409,13 +1409,13 @@ volatile char btConnect(char key, char first)
 			return FN_CANCEL;
 
 		case FR_KEY:
-			if(bt.state == BT_ST_CONNECTED)
+			if(bt.device[menuSelected].connected)
 			{
-				bt.disconnect();
+				bt.disconnect(bt.device[menuSelected].handle);
 			}
 			else
 			{
-				bt.connect(bt.device[menuSelected].addr);
+				if(bt.state != BT_ST_CONNECTED) bt.connect(bt.device[menuSelected].addr);
 			}
 			break;
 	}
@@ -1428,13 +1428,18 @@ volatile char btConnect(char key, char first)
 			break;
 		case BT_EVENT_SCAN_COMPLETE:
 			debug(STR("done!\r\n"));
-			if(bt.state != BT_ST_CONNECTED)
-			{
+			//if(bt.state != BT_ST_CONNECTED)
+			//{
 				bt.advertise();
 				bt.scan();
-			}
+			//}
 			break;
-		case BT_EVENT_DISCONNECT:		
+		case BT_EVENT_DISCONNECT:
+			bt.advertise();
+			bt.scan();
+			break;
+		case BT_EVENT_CONNECT:
+			bt.advertise();
 			bt.scan();
 			break;
 		default:
@@ -1463,48 +1468,53 @@ volatile char btConnect(char key, char first)
 	{
 		lcd.cls();
 
-		if(bt.state == BT_ST_CONNECTED)
-		{
-			menu.setTitle(TEXT("Connect"));
-			lcd.writeStringTiny(18, 20, TEXT("Connected!"));
-			menu.setBar(TEXT("RETURN"), TEXT("DISCONNECT"));
-		}
-		else
-		{
-			if(menuSelected > 2)
-				menuScroll = menuSelected - 2;
+		if(menuSelected > 2)
+			menuScroll = menuSelected - 2;
 
-			menuSize = 0;
+		menuSize = 0;
 
-			for(i = 0; i < bt.devices; i++)
+		for(i = 0; i < bt.devices; i++)
+		{
+			if(i >= menuScroll && i <= menuScroll + 4)
 			{
-				if(i >= menuScroll && i <= menuScroll + 4)
+				for(c = 0; c < MENU_NAME_LEN - 1; c++) // Write settings item text //
 				{
-					for(c = 0; c < MENU_NAME_LEN - 1; c++) // Write settings item text //
-					{
-							if(bt.device[i].name[c])
-								lcd.writeChar(3 + c * 6, 8 + 9 * (menuSize - menuScroll), bt.device[i].name[c]);
-					}
+						if(bt.device[i].name[c])
+							lcd.writeChar(3 + c * 6, 8 + 9 * (menuSize - menuScroll), bt.device[i].name[c]);
+						else
+							break;
 				}
-				menuSize++;
+				if(bt.device[i].connected)
+					lcd.writeChar(3 + (MENU_NAME_LEN - 1) * 6, 8 + 9 * (menuSize - menuScroll), '*');
 			}
+			menuSize++;
+		}
 
-			if(bt.devices)
+		if(bt.devices)
+		{
+			lcd.drawHighlight(2, 7 + 9 * (menuSelected - menuScroll), 81, 7 + 9 * (menuSelected - menuScroll) + 8);
+			if(bt.device[menuSelected].connected)
 			{
-				lcd.drawHighlight(2, 7 + 9 * (menuSelected - menuScroll), 81, 7 + 9 * (menuSelected - menuScroll) + 8);
-				menu.setBar(TEXT("RETURN"), TEXT("CONNECT"));
+				menu.setBar(TEXT("RETURN"), TEXT("DISCONNECT"));
 			}
 			else
 			{
-				lcd.writeStringTiny(6, 20, TEXT("No Devices Found"));
-				menu.setBar(TEXT("RETURN"), BLANK_STR);
+				if(bt.state != BT_ST_CONNECTED) 
+					menu.setBar(TEXT("RETURN"), TEXT("CONNECT"));
+				else
+					menu.setBar(TEXT("RETURN"), TEXT(""));
 			}
-
-			menu.setTitle(TEXT("Connect"));
-
-			lcd.drawLine(0, 3, 0, 40);
-			lcd.drawLine(83, 3, 83, 40);
 		}
+		else
+		{
+			lcd.writeStringTiny(6, 20, TEXT("No Devices Found"));
+			menu.setBar(TEXT("RETURN"), BLANK_STR);
+		}
+
+		menu.setTitle(TEXT("Connect"));
+
+		lcd.drawLine(0, 3, 0, 40);
+		lcd.drawLine(83, 3, 83, 40);
 
 		lcd.update();
 	}

@@ -166,12 +166,41 @@ uint8_t BT::power(uint8_t level)
  *
  ******************************************************************/
 
-uint8_t BT::disconnect(void)
+uint8_t BT::disconnect(uint8_t handle)
 {
 	if(!present)
 		return 1;
 
-	sendCMD(STR("ATDH,0\r"));
+	char buf[9];
+	char tmp[2];
+	tmp[1] = '\0';
+
+	if(handle == BT_DISCONNECT_ALL)
+	{
+		for(handle = 0; handle < BT_MAX_SCAN; handle++)
+		{
+			if(device[handle].connected)
+			{
+				buf[0] = '\0';
+				strcat((char*)buf, STR("ATDH,"));
+				tmp[0] = (char)handle + '0';
+				strcat((char*)buf, tmp);
+				strcat((char*)buf, STR("\r"));
+				sendCMD(buf);
+			}
+		}
+	}
+	else
+	{
+		buf[0] = '\0';
+		strcat((char*)buf, STR("ATDH,"));
+		tmp[0] = (char)handle + '0';
+		strcat((char*)buf, tmp);
+		strcat((char*)buf, STR("\r"));
+		sendCMD(buf);
+	}
+
+	//sendCMD(STR("ATDH,0\r"));
 
 	return checkOK();
 }
@@ -328,6 +357,10 @@ uint8_t BT::connect(char *address)
 		return 1;
 
 	cancel();
+
+	debug(STR("Connecting to "));
+	debug(address);
+	debug_nl();
 
 	sendCMD(STR("ATDMLE"));
 	sendCMD(address);
@@ -830,30 +863,50 @@ uint8_t BT::task(void)
 		{
 			if(strncmp(buf, STR("DISCOVERY"), 9) == 0)
 			{
+				uint8_t connected_devices = compactConnected();
 				if(*(buf + 10) == '6' && newDevices < BT_MAX_SCAN)
 				{
-					ret = BT_EVENT_DISCOVERY;
-					uint8_t i;
-					for(i = 0; i < BT_ADDR_LEN; i++)
+					uint8_t id = findIdByAddr(buf+12);
+					if(id == 255 || device[id].connected == 0)
 					{
-						device[newDevices].addr[i] = *(buf + 12 + i);
+						ret = BT_EVENT_DISCOVERY;
+						uint8_t i;
+						for(i = 0; i < BT_ADDR_LEN; i++)
+						{
+							device[newDevices + connected_devices].addr[i] = *(buf + 12 + i);
+						}
+						device[newDevices + connected_devices].addr[BT_ADDR_LEN - 1] = '\0';
+						for(i = 0; i < BT_NAME_LEN; i++)
+						{
+							if(*(buf + 38 + i) == '\r') break;
+							device[newDevices + connected_devices].name[i] = *(buf + 38 + i);
+						}
+						device[newDevices + connected_devices].name[i] = '\0';
+						newDevices++;
+						if(newDevices + connected_devices > devices) devices = newDevices + connected_devices;
 					}
-					device[newDevices].addr[BT_ADDR_LEN - 1] = '\0';
-					for(i = 0; i < BT_NAME_LEN; i++)
+					else if(id != 255) // update name of connected device
 					{
-						if(*(buf + 38 + i) == '\r') break;
-						device[newDevices].name[i] = *(buf + 38 + i);
+						uint8_t i;
+						for(i = 0; i < BT_NAME_LEN; i++)
+						{
+							if(*(buf + 38 + i) == '\r') break;
+							device[id].name[i] = *(buf + 38 + i);
+						}
+						device[newDevices + connected_devices].name[i] = '\0';
 					}
-					device[newDevices].name[i] = '\0';
-					newDevices++;
-					if(newDevices > devices) devices = newDevices;
 				}
 			}
 			if(strncmp(buf, STR("CONNECT"), 7) == 0)
 			{
-				if(state == BT_ST_SCAN) cancelScan();
+				//if(state == BT_ST_SCAN) cancelScan();
 				//ret = BT_EVENT_CONNECT;
-				devices = 0;
+				uint8_t id = findIdByAddr(&buf[14]);
+				if(id < BT_MAX_SCAN)
+				{
+					device[id].connected = 1;
+					device[id].handle = buf[8] - '0';
+				}
 				state = BT_ST_CONNECTED;
 			}
 			if(strncmp(buf, STR("BRSP"), 4) == 0)
@@ -865,13 +918,18 @@ uint8_t BT::task(void)
 			if(strncmp(buf, STR("DISCONNECT"), 10) == 0)
 			{
 				ret = BT_EVENT_DISCONNECT;
+				uint8_t id = findIdByHandle(buf[11] - '0');
+				if(id < BT_MAX_SCAN) device[id].connected = 0;
 				mode = BT_MODE_CMD;
 				state = BT_ST_IDLE;
+				debug(STR("DC: "));
+				debug(id);
+				debug_nl();
 			}
 			if(strncmp(buf, STR("DONE"), 4) == 0)
 			{
 				ret = BT_EVENT_SCAN_COMPLETE;
-				devices = newDevices;
+				devices = newDevices + connectedDevices();
 			}
 		}
 		else
@@ -883,8 +941,13 @@ uint8_t BT::task(void)
 			if(strncmp(buf + pos, STR("DISCONNECT"), 10) == 0)
 			{
 				ret = BT_EVENT_DISCONNECT;
+				uint8_t id = findIdByHandle(buf[11 + pos] - '0');
+				if(id < BT_MAX_SCAN) device[id].connected = 0;
 				mode = BT_MODE_CMD;
 				state = BT_ST_IDLE;
+				debug(STR("(DC): "));
+				debug(id);
+				debug_nl();
 			}
 			else if(dataId > 0)
 			{
@@ -901,3 +964,58 @@ uint8_t BT::task(void)
 	return ret;
 }
 
+uint8_t BT::findIdByAddr(char *addr)
+{
+	for(uint8_t i = 0; i < BT_MAX_SCAN; i++)
+	{
+		if(strncmp(addr, device[i].addr, 12) == 0) return i;
+	}
+	debug(STR("Addr not found!\n"));
+	return 255;
+}
+
+uint8_t BT::findIdByHandle(uint8_t handle)
+{
+	for(uint8_t i = 0; i < devices; i++)
+	{
+		if(device[i].connected && device[i].handle == handle) return i;
+	}
+	debug(STR("Handle not found!\n"));
+	return 255;
+}
+
+uint8_t BT::connectedDevices()
+{
+	uint8_t connected_devices = 0;
+	for(uint8_t i = 0; i < devices; i++)
+	{
+		if(device[i].connected) connected_devices++;
+	}
+	return connected_devices;
+}
+
+uint8_t BT::compactConnected()
+{
+	uint8_t connected_devices = connectedDevices();
+	uint8_t accounted_devices = 0;
+	for(uint8_t i = 0; i < BT_MAX_SCAN; i++) // Move connected devices to top of list
+	{
+		if(device[i].connected)
+		{
+			if(i != accounted_devices)
+			{
+				debug(STR("Moving ["));
+				debug(i);
+				debug(STR("] to ["));
+				debug(accounted_devices);
+				debug(STR("]\n"));
+
+				memmove(&device[accounted_devices], &device[i], sizeof(device[0]));
+				device[i].connected = 0;
+			}
+			accounted_devices++;
+		}
+		if(accounted_devices >= connected_devices) break;
+	}
+	return connected_devices;
+}

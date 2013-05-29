@@ -34,11 +34,14 @@
 #define BT_EVENT_DATA 4
 #define BT_EVENT_SCAN_COMPLETE 5
 
+#define BT_DISCONNECT_ALL 255
 
 struct discovery
 {
     char name[BT_NAME_LEN];
     char addr[BT_ADDR_LEN];
+    uint8_t connected;
+    uint8_t handle;
 };
 
 class BT
@@ -63,8 +66,11 @@ public:
     uint8_t scan(void);
     uint8_t advertise(void);
     uint8_t connect(char *address);
-    uint8_t disconnect(void);
+    uint8_t disconnect(uint8_t handle);
     uint8_t task(void);
+
+    uint8_t dataMode(void);
+    uint8_t cmdMode(void);
 
     uint8_t present;
     uint8_t state;
@@ -84,8 +90,10 @@ public:
 private:
     char buf[BT_BUF_SIZE];
     uint8_t checkOK(void);
+    uint8_t findIdByAddr(char *addr);
+    uint8_t findIdByHandle(uint8_t handle);
+    uint8_t connectedDevices();
+    uint8_t compactConnected();
     uint8_t btPower;
-    uint8_t dataMode(void);
-    uint8_t cmdMode(void);
     uint8_t newDevices;
 };
