@@ -13,6 +13,7 @@ Timelapse+ Firmware [![Build Status](https://travis-ci.org/timelapseplus/Timelap
 
 Official Firmware for the Timelapse+ Intervalometer [https://www.timelapseplus.com]
 
+Download prepackaged binaries from http://firmware.timelapseplus.com
 
 Requirements
 ------------
