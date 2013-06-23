@@ -44,6 +44,6 @@ volatile char bramp_monitor(char key, char first);
 volatile char videoRemote(char key, char first);
 volatile char system_name(char key, char first);
 volatile char focusStack(char key, char first);
-volatile char lightTrigger(char key, char first, uint8_t mode);
+volatile char lightTrigger(char key, char first);
 void int_to_str(uint16_t n, char buf[6]);
 void updateConditions();

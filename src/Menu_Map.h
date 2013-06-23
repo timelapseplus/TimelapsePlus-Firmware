@@ -285,8 +285,7 @@ const menu_item menu_trigger[]PROGMEM =
     { "Cable Remote", 'F', (void*)cableRelease, 0, 0, (void*)&timerNotRunning },
     { "IR Remote   ", 'F', (void*)IRremote, 0, 0, (void*)&timerNotRunning },
     { "BT Remote   ", 'F', (void*)cableReleaseRemote, 0, 0, (void*)&showRemoteStart },
-    { "Lightning   ", 'F', (void*)lightningTrigger, 0, 0, (void*)&timerNotRunning },
-    { "Motion      ", 'F', (void*)motionTrigger, 0, 0, (void*)&timerNotRunning },
+    { "Light/Motion", 'F', (void*)lightTrigger, 0, 0, (void*)&timerNotRunning },
 //    { "Video       ", 'F', (void*)videoRemote, 0, 0, (void*)&camera.supports.video },
     { "Focus Stack ", 'F', (void*)focusStack, 0, 0, (void*)&camera.supports.focus },
     { "\0           ", 'V', 0, 0, 0 }

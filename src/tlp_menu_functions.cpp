@@ -1190,14 +1190,14 @@ volatile char lightMeter(char key, char first)
  *
  ******************************************************************/
 
-#define YOFF (0)
+#define YOFF (-6)
 
-volatile char lightTrigger(char key, char first, uint8_t mode)
+volatile char lightTrigger(char key, char first)
 {
 	uint8_t i = 0;
 	uint16_t val;
 	static uint16_t lv;
-	static uint8_t threshold = 2;
+	static uint8_t threshold = 2, mode = LIGHT_TRIGGER_MODE_ANY;
 
 	if(!mode) mode = LIGHT_TRIGGER_MODE_ANY;
 
@@ -1211,6 +1211,24 @@ volatile char lightTrigger(char key, char first, uint8_t mode)
 		if(threshold < 4) threshold++;
 		first = 1;
 	}
+	if(key == UP_KEY)
+	{
+		if(mode == LIGHT_TRIGGER_MODE_FALL)
+			mode = LIGHT_TRIGGER_MODE_RISE;
+		else if(mode == LIGHT_TRIGGER_MODE_RISE)
+			mode = LIGHT_TRIGGER_MODE_ANY;
+		else
+			mode = LIGHT_TRIGGER_MODE_FALL;
+	}
+	if(key == DOWN_KEY)
+	{
+		if(mode == LIGHT_TRIGGER_MODE_ANY)
+			mode = LIGHT_TRIGGER_MODE_RISE;
+		else if(mode == LIGHT_TRIGGER_MODE_RISE)
+			mode = LIGHT_TRIGGER_MODE_FALL;
+		else
+			mode = LIGHT_TRIGGER_MODE_ANY;
+	}
 
 	if(first || key)
 	{
@@ -1219,8 +1237,10 @@ volatile char lightTrigger(char key, char first, uint8_t mode)
 		lcd.cls();
 		if(mode == LIGHT_TRIGGER_MODE_ANY)
 			menu.setTitle(TEXT("Motion Sensor"));
-		else
+		else if(mode == LIGHT_TRIGGER_MODE_RISE)
 			menu.setTitle(TEXT("Light Trigger"));
+		else
+			menu.setTitle(TEXT("Int Trigger"));
 
 		menu.setBar(TEXT("RETURN"), BLANK_STR);
 
@@ -1244,6 +1264,31 @@ volatile char lightTrigger(char key, char first, uint8_t mode)
 		lcd.setPixel(42-20+i, 19+YOFF);
 
 		lcd.writeStringTiny(19, 25+YOFF, TEXT("SENSITIVITY"));
+
+		lcd.setPixel(13, 29);
+		lcd.drawLine(12, 30, 14, 30);
+		lcd.drawLine(11, 31, 15, 31);
+
+		lcd.setPixel(13, 35);
+		lcd.drawLine(12, 34, 14, 34);
+		lcd.drawLine(11, 33, 15, 33);
+
+		if(mode == LIGHT_TRIGGER_MODE_FALL)
+		{
+			lcd.drawBox(17, 28, 18 + 2 + lcd.measureStringTiny(TEXT("FALLING EDGE")), 36);
+			lcd.writeStringTiny(19, 30, TEXT("FALLING EDGE"));
+		}
+		else if (mode == LIGHT_TRIGGER_MODE_RISE)
+		{
+			lcd.drawBox(17, 28, 18 + 2 + lcd.measureStringTiny(TEXT("RISING EDGE")), 36);
+			lcd.writeStringTiny(19, 30, TEXT("RISING EDGE"));
+		}
+		else
+		{
+			lcd.drawBox(17, 28, 18 + 2 + lcd.measureStringTiny(TEXT("ANY CHANGE")), 36);
+			lcd.writeStringTiny(19, 30, TEXT("ANY CHANGE"));
+		}
+
 
 		lcd.update();
 		lcd.backlight(0);
@@ -1282,19 +1327,6 @@ volatile char lightTrigger(char key, char first, uint8_t mode)
 	return FN_CONTINUE;
 }
 
-
-
-/******************************************************************
- *
- *   motionTrigger
- *
- *
- ******************************************************************/
-
-volatile char motionTrigger(char key, char first)
-{
-	return lightTrigger(key, first, LIGHT_TRIGGER_MODE_ANY);
-}
 
 /******************************************************************
  *
@@ -1936,10 +1968,6 @@ volatile char usbPlug(char key, char first)
 
 volatile char lightningTrigger(char key, char first)
 {
-
-	return lightTrigger(key, first, LIGHT_TRIGGER_MODE_RISE);
-
-	/*
 	if(first)
 	{
 		sleepOk = 0;
@@ -1964,7 +1992,6 @@ volatile char lightningTrigger(char key, char first)
 	}
 
 	return FN_CONTINUE;
-	*/
 }
 
 /******************************************************************
