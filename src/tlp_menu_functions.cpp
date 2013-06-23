@@ -1240,7 +1240,7 @@ volatile char lightTrigger(char key, char first)
 		else if(mode == LIGHT_TRIGGER_MODE_RISE)
 			menu.setTitle(TEXT("Light Trigger"));
 		else
-			menu.setTitle(TEXT("Int Trigger"));
+			menu.setTitle(TEXT("Light Trigger"));
 
 		menu.setBar(TEXT("RETURN"), BLANK_STR);
 
