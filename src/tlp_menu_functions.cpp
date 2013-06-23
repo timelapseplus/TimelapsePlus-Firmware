@@ -1185,17 +1185,21 @@ volatile char lightMeter(char key, char first)
 
 /******************************************************************
  *
- *   motionTrigger
+ *   lightTrigger
  *
  *
  ******************************************************************/
 
-volatile char motionTrigger(char key, char first)
+#define YOFF (0)
+
+volatile char lightTrigger(char key, char first, uint8_t mode)
 {
-	uint8_t i;
+	uint8_t i = 0;
 	uint16_t val;
-	static uint16_t lv[3];
+	static uint16_t lv;
 	static uint8_t threshold = 2;
+
+	if(!mode) mode = LIGHT_TRIGGER_MODE_ANY;
 
 	if(key == LEFT_KEY)
 	{
@@ -1208,58 +1212,53 @@ volatile char motionTrigger(char key, char first)
 		first = 1;
 	}
 
-	if(first)
+	if(first || key)
 	{
 		sleepOk = 0;
 		clock.tare();
 		lcd.cls();
-		menu.setTitle(TEXT("Motion Sensor"));
+		if(mode == LIGHT_TRIGGER_MODE_ANY)
+			menu.setTitle(TEXT("Motion Sensor"));
+		else
+			menu.setTitle(TEXT("Light Trigger"));
+
 		menu.setBar(TEXT("RETURN"), BLANK_STR);
 
-		lcd.drawLine(10, 22, 84-10, 22);
-		lcd.drawLine(11, 21, 11, 23);
-		lcd.drawLine(84-11, 21, 84-11, 23);
-		lcd.drawLine(12, 20, 12, 24);
-		lcd.drawLine(84-12, 20, 84-12, 24);
-		lcd.drawLine(13, 20, 13, 24);
-		lcd.drawLine(84-13, 20, 84-13, 24);
-		lcd.setPixel(42, 21);
-		lcd.setPixel(42+10, 21);
-		lcd.setPixel(42-10, 21);
-		lcd.setPixel(42+20, 21);
-		lcd.setPixel(42-20, 21);
+		lcd.drawLine(10, 22+YOFF, 84-10, 22+YOFF);
+		lcd.drawLine(11, 21+YOFF, 11, 23+YOFF);
+		lcd.drawLine(84-11, 21+YOFF, 84-11, 23+YOFF);
+		lcd.drawLine(12, 20+YOFF, 12, 24+YOFF);
+		lcd.drawLine(84-12, 20+YOFF, 84-12, 24+YOFF);
+		lcd.drawLine(13, 20+YOFF, 13, 24+YOFF);
+		lcd.drawLine(84-13, 20+YOFF, 84-13, 24+YOFF);
+		lcd.setPixel(42, 21+YOFF);
+		lcd.setPixel(42+10, 21+YOFF);
+		lcd.setPixel(42-10, 21+YOFF);
+		lcd.setPixel(42+20, 21+YOFF);
+		lcd.setPixel(42-20, 21+YOFF);
 
 		i = threshold * 10;
-		lcd.drawLine(42-3-20+i, 16, 42+3-20+i, 16);
-		lcd.drawLine(42-2-20+i, 17, 42+2-20+i, 17);
-		lcd.drawLine(42-1-20+i, 18, 42+1-20+i, 18);
-		lcd.setPixel(42-20+i, 19);
+		lcd.drawLine(42-3-20+i, 16+YOFF, 42+3-20+i, 16+YOFF);
+		lcd.drawLine(42-2-20+i, 17+YOFF, 42+2-20+i, 17+YOFF);
+		lcd.drawLine(42-1-20+i, 18+YOFF, 42+1-20+i, 18+YOFF);
+		lcd.setPixel(42-20+i, 19+YOFF);
 
-		lcd.writeStringTiny(19, 25, TEXT("SENSITIVITY"));
+		lcd.writeStringTiny(19, 25+YOFF, TEXT("SENSITIVITY"));
 
 		lcd.update();
 		lcd.backlight(0);
 		hardware_flashlight(0);
 		_delay_ms(50);
-		for(i = 0; i < 3; i++)
+		for(i = 3; i > 0; i--)
 		{
-			lv[i] = (uint16_t)hardware_readLight(i);
+			lv = (uint16_t)hardware_readLight(i - 1);
+			if(lv < 512) break;
 		}
+		i--;
 	}
 
 	uint8_t thres = 4 - threshold + 2;
 	if((4 - threshold) > 2) thres += ((4 - threshold) - 1) * 2;
-
-	for(i = 0; i < 3; i++)
-	{
-		val = (uint16_t)hardware_readLight(i);
-		if(clock.eventMs() > 1000 && val > thres && (val < (lv[i] - thres) || val > (lv[i] + thres)))
-		{
-			clock.tare();
-			shutter_capture();
-		}
-		lv[i] = val;
-	}
 
 	if(key == FL_KEY)
 	{
@@ -1268,7 +1267,33 @@ volatile char motionTrigger(char key, char first)
 		return FN_CANCEL;
 	}
 
+	while(!button.pressed())
+	{
+		val = (uint16_t)hardware_readLight(i);
+		if(clock.eventMs() > 1000 && val > thres && ((val < (lv - thres) && (mode & LIGHT_TRIGGER_MODE_FALL)) || (val > (lv + thres) && (mode & LIGHT_TRIGGER_MODE_RISE))))
+		{
+			shutter_capture();
+			clock.tare();
+		}
+		lv = val;
+		wdt_reset();
+	}
+
 	return FN_CONTINUE;
+}
+
+
+
+/******************************************************************
+ *
+ *   motionTrigger
+ *
+ *
+ ******************************************************************/
+
+volatile char motionTrigger(char key, char first)
+{
+	return lightTrigger(key, first, LIGHT_TRIGGER_MODE_ANY);
 }
 
 /******************************************************************
@@ -1360,6 +1385,256 @@ volatile char notYet(char key, char first)
 
 	if(key)
 		return FN_CANCEL;
+
+	return FN_CONTINUE;
+}
+
+/******************************************************************
+ *
+ *   focusStack
+ *
+ *
+ ******************************************************************/
+
+volatile char focusStack(char key, char first)
+{
+	static uint8_t state, photos = 3, photosTaken, wait, fine = 0;
+	static int8_t start = 0, end = 0, pos = 0;
+
+	if(state == 0)
+	{
+		state = 1;
+		wait = 0;
+		pos = start;
+		if(camera.modeLiveView) first = true;
+		//camera.liveView(true);
+	}
+
+	if(key) first = 1; //redraw
+
+	if(photosTaken >= photos)
+	{
+		menu.message(TEXT("Done!"));
+		photosTaken = 0;
+		first = 1;
+		state = 1;
+	}
+
+	if(!camera.modeLiveView)
+	{
+		if(first || state > 0)
+		{
+			lcd.cls();
+			lcd.writeStringTiny(2, 15, TEXT("Please set camera"));
+			lcd.writeStringTiny(5, 23, TEXT("to LiveView mode"));
+
+			menu.setTitle(TEXT("Focus Stack"));
+			menu.setBar(TEXT("RETURN"), BLANK_STR);
+			lcd.update();
+		}
+		state = 0;
+	}
+	else if(state < 7)
+	{
+		if(key == LEFT_KEY)
+		{
+			if(state > 1) state--;
+		}
+		if(key == RIGHT_KEY)
+		{
+			if(state < 6) state++;
+		}
+		if(key == UP_KEY)
+		{
+			if(state == 1 && photos < 90) photos += 10;
+			if(state == 2 && photos < 99) photos += 1;
+
+			if(state == 3 && start < 90) start += 10;
+			if(state == 4 && start < 99) start += 1;
+
+			if(state == 5 && end < 90) end += 10;
+			if(state == 6 && end < 99) end += 1;
+		}
+		if(key == DOWN_KEY)
+		{
+			if(state == 1 && photos > 10) photos -= 10;
+			if(state == 2 && photos > 2) photos -= 1;
+
+			if(state == 3 && start > -90) start -= 10;
+			if(state == 4 && start > -99) start -= 1;
+
+			if(state == 5 && end > -90) end -= 10;
+			if(state == 6 && end > -99) end -= 1;
+		}
+		if(key == FR_KEY)
+		{
+			if(state < 3)
+			{
+				if(fine) fine = 0; else fine = 1;
+			}
+			else
+			{
+				key = 0;
+				photosTaken = 0;
+				state = 7; // start
+			}
+		}
+
+		if(first)
+		{
+			lcd.cls();
+			lcd.writeStringTiny(9, 12, TEXT("Steps Start End"));
+
+			lcd.writeChar(12, 25-4, '0' + photos / 10);
+			lcd.writeChar(19, 25-4, '0' + photos % 10);
+
+			int8_t tmp = start;
+			if(tmp < 0)
+			{
+				tmp = 0 - tmp;
+				lcd.setPixel(32, 28-4);
+				lcd.setPixel(33, 28-4);
+				lcd.setPixel(34, 28-4);
+			}
+			lcd.writeChar(36, 25-4, '0' + tmp / 10);
+			lcd.writeChar(43, 25-4, '0' + tmp % 10);
+
+			tmp = end;
+			if(tmp < 0)
+			{
+				tmp = 0 - tmp;
+				lcd.setPixel(56, 28-4);
+				lcd.setPixel(57, 28-4);
+				lcd.setPixel(58, 28-4);
+			}
+			lcd.writeChar(60, 25-4, '0' + tmp / 10);
+			lcd.writeChar(67, 25-4, '0' + tmp % 10);
+
+			if(state == 1) lcd.drawHighlight(12, 24-4, 18, 32-4);
+			if(state == 2) lcd.drawHighlight(19, 24-4, 25, 32-4);
+			if(state == 3) lcd.drawHighlight(36, 24-4, 42, 32-4);
+			if(state == 4) lcd.drawHighlight(43, 24-4, 49, 32-4);
+			if(state == 5) lcd.drawHighlight(60, 24-4, 66, 32-4);
+			if(state == 6) lcd.drawHighlight(67, 24-4, 73, 32-4);
+
+			menu.setTitle(TEXT("Focus Stack"));
+			uint8_t len;
+			if(fine)
+			{
+				len = lcd.measureStringTiny(TEXT("Fine Steps"));
+				lcd.writeStringTiny(3, 35-3, TEXT("Fine Steps"));
+			}
+			else
+			{
+				len = lcd.measureStringTiny(TEXT("Course Steps"));
+				lcd.writeStringTiny(3, 35-3, TEXT("Course Steps"));
+			}
+			if(state < 3)
+			{
+				if(fine)
+				{
+					len = lcd.measureStringTiny(TEXT("Fine Steps"));
+					lcd.writeStringTiny(3, 35-3, TEXT("Fine Steps"));
+					menu.setBar(TEXT("RETURN"), TEXT("COURSE"));
+				}
+				else
+				{
+					len = lcd.measureStringTiny(TEXT("Course Steps"));
+					lcd.writeStringTiny(3, 35-3, TEXT("Course Steps"));
+					menu.setBar(TEXT("RETURN"), TEXT("FINE"));
+				}
+				lcd.drawHighlight(2, 31, 3 + len, 37);
+			}
+			else
+			{
+
+				menu.setBar(TEXT("RETURN"), TEXT("START"));
+			}
+			lcd.update();
+		}
+	}
+	if(state == 7) // Running
+	{
+		float percent = (float) photosTaken /  (float) photos;
+		uint8_t bar = (uint8_t) (56.0 * percent) + 12;
+
+		lcd.cls();
+
+		lcd.drawBox(12, 12, 84 - 12, 20);
+		lcd.drawHighlight(14, 14, bar, 18);
+
+		lcd.writeStringTiny(25, 25, TEXT("Running"));
+		menu.setTitle(TEXT("Focus Stack"));
+		menu.setBar(BLANK_STR, TEXT("CANCEL"));
+		lcd.update();
+	}
+
+	int16_t dest;
+	if(state < 5)
+	{
+		dest = start;
+	}
+	else if(state < 7)
+	{
+		dest = end;
+	}
+	else // running
+	{
+		float length = (float) (start - end);
+		float percent = (float) photosTaken /  (float) photos;
+		dest = start - (int8_t) (length * percent);
+		if(photosTaken == photos - 1) dest = end;
+	}
+	//dest *= 10;
+
+	if(!camera.busy && wait <= 0)
+	{
+		if(pos != dest)
+		{
+			uint16_t move;
+			int16_t steps = dest - pos;
+			if(steps < 0)
+			{
+				steps = 0 - steps;
+				if(fine) move = 0x0001; else move = 0x0002;
+			}
+			else
+			{
+				if(fine) move = 0x8001; else move = 0x8002;
+			}
+			for(int16_t i = 0; i < steps; i++)
+			{
+				camera.moveFocus(move);
+				_delay_ms(100);
+				wdt_reset();
+			}
+			pos = dest;
+		}
+
+		if(state == 7)
+		{
+			camera.capture();
+			photosTaken++;
+			wait = 10;
+		}
+	}
+	else if(!camera.busy && wait > 0)
+	{
+		_delay_ms(50);
+		wait--;
+	}
+
+	if(key == FR_KEY && state == 7)
+	{
+		menu.message(TEXT("Cancelled"));
+		state = 1;
+	}
+	if(key == FL_KEY && state < 7)
+	{
+		state = 0;
+		//camera.liveView(false);
+		return FN_CANCEL;
+	}
 
 	return FN_CONTINUE;
 }
@@ -1661,6 +1936,10 @@ volatile char usbPlug(char key, char first)
 
 volatile char lightningTrigger(char key, char first)
 {
+
+	return lightTrigger(key, first, LIGHT_TRIGGER_MODE_RISE);
+
+	/*
 	if(first)
 	{
 		sleepOk = 0;
@@ -1685,6 +1964,7 @@ volatile char lightningTrigger(char key, char first)
 	}
 
 	return FN_CONTINUE;
+	*/
 }
 
 /******************************************************************
@@ -1709,11 +1989,12 @@ volatile char runHandler(char key, char first)
 		menu.message(TEXT("Timer Started"));
 		timer.begin();
 		menu.spawn((void*)timerStatus);
-		return FN_JUMP;
 	}
-
-	menu.push(0);
-	menu.submenu((void*)menu_options);
+	else
+	{
+		menu.push(0);
+		menu.submenu((void*)menu_options);
+	}
 
 	return FN_JUMP;
 }

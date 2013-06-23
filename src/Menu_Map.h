@@ -287,7 +287,8 @@ const menu_item menu_trigger[]PROGMEM =
     { "BT Remote   ", 'F', (void*)cableReleaseRemote, 0, 0, (void*)&showRemoteStart },
     { "Lightning   ", 'F', (void*)lightningTrigger, 0, 0, (void*)&timerNotRunning },
     { "Motion      ", 'F', (void*)motionTrigger, 0, 0, (void*)&timerNotRunning },
-    { "Video       ", 'F', (void*)videoRemote, 0, 0, (void*)&camera.supports.video },
+//    { "Video       ", 'F', (void*)videoRemote, 0, 0, (void*)&camera.supports.video },
+    { "Focus Stack ", 'F', (void*)focusStack, 0, 0, (void*)&camera.supports.focus },
     { "\0           ", 'V', 0, 0, 0 }
 };
 
@@ -546,6 +547,7 @@ const menu_item menu_development[]PROGMEM =
     { "Light Meter ", 'F', (void*)lightMeter, 0, 0, 0 },
 //    { "BT Flood    ", 'F', (void*)btFloodTest, 0, 0, 0 },
     { "Reset All   ", 'F', (void*)factoryReset, 0, 0, 0 },
+//    { "WDT Reset   ", 'F', (void*)wdtReset, 0, 0, 0 },
     { "DFU Mode    ", 'F', (void*)hardware_bootloader, 0, 0, 0 },
     { "\0           ", 'V', 0, 0, 0 }
 };

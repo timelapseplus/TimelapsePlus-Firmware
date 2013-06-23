@@ -1,3 +1,7 @@
+#define LIGHT_TRIGGER_MODE_ANY 0xFF
+#define LIGHT_TRIGGER_MODE_RISE 0x01
+#define LIGHT_TRIGGER_MODE_FALL 0x02
+
 volatile char firmwareUpdated(char key, char first);
 volatile char firstSetup(char key, char first);
 volatile char timerRevert(char key, char first);
@@ -39,5 +43,7 @@ volatile char btFloodTest(char key, char first);
 volatile char bramp_monitor(char key, char first);
 volatile char videoRemote(char key, char first);
 volatile char system_name(char key, char first);
+volatile char focusStack(char key, char first);
+volatile char lightTrigger(char key, char first, uint8_t mode);
 void int_to_str(uint16_t n, char buf[6]);
 void updateConditions();
