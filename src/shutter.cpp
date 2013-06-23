@@ -193,8 +193,8 @@ void shutter::full(void)
 }
 void shutter_full(void)
 {
-    if(conf.devMode) 
-        hardware_flashlight(1);
+    //if(conf.devMode) 
+    //    hardware_flashlight(1);
 
     MIRROR_UP;
     SHUTTER_OPEN;
@@ -216,11 +216,11 @@ void shutter_bulbStart(void)
     camera.bulbMode();
     if(cable_connected == 0 && ir_shutter_state != 1)
     {
-        if(camera.supports.bulb)
+        if(camera.supports.bulb && (conf.interface & INTERFACE_USB))
         {
             camera.bulbStart();
         }
-        else
+        else if(conf.interface & INTERFACE_IR)
         {
             ir_shutter_state = 1;
             ir.bulbStart();
@@ -228,20 +228,24 @@ void shutter_bulbStart(void)
     }
     else
     {
-        if(camera.supports.capture) camera.busy = true;
+        //if(camera.supports.capture) camera.busy = true;
     }
-    if(conf.bulbMode == 0)
+
+    if(conf.interface & INTERFACE_CABLE)
     {
-        shutter_full();
-    } 
-    else if(conf.bulbMode == 1 && shutter_state != 1)
-    {
-        shutter_full();
-        shutter_state = 1;
-        if(camera.ready)
-            clock.in(SHUTTER_PRESS_TIME, &shutter_off);
-        else
-            clock.in(SHUTTER_PRESS_TIME, &shutter_half);
+        if(conf.bulbMode == 0)
+        {
+            shutter_full();
+        } 
+        else if(conf.bulbMode == 1 && shutter_state != 1)
+        {
+            shutter_full();
+            shutter_state = 1;
+            if(camera.ready)
+                clock.in(SHUTTER_PRESS_TIME, &shutter_off);
+            else
+                clock.in(SHUTTER_PRESS_TIME, &shutter_half);
+        }
     }
 }
 
@@ -259,33 +263,34 @@ void shutter::bulbEnd(void)
 void shutter_bulbEnd(void)
 {
     debug(STR("Bulb End: "));
-#ifndef DEBUG_MODE
     if(camera.bulb_open || ir_shutter_state == 1)
     {
-        if(camera.bulb_open)
+        if(camera.bulb_open && (conf.interface & INTERFACE_USB))
         {
             debug(STR("USB "));
             camera.bulbEnd();
         }
-        else
+        else if(conf.interface & INTERFACE_IR)
         {
             debug(STR("IR "));
             ir.bulbEnd();
         }
         ir_shutter_state = 0;
     } 
-    if(conf.bulbMode == 0)
+    if(conf.interface & INTERFACE_CABLE)
     {
-        debug(STR("CABLE "));
-        shutter_off();
+        if(conf.bulbMode == 0)
+        {
+            debug(STR("CABLE "));
+            shutter_off();
+        }
+        else if(conf.bulbMode == 1 && shutter_state == 1)
+        {
+            shutter_full();
+            shutter_state = 0;
+            clock.in(SHUTTER_PRESS_TIME, &shutter_off);
+        }
     }
-    else if(conf.bulbMode == 1 && shutter_state == 1)
-    {
-        shutter_full();
-        shutter_state = 0;
-        clock.in(SHUTTER_PRESS_TIME, &shutter_off);
-    }
-#endif
     debug_nl();
 }
 
@@ -717,7 +722,7 @@ char shutter::task()
 
                     int8_t tmpShift = 0;
 
-                    if(conf.brampMode & BRAMP_MODE_APERTURE && camera.supports.aperture)
+                    if((conf.brampMode & BRAMP_MODE_APERTURE) && camera.supports.aperture)
                     {
                         // Check for too long bulb time and adjust Aperture //
                         while(bulb_length > BulbMax)
@@ -744,7 +749,7 @@ char shutter::task()
                         debug(STR("Aperture Close: Done!\r\n\r\n"));
                     }
 
-                    if(conf.brampMode & BRAMP_MODE_ISO && camera.supports.iso)
+                    if((conf.brampMode & BRAMP_MODE_ISO) && camera.supports.iso)
                     {
                         // Check for too long bulb time and adjust ISO //
                         while(bulb_length > BulbMax)
@@ -772,7 +777,7 @@ char shutter::task()
                     }
 
 
-                    if(conf.brampMode & BRAMP_MODE_ISO && camera.supports.iso)
+                    if((conf.brampMode & BRAMP_MODE_ISO) && camera.supports.iso)
                     {
                         // Check for too short bulb time and adjust ISO //
                         for(;;)
@@ -801,7 +806,7 @@ char shutter::task()
                     }
 
 
-                    if(conf.brampMode & BRAMP_MODE_APERTURE && camera.supports.aperture)
+                    if((conf.brampMode & BRAMP_MODE_APERTURE) && camera.supports.aperture)
                     {
                         // Check for too short bulb time and adjust Aperture //
                         for(;;)
@@ -963,6 +968,7 @@ char shutter::task()
             if(m & SHUTTER_MODE_BULB)
             {
                 //debug(STR("Running BULB\r\n"));
+                camera.bulb_open = true;
                 clock.job(&shutter_bulbStart, &shutter_bulbEnd, bulb_length + conf.bulbOffset);
             }
             else
@@ -1211,7 +1217,7 @@ uint8_t stopName(char name[8], uint8_t stop)
 
 void calcBulbMax()
 {
-    BulbMax = (timer.current.Gap / 10 - 4) * 1000;
+    BulbMax = (timer.current.Gap / 10 - 5) * 1000;
 
     BulbMaxEv = 1;
     for(uint8_t i = camera.bulbMax(); i < camera.bulbMin(); i++)

@@ -82,7 +82,7 @@ uint16_t PTP_Bytes_Received, PTP_Bytes_Remaining, PTP_Bytes_Total;
 char PTP_CameraModel[23];
 char PTP_CameraMake[23];
 PIMA_Container_t PIMA_Block;
-uint8_t PTP_Ready, PTP_Connected, configured;
+uint8_t PTP_Ready, PTP_Connected, configured, PTP_Run_Task = 1;
 uint16_t PTP_Error, PTP_Response_Code;
 uint16_t supportedOperationsCount;
 uint16_t *supportedOperations;
@@ -92,24 +92,21 @@ uint16_t *supportedOperations;
  */
 void PTP_Task(void)
 {
-//    for(uint8_t i = 0; i < 100; i++)
-//    {
-//        USB_USBTask();
-        if(USB_HostState == HOST_STATE_Configured)
-        {
-            if(configured != USB_HostState)
-            {
-                configured = USB_HostState;
-                PTP_OpenSession();
-                if(PTP_GetDeviceInfo() == 0) PTP_Ready = 1;
-            }
-        }
-        else
+//    USB_USBTask();
+    if(USB_HostState == HOST_STATE_Configured)
+    {
+        if(configured != USB_HostState)
         {
             configured = USB_HostState;
-            PTP_Ready = 0;
+            PTP_OpenSession();
+            if(PTP_GetDeviceInfo() == 0) PTP_Ready = 1;
         }
-//    }
+    }
+    else
+    {
+        configured = USB_HostState;
+        PTP_Ready = 0;
+    }
 }
 
 /** Configures the board hardware and chip peripherals for the demo's functionality. */
@@ -127,6 +124,7 @@ void PTP_Enable(void)
     PTP_Bytes_Remaining = 0;
     PTP_Ready = 0;
     PTP_Error = 0;
+    PTP_Run_Task = 1;
 }
 
 void PTP_Disable(void)
@@ -141,6 +139,7 @@ void PTP_Disable(void)
     PTP_Ready = 0;
     PTP_Connected = 0;
     PTP_Bytes_Remaining = 0;
+    PTP_Run_Task = 1;
     return;
 }
 
@@ -149,6 +148,8 @@ uint8_t PTP_Transaction(uint16_t opCode, uint8_t receive_data, uint8_t paramCoun
 {
     if(PTP_Error) return PTP_RETURN_ERROR;
     if(PTP_Bytes_Remaining > 0) return PTP_FetchData(0);
+
+    PTP_Run_Task = 0; // Pause task while we're busy with the transaction
 
     if(paramCount > 0 && params)
         SI_Host_SendCommand(&DigitalCamera_SI_Interface, CPU_TO_LE16(opCode), paramCount, params);
@@ -186,6 +187,7 @@ uint8_t PTP_Transaction(uint16_t opCode, uint8_t receive_data, uint8_t paramCoun
 //            printf_P(PSTR("   Chunk Size: %d\r\n"), PTP_Bytes_Received);
 //            printf_P(PSTR("   (Bytes PTP_Bytes_Remaining: %d)\r\n\r\n"), PTP_Bytes_Remaining);
             #endif
+            PTP_Run_Task = 1;
             return PTP_RETURN_DATA_REMAINING;
         }
         else
@@ -211,8 +213,10 @@ uint8_t PTP_Transaction(uint16_t opCode, uint8_t receive_data, uint8_t paramCoun
         PTP_Error = opCode;
         PTP_Ready = 0;
         //USB_Host_SetDeviceConfiguration(0);
+        PTP_Run_Task = 1;
         return PTP_RETURN_ERROR;
     }
+    PTP_Run_Task = 1;
     return PTP_RETURN_OK;
 }
 
@@ -220,6 +224,7 @@ uint8_t PTP_FetchData(uint16_t offset)
 {
     if(PTP_Bytes_Remaining > 0)
     {
+        PTP_Run_Task = 0;
         if(PTP_Bytes_Remaining > PTP_BUFFER_SIZE) PTP_Bytes_Received = PTP_BUFFER_SIZE; else PTP_Bytes_Received = PTP_Bytes_Remaining;
         if(offset > 0)
         {
@@ -239,10 +244,13 @@ uint8_t PTP_FetchData(uint16_t offset)
                 puts_P(PSTR("PTP_FetchData Error.\r\n"));
                 #endif
                 USB_Host_SetDeviceConfiguration(0);
+                PTP_Run_Task = 1;
                 return PTP_RETURN_ERROR;
             }
+            PTP_Run_Task = 1;
             return PTP_RETURN_OK;
         }
+        PTP_Run_Task = 1;
         return PTP_RETURN_DATA_REMAINING;
     }
     else

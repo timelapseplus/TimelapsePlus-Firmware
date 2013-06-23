@@ -186,6 +186,8 @@ void setup()
 
 int main()
 {
+//    setOut(POWER_HOLD_PIN); // Hold PWR on
+//    setLow(POWER_HOLD_PIN);
 	/****************************
 	   Initialization
 	*****************************/
@@ -476,7 +478,7 @@ ISR(TIMER2_COMPA_vect)
 {
 	clock.count();
 	button.poll();
-    USB_USBTask();
+    if(PTP_Run_Task) USB_USBTask();
 }
 
 /******************************************************************

@@ -424,7 +424,7 @@ uint8_t PTP::isoUp(uint8_t ev)
 			}
 		}
 	}
-	if(tmp > conf.isoMax) tmp = conf.isoMax;
+	if(tmp < conf.isoMax) tmp = conf.isoMax;
 	return tmp;
 }
 
@@ -873,6 +873,7 @@ uint8_t PTP::init()
 {
 	debug(STR("Initializing Camera...\r\n"));
 	busy = false;
+	PTP_need_update = true;
 	bulb_open = false;
 	currentObject = 0;
 	isoAvailCount = 0;
@@ -915,11 +916,6 @@ uint8_t PTP::init()
 	    PTP_protocol = PROTOCOL_GENERIC;
 	    PTP_propertyOffset = (uint16_t)(((uint8_t*)&PTP_ISO_List[0].nikon) - (uint8_t *)&PTP_ISO_List[0].name[0]);
 	}
-
-//TEMP FIX////
-//    PTP_propertyOffset = (uint16_t)(((uint8_t*)&PTP_ISO_List[0].eos) - (uint8_t *)&PTP_ISO_List[0].name[0]);
-//    PTP_protocol = PROTOCOL_EOS;
-//////////////
 
 	uint8_t bulb_support = 0;//, pc_connect = 0;
     for(uint16_t i = 0; i < supportedOperationsCount; i++)
@@ -1017,6 +1013,8 @@ uint8_t PTP::liveView(uint8_t on)
 			ret = PTP_Transaction(EOS_OC_LV_STOP, 0, 0, NULL, 0, NULL);
 	}
 	
+	if(on) setEosParameter(EOS_DPC_LiveViewShow, 0);
+
 	if(ret == PTP_RETURN_ERROR)
 	{
 		debug(STR("ERROR!\r\n"));
@@ -1036,9 +1034,12 @@ uint8_t PTP::moveFocus(int16_t step)
 	{
 		if(!modeLiveView) // Only works in live view mode
 		{
-			liveView(true);
+			return 0;
+			//liveView(true);
 		}
-		data[0] = (uint32_t) step;
+		data[0] = 0;
+		memcpy(&data[0], &step, sizeof(uint16_t));
+		//data[0] = (uint32_t) step;
 		return PTP_Transaction(EOS_OC_MoveFocus, 0, 1, data, 0, NULL);
 	}
 	else if(PTP_protocol == PROTOCOL_NIKON)
@@ -1171,16 +1172,48 @@ uint8_t PTP::checkEvent()
 						debug(STR(" i: "));
 						debug(i);
 						debug_nl();
-						for(uint8_t x = 0; x < 12; x++)
+						for(uint16_t x = 0; x < 4*5; x++)
 						{
 							sendByte(PTP_Buffer[i + x - 4]);
 						}
+						event_size -= (PTP_BUFFER_SIZE - i);
 						while(event_size > PTP_BUFFER_SIZE && ret == PTP_RETURN_DATA_REMAINING)
 						{
 							ret = PTP_FetchData(0);
-						 	event_size -= PTP_BUFFER_SIZE;
+						 	event_size -= PTP_Bytes_Received;
+							debug(STR(" Received: "));
+							debug(PTP_Bytes_Received);
+							debug_nl();
 						}
 						i = event_size;
+						debug(STR("Checking for non-zero...\r\n"));
+						while(ret == PTP_RETURN_DATA_REMAINING)
+						{
+							uint8_t tbreak = 0;
+							for(uint16_t x = i; x < PTP_Bytes_Received; x++)
+							{
+								if(PTP_Buffer[x] != 0)
+								{
+									debug(STR("Found non-zero!\r\n"));
+									i = x;
+									tbreak = 1;
+									break;
+								}
+							}
+							if(tbreak) break;
+							i = 0;
+							ret = PTP_FetchData(0);
+							debug(STR(" Received: "));
+							debug(PTP_Bytes_Received);
+							debug_nl();
+						}
+						debug(STR(" i: "));
+						debug(i);
+						debug_nl();
+						//for(uint16_t x = i; x < PTP_Bytes_Received; x++)
+						//{
+						//	sendByte(PTP_Buffer[x]);
+						//}
 						continue;
 					}
 					else
@@ -1248,6 +1281,12 @@ uint8_t PTP::checkEvent()
 						debug(STR(" MODE:"));
 						debug(event_value);
 						debug_nl();
+						break;
+					case EOS_DPC_LiveView:
+						debug(STR(" LV:"));
+						if(event_value) debug(STR("ON")); else  debug(STR("OFF"));
+						debug_nl();
+						if(event_value) modeLiveView = true; else modeLiveView = false;
 						break;
 				}
 			}
@@ -1415,7 +1454,6 @@ uint8_t PTP::close()
 	ready = 0;
 	busy = false;
 	bulb_open = false;
-	return 0;
 	supports = (CameraSupports_t)
 	{
 		.capture = false,
@@ -1433,6 +1471,7 @@ uint8_t PTP::close()
 	isoAvailCount = 0;
 	apertureAvailCount = 0;
 	shutterAvailCount = 0;
+	return 0;
 }
 
 uint8_t PTP::capture()
@@ -1522,7 +1561,7 @@ uint8_t PTP::manualMode()
 uint8_t PTP::bulbStart()
 {
 	if(!static_ready) return 0;
-	if(bulb_open) return 1;
+	//if(bulb_open) return 1;
 	if(!supports.bulb) return 1;
 	bulb_open = true;
 	busy = true;

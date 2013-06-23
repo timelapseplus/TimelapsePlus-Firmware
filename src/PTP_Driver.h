@@ -89,7 +89,7 @@ extern uint16_t PTP_Bytes_Received;
 extern uint16_t PTP_Bytes_Total;
 extern char PTP_CameraModel[23];
 extern char PTP_CameraMake[23];
-extern uint8_t PTP_Ready, PTP_Connected;
+extern uint8_t PTP_Ready, PTP_Connected, PTP_Run_Task;
 extern uint16_t PTP_Error, PTP_Response_Code;
 extern uint16_t supportedOperationsCount;
 extern uint16_t *supportedOperations; // note that this memory space is reused -- only available immediately after init

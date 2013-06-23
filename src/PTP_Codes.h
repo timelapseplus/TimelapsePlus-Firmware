@@ -34,6 +34,7 @@
 #define EOS_DPC_ISO 0xD103
 #define EOS_DPC_MODE 0xD105
 #define EOS_DPC_LiveView 0xD1B0
+#define EOS_DPC_LiveViewShow 0xD1B3
 #define EOS_DPC_Video 0xD1B8
 //4=video start
 //0=video stop
