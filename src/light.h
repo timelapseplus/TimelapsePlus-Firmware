@@ -2,7 +2,10 @@
 #define I2C_ADDR_WRITE  0b10001000
 
 #define LIGHT_INTEGRATION_COUNT 64
+#define FILTER_LENGTH 3
 
+#define ANALOG_THRESHOLD 18
+#define OFFSET_UNSET 65535
 
 class Light
 {
@@ -25,8 +28,11 @@ public:
 
 private:
     int8_t iev[LIGHT_INTEGRATION_COUNT];
+    int8_t filter[FILTER_LENGTH];
+    int8_t filterIndex;
     int8_t pos;
     uint8_t integration;
     uint16_t lastSeconds;
     uint8_t initialized;
+    uint16_t offset;
 };

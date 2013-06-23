@@ -83,6 +83,8 @@ void Light::start()
    I2C_Buf[1] = 0x00;
    I2C_Buf[2] = 0b10100000;
    TWI_Start_Read_Write(I2C_Buf, 3);
+   offset = OFFSET_UNSET;
+   filterIndex = -1;
    initialized = 1;
 }
 
@@ -133,21 +135,57 @@ int8_t Light::readEv()
     int8_t ev = (int8_t)ilog2(lux);
     ev *= 3;
     ev += 30;
-    if(ev <= 12)
+    if(ev <= ANALOG_THRESHOLD)
     {
     	uint16_t tmp = hardware_readLight(2);
-    	if(tmp < 10)
+      if(offset == OFFSET_UNSET)
+      {
+        offset = tmp;
+      }
+      tmp = tmp + ANALOG_THRESHOLD - offset;
+    	if(tmp <= ANALOG_THRESHOLD)
     	{
-    		//if(tmp > 4) tmp -= 4; else tmp = 0;
-	    	//ev = (int8_t)ilog2(tmp);
-	    	//if(ev < 0) ev = 0;
-	    	//ev *= 3;
-	    	//ev += 3;
-        ev = tmp + 3;
-	    	debug(STR("Using Analog"));
+        ev = tmp;
+        if(ev < 6) ev = 6;
 	    	method = 1;
     	}
     }
+    if(method == 0) // if analog wasn't used
+    {
+      offset = OFFSET_UNSET;
+    }
+
+    if(filterIndex < 0) // initialize buffer
+    {
+      for(uint8_t i = 0; i < FILTER_LENGTH; i++) filter[i] = ev;
+      filterIndex = 0;
+    }
+    else // circular buffer
+    {
+      if(filterIndex < FILTER_LENGTH - 1) filterIndex++; else filterIndex = 0;
+      filter[filterIndex] = ev;
+    }
+
+    int8_t tmpFilter[FILTER_LENGTH];
+    memcpy(tmpFilter, filter, sizeof(filter));
+    uint8_t num_swaps = 1; // sort the filter array
+    while (num_swaps > 0) 
+    { 
+       num_swaps = 0; 
+       for (uint8_t i = 1; i < FILTER_LENGTH; i++) 
+       { 
+          if(tmpFilter[i - 1] > tmpFilter[i]) 
+          {
+            int8_t temp = tmpFilter[i];
+            tmpFilter[i] = tmpFilter[i - 1];
+            tmpFilter[i - 1] = temp;
+            num_swaps++; 
+          } 
+       } 
+    }
+
+    ev = tmpFilter[FILTER_LENGTH / 2 + 1]; // pick the middle (median) item, filtering out any extremes
+
     return ev;
 }
 
