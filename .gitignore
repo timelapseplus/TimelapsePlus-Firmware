@@ -38,3 +38,5 @@ build_release.sh
 util/fwupdated.rb
 
 util/template/fwupdated_template.png
+
+version
