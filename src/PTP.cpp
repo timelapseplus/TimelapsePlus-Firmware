@@ -46,6 +46,7 @@ const propertyDescription_t PTP_Aperture_List[] PROGMEM = {
     {"   f/36", 0x5b, 3600, 31 }
 };
 
+#define BULB_EV_CODE 253
 const propertyDescription_t PTP_Shutter_List[] PROGMEM = {
     {"  Error", 0xFF, 0x000000FF, 255 },
     {" 1/8000", 0xa0, 0x00000000, 82 },
@@ -103,7 +104,7 @@ const propertyDescription_t PTP_Shutter_List[] PROGMEM = {
     {"    20s", 0x15, 200000, 30 },
     {"    25s", 0x13, 250000, 29 },
     {"    30s", 0x10, 300000, 28 },
-    {"   Bulb", 0x0c, 0xffffffff, 253 }
+    {"   Bulb", 0x0c, 0xffffffff, BULB_EV_CODE }
 };
 
 const propertyDescription_t PTP_ISO_List[] PROGMEM = {
@@ -253,6 +254,7 @@ uint16_t PTP_propertyOffset;
 
 uint32_t currentObject;
 
+uint8_t lvOCmode;
 
 PTP::PTP(void)
 {
@@ -917,7 +919,11 @@ uint8_t PTP::init()
 	    PTP_propertyOffset = (uint16_t)(((uint8_t*)&PTP_ISO_List[0].nikon) - (uint8_t *)&PTP_ISO_List[0].name[0]);
 	}
 
-	uint8_t bulb_support = 0;//, pc_connect = 0;
+	videoMode = true; // overwritten if camera has video mode property
+
+	lvOCmode = 0;
+	supports.bulb = 0;
+
     for(uint16_t i = 0; i < supportedOperationsCount; i++)
     {
     	if(PTP_protocol == PROTOCOL_EOS)
@@ -933,14 +939,12 @@ uint8_t PTP::init()
 	    		case EOS_OC_VIDEO_START:
 	    			supports.video = true;
 	    			break;
-//				case EOS_OC_SETUILOCK:
-//				case EOS_OC_RESETUILOCK:
-//				case EOS_OC_BULBSTART:
-//				case EOS_OC_BULBEND:
+	    		case EOS_OC_LV_START:
+	    		case EOS_OC_LV_STOP:
+	    			lvOCmode = true;
 				case EOS_OC_REMOTE_RELEASE_ON:
 				case EOS_OC_REMOTE_RELEASE_OFF:
-					bulb_support++;
-					if(bulb_support == 2) supports.bulb = true;
+					supports.bulb++;
 					break;
 				case EOS_OC_PC_CONNECT:
 					debug(STR("Using PC Connect Mode\r\n"));
@@ -958,7 +962,7 @@ uint8_t PTP::init()
 	    			break;
 	    		case NIKON_OC_BULBSTART:
 	    		case NIKON_OC_BULBEND:
-	    			supports.bulb = true;
+					supports.bulb++;
 	    			break;
 	    		case PTP_OC_PROPERTY_SET:
 	    			supports.iso = true;
@@ -972,6 +976,10 @@ uint8_t PTP::init()
 		
     	}
     }
+    
+    if(supports.bulb < 1) supports.bulb = false; else supports.bulb = true;
+    if(lvOCmode < 1) lvOCmode = false; else lvOCmode = true;
+
     if(supports.capture) debug(STR("Supports CAPTURE\r\n"));
     if(supports.bulb) debug(STR("Supports BULB\r\n"));
     if(supports.video) debug(STR("Supports VIDEO\r\n"));
@@ -1001,19 +1009,22 @@ uint8_t PTP::liveView(uint8_t on)
 {
 	if(ready == 0) return 0;
 	uint8_t ret;
-	if(true)
+	if(lvOCmode)
 	{
-		ret = setEosParameter(EOS_DPC_LiveView, (on) ? 2 : 0);
-	}
-	else
-	{
+		debug(STR("Using LV OC mode\r\n"));
 		if(on)
 			ret = PTP_Transaction(EOS_OC_LV_START, 0, 0, NULL, 0, NULL);
 		else
 			ret = PTP_Transaction(EOS_OC_LV_STOP, 0, 0, NULL, 0, NULL);
 	}
+	else
+	{
+		debug(STR("Using LV property mode\r\n"));
+		ret = setEosParameter(EOS_DPC_LiveView, (on) ? 2 : 0);
+	}
 	
 	if(on) setEosParameter(EOS_DPC_LiveViewShow, 0);
+	//if(on) setEosParameter(EOS_DPC_Video, 0x03);
 
 	if(ret == PTP_RETURN_ERROR)
 	{
@@ -1065,7 +1076,7 @@ uint8_t PTP::checkEvent()
 	if(ready == 0) return 0;
 	if(bulb_open) return 0; // Because the bulb is closed asynchronously (by the clock), this prevents collisions
 	
-	if(PTP_protocol != PROTOCOL_EOS) // NIKON =======================================================
+	if(PTP_protocol == PROTOCOL_NIKON) // NIKON =======================================================
 	{
 		if(supports.cameraReady)
 		{
@@ -1098,6 +1109,12 @@ uint8_t PTP::checkEvent()
 					break;
 				case PTP_EC_PROPERTY_CHANGED:
 					PTP_need_update = true;
+					debug(STR("\r\n Property: "));
+					sendHex((char *)&event_value);
+					break;
+				default:
+					debug(STR("\r\n Event: "));
+					sendHex((char *)&tevent);
 					break;
 			}
 			if(i >= PTP_BUFFER_SIZE) break;
@@ -1105,6 +1122,7 @@ uint8_t PTP::checkEvent()
 		if(PTP_need_update) updatePtpParameters();
 		return ret;
 	}
+	if(PTP_protocol != PROTOCOL_EOS) return 0;
 
 	ret = PTP_FIRST_TIME; // CANON ==================================================================
 	do {
@@ -1284,10 +1302,41 @@ uint8_t PTP::checkEvent()
 						break;
 					case EOS_DPC_LiveView:
 						debug(STR(" LV:"));
-						if(event_value) debug(STR("ON")); else  debug(STR("OFF"));
-						debug_nl();
 						if(event_value) modeLiveView = true; else modeLiveView = false;
+						if(modeLiveView) debug(STR("ON")); else  debug(STR("OFF"));
+						debug_nl();
 						break;
+					case EOS_DPC_Video:
+						debug(STR(" VIDEO:"));
+						if(event_value == 4) recording = true; else recording = false;
+						if(recording) debug(STR("Recording")); else  debug(STR("OFF"));
+						debug_nl();
+						break;
+					case EOS_DPC_PhotosRemaining:
+						photosRemaining = event_value;
+						debug(STR(" Space Available:"));
+						debug(event_value);
+						debug_nl();
+						break;
+					case EOS_DPC_AFMode:
+						autofocus = (event_value != 3);
+						debug(STR(" AF mode:"));
+						debug(event_value);
+						debug_nl();
+						break;
+					case EOS_DPC_VideoMode:
+						if(event_value == 1) videoMode = true; else videoMode = false;
+						debug(STR(" Video Mode:"));
+						if(videoMode) debug(STR(" ON")); else  debug(STR(" OFF"));
+						debug_nl();
+						break;
+					//default:
+					//	debug(STR(" Prop: "));
+					//	debug(event_item);
+					//	debug(STR(", value: "));
+					//	debug(event_value);
+					//	debug_nl();
+					//	break;
 				}
 			}
 			else if(event_type == EOS_EC_PROPERTY_VALUES)
@@ -1501,8 +1550,6 @@ uint8_t PTP::videoStart()
 	if(!supports.video) return PTP_RETURN_ERROR;
 	if(PTP_protocol == PROTOCOL_EOS && modeLiveView)
 	{
-		recording = true;
-		busy = true;
 		setEosParameter(EOS_DPC_Video, 0x04);
 	}
 	return 0;
@@ -1514,11 +1561,15 @@ uint8_t PTP::videoStop()
 	if(!supports.video) return PTP_RETURN_ERROR;
 	if(PTP_protocol == PROTOCOL_EOS && recording)
 	{
-		busy = false;
 		recording  = false;
 		setEosParameter(EOS_DPC_Video, 0x00);
 	}
 	return 0;
+}
+
+uint8_t PTP::isInBulbMode()
+{
+	if(modePTP == 0x04 || shutter() == BULB_EV_CODE) return 1; else return 0; 
 }
 
 uint8_t PTP::bulbMode()

@@ -104,6 +104,7 @@ public:
     uint8_t bulbMode(void);
     uint8_t manualMode(void);
     uint32_t shiftBulb(uint32_t ms, int8_t ev);
+    uint8_t isInBulbMode(void);
 
     static uint8_t isoName(char name[8], uint8_t ev);
     static uint8_t apertureName(char name[8], uint8_t ev);
@@ -132,7 +133,7 @@ public:
     static uint8_t bulbUp(uint8_t ev);
     static uint8_t bulbDown(uint8_t ev);
 
-    uint8_t ready, busy, bulb_open, modeLiveView, recording;
+    uint8_t ready, busy, bulb_open, modeLiveView, recording, photosRemaining, videoMode, autofocus;
 
     CameraSupports_t supports;
 
