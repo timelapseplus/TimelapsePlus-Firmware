@@ -33,11 +33,15 @@
 #define EOS_DPC_SHUTTER 0xD102
 #define EOS_DPC_ISO 0xD103
 #define EOS_DPC_MODE 0xD105
+#define EOS_DPC_AFMode 0xD108
 #define EOS_DPC_LiveView 0xD1B0
+#define EOS_DPC_VideoMode 0xD1C2
 #define EOS_DPC_LiveViewShow 0xD1B3
 #define EOS_DPC_Video 0xD1B8
-//4=video start
-//0=video stop
+//4=video start record
+//3=live view show / stop record
+//0=video stop / live view stop showing
+#define EOS_DPC_PhotosRemaining 0xD11B
 
 #define EOS_EC_PROPERTY_CHANGE 0xC189
 #define EOS_EC_PROPERTY_VALUES 0xC18A
@@ -62,6 +66,8 @@
 #define NIKON_DPC_SHUTTER 0x500D
 #define NIKON_DPC_ISO 0x500F
 
+#define PTP_OC_NIKON_StartLiveView	0x9201
+#define PTP_OC_NIKON_EndLiveView	0x9202
 #define NIKON_OC_MoveFocus 0x9204
 
 #define NIKON_OC_BULBSTART 0x9207
