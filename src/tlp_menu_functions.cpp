@@ -242,12 +242,24 @@ volatile char videoRemote(char key, char first)
 {
 	lcd.cls();
 	menu.setTitle(TEXT("Video"));
-	if(camera.modeLiveView)
+	
+	if(!camera.videoMode)
+	{
+		lcd.writeString(84 / 2 - (13 * 6) / 2, 14, TEXT("Set Camera to"));
+		lcd.writeString(84 / 2 - (10 * 6) / 2, 22, TEXT("video mode"));
+		menu.setBar(TEXT("Return"), BLANK_STR);
+	}
+	else if(camera.modeLiveView)
 	{
 		if(camera.recording)
+		{
+			lcd.writeString(84 / 2 - (9 * 6) / 2, 16, TEXT("Recording"));
 			menu.setBar(TEXT("Return"), TEXT("Stop"));
+		}
 		else
+		{
 			menu.setBar(TEXT("Return"), TEXT("Start"));
+		}
 	}
 	else
 	{
@@ -271,13 +283,83 @@ volatile char videoRemote(char key, char first)
 	   		}
 	   		else
 	   		{
-	   			camera.liveView(true);
+	   			if(camera.videoMode) camera.liveView(true);
 	   		}
 			break;
 
 	   case FL_KEY:
 	   case LEFT_KEY:
 		   return FN_CANCEL;
+	}
+
+	return FN_CONTINUE;
+}
+
+
+/******************************************************************
+ *
+ *   Videoremote
+ *
+ *
+ ******************************************************************/
+
+volatile char videoRemoteBT(char key, char first)
+{
+	if(first)
+	{
+		remote.watch(REMOTE_VIDEO);
+		remote.watch(REMOTE_LIVEVIEW);
+	}
+
+	lcd.cls();
+	menu.setTitle(TEXT("Remote Video"));
+	
+	if(remote.modeLiveView)
+	{
+		if(remote.recording)
+		{
+			lcd.writeString(84 / 2 - (9 * 6) / 2, 16, TEXT("Recording"));
+			menu.setBar(TEXT("Return"), TEXT("Stop"));
+		}
+		else
+		{
+			menu.setBar(TEXT("Return"), TEXT("Start"));
+		}
+	}
+	else
+	{
+		menu.setBar(TEXT("Return"), TEXT("LiveView"));
+	}
+	lcd.update();
+
+	switch(key)
+	{
+	   case FR_KEY:
+	   		if(remote.modeLiveView)
+	   		{
+		   		if(remote.recording)
+		   		{
+		   			remote.set(REMOTE_VIDEO, false);
+		   		}
+		   		else
+		   		{
+		   			remote.set(REMOTE_VIDEO, true);
+		   		}
+	   		}
+	   		else
+	   		{
+	   			remote.set(REMOTE_LIVEVIEW, true);
+	   		}
+			break;
+
+	   case FL_KEY:
+	   case LEFT_KEY:
+	   {
+			remote.unWatch(REMOTE_VIDEO);
+			remote.unWatch(REMOTE_LIVEVIEW);
+			return FN_CANCEL;
+
+	   }
 	}
 
 	return FN_CONTINUE;
@@ -1194,10 +1276,9 @@ volatile char lightMeter(char key, char first)
 
 volatile char lightTrigger(char key, char first)
 {
-	uint8_t i = 0;
 	uint16_t val;
 	static uint16_t lv;
-	static uint8_t threshold = 2, mode = LIGHT_TRIGGER_MODE_ANY;
+	static uint8_t threshold = 2, mode = LIGHT_TRIGGER_MODE_ANY, i = 0;
 
 	if(!mode) mode = LIGHT_TRIGGER_MODE_ANY;
 
@@ -1461,10 +1542,19 @@ volatile char focusStack(char key, char first)
 			lcd.writeStringTiny(5, 23, TEXT("to LiveView mode"));
 
 			menu.setTitle(TEXT("Focus Stack"));
-			menu.setBar(TEXT("RETURN"), BLANK_STR);
+			menu.setBar(TEXT("RETURN"), TEXT("LIVEVIEW"));
 			lcd.update();
 		}
 		state = 0;
+		if(key == FR_KEY)
+		{
+			camera.liveView(true);
+		}
+		if(key == LEFT_KEY)
+		{
+			state = 0;
+			return FN_CANCEL;
+		}
 	}
 	else if(state < 7)
 	{
@@ -2013,7 +2103,7 @@ volatile char runHandler(char key, char first)
 
 	if(pressed == FR_KEY)
 	{
-		menu.message(TEXT("Timer Started"));
+		//menu.message(TEXT("Timer Started"));
 		timer.begin();
 		menu.spawn((void*)timerStatus);
 	}

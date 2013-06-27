@@ -27,6 +27,9 @@
 #define REMOTE_THUMBNAIL_SIZE 21
 // Note: REMOTE_THUMBNAIL_SIZE cannot be requested -- it only gets sent before sending REMOTE_THUMBNAIL
 
+#define REMOTE_VIDEO 22
+#define REMOTE_LIVEVIEW 23
+
 #define REMOTE_TYPE_SEND 0
 #define REMOTE_TYPE_REQUEST 1
 #define REMOTE_TYPE_SET 2
@@ -42,6 +45,7 @@ public:
     Remote(void);
     uint8_t request(uint8_t id);
     uint8_t set(uint8_t id);
+    uint8_t set(uint8_t id, uint8_t value);
     uint8_t debugMessage(char *str);
     uint8_t watch(uint8_t id);
     uint8_t unWatch(uint8_t id);
@@ -51,6 +55,8 @@ public:
     uint8_t connected;
     uint8_t running;
     uint8_t battery;
+    uint8_t recording;
+    uint8_t modeLiveView;
 
     timer_status status;
     program current;

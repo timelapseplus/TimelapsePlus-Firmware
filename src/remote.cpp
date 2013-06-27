@@ -65,6 +65,11 @@ uint8_t Remote::set(uint8_t id)
 	return send(id, REMOTE_TYPE_SET);
 }
 
+uint8_t Remote::set(uint8_t id, uint8_t value)
+{
+	return bt.sendDATA(id, REMOTE_TYPE_SET, (void *) &value, sizeof(value));
+}
+
 uint8_t Remote::debugMessage(char *str)
 {
 	uint8_t len = 0;
@@ -121,6 +126,16 @@ uint8_t Remote::send(uint8_t id, uint8_t type)
 		case REMOTE_SHUTTER:
 		{
 			uint8_t tmp = camera.shutter();
+			return bt.sendDATA(id, type, (void *) &tmp, sizeof(tmp));
+		}
+		case REMOTE_VIDEO:
+		{
+			uint8_t tmp = camera.recording;
+			return bt.sendDATA(id, type, (void *) &tmp, sizeof(tmp));
+		}
+		case REMOTE_LIVEVIEW:
+		{
+			uint8_t tmp = camera.modeLiveView;
 			return bt.sendDATA(id, type, (void *) &tmp, sizeof(tmp));
 		}
 		case REMOTE_THUMBNAIL:
@@ -285,6 +300,40 @@ void Remote::event()
 					break;
 				case REMOTE_THUMBNAIL:
 					if(bt.dataType == REMOTE_TYPE_REQUEST) send(bt.dataId, REMOTE_TYPE_SEND);
+					break;
+				case REMOTE_VIDEO:
+					if(bt.dataType == REMOTE_TYPE_SET && bt.dataSize == sizeof(uint8_t))
+					{
+						uint8_t tmp;
+						memcpy((void*)&tmp, bt.data, bt.dataSize);
+						if(tmp) camera.videoStart(); else camera.videoStop();
+					}
+					if(bt.dataType == REMOTE_TYPE_SEND && bt.dataSize == sizeof(uint8_t))
+					{
+						uint8_t tmp;
+						memcpy((void*)&tmp, bt.data, bt.dataSize);
+						if(tmp) recording = true; else recording = false;
+					}
+					if(bt.dataType == REMOTE_TYPE_REQUEST) send(bt.dataId, REMOTE_TYPE_SEND);
+					if(bt.dataType == REMOTE_TYPE_NOTIFY_WATCH) notify.watch(REMOTE_VIDEO, (void *)&camera.recording, sizeof(camera.recording), &remote_notify);
+					if(bt.dataType == REMOTE_TYPE_NOTIFY_UNWATCH) notify.unWatch(REMOTE_VIDEO, &remote_notify);
+					break;
+				case REMOTE_LIVEVIEW:
+					if(bt.dataType == REMOTE_TYPE_SET && bt.dataSize == sizeof(uint8_t))
+					{
+						uint8_t tmp;
+						memcpy((void*)&tmp, bt.data, bt.dataSize);
+						if(tmp) camera.liveView(tmp);
+					}
+					if(bt.dataType == REMOTE_TYPE_SEND && bt.dataSize == sizeof(uint8_t))
+					{
+						uint8_t tmp;
+						memcpy((void*)&tmp, bt.data, bt.dataSize);
+						if(tmp) modeLiveView = true; else modeLiveView = false;
+					}
+					if(bt.dataType == REMOTE_TYPE_REQUEST) send(bt.dataId, REMOTE_TYPE_SEND);
+					if(bt.dataType == REMOTE_TYPE_NOTIFY_WATCH) notify.watch(REMOTE_LIVEVIEW, (void *)&camera.modeLiveView, sizeof(camera.modeLiveView), &remote_notify);
+					if(bt.dataType == REMOTE_TYPE_NOTIFY_UNWATCH) notify.unWatch(REMOTE_LIVEVIEW, &remote_notify);
 					break;
 				default:
 					return;

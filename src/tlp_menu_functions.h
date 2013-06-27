@@ -42,6 +42,7 @@ volatile char motionTrigger(char key, char first);
 volatile char btFloodTest(char key, char first);
 volatile char bramp_monitor(char key, char first);
 volatile char videoRemote(char key, char first);
+volatile char videoRemoteBT(char key, char first);
 volatile char system_name(char key, char first);
 volatile char focusStack(char key, char first);
 volatile char lightTrigger(char key, char first);
