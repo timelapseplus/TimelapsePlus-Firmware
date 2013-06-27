@@ -31,6 +31,9 @@
 #include "PTP.h"
 #include "timelapseplus.h"
 #include "light.h"
+#include "5110LCD.h"
+#include "button.h"
+#include "menu.h"
 
 #define DEBUG
 
@@ -51,6 +54,8 @@ extern shutter timer;
 extern BT bt;
 extern Clock clock;
 extern Light light;
+extern MENU menu;
+extern LCD lcd;
 
 volatile unsigned char state;
 const uint16_t settings_warn_time = 0;
@@ -61,6 +66,12 @@ char shutter_state, ir_shutter_state; // used only for momentary toggle mode //
 uint16_t BulbMax; // calculated during bulb ramp mode
 program stored[MAX_STORED+1]EEMEM;
 uint8_t BulbMaxEv;
+
+const char STR_BULBMODE_ALERT[]PROGMEM = "Please make sure the camera is in bulb mode before continuing (01)";
+const char STR_BULBSUPPORT_ALERT[]PROGMEM = "Bulb mode not supported via USB. Use an adaptor cable with the USB (02)";
+const char STR_MEMORYSPACE_ALERT[]PROGMEM = "Please confirm there is enough space on the memory card in the camera (03)";
+const char STR_APERTURE_ALERT[]PROGMEM = "Note: using an aperture setting other than the maximum without lens-twist can cause flicker (04)";
+
 
 /******************************************************************
  *
@@ -214,7 +225,7 @@ void shutter::bulbStart(void)
 void shutter_bulbStart(void)
 {
     camera.bulbMode();
-    if(cable_connected == 0 && ir_shutter_state != 1)
+    if((cable_connected == 0 || !(conf.interface & INTERFACE_CABLE)) && ir_shutter_state != 1)
     {
         if(camera.supports.bulb && (conf.interface & INTERFACE_USB))
         {
@@ -429,7 +440,7 @@ void shutter::begin()
 char shutter::task()
 {
     char cancel = 0;
-    static uint8_t enter, exps, run_state = RUN_DELAY, old_state = 255;
+    static uint8_t enter, exps, run_state = RUN_DELAY, old_state = 255, preChecked = false;
     static int8_t evShift;
     static uint16_t photos;
     static uint32_t last_photo_end_ms;
@@ -447,24 +458,60 @@ char shutter::task()
             return 0;
     }
 
-    if(enter == 0) // Initialize variables and setup I/O pins
+    if(enter == 0 || preChecked) // Initialize variables and setup I/O pins
     {
-        enter = 1;
-        run_state = RUN_DELAY;
-        clock.tare();
-        photos = 0;
-        exps = 0;
-
-        // do sanity check here
-
-        if(camera.supports.aperture) aperture = camera.aperture();
-        if(camera.supports.iso) iso = camera.iso();
-
         if(current.Mode & RAMP)
         {
             uint32_t tmp = (uint32_t)current.Duration * 10;
             tmp /= (uint32_t) current.Gap;
             current.Photos = (uint16_t) tmp;
+        }
+
+        ////////////////////////////// pre check ////////////////////////////////////
+        if(camera.aperture() != camera.apertureDown(camera.aperture()))
+        {
+            if(!preChecked) menu.alert(STR_APERTURE_ALERT);
+        }
+        else
+        {
+            if(preChecked) menu.clearAlert(STR_APERTURE_ALERT);
+        }
+        if((current.Mode & RAMP) && camera.ready && !camera.supports.bulb && !cable_connected)
+        {
+            if(!preChecked) menu.alert(STR_BULBSUPPORT_ALERT);
+        }
+        else
+        {
+            if(preChecked) menu.clearAlert(STR_BULBSUPPORT_ALERT);
+        }
+        if((current.Mode & RAMP) && !camera.isInBulbMode())
+        {
+            if(!preChecked) menu.alert(STR_BULBMODE_ALERT);
+        }
+        else
+        {
+            if(preChecked) menu.clearAlert(STR_BULBMODE_ALERT);
+        }
+        if((current.Photos > 0) && camera.ready && camera.photosRemaining && camera.photosRemaining < current.Photos)
+        {
+            if(!preChecked) menu.alert(STR_MEMORYSPACE_ALERT);
+        }
+        else
+        {
+            if(preChecked) menu.clearAlert(STR_MEMORYSPACE_ALERT);
+        }
+        preChecked = true;
+        if(menu.waitingAlert()) return 0; //////////////////////////////////////////////
+
+        menu.message(TEXT("Loading"));
+        lcd.update();
+
+        enter = 1;
+        preChecked = false;
+
+
+        if(current.Mode & RAMP)
+        {
             calcBulbMax();
             status.rampMax = calcRampMax();
             status.rampMin = calcRampMin();
@@ -474,12 +521,15 @@ char shutter::task()
             light.integrationStart(current.Integration, current.NightSky);
             lightReading = lightStart = light.readIntegratedEv();
         }
-        if(conf.devMode)
-        {
-            debug(STR("Photos: "));
-            debug(current.Photos);
-            debug_nl();
-        }
+
+        run_state = RUN_DELAY;
+        clock.tare();
+        photos = 0;
+        exps = 0;
+
+        if(camera.supports.aperture) aperture = camera.aperture();
+        if(camera.supports.iso) iso = camera.iso();
+
         current.infinitePhotos = current.Photos == 0 ? 1 : 0;
         status.infinitePhotos = current.infinitePhotos;
         status.photosRemaining = current.Photos;
@@ -1088,7 +1138,7 @@ char shutter::task()
             old_state = run_state;
         }
 
-        enter = 0;
+        //enter = 0;
         //running = 0;
         shutter_off();
         camera.bulbEnd();

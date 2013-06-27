@@ -197,6 +197,32 @@ void MENU::task()
             first = 1;
             state = ST_MENU;
             break;
+
+       case ST_ALERT_NEW:
+            first = 1;
+            state = ST_ALERT;
+       case ST_ALERT:
+            if(alert_index > 0 && alerts[alert_index - 1])
+            {
+              ret = alertTask(key, first);
+            }
+            else
+            {
+              debug(STR("Exiting alerts\n"));
+              ret = FN_CANCEL;
+            }
+            key = 0;
+            first = 0;
+            if(ret != FN_CONTINUE)
+            {
+              if(alert_index > 0) alert_index--;
+              first = 1;
+              if(alert_index == 0)
+              {
+                state = alert_return_state;
+              }
+            }
+            break; 
     }
 
     if(state != ST_CONT) 
@@ -1543,4 +1569,97 @@ char MENU::editText(char key, char text[MENU_NAME_LEN], char *name, char first)
 
     return FN_CONTINUE;
 }
+
+char MENU::alertTask(char key, char first)
+{
+    if(first)
+    {
+        uint8_t i = 0, ch, sp = 0, j = 0, y = 0;
+        char buf[12];
+        lcd->cls();
+        // find vertical center
+        while(alert_index > 0) // make sure there are alerts available before looping
+        {
+            ch = pgm_read_byte(alerts[alert_index - 1] + i);
+            buf[j] = ch;
+            if(j < 12) j++;
+            if(ch == ' ' || ch == 0)
+            {
+              j--;
+              buf[j] = 0;
+              uint8_t len = lcd->measureStringTiny(buf);
+              if(len + 2 + sp >= 84)
+              {
+                sp = 0;
+                y += 6;
+              }
+              sp += len + 2;
+              j = 0;
+            }
+            i++;
+            if(ch == 0) break;
+        }
+        
+        i = 0; sp = 0; j = 0; y = 48 / 2 - y / 2;
+
+        while(alert_index > 0) // make sure there are alerts available before looping
+        {
+            ch = pgm_read_byte(alerts[alert_index - 1] + i);
+            buf[j] = ch;
+            if(j < 12) j++;
+            if(ch == ' ' || ch == 0)
+            {
+              j--;
+              buf[j] = 0;
+              uint8_t len = lcd->measureStringTiny(buf);
+              if(len + 2 + sp >= 84)
+              {
+                sp = 0;
+                y += 6;
+              }
+              sp += lcd->writeStringTiny(2 + sp, y, buf) + 2;
+              j = 0;
+            }
+            i++;
+            if(ch == 0) break;
+        }
+        setTitle(TEXT("ALERT"));
+        setBar(BLANK_STR, TEXT("OK"));
+        lcd->update();
+    }
+    if(key == FR_KEY) return FN_CANCEL;
+    return FN_CONTINUE;
+}
+
+void MENU::alert(const char *progmem_string)
+{
+  if(alert_index < MAX_ALERTS)
+  {
+    if(alert_index == 0) alert_return_state = state;
+    alert_index++;
+    alerts[alert_index - 1] = (char*)progmem_string;
+    state = ST_ALERT_NEW;
+  }
+}
+
+void MENU::clearAlert(const char *progmem_string)
+{
+  if(alert_index > 0)
+  {
+    for(uint8_t i = 0; i < alert_index; i++)
+    {
+      if(alerts[i] == progmem_string)
+      {
+        alerts[i] = 0;
+      }
+    }
+  }
+}
+
+char MENU::waitingAlert()
+{
+  if(alert_index > 0) return 1; else return 0;
+}
+
+
 

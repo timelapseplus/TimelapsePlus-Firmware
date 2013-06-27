@@ -14,6 +14,8 @@
 #define MENU_STACK_SIZE 5
 #define MENU_MAX 32
 
+#define MAX_ALERTS 5
+
 #define ST_CONT 0
 #define ST_MENU 1
 #define ST_EDIT 2
@@ -24,6 +26,8 @@
 #define ST_SPAWN 7
 #define ST_DLIST 8
 #define ST_SUBMENU 9
+#define ST_ALERT 10
+#define ST_ALERT_NEW 11
 
 #define FN_CONTINUE 0
 #define FN_CANCEL 1
@@ -87,6 +91,10 @@ public:
     char editSelect(char key, char *n, void *settingslist, char *name, char first);
     char editDynamic(char key, uint8_t *var, void *ditem, char *name, char first);
     char editText(char key, char text[MENU_NAME_LEN], char *name, char first);
+    char alertTask(char key, char first);
+    void alert(const char *progmem_string);
+    void clearAlert(const char *progmem_string);
+    char waitingAlert();
     char *menuName(char *str);
     void message(char *m);
     void push();
@@ -123,6 +131,10 @@ private:
     char desc[MENU_NAME_LEN + 1];
     char *message_text;
     uint32_t message_time;
+
+    char *alerts[MAX_ALERTS];
+    uint8_t alert_index;
+    char alert_return_state;
 };
 
 
