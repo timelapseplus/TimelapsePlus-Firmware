@@ -32,7 +32,7 @@ public:
     void writeUint(unsigned char x, unsigned char y, unsigned int n);
     unsigned char writeNumber(unsigned char x, unsigned char y, unsigned int n, unsigned char mode, unsigned char justification);
     void writeStringBig(unsigned char x, unsigned char y, char *s);
-    void writeStringTiny(unsigned char x, unsigned char y, char *s);
+    char writeStringTiny(unsigned char x, unsigned char y, char *s);
     char measureStringTiny(char *s);
     void writeCharBig(unsigned char x, unsigned char y, unsigned char c);
     void drawBMP(unsigned char x, unsigned char y, unsigned char *pBMP);

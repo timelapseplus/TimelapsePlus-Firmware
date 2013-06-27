@@ -291,13 +291,15 @@ void LCD::writeStringBig(unsigned char x, unsigned char y, char *s)
  *
  ******************************************************************/
 
-void LCD::writeStringTiny(unsigned char x, unsigned char y, char *s)
+char LCD::writeStringTiny(unsigned char x, unsigned char y, char *s)
 {
+    char l = 0;
     while (*(s) != 0)
     {
-        x += writeCharTiny(x, y, *s) + 1;
+        l += writeCharTiny(x + l, y, *s) + 1;
         s++;
     }
+    return l;
 }
 
 /******************************************************************
