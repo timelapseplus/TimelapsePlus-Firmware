@@ -77,6 +77,7 @@ struct program
     unsigned int Gap;         // 2 bytes
     unsigned int Exps;        // 2 bytes
     unsigned int Exp;         // 2 bytes
+    unsigned int ArbExp;      // 2 bytes
     unsigned int Bracket;     // 2 bytes
     unsigned int BulbStart;   // 2 bytes
     unsigned int Bulb[10];    // 20 bytes

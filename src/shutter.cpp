@@ -67,10 +67,10 @@ uint16_t BulbMax; // calculated during bulb ramp mode
 program stored[MAX_STORED+1]EEMEM;
 uint8_t BulbMaxEv;
 
-const char STR_BULBMODE_ALERT[]PROGMEM = "Please make sure the camera is in bulb mode before continuing (01)";
-const char STR_BULBSUPPORT_ALERT[]PROGMEM = "Bulb mode not supported via USB. Use an adaptor cable with the USB (02)";
-const char STR_MEMORYSPACE_ALERT[]PROGMEM = "Please confirm there is enough space on the memory card in the camera (03)";
-const char STR_APERTURE_ALERT[]PROGMEM = "Note: using an aperture setting other than the maximum without lens-twist can cause flicker (04)";
+const char STR_BULBMODE_ALERT[]PROGMEM = "Please make sure the camera is in bulb mode before continuing";
+const char STR_BULBSUPPORT_ALERT[]PROGMEM = "Bulb mode not supported via USB. Use an adaptor cable with the USB";
+const char STR_MEMORYSPACE_ALERT[]PROGMEM = "Please confirm there is enough space on the memory card in the camera";
+const char STR_APERTURE_ALERT[]PROGMEM = "Note that using an aperture other than the maximum without lens-twist can cause flicker";
 
 
 /******************************************************************
@@ -116,6 +116,7 @@ void shutter::setDefault()
     current.Exps = 3;
     current.Mode = MODE_TIMELAPSE;
     current.Exp = 46;
+    current.ArbExp = 100;
     current.Bracket = 6;
     current.Keyframes = 1;
     current.Duration = 3600;
@@ -204,8 +205,8 @@ void shutter::full(void)
 }
 void shutter_full(void)
 {
-    //if(conf.devMode) 
-    //    hardware_flashlight(1);
+    if(conf.devMode) 
+        hardware_flashlight(1);
 
     MIRROR_UP;
     SHUTTER_OPEN;
@@ -273,17 +274,17 @@ void shutter::bulbEnd(void)
 }
 void shutter_bulbEnd(void)
 {
-    debug(STR("Bulb End: "));
+    debug(PSTR("Bulb End: "));
     if(camera.bulb_open || ir_shutter_state == 1)
     {
         if(camera.bulb_open && (conf.interface & INTERFACE_USB))
         {
-            debug(STR("USB "));
+            debug(PSTR("USB "));
             camera.bulbEnd();
         }
         else if(conf.interface & INTERFACE_IR)
         {
-            debug(STR("IR "));
+            debug(PSTR("IR "));
             ir.bulbEnd();
         }
         ir_shutter_state = 0;
@@ -292,7 +293,7 @@ void shutter_bulbEnd(void)
     {
         if(conf.bulbMode == 0)
         {
-            debug(STR("CABLE "));
+            debug(PSTR("CABLE "));
             shutter_off();
         }
         else if(conf.bulbMode == 1 && shutter_state == 1)
@@ -468,7 +469,7 @@ char shutter::task()
         }
 
         ////////////////////////////// pre check ////////////////////////////////////
-        if(camera.aperture() != camera.apertureDown(camera.aperture()))
+        if(camera.ready && camera.aperture() != camera.apertureWideOpen() && (current.Mode & TIMELAPSE) && !((current.Mode & RAMP) && (conf.brampMode & BRAMP_MODE_APERTURE)) )
         {
             if(!preChecked) menu.alert(STR_APERTURE_ALERT);
         }
@@ -504,7 +505,7 @@ char shutter::task()
         if(menu.waitingAlert()) return 0; //////////////////////////////////////////////
 
         menu.message(TEXT("Loading"));
-        lcd.update();
+        menu.task();
 
         enter = 1;
         preChecked = false;
@@ -550,9 +551,9 @@ char shutter::task()
     {
         if(old_state != run_state)
         {
-            if(conf.devMode)
+            if(conf.debugEnabled)
             {
-                debug(STR("State: RUN_DELAY"));
+                debug(PSTR("State: RUN_DELAY"));
                 debug_nl();
             }
             strcpy((char *) status.textStatus, TEXT("Delay"));
@@ -589,15 +590,15 @@ char shutter::task()
         last_photo_end_ms = 0;
         if(old_state != run_state)
         {
-            if(conf.devMode)
+            if(conf.debugEnabled)
             {
-                debug(STR("State: RUN_PHOTO"));
+                debug(PSTR("State: RUN_PHOTO"));
                 debug_nl();
             }
             strcpy((char *) status.textStatus, TEXT("Photo"));
             old_state = run_state;
         }
-        if(current.Exp > 0 || (current.Mode & RAMP))
+        if(current.Exp > 0 || (current.Mode & RAMP) || conf.arbitraryBulb)
         {
             clock.tare();
             run_state = RUN_BULB;
@@ -623,15 +624,26 @@ char shutter::task()
         {
             old_state = run_state;
 
-            if(conf.devMode)
+            if(conf.debugEnabled)
             {
-                debug(STR("State: RUN_BULB"));
+                debug(PSTR("State: RUN_BULB"));
                 debug_nl();
             }
             strcpy((char *) status.textStatus, TEXT("Bulb"));
 
             m = camera.shutterType(current.Exp);
-            if(m & SHUTTER_MODE_BULB) exp = camera.bulbTime((int8_t)current.Exp);
+            if(m & SHUTTER_MODE_BULB || conf.arbitraryBulb)
+            {
+                if(conf.arbitraryBulb)
+                {
+                    exp = current.ArbExp * 100;
+                    m = SHUTTER_MODE_BULB;
+                }
+                else
+                {
+                    exp = camera.bulbTime((int8_t)current.Exp);
+                }
+            }
 
             if(current.Mode & RAMP)
             {
@@ -681,24 +693,24 @@ char shutter::task()
                         status.rampStops = (float)current.BulbStart - curveEv;
                         exp = camera.bulbTime(curveEv - (float)evShift);
 
-                        if(conf.devMode)
+                        if(conf.debugEnabled)
                         {
-                            debug(STR("   Keyframe: "));
+                            debug(PSTR("   Keyframe: "));
                             debug(i);
                             debug_nl();
-                            debug(STR("    Percent: "));
+                            debug(PSTR("    Percent: "));
                             debug(t);
                             debug_nl();
-                            debug(STR("    CurveEv: "));
+                            debug(PSTR("    CurveEv: "));
                             debug(curveEv);
                             debug_nl();
-                            debug(STR("CorrectedEv: "));
+                            debug(PSTR("CorrectedEv: "));
                             debug(curveEv - (float)evShift);
                             debug_nl();
-                            debug(STR("   Exp (ms): "));
+                            debug(PSTR("   Exp (ms): "));
                             debug(exp);
                             debug_nl();
-                            debug(STR("    evShift: "));
+                            debug(PSTR("    evShift: "));
                             debug(evShift);
                             debug_nl();
                         }
@@ -731,33 +743,33 @@ char shutter::task()
                     
                     if(status.rampStops > status.rampMax)
                     {
-                        debug(STR("   (ramp max)\n"));
+                        debug(PSTR("   (ramp max)\n"));
                         status.rampStops = status.rampMax;
                     }
                     else if(status.rampStops < status.rampMin)
                     {
-                        debug(STR("   (ramp min)\n"));
+                        debug(PSTR("   (ramp min)\n"));
                         status.rampStops = status.rampMin;
                     }
                     //                                   56        -     0            -    -6 
                     float tmp_ev = (float)current.BulbStart - status.rampStops - (float)evShift;
                     exp = camera.bulbTime(tmp_ev);
 
-                    if(conf.devMode)
+                    if(conf.debugEnabled)
                     {
-                        debug(STR("     lightStart: "));
+                        debug(PSTR("     lightStart: "));
                         debug(lightStart);
                         debug_nl();
-                        debug(STR("   lightReading: "));
+                        debug(PSTR("   lightReading: "));
                         debug(lightReading);
                         debug_nl();
-                        debug(STR("  bulbStart Ev: "));
+                        debug(PSTR("  bulbStart Ev: "));
                         debug(current.BulbStart);
                         debug_nl();
-                        debug(STR("   bulbTime Ev: "));
+                        debug(PSTR("   bulbTime Ev: "));
                         debug(tmp_ev);
                         debug_nl();
-                        debug(STR("   Exp (ms): "));
+                        debug(PSTR("   Exp (ms): "));
                         debug(exp);
                         debug_nl();                        
                     }
@@ -784,19 +796,19 @@ char shutter::task()
                                 tmpShift += nextAperture - aperture;
                                 aperture = nextAperture;
 
-                                debug(STR("   Aperture UP:"));
+                                debug(PSTR("   Aperture UP:"));
                                 debug(evShift);
-                                debug(STR("   Aperture Val:"));
+                                debug(PSTR("   Aperture Val:"));
                                 debug(nextAperture);
                             }
                             else
                             {
-                                debug(STR("   Reached Aperture Max!!!\r\n"));
+                                debug(PSTR("   Reached Aperture Max!!!\r\n"));
                                 break;
                             }
                             bulb_length = camera.shiftBulb(exp, tmpShift);
                         }
-                        debug(STR("Aperture Close: Done!\r\n\r\n"));
+                        debug(PSTR("Aperture Close: Done!\r\n\r\n"));
                     }
 
                     if((conf.brampMode & BRAMP_MODE_ISO) && camera.supports.iso)
@@ -811,19 +823,19 @@ char shutter::task()
                                 tmpShift += nextISO - iso;
                                 iso = nextISO;
 
-                                debug(STR("   ISO UP:"));
+                                debug(PSTR("   ISO UP:"));
                                 debug(evShift);
-                                debug(STR("   ISO Val:"));
+                                debug(PSTR("   ISO Val:"));
                                 debug(nextISO);
                             }
                             else
                             {
-                                debug(STR("   Reached ISO Max!!!\r\n"));
+                                debug(PSTR("   Reached ISO Max!!!\r\n"));
                                 break;
                             }
                             bulb_length = camera.shiftBulb(exp, tmpShift);
                         }
-                        debug(STR("ISO Up: Done!\r\n\r\n"));
+                        debug(PSTR("ISO Up: Done!\r\n\r\n"));
                     }
 
 
@@ -841,9 +853,9 @@ char shutter::task()
                                     evShift += nextISO - iso;
                                     tmpShift += nextISO - iso;
                                     iso = nextISO;
-                                    debug(STR("   ISO DOWN:"));
+                                    debug(PSTR("   ISO DOWN:"));
                                     debug(evShift);
-                                    debug(STR("   ISO Val:"));
+                                    debug(PSTR("   ISO Val:"));
                                     debug(nextISO);
                                     bulb_length = bulb_length_test;
                                     continue;
@@ -852,7 +864,7 @@ char shutter::task()
                             nextISO = iso;
                             break;
                         }
-                        debug(STR("ISO Down: Done!\r\n\r\n"));
+                        debug(PSTR("ISO Down: Done!\r\n\r\n"));
                     }
 
 
@@ -864,15 +876,15 @@ char shutter::task()
                             nextAperture = camera.apertureUp(aperture);
                             if(nextAperture != aperture && nextAperture < 127)
                             {
-                                uint16_t bulb_length_test = camera.shiftBulb(exp, tmpShift + (nextAperture - aperture) + 6); // two stops extra padding here
+                                uint16_t bulb_length_test = camera.shiftBulb(exp, tmpShift + (nextAperture - aperture)); // two stops extra padding here
                                 if(bulb_length_test < BulbMax)
                                 {
                                     evShift  += nextAperture - aperture;
                                     tmpShift += nextAperture - aperture;
                                     aperture = nextAperture;
-                                    debug(STR("Aperture DOWN:"));
+                                    debug(PSTR("Aperture DOWN:"));
                                     debug(evShift);
-                                    debug(STR(" Aperture Val:"));
+                                    debug(PSTR(" Aperture Val:"));
                                     debug(nextAperture);
                                     bulb_length = camera.shiftBulb(exp, tmpShift);
                                     continue;
@@ -881,11 +893,11 @@ char shutter::task()
                             nextAperture = aperture;
                             break;
                         }
-                        debug(STR("Aperture Open: Done!\r\n\r\n"));
+                        debug(PSTR("Aperture Open: Done!\r\n\r\n"));
                     }
                     if(bulb_length < camera.bulbTime((int8_t)camera.bulbMin()))
                     {
-                        debug(STR("   Reached Bulb Min!!!\r\n"));
+                        debug(PSTR("   Reached Bulb Min!!!\r\n"));
                         bulb_length = camera.bulbTime((int8_t)camera.bulbMin());
                     }
 
@@ -917,33 +929,33 @@ char shutter::task()
                     }
                 }
                 
-                if(conf.devMode)
+                if(conf.debugEnabled)
                 {
-                    debug(STR("   Seconds: "));
+                    debug(PSTR("   Seconds: "));
                     debug((uint16_t)clock.Seconds());
                     debug_nl();
-                    debug(STR("   evShift: "));
+                    debug(PSTR("   evShift: "));
                     debug(evShift);
                     debug_nl();
-                    debug(STR("BulbLength: "));
+                    debug(PSTR("BulbLength: "));
                     debug((uint16_t)bulb_length);
-                    if(found) debug(STR(" (calculated)"));
+                    if(found) debug(PSTR(" (calculated)"));
                     debug_nl();
 
                     /*
-                    debug(STR("i: "));
+                    debug(PSTR("i: "));
                     debug(current.Bulb[i]);
                     debug_nl();
-                    debug(STR("Key1: "));
+                    debug(PSTR("Key1: "));
                     debug((int16_t)key1);
                     debug_nl();
-                    debug(STR("Key2: "));
+                    debug(PSTR("Key2: "));
                     debug((int16_t)key2);
                     debug_nl();
-                    debug(STR("Key3: "));
+                    debug(PSTR("Key3: "));
                     debug((int16_t)key3);
                     debug_nl();
-                    debug(STR("Key4: "));
+                    debug(PSTR("Key4: "));
                     debug((int16_t)key4);
                     debug_nl();
                     */
@@ -965,29 +977,29 @@ char shutter::task()
 
                     if(m & SHUTTER_MODE_PTP)
                     {
-                        debug(STR("Shutter Mode PTP\r\n"));
+                        debug(PSTR("Shutter Mode PTP\r\n"));
                         camera.setShutter(current.Exp - tv_offset);
                         bulb_length = camera.bulbTime((int8_t)(current.Exp - tv_offset));
                     }
                     else
                     {
                         camera.bulbMode();
-                        debug(STR("Shutter Mode BULB\r\n"));
+                        debug(PSTR("Shutter Mode BULB\r\n"));
                         m = SHUTTER_MODE_BULB;
                         bulb_length = camera.bulbTime((int8_t)(current.Exp - tv_offset));
                     }
                 }
 
-                if(conf.devMode)
+                if(conf.debugEnabled)
                 {
                     debug_nl();
-                    debug(STR("Mode: "));
+                    debug(PSTR("Mode: "));
                     debug(m);
                     debug_nl();
-                    debug(STR("Tv: "));
+                    debug(PSTR("Tv: "));
                     debug(current.Exp - tv_offset);
                     debug_nl();
-                    debug(STR("Bulb: "));
+                    debug(PSTR("Bulb: "));
                     debug((uint16_t)bulb_length);
                     debug_nl();
                 }
@@ -995,13 +1007,13 @@ char shutter::task()
             
             if((current.Mode & (HDR | RAMP)) == 0)
             {
-                if(conf.devMode)
+                if(conf.debugEnabled)
                 {
-                    debug(STR("***Using exp: "));
+                    debug(PSTR("***Using exp: "));
                     debug(exp);
-                    debug(STR(" ("));
+                    debug(PSTR(" ("));
                     debug(current.Exp);
-                    debug(STR(")"));
+                    debug(PSTR(")"));
                     debug_nl();
                 }
                 bulb_length = exp;
@@ -1017,13 +1029,13 @@ char shutter::task()
 
             if(m & SHUTTER_MODE_BULB)
             {
-                //debug(STR("Running BULB\r\n"));
+                //debug(PSTR("Running BULB\r\n"));
                 camera.bulb_open = true;
                 clock.job(&shutter_bulbStart, &shutter_bulbEnd, bulb_length + conf.bulbOffset);
             }
             else
             {
-                //debug(STR("Running Capture\r\n"));
+                //debug(PSTR("Running Capture\r\n"));
                 shutter_capture();
             }
         }
@@ -1042,8 +1054,8 @@ char shutter::task()
         }
         else
         {
-            //if(clock.jobRunning) debug(STR("Waiting on clock  "));
-            //if(camera.busy) debug(STR("Waiting on camera  "));
+            //if(clock.jobRunning) debug(PSTR("Waiting on clock  "));
+            //if(camera.busy) debug(PSTR("Waiting on camera  "));
         }
     }
     
@@ -1052,9 +1064,9 @@ char shutter::task()
         last_photo_end_ms = clock.Ms();
         if(old_state != run_state)
         {
-            if(conf.devMode)
+            if(conf.debugEnabled)
             {
-                debug(STR("State: RUN_NEXT"));
+                debug(PSTR("State: RUN_NEXT"));
                 debug_nl();
             }
             old_state = run_state;
@@ -1098,9 +1110,9 @@ char shutter::task()
         if(old_state != run_state)
         {
             if(run_state == RUN_GAP && conf.auxPort == AUX_MODE_DOLLY) aux_pulse();
-            if(conf.devMode)
+            if(conf.debugEnabled)
             {
-                debug(STR("State: RUN_GAP"));
+                debug(PSTR("State: RUN_GAP"));
                 debug_nl();
             }
             strcpy((char *) status.textStatus, TEXT("Waiting"));
@@ -1129,9 +1141,9 @@ char shutter::task()
     {
         if(old_state != run_state)
         {
-            if(conf.devMode)
+            if(conf.debugEnabled)
             {
-                debug(STR("State: RUN_ERROR"));
+                debug(PSTR("State: RUN_ERROR"));
                 debug_nl();
             }
             strcpy((char *) status.textStatus, TEXT("Error"));
@@ -1153,9 +1165,9 @@ char shutter::task()
     {
         if(old_state != run_state)
         {
-            if(conf.devMode)
+            if(conf.debugEnabled)
             {
-                debug(STR("State: RUN_END"));
+                debug(PSTR("State: RUN_END"));
                 debug_nl();
             }
             strcpy((char *) status.textStatus, TEXT("Done"));
@@ -1282,7 +1294,7 @@ void calcBulbMax()
 
     BulbMax = camera.bulbTime((int8_t)BulbMaxEv);
 
-    debug(STR("BulbMax: "));
+    debug(PSTR("BulbMax: "));
     debug(BulbMax);
     debug_nl();
 }
@@ -1342,16 +1354,16 @@ uint8_t checkHDR(uint8_t exps, uint8_t mid, uint8_t bracket)
     uint8_t up = mid - (exps / 2) * bracket;
     uint8_t down = mid + (exps / 2) * bracket;
 
-    debug(STR("up: "));
+    debug(PSTR("up: "));
     debug(up);
     debug_nl();
-    debug(STR("down: "));
+    debug(PSTR("down: "));
     debug(down);
     debug_nl();
-    debug(STR("max: "));
+    debug(PSTR("max: "));
     debug(camera.shutterMax());
     debug_nl();
-    debug(STR("min: "));
+    debug(PSTR("min: "));
     debug(camera.shutterMin());
     debug_nl();
 
