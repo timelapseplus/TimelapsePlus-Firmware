@@ -18,8 +18,10 @@
 #include "clock.h"
 #include "Menu.h"
 #include "debug.h"
+#include "settings.h"
 
 extern Clock clock;
+extern settings conf;
 
 /******************************************************************
  *
@@ -848,6 +850,8 @@ void MENU::down()
 {
     if(menuSelected < menuSize - 1) 
         select(menuSelected + 1);
+    else
+        if(conf.menuWrap) select(0);
     
     if(checkScroll()) 
         init(menu);
@@ -866,7 +870,9 @@ void MENU::up()
 {
     if(menuSelected > 0) 
         select(menuSelected - 1);
-    
+    else
+        if(conf.menuWrap) select(menuSize - 1);
+
     if(checkScroll()) 
         init(menu);
     
@@ -1600,7 +1606,7 @@ char MENU::alertTask(char key, char first)
             if(ch == 0) break;
         }
         
-        i = 0; sp = 0; j = 0; y = 48 / 2 - y / 2;
+        i = 0; sp = 0; j = 0; y = 48 / 2 - y / 2 - 4;
 
         while(alert_index > 0) // make sure there are alerts available before looping
         {

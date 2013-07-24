@@ -35,6 +35,9 @@ volatile uint8_t timerNotRunning = 1;
 volatile uint8_t modeHDR = 0;
 volatile uint8_t modeTimelapse = 1;
 volatile uint8_t modeStandard = 1;
+volatile uint8_t modeStandardExp = 1;
+volatile uint8_t modeStandardExpNikon = 0;
+volatile uint8_t modeStandardExpArb = 0;
 volatile uint8_t modeRamp = 0;
 volatile uint8_t modeNoRamp = 1;
 volatile uint8_t modeRampKeyAdd = 0;
@@ -86,6 +89,11 @@ void updateConditions()
 	modeTimelapse = (timer.current.Mode & TIMELAPSE);
 	modeHDR = (timer.current.Mode & HDR);
 	modeStandard = (!modeHDR && !modeRamp);
+
+	modeStandardExp = modeStandard && (conf.cameraMake != NIKON) && !conf.arbitraryBulb;
+	modeStandardExpNikon = modeStandard && (conf.cameraMake == NIKON) && !conf.arbitraryBulb;
+	modeStandardExpArb = modeStandard && conf.arbitraryBulb;
+
 	modeRamp = (timer.current.Mode & RAMP);
 	modeNoRamp = !modeRamp && modeTimelapse;
 	brampAuto = timer.current.brampMethod == BRAMP_METHOD_AUTO && modeRamp;
@@ -126,10 +134,10 @@ volatile char firmwareUpdated(char key, char first)
 		lcd.cls();
 		menu.setTitle(TEXT("FIRMWARE"));
 
-		lcd.writeStringTiny(13, 10, TEXT("Successfully"));
-		lcd.writeStringTiny(25, 16, TEXT("Updated"));
+		lcd.writeStringTiny(13, 10, PTEXT("Successfully"));
+		lcd.writeStringTiny(25, 16, PTEXT("Updated"));
 
-		lcd.writeStringTiny(8, 28, TEXT("Version:"));
+		lcd.writeStringTiny(8, 28, PTEXT("Version:"));
 		uint32_t version = VERSION;
 		l = 0;
 		while(version)
@@ -177,11 +185,11 @@ volatile char firstSetup(char key, char first)
 		lcd.cls();
 		menu.setTitle(TEXT("First Setup"));
 
-		lcd.writeStringTiny(2, 8, TEXT(" Please go to the "));
-		lcd.writeStringTiny(2, 14, TEXT(" Settings Menu and"));
-		lcd.writeStringTiny(2, 20, TEXT(" set Camera Make  "));
-		lcd.writeStringTiny(2, 26, TEXT(" and Camera FPS   "));
-		lcd.writeStringTiny(2, 32, TEXT(" before using     "));
+		lcd.writeStringTiny(2, 8, PTEXT(" Please go to the "));
+		lcd.writeStringTiny(2, 14, PTEXT(" Settings Menu and"));
+		lcd.writeStringTiny(2, 20, PTEXT(" set Camera Make  "));
+		lcd.writeStringTiny(2, 26, PTEXT(" and Camera FPS   "));
+		lcd.writeStringTiny(2, 32, PTEXT(" before using     "));
 
 		menu.setBar(TEXT("OK"), BLANK_STR);
 		lcd.update();
@@ -245,15 +253,15 @@ volatile char videoRemote(char key, char first)
 	
 	if(!camera.videoMode)
 	{
-		lcd.writeString(84 / 2 - (13 * 6) / 2, 14, TEXT("Set Camera to"));
-		lcd.writeString(84 / 2 - (10 * 6) / 2, 22, TEXT("video mode"));
+		lcd.writeString(84 / 2 - (13 * 6) / 2, 14, PTEXT("Set Camera to"));
+		lcd.writeString(84 / 2 - (10 * 6) / 2, 22, PTEXT("video mode"));
 		menu.setBar(TEXT("Return"), BLANK_STR);
 	}
 	else if(camera.modeLiveView)
 	{
 		if(camera.recording)
 		{
-			lcd.writeString(84 / 2 - (9 * 6) / 2, 16, TEXT("Recording"));
+			lcd.writeString(84 / 2 - (9 * 6) / 2, 16, PTEXT("Recording"));
 			menu.setBar(TEXT("Return"), TEXT("Stop"));
 		}
 		else
@@ -318,7 +326,7 @@ volatile char videoRemoteBT(char key, char first)
 	{
 		if(remote.recording)
 		{
-			lcd.writeString(84 / 2 - (9 * 6) / 2, 16, TEXT("Recording"));
+			lcd.writeString(84 / 2 - (9 * 6) / 2, 16, PTEXT("Recording"));
 			menu.setBar(TEXT("Return"), TEXT("Stop"));
 		}
 		else
@@ -390,7 +398,7 @@ volatile char shutterTest(char key, char first)
 	{
 		status = 1;
 		lcd.eraseBox(20, 18, 20 + 6 * 6, 26);
-		lcd.writeString(20, 18, TEXT("(HALF)"));
+		lcd.writeString(20, 18, PTEXT("(HALF)"));
 		timer.half();
 		lcd.update();
 	}
@@ -398,7 +406,7 @@ volatile char shutterTest(char key, char first)
 	{
 		status = 2;
 		lcd.eraseBox(20, 18, 20 + 6 * 6, 26);
-		lcd.writeString(20, 18, TEXT("(FULL)"));
+		lcd.writeString(20, 18, PTEXT("(FULL)"));
 		timer.full();
 		lcd.update();
 	}
@@ -415,7 +423,7 @@ volatile char shutterTest(char key, char first)
 		if(cable == 0)
 		{
 			cable = 1;
-			lcd.writeStringTiny(6, 28, TEXT("Cable Connected"));
+			lcd.writeStringTiny(6, 28, PTEXT("Cable Connected"));
 			lcd.update();
 		}
 	}
@@ -464,7 +472,7 @@ volatile char cableRelease(char key, char first)
 		{
 			status = 1;
 			lcd.eraseBox(8, 18, 8 + 6 * 11, 26);
-			lcd.writeString(8, 18, TEXT("(BULB OPEN)"));
+			lcd.writeString(8, 18, PTEXT("(BULB OPEN)"));
 			timer.bulbStart();
 			lcd.update();
 		} else
@@ -495,7 +503,7 @@ volatile char cableRelease(char key, char first)
 		if(cable == 0)
 		{
 			cable = 1;
-			lcd.writeStringTiny(6, 28, TEXT("Cable Connected"));
+			lcd.writeStringTiny(6, 28, PTEXT("Cable Connected"));
 			lcd.update();
 		}
 	}
@@ -544,7 +552,7 @@ volatile char cableReleaseRemote(char key, char first)
 		{
 			status = 1;
 			lcd.eraseBox(8, 18, 8 + 6 * 11, 26);
-			lcd.writeString(8, 18, TEXT("(BULB OPEN)"));
+			lcd.writeString(8, 18, PTEXT("(BULB OPEN)"));
 			remote.set(REMOTE_BULB_START);
 			lcd.update();
 		}
@@ -594,9 +602,9 @@ volatile char shutterLagTest(char key, char first)
 	if(key == FR_KEY)
 	{
 		lcd.eraseBox(10, 8, 80, 38);
-		lcd.writeString(10,  8, TEXT("    In:"));
-		lcd.writeString(10, 18, TEXT("   Out:"));
-		lcd.writeString(10, 28, TEXT("Offset:"));
+		lcd.writeString(10,  8, PTEXT("    In:"));
+		lcd.writeString(10, 18, PTEXT("   Out:"));
+		lcd.writeString(10, 28, PTEXT("Offset:"));
 
 		ENABLE_SHUTTER;
 		ENABLE_MIRROR;
@@ -661,9 +669,9 @@ volatile char memoryFree(char key, char first)
 		unsigned int mem = hardware_freeMemory();
 
 		lcd.cls();
-		lcd.writeString(1, 18, TEXT("Free RAM:"));
+		lcd.writeString(1, 18, PTEXT("Free RAM:"));
 		/*char x =*/lcd.writeNumber(55, 18, mem, 'U', 'L');
-		//lcd.writeString(55 + x * 6, 18, TEXT("b"));
+		//lcd.writeString(55 + x * 6, 18, PTEXT("b"));
 		menu.setTitle(TEXT("Memory"));
 		menu.setBar(TEXT("RETURN"), BLANK_STR);
 		lcd.update();
@@ -687,8 +695,8 @@ volatile char factoryReset(char key, char first)
 	if(first)
 	{
 		lcd.cls();
-		lcd.writeString(14, 12, TEXT("Reset all"));
-		lcd.writeString(14, 22, TEXT("settings?"));
+		lcd.writeString(14, 12, PTEXT("Reset all"));
+		lcd.writeString(14, 22, PTEXT("settings?"));
 		menu.setTitle(TEXT("Reset"));
 		menu.setBar(TEXT("CANCEL"), TEXT("RESET"));
 		lcd.update();
@@ -721,7 +729,7 @@ volatile char viewSeconds(char key, char first)
 	if(first)
 	{
 		lcd.cls();
-		lcd.writeString(1, 18, TEXT("Clock:"));
+		lcd.writeString(1, 18, PTEXT("Clock:"));
 		menu.setTitle(TEXT("Clock"));
 		menu.setBar(TEXT("TARE"), TEXT("RETURN"));
 	}
@@ -863,7 +871,7 @@ volatile char sysStatus(char key, char first)
 	char l = lcd.measureStringTiny(text);
 
 	lcd.writeStringTiny(80 - l, 6 + SY, text);
-	lcd.writeStringTiny(3, 6 + SY, TEXT("USB:"));
+	lcd.writeStringTiny(3, 6 + SY, PTEXT("USB:"));
 
 	char buf[6];
 	uint16_t val;
@@ -873,28 +881,28 @@ volatile char sysStatus(char key, char first)
 	text = buf;
 	l = lcd.measureStringTiny(text);
 	lcd.writeStringTiny(80 - l, 12 + SY, text);
-	lcd.writeStringTiny(3, 12 + SY, TEXT("Battery:"));
+	lcd.writeStringTiny(3, 12 + SY, PTEXT("Battery:"));
 
 	val = hardware_freeMemory();
 	int_to_str(val, buf);
 	text = buf;
 	l = lcd.measureStringTiny(text);
 	lcd.writeStringTiny(80 - l, 18 + SY, text);
-	lcd.writeStringTiny(3, 18 + SY, TEXT("Free RAM:"));
+	lcd.writeStringTiny(3, 18 + SY, PTEXT("Free RAM:"));
 
 	val = clock.seconds;
 	int_to_str(val, buf);
 	text = buf;
 	l = lcd.measureStringTiny(text);
 	lcd.writeStringTiny(80 - l, 24 + SY, text);
-	lcd.writeStringTiny(3, 24 + SY, TEXT("Clock s:"));
+	lcd.writeStringTiny(3, 24 + SY, PTEXT("Clock s:"));
 
 	val = clock.ms;
 	int_to_str(val, buf);
 	text = buf;
 	l = lcd.measureStringTiny(text);
 	lcd.writeStringTiny(80 - l, 30 + SY, text);
-	lcd.writeStringTiny(3, 30 + SY, TEXT("Clock ms:"));
+	lcd.writeStringTiny(3, 30 + SY, PTEXT("Clock ms:"));
 
 	menu.setTitle(TEXT("Sys Status"));
 	menu.setBar(TEXT("RETURN"), BLANK_STR);
@@ -1048,7 +1056,7 @@ void displayTimerStatus(uint8_t remote_system)
 			text = buf;
 			l = lcd.measureStringTiny(text);
 			lcd.writeStringTiny(80 - l, 6 + SY, text);
-			lcd.writeStringTiny(3, 6 + SY, TEXT("Photos:"));
+			lcd.writeStringTiny(3, 6 + SY, PTEXT("Photos:"));
 
 			val = stat.photosRemaining;
 			if(stat.infinitePhotos == 0)
@@ -1057,11 +1065,11 @@ void displayTimerStatus(uint8_t remote_system)
 				text = buf;
 				l = lcd.measureStringTiny(text);
 				lcd.writeStringTiny(80 - l, 12 + SY, text);
-				lcd.writeStringTiny(3, 12 + SY, TEXT("Photos rem:"));
+				lcd.writeStringTiny(3, 12 + SY, PTEXT("Photos rem:"));
 			}
 			else
 			{
-				lcd.writeStringTiny(3, 12 + SY, TEXT("Infinite Photos"));
+				lcd.writeStringTiny(3, 12 + SY, PTEXT("Infinite Photos"));
 			}
 
 			val = stat.nextPhoto;
@@ -1069,14 +1077,14 @@ void displayTimerStatus(uint8_t remote_system)
 			text = buf;
 			l = lcd.measureStringTiny(text);
 			lcd.writeStringTiny(80 - l, 18 + SY, text);
-			lcd.writeStringTiny(3, 18 + SY, TEXT("Next Photo:"));
+			lcd.writeStringTiny(3, 18 + SY, PTEXT("Next Photo:"));
 		}
 	}
 	
 	text = stat.textStatus;
 	l = lcd.measureStringTiny(text);
 	lcd.writeStringTiny(80 - l, 24 + SY, text);
-	lcd.writeStringTiny(3, 24 + SY, TEXT("Status:"));
+	lcd.writeStringTiny(3, 24 + SY, PTEXT("Status:"));
 
 	if(remote_system)
 		val = (uint16_t) remote.battery;
@@ -1086,7 +1094,7 @@ void displayTimerStatus(uint8_t remote_system)
 	text = buf;
 	l = lcd.measureStringTiny(text);
 	lcd.writeStringTiny(80 - l, 30 + SY, text);
-	lcd.writeStringTiny(3, 30 + SY, TEXT("Battery Level:"));
+	lcd.writeStringTiny(3, 30 + SY, PTEXT("Battery Level:"));
 
 }
 
@@ -1114,7 +1122,7 @@ volatile char sysInfo(char key, char first)
 		text = TEXT("TLP01");
 		l = lcd.measureStringTiny(text);
 		lcd.writeStringTiny(80 - l, 6 + SY, text);
-		lcd.writeStringTiny(3, 6 + SY, TEXT("Model:"));
+		lcd.writeStringTiny(3, 6 + SY, PTEXT("Model:"));
 
 		if(val > 1)
 			text = TEXT("BTLE");
@@ -1123,9 +1131,9 @@ volatile char sysInfo(char key, char first)
 
 		l = lcd.measureStringTiny(text);
 		lcd.writeStringTiny(80 - l, 12 + SY, text);
-		lcd.writeStringTiny(3, 12 + SY, TEXT("Edition:"));
+		lcd.writeStringTiny(3, 12 + SY, PTEXT("Edition:"));
 
-		lcd.writeStringTiny(3, 18 + SY, TEXT("Firmware:"));
+		lcd.writeStringTiny(3, 18 + SY, PTEXT("Firmware:"));
 		uint32_t version = VERSION;
 
 		char c;
@@ -1151,7 +1159,7 @@ volatile char sysInfo(char key, char first)
 			text = buf;
 			l = lcd.measureStringTiny(text);
 			lcd.writeStringTiny(80 - l, 30 + SY, text);
-			lcd.writeStringTiny(3, 30 + SY, TEXT("BT FW Version:"));
+			lcd.writeStringTiny(3, 30 + SY, PTEXT("BT FW Version:"));
 		}
 
 		val = (uint16_t)battery_percent;
@@ -1159,7 +1167,7 @@ volatile char sysInfo(char key, char first)
 		text = buf;
 		l = lcd.measureStringTiny(text);
 		lcd.writeStringTiny(80 - l, 24 + SY, text);
-		lcd.writeStringTiny(3, 24 + SY, TEXT("Battery:"));
+		lcd.writeStringTiny(3, 24 + SY, PTEXT("Battery:"));
 
 		menu.setTitle(TEXT("System Info"));
 		menu.setBar(TEXT("RETURN"), BLANK_STR);
@@ -1215,35 +1223,35 @@ volatile char lightMeter(char key, char first)
 		text = buf;
 		l = lcd.measureStringTiny(text);
 		lcd.writeStringTiny(80 - l, 6 + SY, text);
-		lcd.writeStringTiny(3, 6 + SY, TEXT("Method:"));
+		lcd.writeStringTiny(3, 6 + SY, PTEXT("Method:"));
 
 		val = (uint16_t)hardware_readLight(0);
 		int_to_str(val, buf);
 		text = buf;
 		l = lcd.measureStringTiny(text);
 		lcd.writeStringTiny(80 - l, 12 + SY, text);
-		lcd.writeStringTiny(3, 12 + SY, TEXT("Level 1:"));
+		lcd.writeStringTiny(3, 12 + SY, PTEXT("Level 1:"));
 
 		val = (uint16_t)hardware_readLight(1);
 		int_to_str(val, buf);
 		text = buf;
 		l = lcd.measureStringTiny(text);
 		lcd.writeStringTiny(80 - l, 18 + SY, text);
-		lcd.writeStringTiny(3, 18 + SY, TEXT("Level 2:"));
+		lcd.writeStringTiny(3, 18 + SY, PTEXT("Level 2:"));
 
 		val = (uint16_t)hardware_readLight(2);
 		int_to_str(val, buf);
 		text = buf;
 		l = lcd.measureStringTiny(text);
 		lcd.writeStringTiny(80 - l, 24 + SY, text);
-		lcd.writeStringTiny(3, 24 + SY, TEXT("Level 3:"));
+		lcd.writeStringTiny(3, 24 + SY, PTEXT("Level 3:"));
 
 		val = (uint16_t)(light.readEv());
 		int_to_str(val, buf);
 		text = buf;
 		l = lcd.measureStringTiny(text);
 		lcd.writeStringTiny(80 - l, 30 + SY, text);
-		lcd.writeStringTiny(3, 30 + SY, TEXT("    I2C:"));
+		lcd.writeStringTiny(3, 30 + SY, PTEXT("    I2C:"));
 
 		lcd.update();
 		_delay_ms(10);
@@ -1344,7 +1352,7 @@ volatile char lightTrigger(char key, char first)
 		lcd.drawLine(42-1-20+i, 18+YOFF, 42+1-20+i, 18+YOFF);
 		lcd.setPixel(42-20+i, 19+YOFF);
 
-		lcd.writeStringTiny(19, 25+YOFF, TEXT("SENSITIVITY"));
+		lcd.writeStringTiny(19, 25+YOFF, PTEXT("SENSITIVITY"));
 
 		lcd.setPixel(13, 29);
 		lcd.drawLine(12, 30, 14, 30);
@@ -1356,18 +1364,18 @@ volatile char lightTrigger(char key, char first)
 
 		if(mode == LIGHT_TRIGGER_MODE_FALL)
 		{
-			lcd.drawBox(17, 28, 18 + 2 + lcd.measureStringTiny(TEXT("FALLING EDGE")), 36);
-			lcd.writeStringTiny(19, 30, TEXT("FALLING EDGE"));
+			lcd.drawBox(17, 28, 18 + 2 + lcd.measureStringTiny(PTEXT("FALLING EDGE")), 36);
+			lcd.writeStringTiny(19, 30, PTEXT("FALLING EDGE"));
 		}
 		else if (mode == LIGHT_TRIGGER_MODE_RISE)
 		{
-			lcd.drawBox(17, 28, 18 + 2 + lcd.measureStringTiny(TEXT("RISING EDGE")), 36);
-			lcd.writeStringTiny(19, 30, TEXT("RISING EDGE"));
+			lcd.drawBox(17, 28, 18 + 2 + lcd.measureStringTiny(PTEXT("RISING EDGE")), 36);
+			lcd.writeStringTiny(19, 30, PTEXT("RISING EDGE"));
 		}
 		else
 		{
-			lcd.drawBox(17, 28, 18 + 2 + lcd.measureStringTiny(TEXT("ANY CHANGE")), 36);
-			lcd.writeStringTiny(19, 30, TEXT("ANY CHANGE"));
+			lcd.drawBox(17, 28, 18 + 2 + lcd.measureStringTiny(PTEXT("ANY CHANGE")), 36);
+			lcd.writeStringTiny(19, 30, PTEXT("ANY CHANGE"));
 		}
 
 
@@ -1487,10 +1495,10 @@ volatile char notYet(char key, char first)
 	if(first)
 	{
 		lcd.cls();
-		lcd.writeString(3, 7, TEXT("Sorry, this  "));
-		lcd.writeString(3, 15, TEXT("feature has  "));
-		lcd.writeString(3, 23, TEXT("not yet been "));
-		lcd.writeString(3, 31, TEXT("implemented  "));
+		lcd.writeString(3, 7, PTEXT("Sorry, this  "));
+		lcd.writeString(3, 15, PTEXT("feature has  "));
+		lcd.writeString(3, 23, PTEXT("not yet been "));
+		lcd.writeString(3, 31, PTEXT("implemented  "));
 		menu.setTitle(TEXT("Not Yet"));
 		menu.setBar(TEXT("RETURN"), BLANK_STR);
 		lcd.update();
@@ -1538,8 +1546,8 @@ volatile char focusStack(char key, char first)
 		if(first || state > 0)
 		{
 			lcd.cls();
-			lcd.writeStringTiny(2, 15, TEXT("Please set camera"));
-			lcd.writeStringTiny(5, 23, TEXT("to LiveView mode"));
+			lcd.writeStringTiny(2, 15, PTEXT("Please set camera"));
+			lcd.writeStringTiny(5, 23, PTEXT("to LiveView mode"));
 
 			menu.setTitle(TEXT("Focus Stack"));
 			menu.setBar(TEXT("RETURN"), TEXT("LIVEVIEW"));
@@ -1605,7 +1613,7 @@ volatile char focusStack(char key, char first)
 		if(first)
 		{
 			lcd.cls();
-			lcd.writeStringTiny(9, 12, TEXT("Steps Start End"));
+			lcd.writeStringTiny(9, 12, PTEXT("Steps Start End"));
 
 			lcd.writeChar(12, 25-4, '0' + photos / 10);
 			lcd.writeChar(19, 25-4, '0' + photos % 10);
@@ -1643,26 +1651,26 @@ volatile char focusStack(char key, char first)
 			uint8_t len;
 			if(fine)
 			{
-				len = lcd.measureStringTiny(TEXT("Fine Steps"));
-				lcd.writeStringTiny(3, 35-3, TEXT("Fine Steps"));
+				len = lcd.measureStringTiny(PTEXT("Fine Steps"));
+				lcd.writeStringTiny(3, 35-3, PTEXT("Fine Steps"));
 			}
 			else
 			{
-				len = lcd.measureStringTiny(TEXT("Course Steps"));
-				lcd.writeStringTiny(3, 35-3, TEXT("Course Steps"));
+				len = lcd.measureStringTiny(PTEXT("Course Steps"));
+				lcd.writeStringTiny(3, 35-3, PTEXT("Course Steps"));
 			}
 			if(state < 3)
 			{
 				if(fine)
 				{
-					len = lcd.measureStringTiny(TEXT("Fine Steps"));
-					lcd.writeStringTiny(3, 35-3, TEXT("Fine Steps"));
+					len = lcd.measureStringTiny(PTEXT("Fine Steps"));
+					lcd.writeStringTiny(3, 35-3, PTEXT("Fine Steps"));
 					menu.setBar(TEXT("RETURN"), TEXT("COURSE"));
 				}
 				else
 				{
-					len = lcd.measureStringTiny(TEXT("Course Steps"));
-					lcd.writeStringTiny(3, 35-3, TEXT("Course Steps"));
+					len = lcd.measureStringTiny(PTEXT("Course Steps"));
+					lcd.writeStringTiny(3, 35-3, PTEXT("Course Steps"));
 					menu.setBar(TEXT("RETURN"), TEXT("FINE"));
 				}
 				lcd.drawHighlight(2, 31, 3 + len, 37);
@@ -1685,7 +1693,7 @@ volatile char focusStack(char key, char first)
 		lcd.drawBox(12, 12, 84 - 12, 20);
 		lcd.drawHighlight(14, 14, bar, 18);
 
-		lcd.writeStringTiny(25, 25, TEXT("Running"));
+		lcd.writeStringTiny(25, 25, PTEXT("Running"));
 		menu.setTitle(TEXT("Focus Stack"));
 		menu.setBar(BLANK_STR, TEXT("CANCEL"));
 		lcd.update();
@@ -1863,7 +1871,7 @@ volatile char btConnect(char key, char first)
 		if(bt.state == BT_ST_CONNECTED)
 		{
 			menu.setTitle(TEXT("Connect"));
-			lcd.writeStringTiny(18, 20, TEXT("Connected!"));
+			lcd.writeStringTiny(18, 20, PTEXT("Connected!"));
 			menu.setBar(TEXT("RETURN"), TEXT("DISCONNECT"));
 		}
 		else
@@ -1893,7 +1901,7 @@ volatile char btConnect(char key, char first)
 			}
 			else
 			{
-				lcd.writeStringTiny(6, 20, TEXT("No Devices Found"));
+				lcd.writeStringTiny(6, 20, PTEXT("No Devices Found"));
 				menu.setBar(TEXT("RETURN"), BLANK_STR);
 			}
 
@@ -1930,7 +1938,7 @@ volatile char usbPlug(char key, char first)
 			if(PTP_Error)
 			{
 				lcd.cls();
-				lcd.writeString(3, 7,  TEXT(" PTP Error!  "));
+				lcd.writeString(3, 7,  PTEXT(" PTP Error!  "));
 
 				lcd.writeChar(3+1*6, 15, '(');
 				char b, *c = (char*)&PTP_Error;
@@ -1957,8 +1965,8 @@ volatile char usbPlug(char key, char first)
 
 				lcd.writeChar(3+11*6, 15, ')');
 
-				lcd.writeString(3, 23, TEXT("Unplug camera"));
-				lcd.writeString(3, 31, TEXT("to reset...  "));
+				lcd.writeString(3, 23, PTEXT("Unplug camera"));
+				lcd.writeString(3, 31, PTEXT("to reset...  "));
 				menu.setTitle(TEXT("Camera Info"));
 				menu.setBar(TEXT("RETURN"), BLANK_STR);
 				lcd.update();
@@ -1980,7 +1988,7 @@ volatile char usbPlug(char key, char first)
 				if(camera.isoName(exp_name, camera.iso()))
 				{
 					lcd.writeString(3, 31, exp_name);
-					lcd.writeString(3+46, 31, TEXT("ISO"));
+					lcd.writeString(3+46, 31, PTEXT("ISO"));
 				}
 				menu.setTitle(TEXT("Camera Info"));
 				menu.setBar(TEXT("RETURN"), TEXT("PHOTO"));
@@ -1991,10 +1999,10 @@ volatile char usbPlug(char key, char first)
 			else
 			{
 				lcd.cls();
-				lcd.writeString(3, 7,  TEXT(" Connected!  "));
-				lcd.writeString(3, 15, TEXT(" Retrieving  "));
-				lcd.writeString(3, 23, TEXT("   Device    "));
-				lcd.writeString(3, 31, TEXT("   Info...   "));
+				lcd.writeString(3, 7,  PTEXT(" Connected!  "));
+				lcd.writeString(3, 15, PTEXT(" Retrieving  "));
+				lcd.writeString(3, 23, PTEXT("   Device    "));
+				lcd.writeString(3, 31, PTEXT("   Info...   "));
 				menu.setTitle(TEXT("Camera Info"));
 				menu.setBar(TEXT("RETURN"), BLANK_STR);
 				lcd.update();
@@ -2005,10 +2013,10 @@ volatile char usbPlug(char key, char first)
 		else
 		{
 			lcd.cls();
-			lcd.writeString(3, 7, TEXT("Plug camera  "));
-			lcd.writeString(3, 15, TEXT("into left USB"));
-			lcd.writeString(3, 23, TEXT("port...      "));
-			lcd.writeString(3, 31, TEXT("             "));
+			lcd.writeString(3, 7, PTEXT("Plug camera  "));
+			lcd.writeString(3, 15, PTEXT("into left USB"));
+			lcd.writeString(3, 23, PTEXT("port...      "));
+			lcd.writeString(3, 31, PTEXT("             "));
 			menu.setTitle(TEXT("Connect USB"));
 			menu.setBar(TEXT("CANCEL"), BLANK_STR);
 			lcd.update();
@@ -2064,7 +2072,7 @@ volatile char lightningTrigger(char key, char first)
 		hardware_lightning_enable();
 		lcd.cls();
 		menu.setTitle(TEXT("Lightning"));
-		lcd.writeString(25, 20, TEXT("READY"));
+		lcd.writeString(25, 20, PTEXT("READY"));
 		menu.setBar(TEXT("RETURN"), TEXT("CALIBRATE"));
 		lcd.update();
 	}
@@ -2475,7 +2483,7 @@ volatile char shutter_delete(char key, char first)
 		menu.setTitle(TEXT("Delete"));
 		menu.setBar(TEXT("CANCEL"), TEXT("DELETE"));
 
-		lcd.writeString(15, 8 + 5, TEXT("Delete"));
+		lcd.writeString(15, 8 + 5, PTEXT("Delete"));
 		uint8_t c, lastChar = 0;
 		for(c = 0; c < MENU_NAME_LEN - 2; c++) // Write settings item text //
 		{
@@ -2589,7 +2597,7 @@ volatile char bramp_monitor(char key, char first)
 	{
 		lcd.cls();
 
-		lcd.writeStringTiny(2, 1, TEXT("BULB RAMP"));
+		lcd.writeStringTiny(2, 1, PTEXT("BULB RAMP"));
 
 		lcd.drawHighlight(0, 0, 53, 6);
 
@@ -2674,7 +2682,7 @@ volatile char bramp_monitor(char key, char first)
 			lcd.writeString(1, 8, STR("Auto"));
 		}
 
-		if(camera.supports.aperture)
+        if((conf.brampMode & BRAMP_MODE_APERTURE) && camera.supports.aperture)
 		{
 			camera.apertureName(buf, camera.aperture());
 			for(b = 0; b < (int16_t)sizeof(buf); b++)
@@ -2687,7 +2695,7 @@ volatile char bramp_monitor(char key, char first)
 			}
 			lcd.writeStringTiny(63, 2, &buf[b + 1]); // Aperture
 		}
-		if(camera.supports.iso)
+        if((conf.brampMode & BRAMP_MODE_ISO) && camera.supports.iso)
 		{
 			camera.isoName(buf, camera.iso());
 			lcd.writeStringTiny(63, 2+12, &buf[2]); // ISO

@@ -49,8 +49,10 @@ public:
     uint8_t sleep(void);
     uint8_t read(void);
     uint8_t send(char *str);
+    uint8_t sendP(const char *str);
     uint8_t sendByte(char byte);
     uint8_t sendCMD(char *str);
+    uint8_t sendCMD(const char *str);
     uint8_t sendDATA(uint8_t id, uint8_t type, void* buffer, uint16_t bytes);
     uint8_t waitRTS(void);
     uint8_t power(uint8_t level);
@@ -83,6 +85,7 @@ public:
 
 private:
     char buf[BT_BUF_SIZE];
+    uint8_t wake(void);
     uint8_t checkOK(void);
     uint8_t btPower;
     uint8_t dataMode(void);

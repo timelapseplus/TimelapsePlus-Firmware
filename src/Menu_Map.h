@@ -33,6 +33,9 @@ const char STR_CAMERA_FPS[]PROGMEM = "Frames per Second";
 const char STR_DEV_MODE_ON[]PROGMEM = "Shutter lights LED";
 const char STR_DEV_MODE_OFF[]PROGMEM = "LED off during use";
 
+const char STR_DEBUG_MODE_ON[]PROGMEM = "Serial debug out";
+const char STR_DEBUG_MODE_OFF[]PROGMEM = "Default";
+
 const char STR_TIMELAPSE[]PROGMEM = "Basic Timelapse";
 const char STR_HDR_TIMELAPSE[]PROGMEM = "HDR Timelapse";
 const char STR_HDR_PHOTO[]PROGMEM = "Single HDR Image";
@@ -65,10 +68,10 @@ const char STR_BRAMP_TARGET[]PROGMEM = "Darkest Point";
 const char STR_AUTO_RUN_ON[]PROGMEM = "Auto-run TL on pwr";
 const char STR_AUTO_RUN_OFF[]PROGMEM = "Normal Operation";
 
-const char STR_MIN_BULB[]PROGMEM = "Minimum Bulb";
-const char STR_MAX_ISO[]PROGMEM = "Maximum ISO";
-const char STR_MAX_APERTURE[]PROGMEM = "Max Aperture";
-const char STR_MIN_APERTURE[]PROGMEM = "Min Aperture";
+const char STR_MIN_BULB[]PROGMEM = "Minimum Bulb Time";
+const char STR_MAX_ISO[]PROGMEM = "Maximum ISO Ramp";
+const char STR_MAX_APERTURE[]PROGMEM = "Max Aperture Ramp";
+const char STR_MIN_APERTURE[]PROGMEM = "Min Aperture Ramp";
 
 const menu_item menu_options[]PROGMEM =
 {
@@ -250,7 +253,9 @@ const menu_item menu_timelapse[]PROGMEM =
     { "Intrvl     F", 'E', (void*)&timer.current.Gap, (void*)STR_TIME_TENTHS, 0, (void*)&showGap },
     { "HDR Exp's  +", 'D', (void*)&dyn_hdr_exps,    (void*)&timer.current.Exps, 0, (void*)&modeHDR },
     { "Mid Tv     +", 'D', (void*)&dyn_hdr_tv,            (void*)&timer.current.Exp, 0, (void*)&modeHDR },
-    { "Tv         +", 'D', (void*)&dyn_tv,            (void*)&timer.current.Exp, 0, (void*)&modeStandard },
+    { "Tv         +", 'D', (void*)&dyn_tv,            (void*)&timer.current.Exp, 0, (void*)&modeStandardExp },
+    { "S          +", 'D', (void*)&dyn_tv,            (void*)&timer.current.Exp, 0, (void*)&modeStandardExpNikon },
+    { "Bulb       F", 'E', (void*)&timer.current.ArbExp,  (void*)STR_TIME_TENTHS, 0, (void*)&modeStandardExpArb },
     { "Bracket    +", 'D', (void*)&dyn_bracket,            (void*)&timer.current.Bracket, 0, (void*)&modeHDR },
     { "StartTv    +", 'D', (void*)&dyn_bulb, (void*)&timer.current.BulbStart, 0, (void*)&modeRamp },
     { "Integration ", 'S', (void*)settings_auto_bramp_integration, (void*)&timer.current.Integration, 0, (void*)&brampAuto },
@@ -317,6 +322,13 @@ const settings_item menu_settings_dev_mode[]PROGMEM =
 {
     { "Off         ", 0, (void*)STR_DEV_MODE_OFF },
     { "On w/Bulb   ", 1, (void*)STR_DEV_MODE_ON },
+    { "\0           ", 0, 0 }
+};
+
+const settings_item menu_settings_debug_mode[]PROGMEM =
+{
+    { "Disabled    ", 0, (void*)STR_DEBUG_MODE_OFF },
+    { "Enabled     ", 1, (void*)STR_DEBUG_MODE_ON },
     { "\0           ", 0, 0 }
 };
 
@@ -416,6 +428,16 @@ const settings_item menu_settings_bramp_mode[]PROGMEM =
     { "\0           ", 0, 0 }
 };
 
+const char STR_ARBITRARY_BULB_DISABLED[]PROGMEM = "Set by stops";
+const char STR_ARBITRARY_BULB_ENABLED[]PROGMEM = "Arbitrary length";
+
+const settings_item menu_settings_arbitrary_bulb[]PROGMEM =
+{
+    { "1/3 Stops   ", 0, (void*)STR_ARBITRARY_BULB_DISABLED },
+    { "0.1 Seconds ", 1, (void*)STR_ARBITRARY_BULB_ENABLED },
+    { "\0           ", 0, 0 }
+};
+
 const char STR_MODE_SWITCH_ENABLED[]PROGMEM = "Auto change via USB";
 const char STR_MODE_SWITCH_DISABLED[]PROGMEM = "Disabled";
 
@@ -423,6 +445,16 @@ const settings_item menu_settings_mode_switch[]PROGMEM =
 {
     { "Enabled     ", USB_CHANGE_MODE_ENABLED, (void*)STR_MODE_SWITCH_ENABLED },
     { "Disabled    ", USB_CHANGE_MODE_DISABLED, (void*)STR_MODE_SWITCH_DISABLED },
+    { "\0           ", 0, 0 }
+};
+
+const char STR_MENU_WRAP_ENABLED[]PROGMEM = "Menu wraps at ends";
+const char STR_MENU_WRAP_DISABLED[]PROGMEM = "Menu stops at ends";
+
+const settings_item menu_settings_menu_wrap[]PROGMEM =
+{
+    { "Enabled     ", 1, (void*)STR_MENU_WRAP_ENABLED },
+    { "Disabled    ", 0, (void*)STR_MENU_WRAP_DISABLED },
     { "\0           ", 0, 0 }
 };
 
@@ -495,6 +527,7 @@ const settings_item menu_settings_lcd_bias[]PROGMEM =
 const menu_item menu_settings_system[]PROGMEM =
 {
     { "System Name ", 'F', (void*)system_name, 0, 0, 0 },
+    { "Menu Wrap   ", 'S', (void*)menu_settings_menu_wrap, (void*)&conf.menuWrap, (void*)settings_update, 0 },
     { "PWR Auto Off", 'S', (void*)menu_settings_power_off_time, (void*)&conf.sysOffTime, (void*)settings_update, 0 },
     { "LED Auto Off", 'S', (void*)menu_settings_flashlight_time, (void*)&conf.flashlightOffTime, (void*)settings_update, 0 },
     { "\0           ", 'V', 0, 0, 0 }
@@ -517,13 +550,19 @@ const menu_item menu_settings_camera[]PROGMEM =
     { "Bulb Mode   ", 'S', (void*)menu_settings_bulb_mode, (void*)&conf.bulbMode, (void*)settings_update, 0 },
     { "Bulb Offset ", 'C', (void*)&conf.bulbOffset, (void*)STR_BULB_OFFSET, (void*)settings_update, 0 },
     { "Bulb Min    ", 'D', (void*)&dyn_min_bulb, (void*)&conf.bulbMin, (void*)settings_update, 0 },
+    { "Half press  ", 'S', (void*)menu_settings_half_press, (void*)&conf.halfPress, (void*)settings_update, 0 },
+    { "Interface   ", 'S', (void*)menu_settings_interface, (void*)&conf.interface, (void*)settings_update, 0 },
+    { "Mode Switch ", 'S', (void*)menu_settings_mode_switch, (void*)&conf.modeSwitch, (void*)settings_update, 0 },
+    { "\0           ", 'V', 0, 0, 0 }
+};
+
+const menu_item menu_settings_timelapse[]PROGMEM =
+{
     { "ISO Max     ", 'D', (void*)&dyn_max_iso, (void*)&conf.isoMax, (void*)settings_update, 0 },
     { "Aperture Max", 'D', (void*)&dyn_max_aperture, (void*)&conf.apertureMax, (void*)settings_update, 0 },
     { "Aperture Min", 'D', (void*)&dyn_min_aperture, (void*)&conf.apertureMin, (void*)settings_update, 0 },
-    { "Half press  ", 'S', (void*)menu_settings_half_press, (void*)&conf.halfPress, (void*)settings_update, 0 },
-    { "Interface   ", 'S', (void*)menu_settings_interface, (void*)&conf.interface, (void*)settings_update, 0 },
     { "Bramp Mode  ", 'S', (void*)menu_settings_bramp_mode, (void*)&conf.brampMode, (void*)settings_update, 0 },
-    { "Mode Switch ", 'S', (void*)menu_settings_mode_switch, (void*)&conf.modeSwitch, (void*)settings_update, 0 },
+    { "Bulb Units  ", 'S', (void*)menu_settings_arbitrary_bulb, (void*)&conf.arbitraryBulb, (void*)settings_update, 0 },
     { "Run on PwrOn", 'S', (void*)menu_settings_auto_run, (void*)&conf.autoRun, (void*)settings_update, 0 },
     { "\0           ", 'V', 0, 0, 0 }
 };
@@ -539,6 +578,7 @@ const menu_item menu_settings_auxiliary[]PROGMEM =
 const menu_item menu_development[]PROGMEM =
 {
     { "Dev Mode LED", 'S', (void*)menu_settings_dev_mode, (void*)&conf.devMode, (void*)settings_update, 0 },
+    { "Debug Mode  ", 'S', (void*)menu_settings_debug_mode, (void*)&conf.debugEnabled, (void*)settings_update, 0 },
     { "Shutter Test", 'F', (void*)shutterTest, 0, 0, (void*)&timerNotRunning },
     { "Calc BOffset", 'F', (void*)shutterLagTest, 0, 0, (void*)&timerNotRunning },
 //    { "4 Hour Light", 'F', (void*)lightTest, 0, 0, (void*)&timerNotRunning },
@@ -557,6 +597,7 @@ const menu_item menu_settings[]PROGMEM =
     { "System Info ", 'F', (void*)sysInfo, 0, 0, 0 },
     { "System      ", 'M', (void*)menu_settings_system, 0, 0, 0 },
     { "Display     ", 'M', (void*)menu_settings_display, 0, 0, 0 },
+    { "Time-lapse  ", 'M', (void*)menu_settings_timelapse, 0, 0, 0 },
     { "Camera      ", 'M', (void*)menu_settings_camera, 0, 0, 0 },
     { "Auxiliary   ", 'M', (void*)menu_settings_auxiliary, 0, 0, 0 },
     { "Development ", 'M', (void*)menu_development, 0, 0, 0 },

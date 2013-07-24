@@ -55,7 +55,7 @@ int8_t test()
 
     termInit();
 
-    termPrintStr(STR("\nReady for Testing\n\nWaiting on PC\n"));
+    termPrintStrP(PSTR("\nReady for Testing\n\nWaiting on PC\n"));
 
     for(;;)
     {
@@ -67,14 +67,14 @@ int8_t test()
             if(run_tests())
             {
                 debug('1');
-                termPrintStr(STR("Passed All Tests\n"));
+                termPrintStrP(PSTR("Passed All Tests\n"));
                 VirtualSerial_Reset();
                 return 1;
             } 
             else
             {
                 debug('0');
-                termPrintStr(STR("Failed Tests\n"));
+                termPrintStrP(PSTR("Failed Tests\n"));
                 VirtualSerial_Reset();
                 return 0;
             }
@@ -86,24 +86,24 @@ int8_t test()
             switch(VirtualSerial_GetChar())
             {
                case 'P':
-                   termPrintStr(STR("Passed All Tests\n"));
+                   termPrintStrP(PSTR("Passed All Tests\n"));
                    VirtualSerial_Reset();
                    return 1;
 
                case 'E':
 //				failed = 1;		// set but never referenced
-                   termPrintStr(STR("Tests Failed\n"));
+                   termPrintStrP(PSTR("Tests Failed\n"));
                    FOREVER;
                    break;
 
                case 'R':
                    lcd.color(1);
-                   termPrintStr(STR("LCD BL RED\n"));
+                   termPrintStrP(PSTR("LCD BL RED\n"));
                    break;
 
                case 'W':
                    lcd.color(0);
-                   termPrintStr(STR("LCD BL WHITE\n"));
+                   termPrintStrP(PSTR("LCD BL WHITE\n"));
                    break;
 
                case 'D':
@@ -122,22 +122,22 @@ int8_t test()
 
                case 'T':
                    debug('E');
-                   termPrintStr(STR("USB Connected\n"));
+                   termPrintStrP(PSTR("USB Connected\n"));
                    break;
 
                case 'O':
                    timer.off();
-                   termPrintStr(STR("Shutter Closed\n"));
+                   termPrintStrP(PSTR("Shutter Closed\n"));
                    break;
 
                case 'F':
                    timer.full();
-                   termPrintStr(STR("Shutter Full\n"));
+                   termPrintStrP(PSTR("Shutter Full\n"));
                    break;
 
                case 'H':
                    timer.half();
-                   termPrintStr(STR("Shutter Half\n"));
+                   termPrintStrP(PSTR("Shutter Half\n"));
                    break;
 
                case 'C':
@@ -152,21 +152,21 @@ int8_t test()
                    if(run_tests())
                    {
                        debug('1');
-                       termPrintStr(STR("Passed All Tests\n"));
+                       termPrintStrP(PSTR("Passed All Tests\n"));
                        VirtualSerial_Reset();
                        return 1;
                    } 
                    else
                    {
                        debug('0');
-                       termPrintStr(STR("Failed Tests\n"));
+                       termPrintStrP(PSTR("Failed Tests\n"));
                        VirtualSerial_Reset();
                        return 0;
                    }
                    break;
 
                case 'B':
-                   termPrintStr(STR("Checking charger\n"));
+                   termPrintStrP(PSTR("Checking charger\n"));
                    debug((char)battery_status());
                    break;
 
@@ -190,11 +190,11 @@ int8_t test_assert(char test_case)
 {
     if(test_case)
     {
-        termPrintStr(STR("   Passed\n"));
+        termPrintStrP(PSTR("   Passed\n"));
         return 1;
     } 
     
-    termPrintStr(STR("   Failed\n"));
+    termPrintStrP(PSTR("   Failed\n"));
     return 0;
 }
 
@@ -215,7 +215,7 @@ int8_t run_tests()
     {
         if(bt.present)
         {
-            termPrintStr(STR("Testing BlueTooth\n"));
+            termPrintStrP(PSTR("Testing BlueTooth\n"));
             pass &= test_assert(bt.version() == 3);
         }
     }
@@ -224,8 +224,9 @@ int8_t run_tests()
     
     if(pass)
     {
-        termPrintStr(STR("Testing Battery\n"));
+        termPrintStrP(PSTR("Testing Battery\n"));
         pass &= test_assert(battery_read_raw() > 400);
+        termPrintStrP(PSTR("Testing Charger\n"));
         pass &= test_assert(battery_status() > 0);
     }
     
@@ -233,18 +234,19 @@ int8_t run_tests()
     
     if(pass)
     {
-        termPrintStr(STR("Testing Timer\n"));
+        termPrintStrP(PSTR("Testing Timer\n"));
         clock.tare();
         _delay_ms(100);
         uint32_t ms = clock.eventMs();
-        pass &= test_assert(ms >= 90 && ms <= 110);
+        //termPrintByte((uint8_t) ms);
+        pass &= test_assert(ms >= 80 && ms <= 120);
     }
     
     wdt_reset();
     
     if(pass)
     {
-        termPrintStr(STR("Testing Shutter\n"));
+        termPrintStrP(PSTR("Testing Shutter\n"));
         ENABLE_SHUTTER;
         ENABLE_MIRROR;
         ENABLE_AUX_PORT;
@@ -265,7 +267,7 @@ int8_t run_tests()
     
     if(pass)
     {
-        termPrintStr(STR("Press top l key\n"));
+        termPrintStrP(PSTR("Press top l key\n"));
         pass &= test_assert(button.waitfor(FL_KEY));
     }
     
@@ -273,7 +275,7 @@ int8_t run_tests()
     
     if(pass)
     {
-        termPrintStr(STR("Press top r key\n"));
+        termPrintStrP(PSTR("Press top r key\n"));
         pass &= test_assert(button.waitfor(FR_KEY));
     }
     
@@ -281,7 +283,7 @@ int8_t run_tests()
     
     if(pass)
     {
-        termPrintStr(STR("Press left key\n"));
+        termPrintStrP(PSTR("Press left key\n"));
         pass &= test_assert(button.waitfor(LEFT_KEY));
     }
     
@@ -289,7 +291,7 @@ int8_t run_tests()
     
     if(pass)
     {
-        termPrintStr(STR("Press right key\n"));
+        termPrintStrP(PSTR("Press right key\n"));
         pass &= test_assert(button.waitfor(RIGHT_KEY));
     }
     
@@ -297,7 +299,7 @@ int8_t run_tests()
     
     if(pass)
     {
-        termPrintStr(STR("Press up key\n"));
+        termPrintStrP(PSTR("Press up key\n"));
         pass &= test_assert(button.waitfor(UP_KEY));
     }
     
@@ -305,7 +307,7 @@ int8_t run_tests()
     
     if(pass)
     {
-        termPrintStr(STR("Press down key\n"));
+        termPrintStrP(PSTR("Press down key\n"));
         pass &= test_assert(button.waitfor(DOWN_KEY));
     }
     
@@ -314,7 +316,7 @@ int8_t run_tests()
     if(pass)
     {
         lcd.color(1);
-        termPrintStr(STR("LCD BL RED\n"));
+        termPrintStrP(PSTR("LCD BL RED\n"));
         pass &= test_assert(button.waitfor(DOWN_KEY));
     }
     
@@ -323,7 +325,7 @@ int8_t run_tests()
     if(pass)
     {
         lcd.color(0);
-        termPrintStr(STR("LCD BL WHITE\n"));
+        termPrintStrP(PSTR("LCD BL WHITE\n"));
         pass &= test_assert(button.waitfor(DOWN_KEY));
     }
     
@@ -355,7 +357,7 @@ int8_t run_tests()
     {
         if(!bt.present)
         {
-            termPrintStr(STR("NO BLUETOOTH\n  CONFIRM\n"));
+            termPrintStrP(PSTR("NO BLUETOOTH\n  CONFIRM\n"));
             pass &= test_assert(button.waitfor(DOWN_KEY));
         }
     }
@@ -380,7 +382,7 @@ void lightTest()
 
     lcd.backlight(0);
 
-    termPrintStr(STR("\nRunning light\nsensor test\n\n"));
+    termPrintStrP(PSTR("\nRunning light\nsensor test\n\n"));
 
     uint8_t i;
 
@@ -395,16 +397,16 @@ void lightTest()
         timer.off();
         hardware_readLightAll(&result);
         eeprom_write_block((const void*)&result, &light_test_results[i], sizeof(light_reading));
-        termPrintStr(TEXT("Photo "));
+        termPrintStrP(PSTR("Photo "));
         termPrintByte(i + 1);
-        termPrintStr(TEXT(" of 120\n"));
+        termPrintStrP(PSTR(" of 120\n"));
         
         while (clock.eventMs() < 120000) 
             wdt_reset();
 
         clock.tare();
     }
-    termPrintStr(TEXT("\nDone!\n"));
+    termPrintStrP(PSTR("\nDone!\n"));
 }
 
 /******************************************************************
@@ -420,7 +422,7 @@ void readLightTest()
 
     termInit();
 
-    termPrintStr(TEXT("\nReading light\nsensor test\ndata...\n\n"));
+    termPrintStrP(PSTR("\nReading light\nsensor test\ndata...\n\n"));
 
     uint8_t i;
 
@@ -437,14 +439,14 @@ void readLightTest()
         debug((uint16_t)result.level3);
         debug_nl();
 
-        termPrintStr(STR("Sent "));
+        termPrintStrP(PSTR("Sent "));
         termPrintByte(i + 1);
-        termPrintStr(STR(" of 120\n"));
+        termPrintStrP(PSTR(" of 120\n"));
 
         VirtualSerial_Task();
         wdt_reset();
     }
     
-    termPrintStr(STR("\nDone!\n"));
+    termPrintStrP(PSTR("\nDone!\n"));
 }
 

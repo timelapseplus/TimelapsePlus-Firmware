@@ -27,13 +27,18 @@ public:
     void xorPixel(unsigned char x, unsigned char y);
     void pixel(unsigned char x, unsigned char y, int8_t color);
     void writeString(unsigned char x, unsigned char y, char *s);
+    void writeString(unsigned char x, unsigned char y, const char *s);
     void writeChar(unsigned char x, unsigned char y, unsigned char c);
     unsigned char writeCharTiny(unsigned char x, unsigned char y, unsigned char c);
     void writeUint(unsigned char x, unsigned char y, unsigned int n);
     unsigned char writeNumber(unsigned char x, unsigned char y, unsigned int n, unsigned char mode, unsigned char justification);
     void writeStringBig(unsigned char x, unsigned char y, char *s);
+    void writeStringBig(unsigned char x, unsigned char y, const char *s);
     char writeStringTiny(unsigned char x, unsigned char y, char *s);
+    char writeStringTiny(unsigned char x, unsigned char y, const char *s);
     char measureStringTiny(char *s);
+    char measureStringTiny(const char *s);
+    char measureCharTiny(char c);
     void writeCharBig(unsigned char x, unsigned char y, unsigned char c);
     void drawBMP(unsigned char x, unsigned char y, unsigned char *pBMP);
     void update();

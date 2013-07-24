@@ -15,5 +15,5 @@
 void termInit();
 void termPrintChar(char c);
 void termPrintByte(uint8_t c);
-void termPrintStr(char *s);
+void termPrintStrP(const char *s);
 void termClear();

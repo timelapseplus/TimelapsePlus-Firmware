@@ -105,6 +105,25 @@ void LCD::writeString(unsigned char x, unsigned char y, char *s)
 
 /******************************************************************
  *
+ *   LCD::writeString
+ *
+ *
+ ******************************************************************/
+
+void LCD::writeString(unsigned char x, unsigned char y, const char *s)
+{
+    char c = pgm_read_byte(s);
+    while(c)
+    {
+        writeChar(x, y, c);
+        x += 6;
+        s++;
+        c = pgm_read_byte(s);
+    }
+}
+
+/******************************************************************
+ *
  *   LCD::writeUint
  *
  *
@@ -286,6 +305,25 @@ void LCD::writeStringBig(unsigned char x, unsigned char y, char *s)
 
 /******************************************************************
  *
+ *   LCD::writeStringBig
+ *
+ *
+ ******************************************************************/
+
+void LCD::writeStringBig(unsigned char x, unsigned char y, const char *s)
+{
+    char c = pgm_read_byte(s);
+    while (c)
+    {
+        writeCharBig(x, y, c);
+        x += 16;
+        s++;
+        c = pgm_read_byte(s);
+    }
+}
+
+/******************************************************************
+ *
  *   LCD::writeStringTiny
  *
  *
@@ -304,6 +342,25 @@ char LCD::writeStringTiny(unsigned char x, unsigned char y, char *s)
 
 /******************************************************************
  *
+ *   LCD::writeStringTiny
+ *
+ *
+ ******************************************************************/
+
+char LCD::writeStringTiny(unsigned char x, unsigned char y, const char *s)
+{
+    char l = 0, c = pgm_read_byte(s);
+    while (c)
+    {
+        l += writeCharTiny(x + l, y, c) + 1;
+        s++;
+        c = pgm_read_byte(s);
+    }
+    return l;
+}
+
+/******************************************************************
+ *
  *   LCD::measureStringTiny
  *
  *
@@ -311,50 +368,79 @@ char LCD::writeStringTiny(unsigned char x, unsigned char y, char *s)
 
 char LCD::measureStringTiny(char *s)
 {
-    unsigned char *pFont;
-    pFont = (unsigned char*)font4_5;
-    char l = 0, c;
-
-    while (*s != 0)
+    uint8_t l = 0;
+    while(*s)
     {
-        if(*s == ' ')
-        {
-            l += 2;
-        } 
-        else if(*s == '.')
-        {
-            l += 1;
-        } 
-        else if(*s == '+')
-        {
-            l += 3;
-        } 
-        else if(*s == '-')
-        {
-            l += 3;
-        } 
-        else if(*s == '/')
-        {
-            l += 5;
-        } 
-        else if(*s >= '0' && *s <= '9')
-        {
-            l += 3;
-        } 
-        else
-        {
-            c = *s;
-            
-            if(c > 90) 
-                c -= 32;
-            
-            c -= 'A';
-            l += pgm_read_byte(pFont + c * 6) + 1;
-        }
-        
+        l += measureCharTiny(*s);
         s++;
     }
     return l;
+}
+
+/******************************************************************
+ *
+ *   LCD::measureStringTiny
+ *
+ *
+ ******************************************************************/
+
+char LCD::measureStringTiny(const char *s)
+{
+    uint8_t l = 0;
+    char c = pgm_read_byte(s);
+    while(c)
+    {
+        l += measureCharTiny(c);
+        s++;
+        c = pgm_read_byte(s);
+    }
+    return l;
+}
+
+/******************************************************************
+ *
+ *   LCD::measureStringTiny
+ *
+ *
+ ******************************************************************/
+
+char LCD::measureCharTiny(char c)
+{
+    unsigned char *pFont;
+    pFont = (unsigned char*)font4_5;
+
+    if(c == ' ')
+    {
+        return 2;
+    } 
+    else if(c == '.')
+    {
+        return 1;
+    } 
+    else if(c == '+')
+    {
+        return 3;
+    } 
+    else if(c == '-')
+    {
+        return 3;
+    } 
+    else if(c == '/')
+    {
+        return 5;
+    } 
+    else if(c >= '0' && c <= '9')
+    {
+        return 3;
+    } 
+    else
+    {
+        if(c > 90) 
+            c -= 32;
+        
+        c -= 'A';
+        return pgm_read_byte(pFont + c * 6) + 1;
+    }
 }
 
 /******************************************************************

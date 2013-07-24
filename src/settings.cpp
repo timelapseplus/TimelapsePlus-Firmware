@@ -115,11 +115,14 @@ void settings_default()
     conf.dollyPulse = 100;
     conf.lcdContrast = 0xf;
     conf.lcdCoefficent = 0x7;
-    conf.lcdBias = 0x4;
+    conf.lcdBias = 0x3;
     conf.bulbMin = 56;
     conf.isoMax = 10;
     conf.apertureMax = 31;
     conf.apertureMin = 2;
+    conf.debugEnabled = 0;
+    conf.arbitraryBulb = 0;
+    conf.menuWrap = 1;
     settings_save();
     settings_load();
 }

@@ -97,10 +97,15 @@ void termPrintChar(char c)
 void termPrintByte(uint8_t c)
 {
     char buf[5];
-    
+    uint8_t i = 0;
+
     int_to_str((uint16_t)c, buf);
     
-    termPrintStr(buf);
+    while(buf[i])
+    {
+        termPrintChar(buf[i]);
+        i++;
+    }
 }
 
 /******************************************************************
@@ -110,12 +115,15 @@ void termPrintByte(uint8_t c)
  *
  ******************************************************************/
 
-void termPrintStr(char *s)
+void termPrintStrP(const char *s)
 {
-    while (*(s) != 0)
+    char c;
+    c = pgm_read_byte(s);
+    while (c != 0)
     {
-        termPrintChar(*s);
+        termPrintChar(c);
         s++;
+        c = pgm_read_byte(s);
     }
     
     lcd.update();
