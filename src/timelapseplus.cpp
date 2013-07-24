@@ -49,6 +49,9 @@ extern volatile uint8_t timerNotRunning;
 extern volatile uint8_t modeHDR;
 extern volatile uint8_t modeTimelapse;
 extern volatile uint8_t modeStandard;
+extern volatile uint8_t modeStandardExp;
+extern volatile uint8_t modeStandardExpNikon;
+extern volatile uint8_t modeStandardExpArb;
 extern volatile uint8_t modeRamp;
 extern volatile uint8_t modeNoRamp;
 extern volatile uint8_t modeRampKeyAdd;
@@ -108,7 +111,7 @@ void setup()
 	{
 		lcd.init(0xf, 0x7, 0x4);
 		termInit();
-		termPrintStr(TEXT("\n  Programming\n  Successful\n\n  Move to test\n  station\n"));
+		termPrintStrP(PSTR("\n  Programming\n  Successful\n\n  Move to test\n  station\n"));
 		wdt_disable();
 		hardware_off();
 	}
@@ -285,16 +288,16 @@ int main()
 
 			   case 'C': // Capture
 				   {
-			   	       debug(STR("Taking picture...\r\n"));
+			   	       debug(PSTR("Taking picture...\r\n"));
 			   	       timer.capture();
 					   break;
 				   }
 
 			   case 'M':
-			   	    debug(STR("REMOTE_MODEL: "));
+			   	    debug(PSTR("REMOTE_MODEL: "));
 				    debug(remote.model);
 				    debug_nl();
-			   	    debug(STR("REMOTE_CONNECTED: "));
+			   	    debug(PSTR("REMOTE_CONNECTED: "));
 				    debug(remote.connected);
 				    debug_nl();
 				    break;
@@ -306,29 +309,29 @@ int main()
 			   case 'L':
 			   	   light.start();
 			   	   light.setRange(0);
-			   	   debug(STR("Light Sensor INIT\r\n"));
+			   	   debug(PSTR("Light Sensor INIT\r\n"));
 				   break;
 
 			   case 'I':
 			   	   light.integrationStart(30, 0);
 			   	   light.setRange(0);
-			   	   debug(STR("Light Sensor Integration Start\r\n"));
+			   	   debug(PSTR("Light Sensor Integration Start\r\n"));
 				   break;
 
 			   case 'l':
-			   	   debug(STR("Raw: "));
+			   	   debug(PSTR("Raw: "));
 			   	   debug(light.readRaw());
 				   debug_nl();
-			   	   debug(STR("Lux: "));
+			   	   debug(PSTR("Lux: "));
 			   	   debug(light.readLux());
 				   debug_nl();
-			   	   debug(STR("Ev: "));
+			   	   debug(PSTR("Ev: "));
 			   	   debug(light.readEv());
 				   debug_nl();
-			   	   debug(STR("IntEv: "));
+			   	   debug(PSTR("IntEv: "));
 			   	   debug(light.readIntegratedEv());
 				   debug_nl();
-			   	   debug(STR("IntSlpope: "));
+			   	   debug(PSTR("IntSlpope: "));
 			   	   debug(light.readIntegratedSlope());
 				   debug_nl();
 				   break;
