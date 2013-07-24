@@ -40,3 +40,5 @@ util/fwupdated.rb
 util/template/fwupdated_template.png
 
 version
+
+*.rid
