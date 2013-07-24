@@ -34,6 +34,7 @@ struct CameraSupports_t
     bool focus;
     bool video;
     bool cameraReady;
+    bool event;
 };
 
 
@@ -118,6 +119,7 @@ public:
     static uint8_t isoMin(void);
     static uint8_t apertureMax(void);
     static uint8_t apertureMin(void);
+    static uint8_t apertureWideOpen(void);
     static uint8_t shutterMax(void);
     static uint8_t shutterMin(void);
     static uint8_t isoUpStatic(uint8_t ev);
