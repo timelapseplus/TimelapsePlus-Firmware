@@ -82,7 +82,7 @@ uint16_t PTP_Bytes_Received, PTP_Bytes_Remaining, PTP_Bytes_Total;
 char PTP_CameraModel[23];
 char PTP_CameraMake[23];
 PIMA_Container_t PIMA_Block;
-uint8_t PTP_Ready, PTP_Connected, configured, PTP_Run_Task = 1;
+volatile uint8_t PTP_Ready, PTP_Connected, configured, PTP_Run_Task = 1;
 uint16_t PTP_Error, PTP_Response_Code;
 uint16_t supportedOperationsCount;
 uint16_t *supportedOperations;
@@ -258,6 +258,23 @@ uint8_t PTP_FetchData(uint16_t offset)
         return PTP_RETURN_ERROR;
     }
 }
+
+uint16_t PTP_GetEvent(uint32_t *event_value)
+{
+    if(SI_Host_IsEventReceived(&DigitalCamera_SI_Interface))
+    {
+        uint8_t error = SI_Host_ReceiveEventHeader(&DigitalCamera_SI_Interface, &PIMA_Block);
+        #ifdef PTP_DEBUG
+        if(error) printf_P(PSTR("PTP_GetEvent Error %x\r\n"), error);
+        #endif
+        *event_value = PIMA_Block.Params[0];
+        return PIMA_Block.Code;
+    }
+
+    return 0;
+
+}
+
 
 uint8_t SI_Host_ReceiveResponseCode(USB_ClassInfo_SI_Host_t* const SIInterfaceInfo, PIMA_Container_t *PIMABlock)
 {

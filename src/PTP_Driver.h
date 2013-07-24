@@ -75,6 +75,7 @@ void EVENT_USB_Host_DeviceUnattached(void);
 void EVENT_USB_Host_DeviceEnumerationFailed(const uint8_t ErrorCode,
                                             const uint8_t SubErrorCode);
 void EVENT_USB_Host_DeviceEnumerationComplete(void);
+uint16_t PTP_GetEvent(uint32_t *event_value);
 uint8_t PTP_Transaction(uint16_t opCode, uint8_t receive_data, uint8_t paramCount, uint32_t *params, uint8_t dataBytes, uint8_t *data);
 uint8_t PTP_FetchData(uint16_t offset);
 uint8_t SI_Host_ReceiveResponseCode(USB_ClassInfo_SI_Host_t* const SIInterfaceInfo, PIMA_Container_t *PIMABlock);
@@ -89,7 +90,7 @@ extern uint16_t PTP_Bytes_Received;
 extern uint16_t PTP_Bytes_Total;
 extern char PTP_CameraModel[23];
 extern char PTP_CameraMake[23];
-extern uint8_t PTP_Ready, PTP_Connected, PTP_Run_Task;
+extern volatile uint8_t PTP_Ready, PTP_Connected, PTP_Run_Task;
 extern uint16_t PTP_Error, PTP_Response_Code;
 extern uint16_t supportedOperationsCount;
 extern uint16_t *supportedOperations; // note that this memory space is reused -- only available immediately after init
