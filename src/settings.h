@@ -51,23 +51,23 @@
 
 struct settings
 {
-    char cameraFPS;
-    char warnTime;
-    char mirrorTime;
+    uint8_t cameraFPS;
+    uint8_t warnTime;
+    uint8_t mirrorTime;
     char sysName[13];
-    char bulbMode;
-    char cameraMake;
-    char lcdColor;
-    char lcdBacklightTime;
-    char sysOffTime;
-    char flashlightOffTime;
+    uint8_t bulbMode;
+    uint8_t cameraMake;
+    uint8_t lcdColor;
+    uint8_t lcdBacklightTime;
+    uint8_t sysOffTime;
+    uint8_t flashlightOffTime;
     uint32_t settingsVersion;
     uint32_t shutterVersion;
-    char devMode;
+    uint8_t devMode;
     uint32_t firmwareVersion;
-    char auxPort;
-    char btMode;
-    char halfPress;
+    uint8_t auxPort;
+    uint8_t btMode;
+    uint8_t halfPress;
     uint16_t bulbOffset;
     uint8_t brampMode;
     uint8_t interface;
@@ -81,7 +81,10 @@ struct settings
     uint8_t isoMax;
     uint8_t apertureMax;
     uint8_t apertureMin;
-    char pad[30];
+    uint8_t debugEnabled;
+    uint8_t arbitraryBulb;
+    uint8_t menuWrap;
+    uint8_t pad[27];
 };
 
 void settings_load(void);
