@@ -42,3 +42,7 @@ util/template/fwupdated_template.png
 version
 
 *.rid
+
+publish_beta_release.sh
+
+publish_release.sh
