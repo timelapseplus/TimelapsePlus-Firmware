@@ -945,7 +945,7 @@ volatile char timerStatus(char key, char first)
 			displayTimerStatus(0);
 
 			menu.setTitle(TEXT("Running"));
-			menu.setBar(TEXT(""), TEXT("STOP"));
+			menu.setBar(TEXT("OPTIONS"), TEXT("STOP"));
 			lcd.update();
 		}
 
@@ -957,9 +957,27 @@ volatile char timerStatus(char key, char first)
 			menu.spawn((void*)timerStop);
 			return FN_JUMP;
 		}
+		if(key == FL_KEY)
+		{
+			menu.push(1);
+			menu.submenu((void*)menu_timelapse_options);
+		}
+		if(key == LEFT_KEY)
+		{
+			return backToMain(key, first);
+		}
 
 		return FN_CONTINUE;
 	}
+}
+
+volatile char backToMain(char key, char first)
+{
+	menu.clearStack();
+	menu.init((menu_item*)menu_main);
+	menu.refresh();
+	lcd.update();
+	return FN_CONTINUE;
 }
 
 /******************************************************************

@@ -297,10 +297,24 @@ const menu_item menu_trigger[]PROGMEM =
     { "\0           ", 'V', 0, 0, 0 }
 };
 
+const menu_item menu_trigger_running[]PROGMEM =
+{
+    { "BT Remote   ", 'F', (void*)cableReleaseRemote, 0, 0, (void*)&showRemoteStart },
+    { "Remote Video", 'F', (void*)videoRemoteBT, 0, 0, (void*)&showRemoteStart },
+    { "\0           ", 'V', 0, 0, 0 }
+};
+
+const menu_item menu_timelapse_options[]PROGMEM =
+{
+    { "Main Menu   ", 'F', (void*)backToMain, 0, 0, 0 },
+    { "Stop T-lapse", 'F', (void*)timerStop, 0, 0, 0 },
+    { "\0           ", 'V', 0, 0, 0 }
+};
+
 const menu_item menu_connect[]PROGMEM =
 {
     { "Bluetooth   ", 'F', (void*)btConnect, 0, 0, &bt.present },
-    { "USB         ", 'F', (void*)usbPlug, 0, 0, 0 },
+    { "USB         ", 'F', (void*)usbPlug, 0, 0, (void*)&timerNotRunning },
     { "\0           ", 'V', 0, 0, 0 }
 };
 
@@ -487,40 +501,16 @@ const settings_item menu_settings_camera_fps[]PROGMEM =
 const char STR_LCD_CONTRAST[]PROGMEM = "LCD Contrast";
 const settings_item menu_settings_lcd_contrast[]PROGMEM =
 {
-    { "Contrast: 1 ", 0xf, (void*)STR_LCD_CONTRAST },
-    { "Contrast: 2 ", 0xe, (void*)STR_LCD_CONTRAST },
-    { "Contrast: 3 ", 0xd, (void*)STR_LCD_CONTRAST },
-    { "Contrast: 4 ", 0xc, (void*)STR_LCD_CONTRAST },
-    { "Contrast: 5 ", 0xb, (void*)STR_LCD_CONTRAST },
-    { "Contrast: 6 ", 0xa, (void*)STR_LCD_CONTRAST },
-    { "Contrast: 7 ", 0x9, (void*)STR_LCD_CONTRAST },
+    { "Contrast: 1 ", 0x1, (void*)STR_LCD_CONTRAST },
+    { "Contrast: 2 ", 0x2, (void*)STR_LCD_CONTRAST },
+    { "Contrast: 3 ", 0x3, (void*)STR_LCD_CONTRAST },
+    { "Contrast: 4 ", 0x4, (void*)STR_LCD_CONTRAST },
+    { "Contrast: 5 ", 0x5, (void*)STR_LCD_CONTRAST },
+    { "Contrast: 6 ", 0x6, (void*)STR_LCD_CONTRAST },
+    { "Contrast: 7 ", 0x7, (void*)STR_LCD_CONTRAST },
     { "Contrast: 8 ", 0x8, (void*)STR_LCD_CONTRAST },
-    { "Contrast: 9 ", 0x7, (void*)STR_LCD_CONTRAST },
-    { "Contrast:10 ", 0x6, (void*)STR_LCD_CONTRAST },
-    { "Contrast:11 ", 0x5, (void*)STR_LCD_CONTRAST },
-    { "Contrast:12 ", 0x4, (void*)STR_LCD_CONTRAST },
-    { "Contrast:13 ", 0x3, (void*)STR_LCD_CONTRAST },
-    { "Contrast:14 ", 0x2, (void*)STR_LCD_CONTRAST },
-    { "Contrast:15 ", 0x1, (void*)STR_LCD_CONTRAST },
-    { "\0           ", 0, 0 }
-};
-
-const char STR_LCD_COEFFICENT[]PROGMEM = "LCD Temp Coeff.";
-const settings_item menu_settings_lcd_coefficent[]PROGMEM =
-{
-    { "Coefficent3 ", 0x3, (void*)STR_LCD_COEFFICENT },
-    { "Coefficent4 ", 0x4, (void*)STR_LCD_COEFFICENT },
-    { "Coefficent5 ", 0x5, (void*)STR_LCD_COEFFICENT },
-    { "Coefficent6 ", 0x6, (void*)STR_LCD_COEFFICENT },
-    { "Coefficent7 ", 0x7, (void*)STR_LCD_COEFFICENT },
-    { "\0           ", 0, 0 }
-};
-
-const char STR_LCD_BIAS[]PROGMEM = "LCD Bias Mode";
-const settings_item menu_settings_lcd_bias[]PROGMEM =
-{
-    { "Bias Mode 3 ", 0x3, (void*)STR_LCD_BIAS },
-    { "Bias Mode 4 ", 0x4, (void*)STR_LCD_BIAS },
+    { "Contrast: 9 ", 0x9, (void*)STR_LCD_CONTRAST },
+    { "Contrast:10 ", 0xA, (void*)STR_LCD_CONTRAST },
     { "\0           ", 0, 0 }
 };
 
@@ -537,9 +527,7 @@ const menu_item menu_settings_display[]PROGMEM =
 {
     { "BackLt Color", 'S', (void*)menu_settings_lcd_color, (void*)&conf.lcdColor, (void*)settings_update, 0 },
     { "BackLt Time ", 'S', (void*)menu_settings_backlight_time, (void*)&conf.lcdBacklightTime, (void*)settings_update, 0 },
-    { "Contrast    ", 'S', (void*)menu_settings_lcd_contrast, (void*)&conf.lcdContrast, (void*)settings_update, 0 },
-    { "T Coefficent", 'S', (void*)menu_settings_lcd_coefficent, (void*)&conf.lcdCoefficent, (void*)settings_update, 0 },
-    { "Bias Mode   ", 'S', (void*)menu_settings_lcd_bias, (void*)&conf.lcdBias, (void*)settings_update, 0 },
+    { "LCD Contrast", 'S', (void*)menu_settings_lcd_contrast, (void*)&conf.lcdContrast, (void*)settings_update, 0 },
     { "\0           ", 'V', 0, 0, 0 }
 };
 
@@ -584,11 +572,11 @@ const menu_item menu_development[]PROGMEM =
 //    { "4 Hour Light", 'F', (void*)lightTest, 0, 0, (void*)&timerNotRunning },
     { "Sys Status  ", 'F', (void*)sysStatus, 0, 0, 0 },
     { "Battery     ", 'F', (void*)batteryStatus, 0, 0, 0 },
-    { "Light Meter ", 'F', (void*)lightMeter, 0, 0, 0 },
+    { "Light Meter ", 'F', (void*)lightMeter, 0, 0, (void*)&timerNotRunning },
 //    { "BT Flood    ", 'F', (void*)btFloodTest, 0, 0, 0 },
-    { "Reset All   ", 'F', (void*)factoryReset, 0, 0, 0 },
+    { "Reset All   ", 'F', (void*)factoryReset, 0, 0, (void*)&timerNotRunning },
 //    { "WDT Reset   ", 'F', (void*)wdtReset, 0, 0, 0 },
-    { "DFU Mode    ", 'F', (void*)hardware_bootloader, 0, 0, 0 },
+    { "DFU Mode    ", 'F', (void*)hardware_bootloader, 0, 0, (void*)&timerNotRunning },
     { "\0           ", 'V', 0, 0, 0 }
 };
 
@@ -607,10 +595,11 @@ const menu_item menu_settings[]PROGMEM =
 const menu_item menu_main[]PROGMEM =
 {
     { "Trigger     ", 'M', (void*)menu_trigger, 0, 0, (void*)&timerNotRunning },
-    { "Timelapse   ", 'M', (void*)menu_timelapse, 0, 0, 0 },
+    { "Timelapse   ", 'M', (void*)menu_timelapse, 0, 0, (void*)&timerNotRunning },
+    { "Timelapse   ", 'F', (void*)timerStatus, 0, 0, (void*)&timer.running },
     { "Connect     ", 'M', (void*)menu_connect, 0, 0, 0 },
     { "Settings    ", 'M', (void*)menu_settings, 0, 0, 0 },
-    { "Power Off   ", 'F', (void*)hardware_off, 0, 0, 0 },
+    { "Power Off   ", 'F', (void*)hardware_off, 0, 0, (void*)&timerNotRunning },
     { "\0           ", 'V', 0, 0, 0 }
 };
 
