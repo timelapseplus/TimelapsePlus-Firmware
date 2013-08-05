@@ -1110,7 +1110,7 @@ uint8_t PTP::checkEvent()
 		}
 		else
 		{
-			busy = false;
+			//busy = false;
 		}
 		if(supports.event)
 		{
@@ -1156,6 +1156,7 @@ uint8_t PTP::checkEvent()
 				switch(tevent)
 				{
 					case PTP_EC_OBJECT_CREATED:
+						busy = false;
 						currentObject = event_value; // Save the object ID for later retrieving the thumbnail
 						debug(PSTR("\r\n Object added: "));
 						sendHex((char *)&currentObject);
