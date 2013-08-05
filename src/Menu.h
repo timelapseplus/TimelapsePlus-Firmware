@@ -82,6 +82,7 @@ public:
     void up();
     void down();
     void back();
+    void clearStack();
     void highlight(char x1, char y1, char x2, char y2);
     void clearHighlight();
     void select(char menuItem);

@@ -543,39 +543,39 @@ char *MENU::menuName(char *str)
 
     if(stack_counter > 0) // is there a calling menu? //
     {
-        menu_item *cmenu = (menu_item*)stack[stack_counter - 1].item;;
-        for(i = stack_counter; i > 0; i--)
+        if(stack[stack_counter - 1].type == 0)
         {
-          if(stack[stack_counter - 1].type == 0)
+          menu_item *cmenu = (menu_item*)stack[stack_counter - 1].item; // retreive calling menu //
+
+          index = stack[stack_counter - 1].index;;
+
+          uint8_t j = 0;
+
+          for(i = 0; i < MENU_NAME_LEN - 1; i++) // read name //
           {
-            cmenu = (menu_item*)stack[stack_counter - 1].item; // retreive calling menu //
+              char c = pgm_read_byte(&cmenu[index].name[i]);
+              if(j == 0 &&  (c == ' ' || c == '-')) continue;
+              *(str + j) = pgm_read_byte(&cmenu[index].name[i]);
+              j++;
+          }
+          
+          for(i = j - 1; i > 1; i--) // trim //
+          {
+              if(*(str + i) != ' ')
+              {
+                  *(str + i + 1) = '\0';
+                  break;
+              }
           }
         }
-
-        index = stack[stack_counter - 1].index;;
-
-        uint8_t j = 0;
-
-        for(i = 0; i < MENU_NAME_LEN - 1; i++) // read name //
+        else
         {
-            char c = pgm_read_byte(&cmenu[index].name[i]);
-            if(j == 0 &&  (c == ' ' || c == '-')) continue;
-            *(str + j) = pgm_read_byte(&cmenu[index].name[i]);
-            j++;
-        }
-        
-        for(i = j - 1; i > 1; i--) // trim //
-        {
-            if(*(str + i) != ' ')
-            {
-                *(str + i + 1) = '\0';
-                break;
-            }
+          strcpy_P(str, PSTR("OPTIONS"));
         }
     } 
     else
     {
-        strcpy_P(str, PSTR("MAIN MENU"));
+      strcpy_P(str, PSTR("MAIN MENU"));
     }
 
     return str;
@@ -778,6 +778,19 @@ void MENU::back()
     {
         debug(STR("POP: BOTTOM\r\n"));
     }
+}
+
+/******************************************************************
+ *
+ *   MENU::back
+ *
+ *
+ ******************************************************************/
+
+void MENU::clearStack()
+{
+  stack_counter = 0;
+  m_refresh = 1;
 }
 
 /******************************************************************
