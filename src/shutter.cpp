@@ -71,6 +71,7 @@ const char STR_BULBMODE_ALERT[]PROGMEM = "Please make sure the camera is in bulb
 const char STR_BULBSUPPORT_ALERT[]PROGMEM = "Bulb mode not supported via USB. Use an adaptor cable with the USB";
 const char STR_MEMORYSPACE_ALERT[]PROGMEM = "Please confirm there is enough space on the memory card in the camera";
 const char STR_APERTURE_ALERT[]PROGMEM = "Note that using an aperture other than the maximum without lens-twist can cause flicker";
+const char STR_DEVMODE_ALERT[]PROGMEM = "DEV Mode can interfere with the light sensor. Please disable before continuing";
 
 
 /******************************************************************
@@ -500,6 +501,14 @@ char shutter::task()
         else
         {
             if(preChecked) menu.clearAlert(STR_MEMORYSPACE_ALERT);
+        }
+        if((current.Mode & RAMP) && (current.brampMethod == BRAMP_METHOD_AUTO) && conf.devMode)
+        {
+            if(!preChecked) menu.alert(STR_DEVMODE_ALERT);
+        }
+        else
+        {
+            if(preChecked) menu.clearAlert(STR_DEVMODE_ALERT);
         }
         preChecked = true;
         if(menu.waitingAlert()) return 0; //////////////////////////////////////////////
