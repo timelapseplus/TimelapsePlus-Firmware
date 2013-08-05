@@ -42,7 +42,7 @@ public:
     void writeCharBig(unsigned char x, unsigned char y, unsigned char c);
     void drawBMP(unsigned char x, unsigned char y, unsigned char *pBMP);
     void update();
-    void init(uint8_t contrast, uint8_t coefficent, uint8_t bias);
+    void init(uint8_t contrast);
     void off(void);
     void cls(void);
     void color(int8_t red);

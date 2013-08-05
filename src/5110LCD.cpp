@@ -939,8 +939,25 @@ void LCD::update()
  *
  ******************************************************************/
 
-void LCD::init(uint8_t contrast, uint8_t coefficent, uint8_t bias)
+void LCD::init(uint8_t contrast)
 {
+    uint8_t coefficent, bias;
+
+    if(contrast < 1 || contrast > 10) contrast = 5;
+
+    if(contrast <= 5)
+    {
+        bias = 3;
+        coefficent = 8 - contrast;
+    }
+    else
+    {
+        bias = 4;
+        coefficent = 8 - (contrast - 5);
+    }
+
+    contrast = 0x8;
+
     // LCD_RST = 0;
     setOut(SPI_CS);
     setOut(SPI_MOSI);

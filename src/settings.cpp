@@ -40,7 +40,7 @@ void settings_save()
 {
     if(conf.cameraMake == PANASONIC) conf.halfPress = HALF_PRESS_DISABLED;
     eeprom_write_block((const void*)&conf, &conf_eep, sizeof(settings));
-    lcd.init(conf.lcdContrast, conf.lcdCoefficent, conf.lcdBias);
+    lcd.init(conf.lcdContrast);
     lcd.update();
 }
 

@@ -121,7 +121,7 @@ void setup()
 	settings_init();
 
 
-	lcd.init(conf.lcdContrast, conf.lcdCoefficent, conf.lcdBias);
+	lcd.init(conf.lcdContrast);
     lcd.writeString(12, 15, STR("Timelapse+"));
     uint8_t l = lcd.measureStringTiny(conf.sysName) / 2;
     lcd.writeStringTiny(41 - l, 25, conf.sysName);

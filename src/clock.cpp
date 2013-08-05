@@ -329,7 +329,7 @@ void Clock::in(uint16_t stime, void (*func)())
 
 void wakeupFunction()
 {
-    lcd.init(conf.lcdContrast, conf.lcdCoefficent, conf.lcdBias);
+    lcd.init(conf.lcdContrast);
     lcd.update();
     
     return;
