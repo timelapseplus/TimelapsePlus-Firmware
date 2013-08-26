@@ -46,3 +46,7 @@ version
 publish_beta_release.sh
 
 publish_release.sh
+
+.cproject
+
+.project
