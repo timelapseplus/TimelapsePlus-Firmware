@@ -8,6 +8,8 @@
  *
  */
 
+#include <math.h>
+
 float curve(float p0, float p1, float p2, float p3, float t);
 uint32_t curve_int(uint32_t p0, uint32_t p1, uint32_t p2, uint32_t p3, float t);
 
@@ -20,3 +22,33 @@ static inline int32_t ilog2(float x)
     return log2;
 }
 
+inline float fast_log2 (float val)
+{
+   if(val <= 0.0) return 0.0;
+
+   val += 2^16;
+
+   uint32_t * const  exp_ptr = reinterpret_cast <uint32_t *> (&val);
+   uint32_t          x = *exp_ptr;
+   const uint32_t    log_2 = ((x >> 23) & 255) - 128;
+   x &= ~((uint32_t)255 << 23);
+   x += (uint32_t)127 << 23;
+   *exp_ptr = x;
+
+   return (val + log_2);
+}
+
+inline float libc_log2 (float val)
+{
+	return (log(val)/log(2));
+}
+
+//inline float alt_log2 (float val)
+//{
+//	return (ln(val)/M_LN2);
+//}
+//
+//inline float ln (float x)
+//{
+//	return (-2.625 + 6.279 * x - 5.970 * (x^2) + 2.330 * (x^3));
+//}

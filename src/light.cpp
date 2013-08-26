@@ -125,35 +125,45 @@ void Light::setRangeAuto()
     }
 }
 
-int8_t Light::readEv()
+float Light::readEv()
 {
     float lux;
     if(!initialized) return 0;
     lux = readLux();
-    lux *= 2^5;
+    //lux *= 2^5;
 	  method = 0;
-    int8_t ev = (int8_t)ilog2(lux);
+    //int8_t ev = (int8_t)ilog2(lux); 
+    float ev = libc_log2(lux);
+
+    //debug(STR("LUX = "));
+    //debug(lux);
+    //debug(STR(", EVi = "));
+    //debug(ev);
+    //debug(STR(", EVf = "));
+    //debug(evf);
+    //debug_nl();
+
     ev *= 3;
     ev += 30;
-    if(ev <= ANALOG_THRESHOLD)
-    {
-    	uint16_t tmp = hardware_readLight(2);
-      if(offset == OFFSET_UNSET)
-      {
-        offset = tmp;
-      }
-      tmp = tmp + ANALOG_THRESHOLD - offset;
-    	if(tmp <= ANALOG_THRESHOLD)
-    	{
-        ev = tmp;
-        if(ev < 6) ev = 6;
-	    	method = 1;
-    	}
-    }
-    if(method == 0) // if analog wasn't used
-    {
-      offset = OFFSET_UNSET;
-    }
+    //if(ev <= ANALOG_THRESHOLD)
+    //{
+    //	uint16_t tmp = hardware_readLight(2);
+    //  if(offset == OFFSET_UNSET)
+    //  {
+    //    offset = tmp;
+    //  }
+    //  tmp = tmp + ANALOG_THRESHOLD - offset;
+    //	if(tmp <= ANALOG_THRESHOLD)
+    //	{
+    //    ev = tmp;
+    //    if(ev < 6) ev = 6;
+	  //  	method = 1;
+    //	}
+    //}
+    //if(method == 0) // if analog wasn't used
+    //{
+    //  offset = OFFSET_UNSET;
+    //}
 
     if(filterIndex < 0) // initialize buffer
     {
@@ -166,7 +176,7 @@ int8_t Light::readEv()
       filter[filterIndex] = ev;
     }
 
-    int8_t tmpFilter[FILTER_LENGTH];
+    float tmpFilter[FILTER_LENGTH];
     memcpy(tmpFilter, filter, sizeof(filter));
     uint8_t num_swaps = 1; // sort the filter array
     while (num_swaps > 0) 
@@ -176,7 +186,7 @@ int8_t Light::readEv()
        { 
           if(tmpFilter[i - 1] > tmpFilter[i]) 
           {
-            int8_t temp = tmpFilter[i];
+            float temp = tmpFilter[i];
             tmpFilter[i] = tmpFilter[i - 1];
             tmpFilter[i - 1] = temp;
             num_swaps++; 
@@ -191,7 +201,7 @@ int8_t Light::readEv()
 
 float Light::readIntegratedEv()
 {
-    uint16_t sum = 0;
+    float sum = 0.0;
     for(uint8_t i = 0; i < LIGHT_INTEGRATION_COUNT; i++) sum += iev[i];
 
     float value = (float)sum / (float)(LIGHT_INTEGRATION_COUNT);
@@ -201,7 +211,7 @@ float Light::readIntegratedEv()
 
 float Light::readIntegratedSlope()
 {
-    float value = ((float)readEv() - readIntegratedEv()) / (float)integration;
+    float value = (readEv() - readIntegratedEv()) / (float)integration;
 
     value *= 30.0; // stops per 30min
 
