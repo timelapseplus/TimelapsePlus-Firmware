@@ -883,9 +883,10 @@ char shutter::task()
                         for(;;)
                         {
                             nextAperture = camera.apertureUp(aperture);
-                            if(nextAperture != aperture && nextAperture < 127)
+                            if(nextAperture != aperture)
                             {
-                                uint16_t bulb_length_test = camera.shiftBulb(exp, tmpShift + (nextAperture - aperture)); // two stops extra padding here
+                                if(nextAperture >= 127) break;
+                                uint16_t bulb_length_test = camera.shiftBulb(exp, tmpShift + (nextAperture - aperture));
                                 if(bulb_length_test < BulbMax)
                                 {
                                     evShift  += nextAperture - aperture;
@@ -904,6 +905,7 @@ char shutter::task()
                         }
                         debug(PSTR("Aperture Open: Done!\r\n\r\n"));
                     }
+                    
                     if(bulb_length < camera.bulbTime((int8_t)camera.bulbMin()))
                     {
                         debug(PSTR("   Reached Bulb Min!!!\r\n"));
