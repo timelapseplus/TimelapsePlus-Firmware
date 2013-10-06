@@ -19,6 +19,7 @@
 #include "Menu.h"
 #include "debug.h"
 #include "settings.h"
+#include "hardware.h"
 
 extern Clock clock;
 extern settings conf;
@@ -1680,5 +1681,28 @@ char MENU::waitingAlert()
   if(alert_index > 0) return 1; else return 0;
 }
 
+void MENU::blink()
+{
+  uint8_t bl = lcd->getBacklight();
+  lcd->backlight(255);
+  hardware_flashlight(1);
+  _delay_ms(100);
+  lcd->backlight(0);
+  hardware_flashlight(0);
+  _delay_ms(100);
+  lcd->backlight(255);
+  hardware_flashlight(1);
+  _delay_ms(100);
+  lcd->backlight(0);
+  hardware_flashlight(0);
+  _delay_ms(100);
+  lcd->backlight(255);
+  hardware_flashlight(1);
+  _delay_ms(100);
+  lcd->backlight(0);
+  hardware_flashlight(0);
+  _delay_ms(100);
 
+  lcd->backlight(bl);
+}
 

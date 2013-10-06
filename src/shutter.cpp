@@ -475,6 +475,14 @@ char shutter::task()
             if(!preChecked) menu.alert(STR_APERTURE_ALERT);
         }
         else
+        CHECK_ALERT(STR_APERTURE_ALERT, camera.ready && camera.aperture() != camera.apertureWideOpen() && (current.Mode & TIMELAPSE) && !((current.Mode & RAMP) && (conf.brampMode & BRAMP_MODE_APERTURE)));
+        CHECK_ALERT(STR_BULBSUPPORT_ALERT, (current.Mode & RAMP) && camera.ready && !camera.supports.bulb && !cable_connected);
+        CHECK_ALERT(STR_BULBMODE_ALERT, (current.Mode & RAMP) && !camera.isInBulbMode());
+        CHECK_ALERT(STR_MEMORYSPACE_ALERT, (current.Photos > 0) && camera.ready && camera.photosRemaining && camera.photosRemaining < current.Photos);
+        CHECK_ALERT(STR_DEVMODE_ALERT, (current.Mode & RAMP) && (current.brampMethod == BRAMP_METHOD_AUTO) && conf.devMode);
+        CHECK_ALERT(STR_ZEROLENGTH_ALERT, (current.Mode & RAMP) && (current.Duration == 0));
+
+        if(!preChecked && menu.waitingAlert())
         {
             if(preChecked) menu.clearAlert(STR_APERTURE_ALERT);
         }
@@ -509,9 +517,11 @@ char shutter::task()
         else
         {
             if(preChecked) menu.clearAlert(STR_DEVMODE_ALERT);
+            menu.blink();
         }
         preChecked = true;
         if(menu.waitingAlert()) return 0; //////////////////////////////////////////////
+        if(menu.waitingAlert()) return CONTINUE; //////////////////////////////////////////////
 
         menu.message(TEXT("Loading"));
         menu.task();

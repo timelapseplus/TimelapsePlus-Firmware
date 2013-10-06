@@ -100,6 +100,7 @@ public:
     void message(char *m);
     void push();
     void push(uint8_t type);
+    void blink();
     
     uint8_t unusedKey;
 
