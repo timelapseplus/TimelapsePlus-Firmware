@@ -113,7 +113,7 @@ void settings_default()
     conf.autoRun = AUTO_RUN_OFF;
     conf.modeSwitch = USB_CHANGE_MODE_DISABLED;
     conf.dollyPulse = 100;
-    conf.lcdContrast = 0xf;
+    conf.lcdContrast = 3;
     conf.lcdCoefficent = 0x7;
     conf.lcdBias = 0x3;
     conf.bulbMin = 56;
