@@ -123,6 +123,8 @@ void settings_default()
     conf.debugEnabled = 0;
     conf.arbitraryBulb = 0;
     conf.menuWrap = 1;
+    conf.extendedRamp = 0;
+
     settings_save();
     settings_load();
 }

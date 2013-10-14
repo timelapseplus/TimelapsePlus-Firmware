@@ -77,6 +77,8 @@
 #define PTP_OC_SendObjectInfo 0x100C
 #define PTP_OC_SendObject 0x100D
 
+#define PTP_RESPONSE_OK 0x2001
+#define PTP_RESPONSE_BUSY 0x2019
 
 
 

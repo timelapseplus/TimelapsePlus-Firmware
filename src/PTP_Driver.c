@@ -83,7 +83,7 @@ char PTP_CameraModel[23];
 char PTP_CameraMake[23];
 PIMA_Container_t PIMA_Block;
 volatile uint8_t PTP_Ready, PTP_Connected, configured, PTP_Run_Task = 1;
-uint16_t PTP_Error, PTP_Response_Code;
+volatile uint16_t PTP_Error, PTP_Response_Code;
 uint16_t supportedOperationsCount;
 uint16_t *supportedOperations;
 
@@ -197,6 +197,8 @@ uint8_t PTP_Transaction(uint16_t opCode, uint8_t receive_data, uint8_t paramCoun
         }
     }
 
+    USB_USBTask(); // not sure this is necessary here - trying to fix an occasional crash while reading EOS events
+
     PTP_Response_Code = 0;
     uint8_t error_code = SI_Host_ReceiveResponseCode(&DigitalCamera_SI_Interface, &PIMA_Block);
     PTP_Response_Code = PIMA_Block.Code;
@@ -263,9 +265,11 @@ uint16_t PTP_GetEvent(uint32_t *event_value)
 {
     if(SI_Host_IsEventReceived(&DigitalCamera_SI_Interface))
     {
-        uint8_t error = SI_Host_ReceiveEventHeader(&DigitalCamera_SI_Interface, &PIMA_Block);
         #ifdef PTP_DEBUG
+        uint8_t error = SI_Host_ReceiveEventHeader(&DigitalCamera_SI_Interface, &PIMA_Block);
         if(error) printf_P(PSTR("PTP_GetEvent Error %x\r\n"), error);
+        #else
+        SI_Host_ReceiveEventHeader(&DigitalCamera_SI_Interface, &PIMA_Block);
         #endif
         *event_value = PIMA_Block.Params[0];
         return PIMA_Block.Code;
@@ -281,13 +285,30 @@ uint8_t SI_Host_ReceiveResponseCode(USB_ClassInfo_SI_Host_t* const SIInterfaceIn
     uint8_t ErrorCode;
 
     if ((USB_HostState != HOST_STATE_Configured) || !(SIInterfaceInfo->State.IsActive))
+    {
+      #ifdef PTP_DEBUG
+      printf_P(PSTR("SI_Host_ReceiveResponseCode -- disconnected\r\n"));
+      #endif
       return PIPE_RWSTREAM_DeviceDisconnected;
+    }
 
     if ((ErrorCode = SI_Host_ReceiveBlockHeader(SIInterfaceInfo, PIMABlock)) != PIPE_RWSTREAM_NoError)
+    {
+      #ifdef PTP_DEBUG
+      printf_P(PSTR("SI_Host_ReceiveResponseCode -- error %x\r\n"), ErrorCode);
+      #endif
       return ErrorCode;
+    }
 
     if ((PIMABlock->Type != CPU_TO_LE16(PIMA_CONTAINER_ResponseBlock)) || (PIMABlock->Code != CPU_TO_LE16(0x2001)))
+    {
+      #ifdef PTP_DEBUG
+      printf_P(PSTR("SI_Host_ReceiveResponseCode -- block type\r\n"));
+      printf_P(PSTR("     PIMABlock->Type = %d\r\n"), PIMABlock->Type);
+      printf_P(PSTR("     PIMABlock->Code = %d\r\n"), PIMABlock->Code);
+      #endif
       return SI_ERROR_LOGICAL_CMD_FAILED;
+    }
 
     return PIPE_RWSTREAM_NoError;
 }

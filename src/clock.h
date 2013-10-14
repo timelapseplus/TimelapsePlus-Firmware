@@ -37,6 +37,7 @@ public:
     uint8_t jobRunning;
 
     void job(void (*startFunction)(), void (*endFunction)(), uint32_t duration);
+    void cancelJob(void);
     void in(uint16_t stime, void (*func)());
 
 private:

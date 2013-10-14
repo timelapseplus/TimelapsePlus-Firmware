@@ -47,5 +47,8 @@ volatile char system_name(char key, char first);
 volatile char focusStack(char key, char first);
 volatile char lightTrigger(char key, char first);
 volatile char backToMain(char key, char first);
+volatile char timerToGuided(char key, char first);
+volatile char timerToAuto(char key, char first);
+
 void int_to_str(uint16_t n, char buf[6]);
 void updateConditions();

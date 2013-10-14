@@ -73,6 +73,9 @@ const char STR_MAX_ISO[]PROGMEM = "Maximum ISO Ramp";
 const char STR_MAX_APERTURE[]PROGMEM = "Max Aperture Ramp";
 const char STR_MIN_APERTURE[]PROGMEM = "Min Aperture Ramp";
 
+const char STR_INTERVAL_MODE_FIXED[]PROGMEM = "Fixed Interval";
+const char STR_INTERVAL_MODE_VARIABLE[]PROGMEM = "Variable Interval";
+
 const menu_item menu_options[]PROGMEM =
 {
     { "Stop Timer  ", 'F', (void*)&timerStop, 0, 0, (void*)&timer.running },
@@ -113,9 +116,10 @@ const settings_item settings_bramp_method[]PROGMEM =
 const settings_item settings_bramp_target[]PROGMEM =
 {
     { "Automatic   ", BRAMP_TARGET_AUTO, (void*)STR_BRAMP_TARGET },
-    { "Starlight   ", BRAMP_TARGET_STARS, (void*)STR_BRAMP_TARGET },
+    { "Milky Way   ", BRAMP_TARGET_STARS, (void*)STR_BRAMP_TARGET },
     { "Half Moon   ", BRAMP_TARGET_HALFMOON, (void *) STR_BRAMP_TARGET },
     { "Full Moon   ", BRAMP_TARGET_FULLMOON, (void*)STR_BRAMP_TARGET },
+    { "City Lights ", BRAMP_TARGET_CITYLIGHTS, (void*)STR_BRAMP_TARGET },
     { "\0           ", 0, 0 }
 };
 
@@ -163,10 +167,26 @@ const settings_item settings_hdr_exposures[]PROGMEM =
     { "\0           ", 0, 0 }
 };
 
+const settings_item settings_interval_mode[]PROGMEM =
+{
+    { "      Fixed ", INTERVAL_MODE_FIXED, (void*)STR_INTERVAL_MODE_FIXED },
+    { "       Auto ", INTERVAL_MODE_AUTO, (void*)STR_INTERVAL_MODE_VARIABLE },
+//    { "   Keyframe ", INTERVAL_MODE_KEYFRAME, (void*)STR_INTERVAL_MODE_VARIABLE },
+    { "\0           ", 0, 0 }
+};
+
 const dynamicItem_t dyn_tv PROGMEM =
 {
     (void*)PTP::shutterUp,
     (void*)PTP::shutterDown,
+    (void*)PTP::shutterName,
+    (void*)STR_TV
+};
+
+const dynamicItem_t dyn_ramp_ext PROGMEM =
+{
+    (void*)rampTvUpExtended,
+    (void*)rampTvDownExtended,
     (void*)PTP::shutterName,
     (void*)STR_TV
 };
@@ -250,14 +270,18 @@ const menu_item menu_timelapse[]PROGMEM =
     { "Delay      T", 'E', (void*)&timer.current.Delay, (void*)STR_TIME, 0, 0 },
     { "Length     T", 'E', (void*)&timer.current.Duration, (void*)STR_TIME, 0, (void*)&modeRamp },
     { "Frames     U", 'E', (void*)&timer.current.Photos, (void*)STR_PHOTOS, 0, (void*)&modeNoRamp },
+    { "Intrvl Mode ", 'S', (void*)settings_interval_mode, (void*)&timer.current.IntervalMode, 0, (void*)&modeRamp },
     { "Intrvl     F", 'E', (void*)&timer.current.Gap, (void*)STR_TIME_TENTHS, 0, (void*)&showGap },
+    { "Int Max    F", 'E', (void*)&timer.current.Gap, (void*)STR_TIME_TENTHS, 0, (void*)&showIntervalMaxMin },
+    { "Int Min    F", 'E', (void*)&timer.current.GapMin, (void*)STR_TIME_TENTHS, 0, (void*)&showIntervalMaxMin },
     { "HDR Exp's  +", 'D', (void*)&dyn_hdr_exps,    (void*)&timer.current.Exps, 0, (void*)&modeHDR },
     { "Mid Tv     +", 'D', (void*)&dyn_hdr_tv,            (void*)&timer.current.Exp, 0, (void*)&modeHDR },
     { "Tv         +", 'D', (void*)&dyn_tv,            (void*)&timer.current.Exp, 0, (void*)&modeStandardExp },
     { "S          +", 'D', (void*)&dyn_tv,            (void*)&timer.current.Exp, 0, (void*)&modeStandardExpNikon },
     { "Bulb       F", 'E', (void*)&timer.current.ArbExp,  (void*)STR_TIME_TENTHS, 0, (void*)&modeStandardExpArb },
     { "Bracket    +", 'D', (void*)&dyn_bracket,            (void*)&timer.current.Bracket, 0, (void*)&modeHDR },
-    { "StartTv    +", 'D', (void*)&dyn_bulb, (void*)&timer.current.BulbStart, 0, (void*)&modeRamp },
+    { "StartTv    +", 'D', (void*)&dyn_bulb, (void*)&timer.current.BulbStart, 0, (void*)&modeRampNormal },
+    { "StartTv    +", 'D', (void*)&dyn_ramp_ext, (void*)&timer.current.BulbStart, 0, (void*)&modeRampExtended },
     { "Integration ", 'S', (void*)settings_auto_bramp_integration, (void*)&timer.current.Integration, 0, (void*)&brampAuto },
 //    { "Night Sky   ", 'S', (void*)settings_bramp_target, (void*)&timer.current.NightSky, 0, (void*)&brampAuto },
     { "-By        T", 'E', (void*)&timer.current.Key[0], (void*)STR_TIME_SINCE_START, 0, (void*)&brampKeyframe },
@@ -307,6 +331,8 @@ const menu_item menu_trigger_running[]PROGMEM =
 const menu_item menu_timelapse_options[]PROGMEM =
 {
     { "Main Menu   ", 'F', (void*)backToMain, 0, 0, 0 },
+    { "Guided Mode ", 'F', (void*)timerToGuided, 0, 0, (void*)&brampNotGuided },
+    { "Auto Mode   ", 'F', (void*)timerToAuto, 0, 0, (void*)&brampNotAuto },
     { "Stop T-lapse", 'F', (void*)timerStop, 0, 0, 0 },
     { "\0           ", 'V', 0, 0, 0 }
 };
@@ -425,8 +451,8 @@ const settings_item menu_settings_interface[]PROGMEM =
     { "Auto        ", INTERFACE_AUTO, (void*)STR_INTERFACE },
     { "USB + Cable ", INTERFACE_USB_CABLE, (void*)STR_INTERFACE },
     { "USB Only    ", INTERFACE_USB, (void*)STR_INTERFACE },
-    { "Cable Only  ", INTERFACE_IR, (void*)STR_INTERFACE },
-    { "IR Only     ", INTERFACE_CABLE, (void*)STR_INTERFACE },
+    { "Cable Only  ", INTERFACE_CABLE, (void*)STR_INTERFACE },
+    { "IR Only     ", INTERFACE_IR, (void*)STR_INTERFACE },
     { "\0           ", 0, 0 }
 };
 
@@ -439,6 +465,16 @@ const settings_item menu_settings_bramp_mode[]PROGMEM =
     { "Bulb,A,ISO  ", BRAMP_MODE_ALL, (void*)STR_BRAMP_ALL },
     { "Bulb, ISO   ", BRAMP_MODE_BULB_ISO, (void*)STR_BRAMP_BULB_ISO },
     { "Bulb only   ", BRAMP_MODE_BULB, (void*)STR_BRAMP_BULB },
+    { "\0           ", 0, 0 }
+};
+
+const char STR_BRAMP_EXTENDED_DISABLED[]PROGMEM = "Uses Bulb Only";
+const char STR_BRAMP_EXTENDED_ENABLED[]PROGMEM =  "Fast Shutter Steps";
+
+const settings_item menu_settings_bramp_extended[]PROGMEM =
+{
+    { "Disabled    ", 0, (void*)STR_BRAMP_EXTENDED_DISABLED },
+    { "Enabled     ", 1, (void*)STR_BRAMP_EXTENDED_ENABLED },
     { "\0           ", 0, 0 }
 };
 
@@ -550,6 +586,7 @@ const menu_item menu_settings_timelapse[]PROGMEM =
     { "Aperture Max", 'D', (void*)&dyn_max_aperture, (void*)&conf.apertureMax, (void*)settings_update, 0 },
     { "Aperture Min", 'D', (void*)&dyn_min_aperture, (void*)&conf.apertureMin, (void*)settings_update, 0 },
     { "Bramp Mode  ", 'S', (void*)menu_settings_bramp_mode, (void*)&conf.brampMode, (void*)settings_update, 0 },
+    { "Ext Bramp   ", 'S', (void*)menu_settings_bramp_extended, (void*)&conf.extendedRamp, (void*)settings_update, 0 },
     { "Bulb Units  ", 'S', (void*)menu_settings_arbitrary_bulb, (void*)&conf.arbitraryBulb, (void*)settings_update, 0 },
     { "Run on PwrOn", 'S', (void*)menu_settings_auto_run, (void*)&conf.autoRun, (void*)settings_update, 0 },
     { "\0           ", 'V', 0, 0, 0 }
@@ -569,7 +606,9 @@ const menu_item menu_development[]PROGMEM =
     { "Debug Mode  ", 'S', (void*)menu_settings_debug_mode, (void*)&conf.debugEnabled, (void*)settings_update, 0 },
     { "Shutter Test", 'F', (void*)shutterTest, 0, 0, (void*)&timerNotRunning },
     { "Calc BOffset", 'F', (void*)shutterLagTest, 0, 0, (void*)&timerNotRunning },
-//    { "4 Hour Light", 'F', (void*)lightTest, 0, 0, (void*)&timerNotRunning },
+#ifdef PRODUCTION
+    { "4 Hour Light", 'F', (void*)lightTest, 0, 0, (void*)&timerNotRunning },
+#endif
     { "Sys Status  ", 'F', (void*)sysStatus, 0, 0, 0 },
     { "Battery     ", 'F', (void*)batteryStatus, 0, 0, 0 },
     { "Light Meter ", 'F', (void*)lightMeter, 0, 0, (void*)&timerNotRunning },

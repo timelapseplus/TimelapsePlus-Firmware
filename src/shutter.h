@@ -32,12 +32,20 @@
 #define BRAMP_METHOD_GUIDED 1
 #define BRAMP_METHOD_AUTO 2
 
-#define BRAMP_INTERVAL_MIN 70
+#define BRAMP_INTERVAL_MIN 80
+#define BRAMP_INTERVAL_VAR_MIN 30
 
-#define BRAMP_TARGET_AUTO 0
-#define BRAMP_TARGET_STARS 9
-#define BRAMP_TARGET_HALFMOON 3
-#define BRAMP_TARGET_FULLMOON 1
+#define BRAMP_TARGET_AUTO 255
+#define BRAMP_TARGET_STARS (100-4)
+#define BRAMP_TARGET_HALFMOON (100+3)
+#define BRAMP_TARGET_FULLMOON (100+1)
+#define BRAMP_TARGET_CITYLIGHTS (100+5)
+
+#define MAX_EXTENDED_RAMP_SHUTTER 69
+
+#define INTERVAL_MODE_FIXED 0
+#define INTERVAL_MODE_AUTO 1
+#define INTERVAL_MODE_KEYFRAME 2
 
 #define MAX_KEYFRAMES 5
 
@@ -65,7 +73,9 @@
 //#define CHECK_CABLE if(getPin(CHECK_CABLE_PIN) || getPin(SHUTTER_SENSE_PIN)) cable_connected = 1; else cable_connected = 0
 #define CHECK_CABLE if(getPin(CHECK_CABLE_PIN)) cable_connected = 1; else cable_connected = 0
 
-#define SHUTTER_VERSION 20130403
+#define SHUTTER_VERSION 20131003
+
+#define CHECK_ALERT(string, test) if(test) { if(!preChecked) menu.alert(string); } else { if(preChecked) menu.clearAlert(string); }
 
 struct program
 {
@@ -74,7 +84,9 @@ struct program
     unsigned int Delay;       // 2 bytes
     unsigned int Duration;    // 2 bytes
     unsigned int Photos;      // 2 bytes
+    unsigned int IntervalMode;// 2 bytes
     unsigned int Gap;         // 2 bytes
+    unsigned int GapMin;      // 2 bytes
     unsigned int Exps;        // 2 bytes
     unsigned int Exp;         // 2 bytes
     unsigned int ArbExp;      // 2 bytes
@@ -85,7 +97,7 @@ struct program
     unsigned int Keyframes;   // 2 bytes
     unsigned int brampMethod; // 2 bytes
     unsigned int Integration; // 2 bytes
-    unsigned int NightSky; // 2 bytes
+    uint8_t NightSky; // 2 bytes
     uint8_t infinitePhotos;   // 1 byte  
 };
 
@@ -101,6 +113,7 @@ struct timer_status
     uint16_t bulbLength;
     int8_t rampMax;
     int8_t rampMin;
+    unsigned int interval;
 };
 
 extern program stored[MAX_STORED+1]EEMEM;
@@ -110,6 +123,7 @@ class shutter
 public:
     shutter();
     void begin(void);
+    void pause(uint8_t p);
     char task(void);
     void save(char id);
     void load(char id);
@@ -129,6 +143,9 @@ public:
 
     char cableIsConnected(void);
 
+    void switchToGuided();
+    void switchToAuto();
+
     program current;
     timer_status status; 
     volatile char running;  // 0 = not running, 1 = running (shutter closed), 2 = running (shutter open)
@@ -139,12 +156,12 @@ public:
     volatile float lightReading;
     volatile float lightStart;
     volatile float internalRampStops;
+    volatile uint8_t paused, pausing;
 
 private:
     double test;
     uint8_t iso;
     uint8_t aperture;
-
 };
 
 void check_cable();
@@ -175,6 +192,9 @@ int8_t calcRampMax();
 int8_t calcRampMin();
 uint8_t rampTvUp(uint8_t ev);
 uint8_t rampTvUpStatic(uint8_t ev);
+uint8_t rampTvUpExtended(uint8_t ev);
 uint8_t rampTvDown(uint8_t ev);
+uint8_t rampTvDownExtended(uint8_t ev);
+void calcInterval();
 #endif
 

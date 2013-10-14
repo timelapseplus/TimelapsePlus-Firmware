@@ -69,6 +69,7 @@ public:
     uint8_t init(void);
     uint8_t checkEvent(void);
     uint8_t close(void);
+    void resetConnection(void);
     uint8_t capture(void);
     uint8_t liveView(uint8_t on);
     uint8_t moveFocus(int16_t step);
@@ -100,18 +101,20 @@ public:
     uint8_t setShutter(uint8_t value);
     uint8_t setAperture(uint8_t value);
 
-    uint32_t bulbTime(int8_t ev);
-    uint32_t bulbTime(float ev);
     uint8_t bulbMode(void);
     uint8_t manualMode(void);
-    uint32_t shiftBulb(uint32_t ms, int8_t ev);
     uint8_t isInBulbMode(void);
+
+    static uint32_t bulbTime(int8_t ev);
+    static uint32_t bulbTime(float ev);
+    static uint32_t shiftBulb(uint32_t ms, int8_t ev);
 
     static uint8_t isoName(char name[8], uint8_t ev);
     static uint8_t apertureName(char name[8], uint8_t ev);
     static uint8_t shutterName(char name[8], uint8_t ev);
-    static uint8_t bulbName(char name[8], uint16_t bulb_time);
+    static uint8_t bulbName(char name[8], uint32_t bulb_time);
     static uint8_t shutterType(uint8_t ev);
+    static uint8_t bulbToShutterEv(uint32_t bulb_time);
 
     static uint8_t bulbMax(void);
     static uint8_t bulbMin(void);
@@ -135,7 +138,10 @@ public:
     static uint8_t bulbUp(uint8_t ev);
     static uint8_t bulbDown(uint8_t ev);
 
-    uint8_t ready, busy, bulb_open, modeLiveView, recording, photosRemaining, videoMode, autofocus;
+
+    uint8_t ready, busy, bulb_open, modeLiveView, recording, videoMode, autofocus;
+
+    uint16_t photosRemaining;
 
     CameraSupports_t supports;
 

@@ -29,18 +29,21 @@
 #include "timelapseplus.h"
 #include "VirtualSerial.h"
 #include "TWI_Master.h"
-#include "LCD_Term.h"
 #include "debug.h"
 #include "bluetooth.h"
 #include "settings.h"
 #include "PTP_Driver.h"
 #include "math.h"
-#include "selftest.h"
 #include "remote.h"
 #include "tlp_menu_functions.h"
 #include "notify.h"
 #include "PTP.h"
 #include "light.h"
+
+#ifdef PRODUCTION
+#include "LCD_Term.h"
+#include "selftest.h"
+#endif
 
 char system_tested EEMEM;
 
@@ -66,6 +69,11 @@ extern volatile uint8_t showRemoteInfo;
 extern volatile uint8_t brampKeyframe;
 extern volatile uint8_t brampGuided;
 extern volatile uint8_t brampAuto;
+extern volatile uint8_t brampNotAuto;
+extern volatile uint8_t brampNotGuided;
+extern volatile uint8_t showIntervalMaxMin;
+extern volatile uint8_t modeRampNormal;
+extern volatile uint8_t modeRampExtended;
 
 volatile uint8_t connectUSBcamera = 0;
 
@@ -109,7 +117,7 @@ void setup()
 #ifdef PRODUCTION
 	if(battery_status() == 0 && getPin(BUTTON_FL_PIN)) // Looks like it's connected to the programmer
 	{
-		lcd.init(0xf, 0x7, 0x4);
+		lcd.init(0x3);
 		termInit();
 		termPrintStrP(PSTR("\n  Programming\n  Successful\n\n  Move to test\n  station\n"));
 		wdt_disable();
@@ -288,18 +296,18 @@ int main()
 
 			   case 'C': // Capture
 				   {
-			   	       debug(PSTR("Taking picture...\r\n"));
+			   	       DEBUG(PSTR("Taking picture...\r\n"));
 			   	       timer.capture();
 					   break;
 				   }
 
 			   case 'M':
-			   	    debug(PSTR("REMOTE_MODEL: "));
-				    debug(remote.model);
-				    debug_nl();
-			   	    debug(PSTR("REMOTE_CONNECTED: "));
-				    debug(remote.connected);
-				    debug_nl();
+			   	    DEBUG(PSTR("REMOTE_MODEL: "));
+				    DEBUG(remote.model);
+				    DEBUG_NL();
+			   	    DEBUG(PSTR("REMOTE_CONNECTED: "));
+				    DEBUG(remote.connected);
+				    DEBUG_NL();
 				    break;
 
 			   case 'B':
@@ -309,31 +317,35 @@ int main()
 			   case 'L':
 			   	   light.start();
 			   	   light.setRange(0);
-			   	   debug(PSTR("Light Sensor INIT\r\n"));
+			   	   DEBUG(PSTR("Light Sensor INIT\r\n"));
 				   break;
-
+#ifdef PRODUCTION
+			   case 'R':
+			   	   DEBUG(PSTR("Light Sensor Test Results:\r\n"));
+			   	   readLightTest();
+				   break;
+#endif
 			   case 'I':
-			   	   light.integrationStart(30, 0);
-			   	   light.setRange(0);
-			   	   debug(PSTR("Light Sensor Integration Start\r\n"));
+			   	   light.integrationStart(10, 0);
+			   	   DEBUG(PSTR("Light Sensor Integration Start\r\n"));
 				   break;
 
 			   case 'l':
-			   	   debug(PSTR("Raw: "));
-			   	   debug(light.readRaw());
-				   debug_nl();
-			   	   debug(PSTR("Lux: "));
-			   	   debug(light.readLux());
-				   debug_nl();
-			   	   debug(PSTR("Ev: "));
-			   	   debug(light.readEv());
-				   debug_nl();
-			   	   debug(PSTR("IntEv: "));
-			   	   debug(light.readIntegratedEv());
-				   debug_nl();
-			   	   debug(PSTR("IntSlpope: "));
-			   	   debug(light.readIntegratedSlope());
-				   debug_nl();
+			   	   DEBUG(PSTR("Raw: "));
+			   	   DEBUG(light.readRaw());
+				   DEBUG_NL();
+			   	   DEBUG(PSTR("Lux: "));
+			   	   DEBUG(light.readLux());
+				   DEBUG_NL();
+			   	   DEBUG(PSTR("Ev: "));
+			   	   DEBUG(light.readEv());
+				   DEBUG_NL();
+			   	   DEBUG(PSTR("IntEv: "));
+			   	   DEBUG(light.readIntegratedEv());
+				   DEBUG_NL();
+			   	   DEBUG(PSTR("IntSlpope: "));
+			   	   DEBUG(light.readIntegratedSlope());
+				   DEBUG_NL();
 				   break;
 
 			   case 'S': // Screen dump
@@ -454,7 +466,8 @@ void message_notify(uint8_t id)
 			{
 				if(PTP_Error && timer.running)
 				{
-					timerStop(0, 1);
+					//timerStop(0, 1);
+					menu.push(1);
 					menu.spawn((void*)usbPlug);
 				}
 				else

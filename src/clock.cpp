@@ -300,11 +300,27 @@ uint8_t Clock::slept()
 
 void Clock::job(void (*startFunction)(), void (*endFunction)(), uint32_t duration)
 {
-    jobRunning = 1;
+    jobRunning = 0;
     jobStart = startFunction;
     jobComplete = endFunction;
     jobDuration = duration;
     newJob = 1;
+}
+
+/******************************************************************
+ *
+ *   Clock::cancelJob
+ *
+ *
+ ******************************************************************/
+
+void Clock::cancelJob()
+{
+    jobRunning = 0;
+    jobStart = 0;
+    jobComplete = 0;
+    jobDuration = 0;
+    newJob = 0;
 }
 
 /******************************************************************

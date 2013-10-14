@@ -7,228 +7,10 @@
 #include "settings.h"
 #include "tldefs.h"
 #include "debug.h"
-
+#include "PTP_Lists.h"
 //#define EXTENDED_DEBUG
 
 extern settings conf;
-
-const propertyDescription_t PTP_Aperture_List[] PROGMEM = {
-    {"  Error", 0xFF, 0xFF, 255 },
-    {"  f/1.2", 0x0d, 120, 2 },
-    {"  f/1.4", 0x10, 140, 3 },
-    {"  f/1.6", 0x13, 160, 4 },
-    {"  f/1.8", 0x15, 180, 5 },
-    {"  f/2.0", 0x18, 200, 6 },
-    {"  f/2.2", 0x1b, 220, 7 },
-    {"  f/2.5", 0x1d, 250, 8 },
-    {"  f/2.8", 0x20, 280, 9 },
-    {"  f/3.2", 0x23, 320, 10 },
-    {"  f/3.5", 0x25, 350, 11 },
-    {"  f/4.0", 0x28, 400, 12 },
-    {"  f/4.5", 0x2b, 450, 13 },
-    {"  f/5.0", 0x2d, 500, 14 },
-    {"  f/5.6", 0x30, 560, 15 },
-    {"  f/6.3", 0x33, 630, 16 },
-    {"  f/7.1", 0x35, 710, 17 },
-    {"  f/8.0", 0x38, 800, 18 },
-    {"  f/9.0", 0x3b, 900, 19 },
-    {"   f/10", 0x3d, 1000, 20 },
-    {"   f/11", 0x40, 1100, 21 },
-    {"   f/13", 0x43, 1300, 22 },
-    {"   f/14", 0x45, 1400, 23 },
-    {"   f/16", 0x48, 1600, 24 },
-    {"   f/18", 0x4b, 1800, 25 },
-    {"   f/20", 0x4d, 2000, 26 },
-    {"   f/22", 0x50, 2200, 27 },
-    {"   f/25", 0x53, 2500, 28 },
-    {"   f/29", 0x55, 2900, 29 },
-    {"   f/32", 0x58, 3200, 30 },
-    {"   f/36", 0x5b, 3600, 31 }
-};
-
-#define BULB_EV_CODE 253
-const propertyDescription_t PTP_Shutter_List[] PROGMEM = {
-    {"  Error", 0xFF, 0x000000FF, 255 },
-    {" 1/8000", 0xa0, 0x00000000, 82 },
-    {" 1/6400", 0x9d, 0x00000000, 81 },
-    {" 1/5000", 0x9b, 0x00000000, 80 },
-    {" 1/4000", 0x98, 2,      79 },
-    {" 1/3200", 0x95, 3,      78 },
-    {" 1/2500", 0x93, 4,      77 },
-    {" 1/2000", 0x90, 5,      76 },
-    {" 1/1600", 0x8d, 6,      75 },
-    {" 1/1250", 0x8b, 8,      74 },
-    {" 1/1000", 0x88, 10,     73 },
-    {"  1/800", 0x85, 12,     72 },
-    {"  1/640", 0x83, 15,     71 },
-    {"  1/500", 0x80, 20,     70 },
-    {"  1/400", 0x7d, 25,     69 },
-    {"  1/320", 0x7b, 31,     68 },
-    {"  1/250", 0x78, 40,     67 },
-    {"  1/200", 0x75, 50,     66 },
-    {"  1/160", 0x73, 62,     65 },
-    {"  1/125", 0x70, 80,     64 },
-    {"  1/100", 0x6d, 100,    63 },
-    {"   1/80", 0x6b, 125,    62 },
-    {"   1/60", 0x68, 166,    61 },
-    {"   1/50", 0x65, 200,    60 },
-    {"   1/40", 0x63, 250,    59 },
-    {"   1/30", 0x60, 333,    58 },
-    {"   1/25", 0x5d, 400,    57 },
-    {"   1/20", 0x5b, 500,    56 },
-    {"   1/15", 0x58, 666,    55 },
-    {"   1/13", 0x55, 769,    54 },
-    {"   1/10", 0x53, 1000,   53 },
-    {"    1/8", 0x50, 1250,   52 },
-    {"    1/6", 0x4d, 1666,   51 },
-    {"    1/5", 0x4b, 2000,   50 },
-    {"    1/4", 0x48, 2500,   49 },
-    {"    0.3", 0x45, 3333,   48 },
-    {"    0.4", 0x43, 4000,   47 },
-    {"    0.5", 0x40, 5000,   46 },
-    {"    0.6", 0x3d, 6250,   45 },
-    {"    0.8", 0x3b, 7692,   44 },
-    {"     1s", 0x38, 10000,  43 },
-    {"   1.3s", 0x35, 13000,  42 },
-    {"   1.6s", 0x33, 16000,  41 },
-    {"     2s", 0x30, 20000,  40 },
-    {"   2.5s", 0x2d, 25000,  39 },
-    {"   3.2s", 0x2b, 30000,  38 },
-    {"     4s", 0x28, 40000,  37 },
-    {"     5s", 0x25, 50000,  36 },
-    {"     6s", 0x23, 60000,  35 },
-    {"     8s", 0x20, 80000,  34 },
-    {"    10s", 0x1d, 100000, 33 },
-    {"    13s", 0x1b, 130000, 32 },
-    {"    15s", 0x18, 150000, 31 },
-    {"    20s", 0x15, 200000, 30 },
-    {"    25s", 0x13, 250000, 29 },
-    {"    30s", 0x10, 300000, 28 },
-    {"   Bulb", 0x0c, 0xffffffff, BULB_EV_CODE }
-};
-
-const propertyDescription_t PTP_ISO_List[] PROGMEM = {
-    {"  Error", 0xFF, 0x000000FF, 255 },
-    {"   Auto", 0x00, 0x00000000, 254 },
-    {"     50", 0x40, 50, 46 },
-    {"    100", 0x48, 100, 43 },
-    {"    125", 0x4b, 125, 42 },
-    {"    160", 0x4d, 160, 41 },
-    {"    200", 0x50, 200, 40 },
-    {"    250", 0x53, 250, 39 },
-    {"    320", 0x55, 320, 38 },
-    {"    400", 0x58, 400, 37 },
-    {"    500", 0x5b, 500, 36 },
-    {"    640", 0x5d, 640, 35 },
-    {"    800", 0x60, 800, 34 },
-    {"   1000", 0x63, 1000, 33 },
-    {"   1250", 0x65, 1250, 32 },
-    {"   1600", 0x68, 1600, 31 },
-    {"   2000", 0x6B, 2000, 30 },
-    {"   2500", 0x6D, 2500, 29 },
-    {"   3200", 0x70, 3200, 28 },
-    {"   4000", 0x73, 4000, 27 },
-    {"   5000", 0x75, 5000, 26 },
-    {"   6400", 0x78, 6400, 25 },
-    {"   8000", 0x7B, 8000, 24 },
-    {"  10000", 0x7D, 10000, 23 },
-    {"  12800", 0x80, 12800, 22 },
-    {"  16000", 0x83, 16000, 21 },
-    {"  20000", 0x85, 20000, 20 },
-    {"  25600", 0x88, 25600, 19 },
-    {"  32000", 0x8B, 32000, 18 },
-    {"  40000", 0x8D, 40000, 17 },
-    {"  51200", 0x90, 51200, 16 },
-    {"  64000", 0x93, 64000, 15 },
-    {"  81000", 0x95, 81000, 14 },
-    {" 102400", 0x98, 102400, 13 },
-    {" 129000", 0x9B, 129000, 12 },
-    {" 162000", 0x9D, 162000, 11 },
-    {" 204800", 0xA0, 204800, 10 }
-}; 
-
-// Property lists:
-// ID   Type* ?  ?  1st      Current  ?   ArrayLen list...
-// 0F50 04    00 01 C800     9001     02  0500     C800 9001 2003 4006 800C 
-// 0F50 04    00 01 C800     800C     02  0500     C800 9001 2003 4006 800C
-// 0D50 06    00 01 02000000 60EA0000 02  3500     02000000 03000000 04 00 00 00 05 00 00 00 06 00 00 00 08 00 00 00 0A 00 00 00 0C 00 00 00 0F 00 00 00 14 00 00 00 19 00 00 00 1F 00 00 00 28 00 00 00 32 00 00 00 3E 00 00 00 50 00 00 00 64 00 00 00 7D 00 00 00 A6 00 00 00 C8 00 00 00 FA 00 00 00 4D 01 00 00 90 01 00 00 F4 01 00 00 9A 02 00 00 01 03 00 00 E8 03 00 00 E2 04 00 00 82 06 00 00 D0 07 00 00 C4 09 00 00 05 0D 00 00 A0 0F 00 00 88 13 00 00 6A 18 00 00 0C 1E 00 00 10 27 00 00 C8 32 00 00 80 3E 00 00 20 4E 00 00 A8 61 00 00 30 75 00 00 40 9C 00 00 50 C3 00 00 60 EA 00 00 80 38 01 00 A0 86 01 00 D0 FB 01 00 F0 49 02 00 40 0D 03 00 90 D0 03 00 E0 93 04 00 FF FF FF FF
-// 0D50 06    00 01 02000000 02000000 02  3500     02000000 03000000 04 00 00 00 05 00 00 00 06 00 00 00 08 00 00 00 0A 00 00 00 0C 00 00 00 0F 00 00 00 14 00 00 00 19 00 00 00 1F 00 00 00 28 00 00 00 32 00 00 00 3E 00 00 00 50 
-// 0750 04    00 01 A401     3002     02  1200     A401 C201 F401 3002 76 02 C6 02 20 03 84 03 E8 03 4C 04 14 05 78 05 40 06 08 07 D0 07 98 08 C4 09 54 0B 
-
-//*Types:
-// 1 = INT8
-// 2 = UINT8
-// 3 = INT16
-// 4 = UINT16
-// 5 = INT32
-// 6 = UINT32
-// 7 = INT64
-// 8 = UINT64
-
-//ISO:
-// 200 = C8 00
-// 400 = 90 01
-// 800 = 20 03
-//1600 = 40 06
-//3200 = 80 0C
-
-
-const bulbSettings_t Bulb_List[] PROGMEM = {
-    {" Camera", 0,  254 },
-    {"   1/20", 49, 56 },
-    {"   1/15", 62, 55 },
-    {"   1/13", 79, 54 },
-    {"   1/10", 99, 53 },
-    {"    1/8", 125, 52 },
-    {"    1/6", 157, 51 },
-    {"    1/5", 198, 50 },
-    {"    1/4", 250, 49 },
-    {"   0.3s", 315, 48 },
-    {"   0.4s", 397, 47 },
-    {"   0.5s", 500, 46 },
-    {"   0.6s", 630, 45 },
-    {"   0.8s", 794, 44 },
-    {"     1s", 1000, 43 },
-    {"   1.3s", 1260, 42 },
-    {"   1.6s", 1587, 41 },
-    {"     2s", 2000, 40 },
-    {"   2.5s", 2520, 39 },
-    {"   3.2s", 3175, 38 },
-    {"     4s", 4000, 37 },
-    {"     5s", 5040, 36 },
-    {"     6s", 6349, 35 },
-    {"     8s", 8000, 34 },
-    {"    10s", 10079, 33 },
-    {"    13s", 12699, 32 },
-    {"    15s", 16000, 31 },
-    {"    20s", 20158, 30 },
-    {"    25s", 25398, 29 },
-    {"    30s", 32000, 28 },
-    {"    40s", 40320, 27 },
-    {"    50s", 50800, 26 },
-    {"    60s", 64000, 25 },
-    {"    80s", 80630, 24 },
-    {"   100s", 101590, 23 },
-    {"   125s", 128000, 22 },
-    {"   160s", 161270, 21 },
-    {"   200s", 203180, 20 },
-    {"     4m", 256000, 19 },
-    {"   5.3m", 322530, 18 },
-    {"   6.6m", 406360, 17 },
-    {"     8m", 512000, 16 },
-    {"    11m", 645070, 15 },
-    {"    13m", 812720, 14 },
-    {"    15m", 1024000, 13 },
-    {"    20m", 1290138, 12 },
-    {"    25m", 1625444, 11 },
-    {"    30m", 2048000, 10 },
-    {"    40m", 2580318, 9 },
-    {"    50m", 3250997, 8 },
-    {"    60m", 4096000, 7 },
-    {"    80m", 5160637, 6 },
-    {"   100m", 6501995, 5 },
-    {"   125m", 8192000, 4 }
-};
 
 
 uint8_t isoAvail[32];
@@ -352,7 +134,7 @@ uint8_t PTP::shutterMin() // 76
 {
 	if(shutterAvailCount > 0)
 	{
-		for(uint8_t i = 0; i < shutterAvailCount; i++)
+		for(uint8_t i = shutterAvailCount; i > 0; i--)
 		{
 			uint8_t tmp = shutterAvail[i];
 			if(tmp > 0 && tmp < 128) return tmp;
@@ -758,13 +540,14 @@ uint8_t PTP::shutterName(char name[8], uint8_t ev)
 	return 0;
 }
 
-uint8_t PTP::bulbName(char name[8], uint16_t bulb_time)
+uint8_t PTP::bulbName(char name[8], uint32_t bulb_time)
 {
 	name[0] = '\0';
 	if(bulb_time == 0) return 0;
+	if(bulb_time < bulbTime((int8_t)bulbMin())) return shutterName(name, bulbToShutterEv(bulb_time));
 	for(uint8_t i = 0; i < sizeof(Bulb_List) / sizeof(Bulb_List[0]); i++)
 	{
-		if(pgm_read_word(&Bulb_List[i].ms) >= bulb_time)
+		if(pgm_read_u32(&Bulb_List[i].ms) >= bulb_time)
 		{
 			if(name)
 			{
@@ -774,6 +557,50 @@ uint8_t PTP::bulbName(char name[8], uint16_t bulb_time)
 		}
 	}
 	return 0;
+}
+
+uint8_t PTP::bulbToShutterEv(uint32_t bulb_time)
+{
+	if(bulb_time == 0) return 0;
+	static uint8_t prev_ev = 0;
+	uint8_t ev = 0, ev1 = 0, ev2 = 0;
+	uint16_t delta1, delta2;
+	uint32_t buf;
+
+	for(uint8_t i = 0; i < sizeof(PTP_Shutter_List) / sizeof(PTP_Shutter_List[0]); i++)
+	{
+		buf = pgm_read_u32(&PTP_Shutter_List[i].nikon);
+		if(buf >= bulb_time * 10)
+		{
+			ev1 = pgm_read_byte(&PTP_Shutter_List[i].ev);
+			delta1 = buf - bulb_time * 10;
+			DEBUG(STR("DELTA: "));
+			DEBUG(delta1);
+			if(prev_ev && prev_ev == ev1) delta1 /= 2; // hysteresis
+			if(i < sizeof(PTP_Shutter_List) - 1)
+			{
+				buf = pgm_read_u32(&PTP_Shutter_List[i + 1].nikon);
+				ev2 = pgm_read_byte(&PTP_Shutter_List[i + 1].ev);
+				delta2 = buf - bulb_time * 10;
+				DEBUG(STR(", "));
+				DEBUG(delta2);
+				if(prev_ev && prev_ev == ev2) delta2 /= 2; // hysteresis
+				if(delta2 <= delta1)
+				{
+					DEBUG_NL();
+					ev = ev2;
+					break;
+				}
+			}
+			DEBUG_NL();
+			ev = ev1;
+			break;
+		}
+	}
+
+	if(ev > MAX_EXTENDED_RAMP_SHUTTER) ev = MAX_EXTENDED_RAMP_SHUTTER;
+	prev_ev = ev;
+	return ev;
 }
 
 uint8_t PTP::shutterType(uint8_t ev)
@@ -826,18 +653,38 @@ uint32_t PTP::bulbTime(int8_t ev)
 {
 	if(ev == 0) return 0;
 	uint32_t ms = 0;
-	for(uint8_t i = 0; i < sizeof(Bulb_List) / sizeof(Bulb_List[0]); i++)
+	if(ev > bulbMin())
 	{
-		if(pgm_read_byte(&Bulb_List[i].ev) == ev)
+		for(uint8_t i = 0; i < sizeof(PTP_Shutter_List) / sizeof(PTP_Shutter_List[0]); i++)
 		{
-			char *ptr1, *ptr2;
-			ptr1 = (char *) &ms;
-			ptr2 = (char *) &Bulb_List[i].ms;
-			ptr1[0] = pgm_read_byte(&ptr2[0]);
-			ptr1[1] = pgm_read_byte(&ptr2[1]);
-			ptr1[2] = pgm_read_byte(&ptr2[2]);
-			ptr1[3] = pgm_read_byte(&ptr2[3]);
-			return ms;
+			if(pgm_read_byte(&PTP_Shutter_List[i].ev) == ev)
+			{
+				char *ptr1, *ptr2;
+				ptr1 = (char *) &ms;
+				ptr2 = (char *) &PTP_Shutter_List[i].nikon;
+				ptr1[0] = pgm_read_byte(&ptr2[0]);
+				ptr1[1] = pgm_read_byte(&ptr2[1]);
+				ptr1[2] = pgm_read_byte(&ptr2[2]);
+				ptr1[3] = pgm_read_byte(&ptr2[3]);
+				return ms / 10;
+			}
+		}
+	}
+	else
+	{
+		for(uint8_t i = 0; i < sizeof(Bulb_List) / sizeof(Bulb_List[0]); i++)
+		{
+			if(pgm_read_byte(&Bulb_List[i].ev) == ev)
+			{
+				char *ptr1, *ptr2;
+				ptr1 = (char *) &ms;
+				ptr2 = (char *) &Bulb_List[i].ms;
+				ptr1[0] = pgm_read_byte(&ptr2[0]);
+				ptr1[1] = pgm_read_byte(&ptr2[1]);
+				ptr1[2] = pgm_read_byte(&ptr2[2]);
+				ptr1[3] = pgm_read_byte(&ptr2[3]);
+				return ms;
+			}
 		}
 	}
 	// Reaching outside of predefined list
@@ -879,7 +726,7 @@ uint32_t PTP::shiftBulb(uint32_t ms, int8_t ev)
 
 uint8_t PTP::init()
 {
-	debug(PSTR("Initializing Camera...\r\n"));
+	DEBUG(PSTR("Initializing Camera...\r\n"));
 	busy = false;
 	PTP_need_update = true;
 	bulb_open = false;
@@ -903,22 +750,22 @@ uint8_t PTP::init()
 //	if(strncmp(PTP_CameraMake, "Canon", 5) == 0) // This should be done with VendorID instead
 	if(conf.cameraMake == CANON) // This should be done with VendorID instead
 	{
-		debug(PSTR("Using Canon EOS PTP Protocol\r\n"));
+		DEBUG(PSTR("Using Canon EOS PTP Protocol\r\n"));
 	    PTP_propertyOffset = (uint16_t)(((uint8_t*)&PTP_ISO_List[0].eos) - (uint8_t *)&PTP_ISO_List[0].name[0]);
-	    debug(PSTR("Property Offset (Canon): "));
-	    debug(PTP_propertyOffset);
-	    debug_nl();
+	    DEBUG(PSTR("Property Offset (Canon): "));
+	    DEBUG(PTP_propertyOffset);
+	    DEBUG_NL();
 	    PTP_protocol = PROTOCOL_EOS;
 	}
 	//else if(strncmp(PTP_CameraMake, "Nikon", 5) == 0)
 	else if(conf.cameraMake == NIKON)
 	{
-		debug(PSTR("Using Nikon PTP Protocol\r\n"));
+		DEBUG(PSTR("Using Nikon PTP Protocol\r\n"));
 	    PTP_protocol = PROTOCOL_NIKON;
 	    PTP_propertyOffset = (uint16_t)(((uint8_t*)&PTP_ISO_List[0].nikon) - (uint8_t *)&PTP_ISO_List[0].name[0]);
-	    debug(PSTR("Property Offset (Nikon): "));
-	    debug(PTP_propertyOffset);
-	    debug_nl();
+	    DEBUG(PSTR("Property Offset (Nikon): "));
+	    DEBUG(PTP_propertyOffset);
+	    DEBUG_NL();
 	}
 	else
 	{
@@ -954,7 +801,7 @@ uint8_t PTP::init()
 					supports.bulb++;
 					break;
 				case EOS_OC_PC_CONNECT:
-					debug(PSTR("Using PC Connect Mode\r\n"));
+					DEBUG(PSTR("Using PC Connect Mode\r\n"));
 					break;
 				case EOS_OC_EVENT_GET:
 					supports.event = true;
@@ -969,9 +816,9 @@ uint8_t PTP::init()
 	    		case PTP_OC_CAPTURE:
 	    			supports.capture = true;
 	    			break;
-	    		case NIKON_OC_CAPTURE:
-	    			supports_nikon_capture = true;
-	    			break;
+	    		//case NIKON_OC_CAPTURE:
+	    		//	supports_nikon_capture = true;
+	    		//	break;
 	    		case NIKON_OC_BULBSTART:
 					supports.bulb = 2;
 	    			break;
@@ -997,11 +844,11 @@ uint8_t PTP::init()
     if(supports.bulb < 1) supports.bulb = false; else supports.bulb = true;
     if(lvOCmode < 1) lvOCmode = false; else lvOCmode = true;
 
-    if(supports.capture) debug(PSTR("Supports CAPTURE\r\n"));
-    if(supports.bulb) debug(PSTR("Supports BULB\r\n"));
-    if(supports.video) debug(PSTR("Supports VIDEO\r\n"));
-    if(supports.focus) debug(PSTR("Supports FOCUS\r\n"));
-    if(supports.event) debug(PSTR("Supports EVENTS\r\n"));
+    if(supports.capture) DEBUG(PSTR("Supports CAPTURE\r\n"));
+    if(supports.bulb) DEBUG(PSTR("Supports BULB\r\n"));
+    if(supports.video) DEBUG(PSTR("Supports VIDEO\r\n"));
+    if(supports.focus) DEBUG(PSTR("Supports FOCUS\r\n"));
+    if(supports.event) DEBUG(PSTR("Supports EVENTS\r\n"));
 
     if(PTP_protocol == PROTOCOL_EOS)
     {
@@ -1030,7 +877,7 @@ uint8_t PTP::liveView(uint8_t on)
 	uint8_t ret;
 	if(lvOCmode)
 	{
-		debug(PSTR("Using LV OC mode\r\n"));
+		DEBUG(PSTR("Using LV OC mode\r\n"));
 		if(on)
 			ret = PTP_Transaction(EOS_OC_LV_START, 0, 0, NULL, 0, NULL);
 		else
@@ -1038,7 +885,7 @@ uint8_t PTP::liveView(uint8_t on)
 	}
 	else
 	{
-		debug(PSTR("Using LV property mode\r\n"));
+		DEBUG(PSTR("Using LV property mode\r\n"));
 		ret = setEosParameter(EOS_DPC_LiveView, (on) ? 2 : 0);
 	}
 	
@@ -1047,7 +894,7 @@ uint8_t PTP::liveView(uint8_t on)
 
 	if(ret == PTP_RETURN_ERROR)
 	{
-		debug(PSTR("ERROR!\r\n"));
+		DEBUG(PSTR("ERROR!\r\n"));
 		return 1;	
 	}
 	else
@@ -1129,18 +976,18 @@ uint8_t PTP::checkEvent()
 				{
 					case PTP_EC_OBJECT_CREATED:
 						currentObject = event_value; // Save the object ID for later retrieving the thumbnail
-						debug(PSTR("\r\n Object added: "));
+						DEBUG(PSTR("\r\n Object added: "));
 						sendHex((char *)&currentObject);
 						break;
 					case PTP_EC_PROPERTY_CHANGED:
 						PTP_need_update = true;
-						debug(PSTR("\r\n Property: "));
+						DEBUG(PSTR("\r\n Property: "));
 						sendHex((char *)&event_value);
 						break;
 					default:
-						debug(PSTR("\r\n Event: "));
+						DEBUG(PSTR("\r\n Event: "));
 						sendHex((char *)&tevent);
-						debug(PSTR("\r\n Param: "));
+						DEBUG(PSTR("\r\n Param: "));
 						sendHex((char *)&event_value);
 						break;
 				}
@@ -1152,24 +999,24 @@ uint8_t PTP::checkEvent()
 			uint16_t tevent;
 			if((tevent = PTP_GetEvent(&event_value)))
 			{
-				debug(PSTR("Received Asynchronous Event!\r\n"));
+				DEBUG(PSTR("Received Asynchronous Event!\r\n"));
 				switch(tevent)
 				{
 					case PTP_EC_OBJECT_CREATED:
 						busy = false;
 						currentObject = event_value; // Save the object ID for later retrieving the thumbnail
-						debug(PSTR("\r\n Object added: "));
+						DEBUG(PSTR("\r\n Object added: "));
 						sendHex((char *)&currentObject);
 						break;
 					case PTP_EC_PROPERTY_CHANGED:
 						PTP_need_update = true;
-						debug(PSTR("\r\n Property: "));
+						DEBUG(PSTR("\r\n Property: "));
 						sendHex((char *)&event_value);
 						break;
 					default:
-						debug(PSTR("\r\n Event: "));
+						DEBUG(PSTR("\r\n Event: "));
 						sendHex((char *)&tevent);
-						debug(PSTR("\r\n Param: "));
+						DEBUG(PSTR("\r\n Param: "));
 						sendHex((char *)&event_value);
 						break;
 				}
@@ -1189,7 +1036,13 @@ uint8_t PTP::checkEvent()
 			i = 0;
 			if(ret == PTP_RETURN_ERROR)
 			{
-				debug(PSTR("ERROR checking events!\r\n"));
+				DEBUG(PSTR("ERROR checking events!\r\n"));
+				DEBUG(PSTR("     PTP_Response_Code: "));
+				DEBUG(PTP_Response_Code);
+				DEBUG_NL();
+				DEBUG(PSTR("     PTP_Error: "));
+				DEBUG(PTP_Error);
+				DEBUG_NL();
 				return 1;	
 			}
 			else
@@ -1202,11 +1055,11 @@ uint8_t PTP::checkEvent()
 		}
 		else
 		{
-			debug(PSTR("Fetching next data packet... \r\n"));
+			DEBUG(PSTR("Fetching next data packet... \r\n"));
 			ret = PTP_FetchData(0);
 			if(ret == PTP_RETURN_ERROR)
 			{
-				debug(PSTR("Error fetching packet!"));
+				DEBUG(PSTR("Error fetching packet!"));
 				return ret;	
 			}
 			i = 0;
@@ -1217,7 +1070,7 @@ uint8_t PTP::checkEvent()
 			{
 				if(ret == PTP_RETURN_DATA_REMAINING)
 				{
-					debug(PSTR("Pre-fetching next data packet... \r\n"));
+					DEBUG(PSTR("Pre-fetching next data packet... \r\n"));
 					ret = PTP_FetchData(PTP_BUFFER_SIZE - i);
 					if(ret == PTP_RETURN_ERROR) return ret;
 					i = 0;
@@ -1225,14 +1078,14 @@ uint8_t PTP::checkEvent()
 				}
 				else
 				{
-					debug(PSTR("Pre-fetch Incomplete! \r\n"));
+					DEBUG(PSTR("Pre-fetch Incomplete! \r\n"));
 					return PTP_RETURN_ERROR;
 				}
 			}
 			memcpy(&event_size, &PTP_Buffer[i], sizeof(uint32_t));
 			if(event_size == 0)
 			{
-				debug(PSTR("ERROR: Zero-length\r\n"));
+				DEBUG(PSTR("ERROR: Zero-length\r\n"));
 				return PTP_RETURN_ERROR;
 			}
 			if((event_size + i) > PTP_BUFFER_SIZE)
@@ -1241,12 +1094,12 @@ uint8_t PTP::checkEvent()
 				{
 					if(event_size > PTP_BUFFER_SIZE)
 					{
-						debug(PSTR("Too Big: "));
-						debug(event_size);
-						debug_nl();
-						debug(PSTR(" i: "));
-						debug(i);
-						debug_nl();
+						DEBUG(PSTR("Too Big: "));
+						DEBUG(event_size);
+						DEBUG_NL();
+						DEBUG(PSTR(" i: "));
+						DEBUG(i);
+						DEBUG_NL();
 						for(uint16_t x = 0; x < 4*5; x++)
 						{
 							sendByte(PTP_Buffer[i + x - 4]);
@@ -1256,12 +1109,12 @@ uint8_t PTP::checkEvent()
 						{
 							ret = PTP_FetchData(0);
 						 	event_size -= PTP_Bytes_Received;
-							debug(PSTR(" Received: "));
-							debug(PTP_Bytes_Received);
-							debug_nl();
+							DEBUG(PSTR(" Received: "));
+							DEBUG(PTP_Bytes_Received);
+							DEBUG_NL();
 						}
 						i = event_size;
-						debug(PSTR("Checking for non-zero...\r\n"));
+						DEBUG(PSTR("Checking for non-zero...\r\n"));
 						while(ret == PTP_RETURN_DATA_REMAINING)
 						{
 							uint8_t tbreak = 0;
@@ -1269,7 +1122,7 @@ uint8_t PTP::checkEvent()
 							{
 								if(PTP_Buffer[x] != 0)
 								{
-									debug(PSTR("Found non-zero!\r\n"));
+									DEBUG(PSTR("Found non-zero!\r\n"));
 									i = x;
 									tbreak = 1;
 									break;
@@ -1278,13 +1131,13 @@ uint8_t PTP::checkEvent()
 							if(tbreak) break;
 							i = 0;
 							ret = PTP_FetchData(0);
-							debug(PSTR(" Received: "));
-							debug(PTP_Bytes_Received);
-							debug_nl();
+							DEBUG(PSTR(" Received: "));
+							DEBUG(PTP_Bytes_Received);
+							DEBUG_NL();
 						}
-						debug(PSTR(" i: "));
-						debug(i);
-						debug_nl();
+						DEBUG(PSTR(" i: "));
+						DEBUG(i);
+						DEBUG_NL();
 						//for(uint16_t x = i; x < PTP_Bytes_Received; x++)
 						//{
 						//	sendByte(PTP_Buffer[x]);
@@ -1293,7 +1146,7 @@ uint8_t PTP::checkEvent()
 					}
 					else
 					{
-						debug(PSTR("Fetching next data packet (2)... \r\n"));
+						DEBUG(PSTR("Fetching next data packet (2)... \r\n"));
 						ret = PTP_FetchData(PTP_BUFFER_SIZE - i);
 						if(ret == PTP_RETURN_ERROR) return ret;
 						i = 0;
@@ -1303,7 +1156,7 @@ uint8_t PTP::checkEvent()
 				}
 				else
 				{
-					debug(PSTR("Incomplete! \r\n"));
+					DEBUG(PSTR("Incomplete! \r\n"));
 					return PTP_RETURN_ERROR;
 				}
 			}
@@ -1315,17 +1168,17 @@ uint8_t PTP::checkEvent()
 			#ifdef EXTENDED_DEBUG
 			if(i > 1200)
 			{
-			debug(PSTR(" Event: "));
-			debug(i);
-			debug_nl();
+			DEBUG(PSTR(" Event: "));
+			DEBUG(i);
+			DEBUG_NL();
 			sendHex((char *) &event_size);
-			debug(PSTR("        "));
+			DEBUG(PSTR("        "));
 			sendHex((char *) &event_type);
-			debug(PSTR("        "));
+			DEBUG(PSTR("        "));
 			sendHex((char *) &event_item);
-			debug(PSTR("        "));
+			DEBUG(PSTR("        "));
 			sendHex((char *) &event_value);
-			debug_nl();
+			DEBUG_NL();
 			}
 			#endif
 
@@ -1335,73 +1188,73 @@ uint8_t PTP::checkEvent()
 				{
 					case EOS_DPC_ISO:
 						isoPTP = event_value;
-						debug(PSTR(" ISO:"));
-						debug(event_value);
-						debug_nl();
+						DEBUG(PSTR(" ISO:"));
+						DEBUG(event_value);
+						DEBUG_NL();
 						break;
 					case EOS_DPC_SHUTTER:
 						shutterPTP = event_value;
-						debug(PSTR(" SHUTTER:"));
-						debug(event_value);
-						debug_nl();
+						DEBUG(PSTR(" SHUTTER:"));
+						DEBUG(event_value);
+						DEBUG_NL();
 						break;
 					case EOS_DPC_APERTURE:
 						aperturePTP = event_value;
-						debug(PSTR(" APERTURE:"));
-						debug(event_value);
-						debug_nl();
+						DEBUG(PSTR(" APERTURE:"));
+						DEBUG(event_value);
+						DEBUG_NL();
 						break;
 					case EOS_DPC_MODE:
 						modePTP = event_value;
-						debug(PSTR(" MODE:"));
-						debug(event_value);
-						debug_nl();
+						DEBUG(PSTR(" MODE:"));
+						DEBUG(event_value);
+						DEBUG_NL();
 						break;
 					case EOS_DPC_LiveView:
-						debug(PSTR(" LV:"));
+						DEBUG(PSTR(" LV:"));
 						if(event_value) modeLiveView = true; else modeLiveView = false;
-						if(modeLiveView) debug(PSTR("ON")); else  debug(PSTR("OFF"));
-						debug_nl();
+						if(modeLiveView) DEBUG(PSTR("ON")); else  DEBUG(PSTR("OFF"));
+						DEBUG_NL();
 						break;
 					case EOS_DPC_Video:
-						debug(PSTR(" VIDEO:"));
+						DEBUG(PSTR(" VIDEO:"));
 						if(event_value == 4) recording = true; else recording = false;
-						if(recording) debug(PSTR("Recording")); else  debug(PSTR("OFF"));
-						debug_nl();
+						if(recording) DEBUG(PSTR("Recording")); else  DEBUG(PSTR("OFF"));
+						DEBUG_NL();
 						break;
 					case EOS_DPC_PhotosRemaining:
 						photosRemaining = event_value;
-						debug(PSTR(" Space Available:"));
-						debug(event_value);
-						debug_nl();
+						DEBUG(PSTR(" Space Available:"));
+						DEBUG(event_value);
+						DEBUG_NL();
 						break;
 					case EOS_DPC_AFMode:
 						autofocus = (event_value != 3);
-						debug(PSTR(" AF mode:"));
-						debug(event_value);
-						debug_nl();
+						DEBUG(PSTR(" AF mode:"));
+						DEBUG(event_value);
+						DEBUG_NL();
 						break;
 					case EOS_DPC_VideoMode:
 						if(event_value == 1) videoMode = true; else videoMode = false;
-						debug(PSTR(" Video Mode:"));
-						if(videoMode) debug(PSTR(" ON")); else  debug(PSTR(" OFF"));
-						debug_nl();
+						DEBUG(PSTR(" Video Mode:"));
+						if(videoMode) DEBUG(PSTR(" ON")); else  DEBUG(PSTR(" OFF"));
+						DEBUG_NL();
 						break;
 					//default:
-					//	debug(PSTR(" Prop: "));
-					//	debug(event_item);
-					//	debug(PSTR(", value: "));
-					//	debug(event_value);
-					//	debug_nl();
+					//	DEBUG(PSTR(" Prop: "));
+					//	DEBUG(event_item);
+					//	DEBUG(PSTR(", value: "));
+					//	DEBUG(event_value);
+					//	DEBUG_NL();
 					//	break;
 				}
 			}
 			else if(event_type == EOS_EC_PROPERTY_VALUES)
 			{
 				#ifdef EXTENDED_DEBUG
-				//debug(PSTR(" Value List: "));
+				//DEBUG(PSTR(" Value List: "));
 				//sendHex((char *)&event_item);
-				//debug_nl();
+				//DEBUG_NL();
 				#endif
 
 				uint32_t x;
@@ -1416,9 +1269,9 @@ uint8_t PTP::checkEvent()
 						supports.iso = isoAvailCount > 0;
 
 						#ifdef EXTENDED_DEBUG
-						debug(PSTR("\r\n ISO Avail Count: 0x"));
-						debug(isoAvailCount);
-						debug_nl();
+						DEBUG(PSTR("\r\n ISO Avail Count: 0x"));
+						DEBUG(isoAvailCount);
+						DEBUG_NL();
 						#endif
 
 						break;
@@ -1431,9 +1284,9 @@ uint8_t PTP::checkEvent()
 						supports.shutter = shutterAvailCount > 0;
 						
 						#ifdef EXTENDED_DEBUG
-						debug(PSTR("\r\n Shutter Avail Count: 0x"));
-						debug(shutterAvailCount);
-						debug_nl();
+						DEBUG(PSTR("\r\n Shutter Avail Count: 0x"));
+						DEBUG(shutterAvailCount);
+						DEBUG_NL();
 						#endif
 
 						break;
@@ -1446,9 +1299,9 @@ uint8_t PTP::checkEvent()
 						supports.aperture = apertureAvailCount > 0;
 
 						#ifdef EXTENDED_DEBUG
-						debug(PSTR("\r\n Aperture Avail Count: "));
-						debug(apertureAvailCount);
-						debug_nl();
+						DEBUG(PSTR("\r\n Aperture Avail Count: "));
+						DEBUG(apertureAvailCount);
+						DEBUG_NL();
 						#endif
 
 						break;
@@ -1461,9 +1314,9 @@ uint8_t PTP::checkEvent()
 						//supports.mode = modeAvailCount > 0;
 
 						//#ifdef EXTENDED_DEBUG
-						debug(PSTR("\r\n Mode Avail Count: "));
-						debug(modeAvailCount);
-						debug_nl();
+						DEBUG(PSTR("\r\n Mode Avail Count: "));
+						DEBUG(modeAvailCount);
+						DEBUG_NL();
 						//#endif
 
 						break;*/
@@ -1486,28 +1339,28 @@ uint8_t PTP::checkEvent()
 																		 //11
 				memcpy(&currentObject, &PTP_Buffer[i + sizeof(uint32_t) * 2], sizeof(uint32_t)); // Save the object ID for later retrieving the thumbnail
 
-				debug(PSTR("\r\n Object added: "));
+				DEBUG(PSTR("\r\n Object added: "));
 				sendHex((char *)&currentObject);
 
 				//getThumb(currentObject);
 			}
 			else if(event_type == EOS_EC_WillShutdownSoon)
 			{
-//				debug(PSTR("Keeping camera on\r\n"));
+//				DEBUG(PSTR("Keeping camera on\r\n"));
 //				PTP_Transaction(EOS_OC_KeepDeviceOn, 0, 0, NULL);
 			}
 			else if(event_type > 0)
 			{
-				//debug(PSTR("\r\n Unknown: "));
+				//DEBUG(PSTR("\r\n Unknown: "));
 				//sendHex((char *)&event_type);
-				//debug(PSTR("\r\n    Size: "));
-				//debug(event_size);
-				//debug_nl();
-				//debug(PSTR("\r\n  Value1: "));
+				//DEBUG(PSTR("\r\n    Size: "));
+				//DEBUG(event_size);
+				//DEBUG_NL();
+				//DEBUG(PSTR("\r\n  Value1: "));
 				//sendHex((char *)&event_value);
-				//debug(PSTR("\r\n  Value2: "));
+				//DEBUG(PSTR("\r\n  Value2: "));
 				//sendHex((char *)(&event_value+4));
-				//debug(PSTR("\r\n  Value3: "));
+				//DEBUG(PSTR("\r\n  Value3: "));
 				//sendHex((char *)(&event_value+8));
 			}
 			i += event_size;
@@ -1527,13 +1380,13 @@ void sendHex(char *hex)
 		b[1] = (hex[i-1] & 0x0F) + '0'; if(b[1] > '9') b[1] += 7;
 		b[2] = ' ';
 		b[3] = 0;
-		debug(b);
+		DEBUG(b);
 		if(i == 1)
 		{
 			b[0] = '\r';
 			b[1] = '\n';
 			b[2] = 0;
-			debug(b);
+			DEBUG(b);
 		}
 	}
 }
@@ -1546,16 +1399,16 @@ void sendByte(char byte)
 	b[1] = (byte & 0x0F) + '0'; if(b[1] > '9') b[1] += 7;
 	b[2] = ' ';
 	b[3] = 0;
-	debug(b);
+	DEBUG(b);
 	b[0] = '\r';
 	b[1] = '\n';
 	b[2] = 0;
-	debug(b);
+	DEBUG(b);
 }
 
 uint8_t PTP::close()
 {
-	debug(PSTR("PTP Closed\r\n"));
+	DEBUG(PSTR("PTP Closed\r\n"));
 	static_ready = 0;
 	ready = 0;
 	busy = false;
@@ -1581,6 +1434,15 @@ uint8_t PTP::close()
 	return 0;
 }
 
+void PTP::resetConnection()
+{
+	close();
+	PTP_Disable();
+	_delay_ms(1000);
+	PTP_Enable();
+
+}
+
 uint8_t PTP::capture()
 {
 	if(!static_ready) return 0;
@@ -1588,18 +1450,20 @@ uint8_t PTP::capture()
 	busy = true;
 	if(PTP_protocol == PROTOCOL_EOS)
 	{
-		return PTP_Transaction(EOS_OC_CAPTURE, 0, 0, NULL, 0, NULL);
+		PTP_Transaction(EOS_OC_CAPTURE, 0, 0, NULL, 0, NULL);
 	}
 	else if(PTP_protocol == PROTOCOL_NIKON && supports_nikon_capture)
 	{
-		return PTP_Transaction(NIKON_OC_CAPTURE, 0, 0, NULL, 0, NULL);
+		PTP_Transaction(NIKON_OC_CAPTURE, 0, 0, NULL, 0, NULL);
 	}
 	else
 	{
 		data[0] = 0x00000000;
 		data[1] = 0x00000000;
-		return PTP_Transaction(PTP_OC_CAPTURE, 0, 2, data, 0, NULL);
+		PTP_Transaction(PTP_OC_CAPTURE, 0, 2, data, 0, NULL);
 	}
+	if(PTP_Response_Code != PTP_RESPONSE_OK) return 1;
+	return 0;
 }
 
 uint8_t PTP::videoStart()
@@ -1642,6 +1506,7 @@ uint8_t PTP::bulbMode()
 		preBulbShutter = shutter();
 		setPtpParameter(0xd100, (uint32_t)0xffffffff);
 	}
+	if(PTP_Response_Code != PTP_RESPONSE_OK) return 1;
 	return 0;
 }
 
@@ -1654,9 +1519,9 @@ uint8_t PTP::manualMode()
 	}
 	else if(PTP_protocol == PROTOCOL_NIKON)
 	{
-		debug(PSTR("ManualMode: "));
-		debug(preBulbShutter);
-		debug_nl();
+		DEBUG(PSTR("ManualMode: "));
+		DEBUG(preBulbShutter);
+		DEBUG_NL();
 		if(preBulbShutter)
 		{
 			uint8_t tmp = preBulbShutter;
@@ -1664,12 +1529,13 @@ uint8_t PTP::manualMode()
 			setShutter(tmp);
 		}
 	}
+	if(PTP_Response_Code != PTP_RESPONSE_OK) return 1;
 	return 0;
 }
 
 uint8_t PTP::bulbStart()
 {
-	if(!static_ready) return 0;
+	if(!static_ready) return 1;
 	//if(bulb_open) return 1;
 	if(!supports.bulb) return 1;
 	bulb_open = true;
@@ -1689,6 +1555,10 @@ uint8_t PTP::bulbStart()
 		data[1] = 0x00000001;
 		if(PTP_Transaction(NIKON_OC_BULBSTART, 0, 2, data, 0, NULL)) return 1; // Bulb Start
 	}
+	//DEBUG(PSTR("Res: "));
+	//DEBUG(PTP_Response_Code);
+	//DEBUG_NL();
+	if(PTP_Response_Code != PTP_RESPONSE_OK) return 1;
 	return 0;
 }
 
@@ -1712,6 +1582,7 @@ uint8_t PTP::bulbEnd()
 		if(PTP_Transaction(NIKON_OC_BULBEND, 0, 2, data, 0, NULL)) return 1; // Bulb End
 	}
 	bulb_open = false;
+	if(PTP_Response_Code != PTP_RESPONSE_OK) return 1;
 	return 0;
 }
 
@@ -1917,9 +1788,9 @@ uint8_t PTP::getPropertyInfo(uint16_t prop_code, uint8_t expected_size, uint16_t
 	memcpy(&prop, &PTP_Buffer[0], sizeof(uint16_t));
     if(prop != prop_code) return PTP_RETURN_ERROR;
 
-	debug(PSTR("PROP="));
-	debug(prop);
-	debug_nl();
+	DEBUG(PSTR("PROP="));
+	DEBUG(prop);
+	DEBUG_NL();
 
 	// data[2]
 	// data[3] -- data type code
@@ -1928,9 +1799,9 @@ uint8_t PTP::getPropertyInfo(uint16_t prop_code, uint8_t expected_size, uint16_t
     uint16_t type = 0;
 	memcpy(&type, &PTP_Buffer[2], sizeof(uint16_t));
 
-	debug(PSTR("TYPE="));
-	debug(type);
-	debug_nl();
+	DEBUG(PSTR("TYPE="));
+	DEBUG(type);
+	DEBUG_NL();
 
 	// data[4] -- GetSet flag
     //uint8_t getset = PTP_Buffer[4];
@@ -1973,17 +1844,17 @@ uint8_t PTP::getPropertyInfo(uint16_t prop_code, uint8_t expected_size, uint16_t
 	    break;
       }
 
-	debug(PSTR("CURRENT="));
-	debug(*((uint16_t*)current));
-	debug_nl();
+	DEBUG(PSTR("CURRENT="));
+	DEBUG(*((uint16_t*)current));
+	DEBUG_NL();
 
 	// The form flag...
     uint8_t form = PTP_Buffer[index];
     index++;
 
-	debug(PSTR("FORM="));
-	debug(form);
-	debug_nl();
+	DEBUG(PSTR("FORM="));
+	DEBUG(form);
+	DEBUG_NL();
 
       if (form == 1) { // RANGE
 	      // The range description includes 3 values: the minimum
@@ -2013,9 +1884,9 @@ uint8_t PTP::getPropertyInfo(uint16_t prop_code, uint8_t expected_size, uint16_t
 		index += sizeof(uint16_t);
 		*count = enum_count;
 
-		debug(PSTR("COUNT="));
-		debug(*count);
-		debug_nl();
+		DEBUG(PSTR("COUNT="));
+		DEBUG(*count);
+		DEBUG_NL();
 
 
 	    switch (type) {
@@ -2070,7 +1941,7 @@ uint8_t PTP::getCurrentThumbContinued()
 	uint8_t ret = PTP_FetchData(0);
 	if(ret == PTP_RETURN_ERROR)
 	{
-		debug(PSTR("Error Retrieving thumbnail (c)!\r\n"));
+		DEBUG(PSTR("Error Retrieving thumbnail (c)!\r\n"));
 		return 0;
 	}
 	return ret;
@@ -2081,14 +1952,14 @@ uint8_t PTP::getThumb(uint32_t handle)
 	uint8_t ret = PTP_Transaction(PTP_OC_GET_THUMB, 1, 1, data, 0, NULL);
 	if(ret == PTP_RETURN_ERROR)
 	{
-		debug(PSTR("Error Retrieving thumbnail!\r\n"));
+		DEBUG(PSTR("Error Retrieving thumbnail!\r\n"));
 		return 0;
 	}
 	else
 	{
-		debug(PSTR("Obj Size: "));
-		debug(PTP_Bytes_Total);
-		debug_nl();
+		DEBUG(PSTR("Obj Size: "));
+		DEBUG(PTP_Bytes_Total);
+		DEBUG_NL();
 		return ret;
 	}
 }

@@ -17,13 +17,14 @@
 #include "TWI_Master.h"
 #include "math.h"
 #include "light.h"
+#include "settings.h"
 #include <LUFA/Common/Common.h>
 #include <LUFA/Drivers/USB/USB.h>
 #include <LUFA/Drivers/Peripheral/ADC.h>
 
 extern LCD lcd;
 extern Clock clock;
-
+extern settings conf;
 
 Light::Light()
 {
@@ -31,6 +32,7 @@ Light::Light()
 	TWI_Master_Initialise();
 	lastSeconds = 0;
   initialized = 0;
+  darkPoint = BRAMP_TARGET_AUTO;
 }
 
 uint16_t Light::readRaw()
@@ -86,6 +88,7 @@ void Light::start()
    offset = OFFSET_UNSET;
    filterIndex = -1;
    initialized = 1;
+   paused = 0;
 }
 
 void Light::stop()
@@ -98,6 +101,8 @@ void Light::stop()
    TWI_Start_Read_Write(I2C_Buf, 3);
    lcd.backlight(255);
    lastSeconds = 0;
+   paused = 0;
+   darkPoint = BRAMP_TARGET_AUTO;
 }
 
 void Light::setRange(uint8_t range)
@@ -114,7 +119,7 @@ void Light::setRangeAuto()
 {
     uint8_t range;
     uint16_t reading;
-    if(!initialized) return;
+    if(!initialized || paused) return;
     lcd.backlight(0);
     _delay_ms(10);
     for(range = 0; range < 4; range++)
@@ -128,20 +133,25 @@ void Light::setRangeAuto()
 float Light::readEv()
 {
     float lux;
+    static float lastReading;
+
     if(!initialized) return 0;
+
+    if(paused) return lastReading;
+
     lux = readLux();
     //lux *= 2^5;
 	  method = 0;
     //int8_t ev = (int8_t)ilog2(lux); 
     float ev = libc_log2(lux);
 
-    //debug(STR("LUX = "));
-    //debug(lux);
-    //debug(STR(", EVi = "));
-    //debug(ev);
-    //debug(STR(", EVf = "));
-    //debug(evf);
-    //debug_nl();
+    //DEBUG(STR("LUX = "));
+    //DEBUG(lux);
+    //DEBUG(STR(", EVi = "));
+    //DEBUG(ev);
+    //DEBUG(STR(", EVf = "));
+    //DEBUG(evf);
+    //DEBUG_NL();
 
     ev *= 3;
     ev += 30;
@@ -196,6 +206,46 @@ float Light::readEv()
 
     ev = tmpFilter[FILTER_LENGTH / 2 + 1]; // pick the middle (median) item, filtering out any extremes
 
+    #define DARK_SHIFT_SECONDS 1800
+
+    if(darkPoint != BRAMP_TARGET_AUTO)
+    {
+      if(conf.debugEnabled)
+      {
+        DEBUG("darkPoint: ");
+        DEBUG(darkPoint);
+      }
+      if(ev < (darkPoint - 100))
+      {
+        ev = (darkPoint - 100);
+      }
+      else if(ev < 5)
+      {
+        if(clock.Seconds() - lastMeterSeconds > DARK_SHIFT_SECONDS)
+        {
+          ev = (float)(darkPoint - 100);
+        }
+        else
+        {
+          ev = (float)(darkPoint - 100) * (float)((clock.Seconds() - lastMeterSeconds) / DARK_SHIFT_SECONDS);
+        }
+        lastPointSeconds = clock.Seconds();
+        lastPointReading = ev;
+      }
+      else
+      {
+        if(clock.Seconds() - lastPointSeconds < DARK_SHIFT_SECONDS)
+        {
+          ev = (float)lastPointReading * (1 - (float)((clock.Seconds() - lastPointSeconds) / DARK_SHIFT_SECONDS));
+        }
+
+        lastMeterSeconds = clock.Seconds();
+        lastMeterReading = ev;
+      }
+    }
+
+    lastReading = ev;
+
     return ev;
 }
 
@@ -222,19 +272,34 @@ void Light::task()
 {
 	if(lastSeconds == 0 || !initialized) return;
 
-    if(clock.Seconds() > lastSeconds + ((integration * 60) / LIGHT_INTEGRATION_COUNT))
-    {
-        lastSeconds = clock.Seconds();
-        iev[pos] = readEv();
-        pos++;
-        if(pos >= LIGHT_INTEGRATION_COUNT) pos = 0;
-        iev[pos] = 0;
-    }
+  if(paused)
+  {
+    lcd.backlight(255);
+    wasPaused = 5;
+    return;
+  }
+
+  if(wasPaused > 0)
+  {
+    lcd.backlight(0);
+    wasPaused--;
+    return;
+  }
+
+  if(clock.Seconds() > lastSeconds + ((integration * 60) / LIGHT_INTEGRATION_COUNT))
+  {
+      lastSeconds = clock.Seconds();
+      iev[pos] = readEv();
+      pos++;
+      if(pos >= LIGHT_INTEGRATION_COUNT) pos = 0;
+      iev[pos] = 0;
+  }
 }
 
-void Light::integrationStart(uint8_t integration_minutes, int8_t darkOffset)
+void Light::integrationStart(uint8_t integration_minutes, int8_t darkTarget)
 {
-	start();
+	  start();
+    darkPoint = darkTarget;
     integration = integration_minutes;
     pos = 0;
     lastSeconds = clock.Seconds() + 1; // +1 so it can never be zero
@@ -250,7 +315,7 @@ float Light::readLux()
     uint8_t range;
     uint16_t reading;
     float lux;
-    if(!initialized) return 0.0;
+    if(!initialized || paused) return 0.0;
     lcd.backlight(0);
     for(range = 0; range < 4; range++)
     {
@@ -261,10 +326,10 @@ float Light::readLux()
 
     if(range == 0)
     {
-        for(uint8_t i = 0; i < 5; i++)
+      for(uint8_t i = 0; i < 5; i++)
 	    {
 		    uint16_t reading2 = readRaw();
-	        if(reading2 < reading) reading = reading2;
+	      if((reading2 < reading && reading2 > 0) || reading == 0) reading = reading2;
 	    }	
     }
 	
