@@ -33,6 +33,7 @@
 #include "settings.h"
 #include "selftest.h"
 #include "math.h"
+#include "light.h"
 
 extern shutter timer;
 extern LCD lcd;
@@ -66,14 +67,14 @@ int8_t test()
         {
             if(run_tests())
             {
-                debug('1');
+                DEBUG('1');
                 termPrintStrP(PSTR("Passed All Tests\n"));
                 VirtualSerial_Reset();
                 return 1;
             } 
             else
             {
-                debug('0');
+                DEBUG('0');
                 termPrintStrP(PSTR("Failed Tests\n"));
                 VirtualSerial_Reset();
                 return 0;
@@ -121,7 +122,7 @@ int8_t test()
                    break;
 
                case 'T':
-                   debug('E');
+                   DEBUG('E');
                    termPrintStrP(PSTR("USB Connected\n"));
                    break;
 
@@ -142,23 +143,23 @@ int8_t test()
 
                case 'C':
                    if(timer.cableIsConnected()) 
-                       debug('1');
+                       DEBUG('1');
                    else 
-                       debug('0');
+                       DEBUG('0');
                    break;
 
                case 'S':
 
                    if(run_tests())
                    {
-                       debug('1');
+                       DEBUG('1');
                        termPrintStrP(PSTR("Passed All Tests\n"));
                        VirtualSerial_Reset();
                        return 1;
                    } 
                    else
                    {
-                       debug('0');
+                       DEBUG('0');
                        termPrintStrP(PSTR("Failed Tests\n"));
                        VirtualSerial_Reset();
                        return 0;
@@ -167,7 +168,7 @@ int8_t test()
 
                case 'B':
                    termPrintStrP(PSTR("Checking charger\n"));
-                   debug((char)battery_status());
+                   DEBUG((char)battery_status());
                    break;
 
                case 'X': // RESET USB
@@ -365,7 +366,7 @@ int8_t run_tests()
     return pass;
 }
 
-light_reading light_test_results[120]EEMEM;
+float light_test_results[120]EEMEM;
 
 /******************************************************************
  *
@@ -376,13 +377,17 @@ light_reading light_test_results[120]EEMEM;
 
 void lightTest()
 {
-    light_reading result;
+    Light light;
+    float result;
 
     termInit();
 
     lcd.backlight(0);
 
     termPrintStrP(PSTR("\nRunning light\nsensor test\n\n"));
+
+    light.integrationStart(10, 1);
+    
 
     uint8_t i;
 
@@ -395,14 +400,19 @@ void lightTest()
         timer.full();
         _delay_ms(50);
         timer.off();
-        hardware_readLightAll(&result);
-        eeprom_write_block((const void*)&result, &light_test_results[i], sizeof(light_reading));
-        termPrintStrP(PSTR("Photo "));
+        result = light.readIntegratedEv();
+        eeprom_write_block((const void*)&result, &light_test_results[i], sizeof(result));
+        //termPrintStrP(PSTR("Photo "));
         termPrintByte(i + 1);
-        termPrintStrP(PSTR(" of 120\n"));
+        termPrintStrP(PSTR(" of 120: "));
+        termPrintByte((int8_t)result);
+        termPrintStrP(PSTR("\n"));
         
-        while (clock.eventMs() < 120000) 
+        while (clock.eventMs() < 60000) 
+        {
+            light.task();
             wdt_reset();
+        }
 
         clock.tare();
     }
@@ -418,7 +428,7 @@ void lightTest()
 
 void readLightTest()
 {
-    light_reading result;
+    float result;
 
     termInit();
 
@@ -428,16 +438,12 @@ void readLightTest()
 
     for(i = 0; i < 120; i++)
     {
-        eeprom_read_block((void*)&result, &light_test_results[i], sizeof(light_reading));
+        eeprom_read_block((void*)&result, &light_test_results[i], sizeof(result));
 
-        debug(i);
-        debug(STR(", "));
-        debug((uint16_t)result.level1);
-        debug(STR(", "));
-        debug((uint16_t)result.level2);
-        debug(STR(", "));
-        debug((uint16_t)result.level3);
-        debug_nl();
+        DEBUG(i);
+        DEBUG(STR(", "));
+        DEBUG(result);
+        DEBUG_NL();
 
         termPrintStrP(PSTR("Sent "));
         termPrintByte(i + 1);

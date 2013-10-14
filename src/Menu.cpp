@@ -211,7 +211,7 @@ void MENU::task()
             }
             else
             {
-              debug(STR("Exiting alerts\n"));
+              DEBUG(STR("Exiting alerts\n"));
               ret = FN_CANCEL;
             }
             key = 0;
@@ -754,13 +754,13 @@ void MENU::back()
 {
     if(stack_counter > 0)
     {
-        debug(STR("POP: "));
-        debug(stack_counter);
+        DEBUG(STR("POP: "));
+        DEBUG(stack_counter);
         menu_stack new_menu;
         new_menu = menu_pop();
         if(new_menu.type == 1)
         {
-          debug(STR(" (function)\r\n"));
+          DEBUG(STR(" (function)\r\n"));
           func = (char (*)(char, char)) new_menu.item;
           menuSelected = getSelected((menu_item*)new_menu.menu_backup, new_menu.index);
           menu = (menu_item*)new_menu.menu_backup;
@@ -769,7 +769,7 @@ void MENU::back()
         }
         else
         {
-          debug(STR(" (menu)\r\n"));
+          DEBUG(STR(" (menu)\r\n"));
           menuSelected = getSelected((menu_item*)new_menu.item, new_menu.index);
           menu = (menu_item*)new_menu.item;
           state = ST_MENU;
@@ -777,7 +777,7 @@ void MENU::back()
     }
     else
     {
-        debug(STR("POP: BOTTOM\r\n"));
+        DEBUG(STR("POP: BOTTOM\r\n"));
     }
 }
 
@@ -1097,16 +1097,16 @@ char MENU::editNumber(char key, unsigned int *n, char *name, char *unit, char mo
            case 'F':
                 m += (d[4] * 10 + d[3]) * 600; // minutes
                 m += d[2] * 100 + d[1] * 10 + d[0]; // seconds
-                debug(m);
-                debug_nl();
+                DEBUG(m);
+                DEBUG_NL();
                 break;
             
            case 'T':
                m += d[4] * 3600;  // hours
                m += (d[3] * 10 + d[2]) * 60; // minutes
                m += d[1] * 10 + d[0]; // seconds
-               debug(m);
-               debug_nl();
+               DEBUG(m);
+               DEBUG_NL();
                break;
                
            default:
@@ -1213,16 +1213,16 @@ void MENU::menu_push(void *item_addr, char selection, uint8_t type)
           stack[stack_counter - 1].index = getIndex((menu_item*)menu, menuSelected);
           stack[stack_counter - 1].menu_backup = (void*)menu;
         }
-        debug(STR("PUSH: "));
-        debug(stack_counter);
+        DEBUG(STR("PUSH: "));
+        DEBUG(stack_counter);
         if(type == 1)
-          debug(STR(" (function)\r\n"));
+          DEBUG(STR(" (function)\r\n"));
         else
-          debug(STR(" (menu)\r\n"));
+          DEBUG(STR(" (menu)\r\n"));
     }
     else
     {
-      debug(STR("ERROR: Menu Stack Full!\r\n"));
+      DEBUG(STR("ERROR: Menu Stack Full!\r\n"));
     }
 }
 

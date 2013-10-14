@@ -64,7 +64,7 @@ void Notify::watch(uint8_t id, void * item, uint8_t size, void (handler)(uint8_t
             return;
         }
     }
-    debug(STR("ERROR: Watch Buffer Full!\n\r"));
+    DEBUG(STR("ERROR: Watch Buffer Full!\n\r"));
     return;
 }
 

@@ -489,16 +489,16 @@ void hardware_lightning_enable()
         hardware_light_enable(i);
         _delay_ms(50);
         uint16_t reading = hardware_analogRead(0);
-        debug('(');
-        debug(reading);
-        debug(')');
-        debug(':');
-        debug(' ');
-        debug_nl();
+        DEBUG('(');
+        DEBUG(reading);
+        DEBUG(')');
+        DEBUG(':');
+        DEBUG(' ');
+        DEBUG_NL();
         if(reading < 256) break;
     }
-    debug(i);
-    if(getPin(LIGHT_SENSE_PIN)) debug(STR("+")); else debug(STR("-"));
+    DEBUG(i);
+    if(getPin(LIGHT_SENSE_PIN)) DEBUG(STR("+")); else DEBUG(STR("-"));
 
     shutter_half();
     

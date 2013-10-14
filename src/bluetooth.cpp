@@ -46,7 +46,7 @@ uint8_t BT::init(void)
 {
 	_delay_ms(100);
 	present = true;
-	debug(PSTR("BT Init\n\r"));
+	DEBUG(PSTR("BT Init\n\r"));
 
 //	sendCMD(PSTR("ATRST\r")); // Reset module
 //	_delay_ms(200);
@@ -55,9 +55,9 @@ uint8_t BT::init(void)
 
 	sendCMD(PSTR("AT\r")); // Check connection
 
-	debug(PSTR("Data: "));
-	debug(data);
-	debug_nl();
+	DEBUG(PSTR("Data: "));
+	DEBUG(data);
+	DEBUG_NL();
 
 	if(checkOK() == 0)
 	{
@@ -96,7 +96,7 @@ uint8_t BT::init(void)
 	if(checkOK() == 0)
 		return 0;
 
-	debug(PSTR("BT Init: Saved configuration\r\n"));
+	DEBUG(PSTR("BT Init: Saved configuration\r\n"));
 
 	state = BT_ST_IDLE;
 	mode = BT_MODE_CMD;
@@ -531,7 +531,7 @@ uint8_t BT::waitRTS()
 	{
 		if(++i > 250)
 		{
-			debug(PSTR("BT RTS Failed!\r\n"));
+			DEBUG(PSTR("BT RTS Failed!\r\n"));
 			return 1;
 		}
 		_delay_ms(1);
@@ -544,13 +544,13 @@ uint8_t BT::sendDATA(uint8_t id, uint8_t type, void* buffer, uint16_t bytes)
 	if(!present)
 		return 1;
 
-	debug(PSTR("Sending: "));
-	debug(id);
-	debug(PSTR(", "));
-	debug(type);
-	debug(PSTR(", "));
-	debug(bytes);
-	debug_nl();
+	DEBUG(PSTR("Sending: "));
+	DEBUG(id);
+	DEBUG(PSTR(", "));
+	DEBUG(type);
+	DEBUG(PSTR(", "));
+	DEBUG(bytes);
+	DEBUG_NL();
 	if(dataMode())
 	{
 		waitRTS();
@@ -589,7 +589,7 @@ uint8_t BT::sendDATA(uint8_t id, uint8_t type, void* buffer, uint16_t bytes)
 		}
 		else
 		{
-			debug(PSTR("BT RTS Failed!\r\n"));
+			DEBUG(PSTR("BT RTS Failed!\r\n"));
 		}
 	}
 
@@ -684,7 +684,7 @@ uint8_t BT::wake()
 	char i = 0;
 	if(!(BT_RTS) && state == BT_ST_SLEEP)
 	{
-		debug(PSTR("Waking up BT\r\n"));
+		DEBUG(PSTR("Waking up BT\r\n"));
 		state = BT_ST_IDLE;
 		while(!(BT_RTS))
 		{
@@ -698,7 +698,7 @@ uint8_t BT::wake()
 		}
 		if(state == BT_ST_SLEEP)
 		{
-			debug(PSTR("ERROR: BT didn't wake up!\r\n"));
+			DEBUG(PSTR("ERROR: BT didn't wake up!\r\n"));
 			return 0; // wakeup failed
 		}
 	}
@@ -728,7 +728,7 @@ uint8_t BT::sendByte(char byte)
 	char i = 0;
 	if(!(BT_RTS) && state == BT_ST_SLEEP)
 	{
-		debug(PSTR("Waking up BT\r\n"));
+		DEBUG(PSTR("Waking up BT\r\n"));
 		state = BT_ST_IDLE;
 		while(!(BT_RTS))
 		{
@@ -742,7 +742,7 @@ uint8_t BT::sendByte(char byte)
 		}
 		if(state == BT_ST_SLEEP)
 		{
-			debug(PSTR("ERROR: BT didn't wake up!\r\n"));
+			DEBUG(PSTR("ERROR: BT didn't wake up!\r\n"));
 			return 0; // wakeup failed
 		}
 	}
@@ -798,26 +798,26 @@ uint8_t BT::read(void)
 
 		if(timeout > 50000)
 		{
-			debug(PSTR("TIMED OUT!"));
-			debug(PSTR("\r\n   BYTES: "));
-			debug(bytes);
-			debug(PSTR("\r\n      ID: "));
-			debug((uint8_t)buf[1]);
-			debug(PSTR("\r\n    SIZE: "));
-			debug(dataSize);
-			debug(PSTR("\r\n  DATA[0]: "));
-			debug(buf[0]);
-			debug(PSTR("\r\n  DATA[1]: "));
-			debug((uint8_t)buf[1]);
-			debug(PSTR("\r\n  DATA[2]: "));
-			debug((uint8_t)buf[2]);
-			debug(PSTR("\r\n  DATA[3]: "));
-			debug((uint8_t)buf[3]);
-			debug(PSTR("\r\n  DATA[4]: "));
-			debug(buf[4]);
-			debug(PSTR("\r\n  DATA[5]: "));
-			debug(buf[5]);
-		    debug(PSTR("\r\n"));
+			DEBUG(PSTR("TIMED OUT!"));
+			DEBUG(PSTR("\r\n   BYTES: "));
+			DEBUG(bytes);
+			DEBUG(PSTR("\r\n      ID: "));
+			DEBUG((uint8_t)buf[1]);
+			DEBUG(PSTR("\r\n    SIZE: "));
+			DEBUG(dataSize);
+			DEBUG(PSTR("\r\n  DATA[0]: "));
+			DEBUG(buf[0]);
+			DEBUG(PSTR("\r\n  DATA[1]: "));
+			DEBUG((uint8_t)buf[1]);
+			DEBUG(PSTR("\r\n  DATA[2]: "));
+			DEBUG((uint8_t)buf[2]);
+			DEBUG(PSTR("\r\n  DATA[3]: "));
+			DEBUG((uint8_t)buf[3]);
+			DEBUG(PSTR("\r\n  DATA[4]: "));
+			DEBUG(buf[4]);
+			DEBUG(PSTR("\r\n  DATA[5]: "));
+			DEBUG(buf[5]);
+		    DEBUG(PSTR("\r\n"));
 			break;
 		}
 		else if(timeout > 5000 && bytes == 0)
@@ -895,9 +895,9 @@ uint8_t BT::task(void)
 
 	if(len)
 	{
-		if(mode == BT_MODE_CMD) debug(PSTR("CMD:\r\n")); else debug(PSTR("DATA:\r\n"));
-		debug(buf);
-		debug_nl();
+		if(mode == BT_MODE_CMD) DEBUG(PSTR("CMD:\r\n")); else DEBUG(PSTR("DATA:\r\n"));
+		DEBUG(buf);
+		DEBUG_NL();
 		if(mode == BT_MODE_CMD)
 		{
 			if(strncmp(buf, STR("DISCOVERY"), 9) == 0)
@@ -960,11 +960,11 @@ uint8_t BT::task(void)
 			}
 			else if(dataId > 0)
 			{
-				debug(PSTR("Received Packet: "));
-				debug(dataId);
-				debug(PSTR(" ("));
-				debug(dataSize);
-				debug(PSTR(" bytes)\r\n"));
+				DEBUG(PSTR("Received Packet: "));
+				DEBUG(dataId);
+				DEBUG(PSTR(" ("));
+				DEBUG(dataSize);
+				DEBUG(PSTR(" bytes)\r\n"));
 				ret = BT_EVENT_DATA;
 			}
 		}

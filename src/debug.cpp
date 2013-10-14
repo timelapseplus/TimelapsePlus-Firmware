@@ -17,6 +17,7 @@
 #include "bluetooth.h"
 #include "remote.h"
 #include "tldefs.h"
+#include "PTP_Driver.h"
 
 extern settings conf;
 extern Remote remote;
@@ -31,12 +32,14 @@ extern BT bt;
 
 void debug(char *s)
 {
+#ifndef PTP_DEBUG
     if(conf.debugEnabled == 0) return;
     if(VirtualSerial_connected)
         VirtualSerial_PutString(s);
 //    else if(remote.connected && remote.model == REMOTE_MODEL_TLP)
 //        remote.debug(s);
     else if(bt.state == BT_ST_CONNECTED && remote.model == 0)
+#endif
        bt.send(s);
 }
 

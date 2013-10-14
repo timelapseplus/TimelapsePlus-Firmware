@@ -19,3 +19,13 @@ void debug(const char *s);
 void debug_nl(void);
 void debug_remote(char *s);
 
+// This can be set per file -- set here to enable globally
+#define DEBUG_ENABLED
+
+#ifdef DEBUG_ENABLED
+#define DEBUG(x) debug(x)
+#define DEBUG_NL debug_nl
+#else
+#define DEBUG(x)
+#define DEBUG_NL()
+#endif
