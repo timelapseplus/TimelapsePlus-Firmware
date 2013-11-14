@@ -595,7 +595,8 @@ const menu_item menu_settings_timelapse[]PROGMEM =
 const menu_item menu_settings_auxiliary[]PROGMEM =
 {
     { "AUX Port    ", 'S', (void*)menu_settings_aux_port, (void*)&conf.auxPort, (void*)settings_update, 0 },
-    { "Dolly Pulse ", 'C', (void*)&conf.dollyPulse, (void*)STR_DOLLY_PULSE, (void*)settings_update, &conf.auxPort },
+    { "Dolly Pulse1", 'C', (void*)&conf.dollyPulse, (void*)STR_DOLLY_PULSE, (void*)settings_update, &conf.auxPort },
+    { "Dolly Pulse2", 'C', (void*)&conf.dollyPulse2, (void*)STR_DOLLY_PULSE, (void*)settings_update, &conf.auxPort },
     { "BT Default  ", 'S', (void*)menu_settings_bt_default, (void*)&conf.btMode, (void*)settings_update, &bt.present },
     { "\0           ", 'V', 0, 0, 0 }
 };

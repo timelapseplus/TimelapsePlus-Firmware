@@ -1236,7 +1236,7 @@ char shutter::task()
     {
         if(old_state != run_state)
         {
-            if(run_state == RUN_GAP && conf.auxPort == AUX_MODE_DOLLY) aux_pulse();
+            if(conf.auxPort == AUX_MODE_DOLLY) aux_pulse();
             if(conf.debugEnabled)
             {
                 DEBUG(PSTR("State: RUN_GAP"));
@@ -1315,7 +1315,8 @@ char shutter::task()
         camera.bulbEnd();
         hardware_flashlight(0);
         light.stop();
-        aux_off();
+        aux1_off();
+        aux2_off();
         clock.awake();
 
         return DONE;
@@ -1351,21 +1352,34 @@ void check_cable()
 
 void aux_pulse()
 {
-    aux_on();
+    aux1_on();
+    aux2_on();
     if(conf.dollyPulse == 65535) conf.dollyPulse = 100;
-    clock.in(conf.dollyPulse, &aux_off);
+    if(conf.dollyPulse2 == 65535) conf.dollyPulse2 = 100;
+    clock.in(conf.dollyPulse, &aux1_off);
+    clock.in(conf.dollyPulse2, &aux2_off);
 }
 
-void aux_on()
+void aux1_on()
 {
-    ENABLE_AUX_PORT;
+    ENABLE_AUX_PORT1;
     AUX_OUT1_ON;
+}
+
+void aux1_off()
+{
+    ENABLE_AUX_PORT1;
+}
+
+void aux2_on()
+{
+    ENABLE_AUX_PORT2;
     AUX_OUT2_ON;
 }
 
-void aux_off()
+void aux2_off()
 {
-    ENABLE_AUX_PORT;
+    ENABLE_AUX_PORT2;
 }
 
 uint8_t stopName(char name[8], uint8_t stop)

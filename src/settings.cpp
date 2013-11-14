@@ -61,7 +61,11 @@ void settings_load()
     lcd.color(conf.lcdColor);
     ir.init();
     ir.make = conf.cameraMake;
-    if(conf.auxPort != AUX_MODE_DISABLED) aux_off();
+    if(conf.auxPort != AUX_MODE_DISABLED)
+    {
+        aux1_off();
+        aux2_off();
+    }
     if(bt.present && !remote.connected)
     {
         if(conf.btMode == BT_MODE_SLEEP) bt.sleep(); else bt.advertise();
@@ -113,6 +117,7 @@ void settings_default()
     conf.autoRun = AUTO_RUN_OFF;
     conf.modeSwitch = USB_CHANGE_MODE_DISABLED;
     conf.dollyPulse = 100;
+    conf.dollyPulse2 = 100;
     conf.lcdContrast = 3;
     conf.lcdCoefficent = 0x7;
     conf.lcdBias = 0x3;

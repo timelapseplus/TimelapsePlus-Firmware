@@ -624,7 +624,8 @@ volatile char shutterLagTest(char key, char first)
 
 		ENABLE_SHUTTER;
 		ENABLE_MIRROR;
-		ENABLE_AUX_PORT;
+		ENABLE_AUX_PORT1;
+		ENABLE_AUX_PORT2;
 
 		_delay_ms(100);
 

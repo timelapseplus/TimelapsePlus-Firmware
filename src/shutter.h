@@ -54,7 +54,8 @@
 #define ENABLE_SHUTTER setHigh(SHUTTER_FULL_PIN); setOut(SHUTTER_FULL_PIN); setIn(CHECK_CABLE_PIN); setHigh(CHECK_CABLE_PIN); setIn(SHUTTER_SENSE_PIN); setHigh(SHUTTER_SENSE_PIN);
 #define ENABLE_MIRROR setHigh(SHUTTER_HALF_PIN); setOut(SHUTTER_HALF_PIN)
 
-#define ENABLE_AUX_PORT setOut(AUX_OUT1_PIN); setHigh(AUX_OUT1_PIN); setOut(AUX_OUT2_PIN); setHigh(AUX_OUT2_PIN); setIn(AUX_INPUT1_PIN); setHigh(AUX_INPUT1_PIN); setIn(AUX_INPUT2_PIN); setHigh(AUX_INPUT2_PIN)
+#define ENABLE_AUX_PORT1 setOut(AUX_OUT1_PIN); setHigh(AUX_OUT1_PIN); setIn(AUX_INPUT1_PIN); setHigh(AUX_INPUT1_PIN)
+#define ENABLE_AUX_PORT2 setOut(AUX_OUT2_PIN); setHigh(AUX_OUT2_PIN); setIn(AUX_INPUT2_PIN); setHigh(AUX_INPUT2_PIN)
 #define AUX_INPUT1 (getPin(AUX_INPUT1_PIN) == 0)
 #define AUX_INPUT2 (getPin(AUX_INPUT2_PIN) == 0)
 #define AUX_OUT1_ON (setLow(AUX_OUT1_PIN))
@@ -173,8 +174,10 @@ void shutter_full(void);
 void shutter_bulbEnd(void);
 void shutter_bulbStart(void);
 void shutter_capture(void);
-void aux_on(void);
-void aux_off(void);
+void aux1_on(void);
+void aux1_off(void);
+void aux2_on(void);
+void aux2_off(void);
 void aux_pulse(void);
 uint8_t stopName(char name[7], uint8_t stop);
 uint8_t stopUp(uint8_t stop);
