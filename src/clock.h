@@ -11,6 +11,8 @@
 #define CLOCK_TUNE 134
 //#define CLOCK_TUNE 8
 
+#define CLOCK_IN_QUEUE 3
+
 class Clock
 {
 public:
@@ -46,8 +48,9 @@ private:
     uint32_t jobDuration;
     uint8_t newJob;
 
-    uint16_t inTime;
-    void (*inFunction)();
+    uint8_t inIndex;
+    uint16_t inTime[CLOCK_IN_QUEUE];
+    void (*inFunction[CLOCK_IN_QUEUE])();
 
     uint8_t sleepWasOk;
     uint16_t light_time;

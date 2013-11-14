@@ -100,12 +100,15 @@ volatile void Clock::count()
         light_time++;
         flashlight_time++;
     }
-    if(inTime > 0)
+    for(uint8_t i = 0; i < CLOCK_IN_QUEUE; i++)
     {
-        inTime--;
-        if(inTime <= 0)
+        if(inTime[i] > 0)
         {
-            (*inFunction)();
+            inTime[i]--;
+            if(inTime[i] <= 0)
+            {
+                (*inFunction[i])();
+            }
         }
     }
     if(newJob)
@@ -332,8 +335,15 @@ void Clock::cancelJob()
 
 void Clock::in(uint16_t stime, void (*func)())
 {
-    inFunction = func;   
-    inTime = stime;
+    for(uint8_t i = 0; i < CLOCK_IN_QUEUE; i++)
+    {
+        if(inTime[i] <= 0)
+        {
+            inFunction[i] = func;
+            inTime[i] = stime;
+            break;
+        }
+    }
 }
 
 /******************************************************************
