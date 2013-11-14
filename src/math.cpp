@@ -10,8 +10,10 @@
  
 //#include <stdio.h>
 #include <inttypes.h>
+#include <LUFA/Common/Common.h>
 
 #include "math.h"
+#include "debug.h"
 
 /******************************************************************
  *
@@ -64,6 +66,67 @@ uint32_t curve_int(uint32_t p0, uint32_t p1, uint32_t p2, uint32_t p3, float t)
 
     return ret;
 }
+
+void sort(float *array, const uint8_t length)
+{
+  uint16_t num_swaps = 1; // sort the array
+  while (num_swaps > 0) 
+  { 
+     num_swaps = 0; 
+     for (uint8_t i = 1; i < length; i++) 
+     { 
+        if(array[i - 1] > array[i]) 
+        {
+          float temp = array[i];
+          array[i] = array[i - 1];
+          array[i - 1] = temp;
+          num_swaps++; 
+        } 
+     } 
+  }
+}
+
+float arrayMedian(const float *array, const uint8_t length)
+{
+  float tmpArray[length];
+  memcpy(tmpArray, array, length * sizeof(float));
+
+  sort(tmpArray, length);
+
+  float m;
+  if(length % 2)
+  {
+    m = tmpArray[length / 2 + 1];
+  }
+  else
+  {
+    m = (tmpArray[length / 2] + tmpArray[length / 2 + 1]) / 2;
+  }
+
+  return m;
+}
+
+float arrayMedian50(const float *array, const uint8_t length)
+{
+  float tmpArray[length];
+  memcpy(tmpArray, array, length * sizeof(float));
+
+  sort(tmpArray, length);
+
+  float m = 0.0, count = 0.0;
+ 
+  for(uint8_t i = (length / 4); i < length - (length / 4); i++) // take the average of the middle two quarters
+  {
+    count++;
+    m += tmpArray[i];
+  }
+  m /= count;
+ 
+  return m;
+}
+
+
+
 
 
 /*
