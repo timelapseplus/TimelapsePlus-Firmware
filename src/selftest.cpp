@@ -42,6 +42,7 @@ extern Clock clock;
 extern Button button;
 extern BT bt;
 extern IR ir;
+extern Light light;
 
 /******************************************************************
  *
@@ -247,14 +248,36 @@ int8_t run_tests()
     
     if(pass)
     {
+        termPrintStrP(PSTR("Testing Light\n"));
+        lcd.backlight(0);
+        light.start();
+        _delay_ms(100);
+        light.setRangeAuto();
+        _delay_ms(100);
+        uint16_t light_off = light.readRaw();
+        lcd.backlight(255);
+        hardware_flashlight(1);
+        _delay_ms(200);
+        uint16_t light_on = light.readRaw();
+        hardware_flashlight(0);
+        light.stop();
+        pass &= test_assert(light_off < light_on);
+    }
+    
+    wdt_reset();
+    
+    if(pass)
+    {
         termPrintStrP(PSTR("Testing Shutter\n"));
         ENABLE_SHUTTER;
         ENABLE_MIRROR;
-        ENABLE_AUX_PORT;
+        ENABLE_AUX_PORT1;
+        ENABLE_AUX_PORT2;
         uint8_t i = 0;      // this was uninitialized. I set it to 0 -- John
         
         while (i < 30)
         {
+            i++;
             wdt_reset();
             _delay_ms(100);
 
@@ -386,7 +409,7 @@ void lightTest()
 
     termPrintStrP(PSTR("\nRunning light\nsensor test\n\n"));
 
-    light.integrationStart(10, 1);
+    light.integrationStart(10);
     
 
     uint8_t i;
