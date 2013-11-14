@@ -20,7 +20,9 @@ void debug_nl(void);
 void debug_remote(char *s);
 
 // This can be set per file -- set here to enable globally
-#define DEBUG_ENABLED
+#ifndef PRODUCTION
+	#define DEBUG_ENABLED
+#endif
 
 #ifdef DEBUG_ENABLED
 #define DEBUG(x) debug(x)
