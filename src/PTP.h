@@ -7,6 +7,8 @@
 #define THIRTIETH_ROOT_OF_2 1.023373892
 #define THREE_HUNDREDTH_ROOT_OF_2 1.00231316184
 
+// how many seconds before the busy flag is automatically cleared (to avoid stalls)
+#define BUSY_TIMEOUT_SECONDS 5
 
 struct propertyDescription_t
 {

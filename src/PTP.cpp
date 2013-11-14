@@ -5,13 +5,14 @@
 #include "PTP_Codes.h"
 #include "shutter.h"
 #include "settings.h"
+#include "clock.h"
 #include "tldefs.h"
 #include "debug.h"
 #include "PTP_Lists.h"
 //#define EXTENDED_DEBUG
 
 extern settings conf;
-
+extern Clock clock;
 
 uint8_t isoAvail[32];
 uint8_t isoAvailCount;
@@ -938,9 +939,27 @@ uint8_t PTP::checkEvent()
 	uint32_t event_item;
 	uint32_t event_value;
 	uint32_t i = 0;
+	static uint8_t count = 0;
+	static uint32_t busySeconds = 0;
 
 	if(ready == 0) return 0;
 	if(bulb_open) return 0; // Because the bulb is closed asynchronously (by the clock), this prevents collisions
+
+	if(busy) // auto reset for busy flag
+	{
+		if(busySeconds)
+		{
+			if(clock.Seconds() - busySeconds >= BUSY_TIMEOUT_SECONDS)
+			{
+				busySeconds = 0;
+				busy = false;
+			}
+		}
+		else
+		{
+			busySeconds = clock.Seconds();
+		}
+	}
 	
 	if(PTP_protocol == PROTOCOL_NIKON) // NIKON =======================================================
 	{
@@ -996,9 +1015,15 @@ uint8_t PTP::checkEvent()
 		}
 		else
 		{
+			if(count++ > 10)
+			{
+				PTP_need_update = true;
+				count = 0;
+			}
 			uint16_t tevent;
 			if((tevent = PTP_GetEvent(&event_value)))
 			{
+				busy = false;
 				DEBUG(PSTR("Received Asynchronous Event!\r\n"));
 				switch(tevent)
 				{

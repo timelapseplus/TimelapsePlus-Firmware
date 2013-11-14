@@ -116,7 +116,7 @@ void PTP_Enable(void)
     USB_Init(USB_MODE_Host);
 
     /* Create a stdio stream for the serial port for stdin and stdout */
-    #ifdef PTP_DEBUG
+    #if defined(PTP_DEBUG) || defined(PTP_DEBUG_SELECTIVE)
     Serial_Init(115200, true);
     Serial_CreateStream(NULL);
     puts_P(PSTR("Camera Enabled.\r\n"));
@@ -263,20 +263,87 @@ uint8_t PTP_FetchData(uint16_t offset)
 
 uint16_t PTP_GetEvent(uint32_t *event_value)
 {
-    if(SI_Host_IsEventReceived(&DigitalCamera_SI_Interface))
+    if(SI_Host_ReceiveEventHeaderTLP(&DigitalCamera_SI_Interface, &PIMA_Block))
     {
+        /*
         #ifdef PTP_DEBUG
-        uint8_t error = SI_Host_ReceiveEventHeader(&DigitalCamera_SI_Interface, &PIMA_Block);
+        uint8_t error = SI_Host_ReceiveEventHeaderTLP(&DigitalCamera_SI_Interface, &PIMA_Block);
         if(error) printf_P(PSTR("PTP_GetEvent Error %x\r\n"), error);
+        uint8_t size = (uint8_t) PIMA_Block.DataLength;
+        printf_P(PSTR("PTP_GetEvent Length %x\r\n"), size);
         #else
-        SI_Host_ReceiveEventHeader(&DigitalCamera_SI_Interface, &PIMA_Block);
+        SI_Host_ReceiveEventHeaderTLP(&DigitalCamera_SI_Interface, &PIMA_Block);
         #endif
+        */
         *event_value = PIMA_Block.Params[0];
         return PIMA_Block.Code;
     }
 
     return 0;
 
+}
+
+uint8_t SI_Host_ReceiveEventHeaderTLP(USB_ClassInfo_SI_Host_t* const SIInterfaceInfo,
+                                   PIMA_Container_t* const PIMAHeader)
+{
+    uint8_t ErrorCode;
+    uint8_t EventReceived = 0;
+//    uint8_t buf[8];
+
+
+
+    if ((USB_HostState != HOST_STATE_Configured) || !(SIInterfaceInfo->State.IsActive))
+      return 0;
+
+    Pipe_SelectPipe(SIInterfaceInfo->Config.EventsPipe.Address);
+    Pipe_SetFiniteINRequests(1);
+    Pipe_Unfreeze();
+    if (Pipe_IsINReceived())//Pipe_BytesInPipe())//
+    {
+       //uint16_t EventEP_size = SIInterfaceInfo->Config.EventsPipe.Size;
+       //printf_P(PSTR("EP Size: %d"), EventEP_size);
+
+
+        EventReceived = 1;
+    //    ErrorCode = Pipe_Read_Stream_LE(PIMAHeader, sizeof(PIMA_Container_t), NULL);
+
+        ErrorCode = Pipe_Read_Stream_LE(PIMAHeader, PIMA_COMMAND_SIZE(0), NULL);
+//        ErrorCode = Pipe_Read_Stream_LE(buf, sizeof(buf), NULL);
+/*        Pipe_ClearIN();
+        Pipe_Unfreeze();
+        Pipe_IsINReceived();
+        Pipe_WaitUntilReady();
+        ErrorCode = Pipe_Read_Stream_LE(&buf[8], 8, NULL);
+*/
+        #ifdef PTP_DEBUG_SELECTIVE
+            puts_P(PSTR("Read: "));
+            for(uint8_t i = 0; i < sizeof(buf); i++)
+            {
+               printf_P(PSTR("%2x "), buf[i]);
+            }
+            puts_P(PSTR("\r\n"));
+        #endif
+    /*
+        if (PIMAHeader->Type == CPU_TO_LE16(PIMA_CONTAINER_EventBlock) && !ErrorCode)
+        {
+            uint8_t ParamBytes = 8;//(PIMAHeader->DataLength - PIMA_COMMAND_SIZE(0));
+
+            #ifdef PTP_DEBUG_SELECTIVE
+                printf_P(PSTR("PTP_GetEvent Reading %x\r\n"), ParamBytes);
+            #endif
+
+            if (ParamBytes)
+              ErrorCode = Pipe_Read_Stream_LE(&PIMAHeader->Params, ParamBytes, NULL);
+        }
+    */
+
+
+    }
+
+    Pipe_ClearIN();
+    Pipe_Freeze();
+
+    return EventReceived && !ErrorCode;
 }
 
 

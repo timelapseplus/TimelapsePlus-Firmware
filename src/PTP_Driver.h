@@ -38,6 +38,7 @@
 
 //When defined, this breaks BT functionality
 //#define PTP_DEBUG
+//#define PTP_DEBUG_SELECTIVE
 
 #define PTP_RETURN_OK 0
 #define PTP_RETURN_ERROR 1
@@ -79,6 +80,7 @@ uint16_t PTP_GetEvent(uint32_t *event_value);
 uint8_t PTP_Transaction(uint16_t opCode, uint8_t receive_data, uint8_t paramCount, uint32_t *params, uint8_t dataBytes, uint8_t *data);
 uint8_t PTP_FetchData(uint16_t offset);
 uint8_t SI_Host_ReceiveResponseCode(USB_ClassInfo_SI_Host_t* const SIInterfaceInfo, PIMA_Container_t *PIMABlock);
+uint8_t SI_Host_ReceiveEventHeaderTLP(USB_ClassInfo_SI_Host_t* const SIInterfaceInfo, PIMA_Container_t* const PIMAHeader);
 uint8_t PTP_OpenSession(void);
 uint8_t PTP_CloseSession(void);
 uint8_t PTP_GetDeviceInfo(void);
