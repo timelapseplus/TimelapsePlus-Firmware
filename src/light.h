@@ -21,25 +21,22 @@ public:
 	float readEv();
 	float readIntegratedEv();
 	float readIntegratedSlope();
-	void integrationStart(uint8_t integration_minutes, int8_t darkTarget);
+	float readIntegratedSlopeMedian();
+	void integrationStart(uint8_t integration_minutes);
 	float readLux();
 
+    float lockedSlope, slope, integrated, median;
 	uint8_t method, paused;
 
 private:
     float iev[LIGHT_INTEGRATION_COUNT];
     float filter[FILTER_LENGTH];
     int8_t filterIndex;
-    int8_t pos, wasPaused;
-    uint8_t darkPoint;
+    int8_t wasPaused;
     uint8_t integration;
     uint16_t lastSeconds;
     uint8_t initialized;
     uint16_t offset;
-
-    uint32_t lastPointSeconds;
-	float lastPointReading;
-    uint32_t lastMeterSeconds;
-	float lastMeterReading;
+    bool integrationActive;
 
 };
