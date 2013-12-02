@@ -57,11 +57,12 @@ struct ptp_object_info
     uint16_t association_type;
     uint32_t association_desc;
     uint32_t sequence_number;
-    char     filename[10];
+    char     filename[18];
     char     capture_date[2];
     char     modified_date[2];
     char     keywords[2];
 };
+
 
 class PTP
 {
@@ -92,7 +93,7 @@ public:
     uint8_t getCurrentThumbStart(void);
     uint8_t getCurrentThumbContinued(void);
     uint8_t writeFile(char *name, uint8_t *data, uint16_t dataSize);
-    uint8_t sendObjectInfo(uint32_t *storage, uint32_t *parent, ptp_object_info *objectinfo);
+    uint8_t sendObjectInfo(uint32_t storage, uint32_t parent, ptp_object_info *objectinfo);
     uint8_t sendObject(uint8_t *data, uint16_t dataSize);
 
     uint8_t iso(void);

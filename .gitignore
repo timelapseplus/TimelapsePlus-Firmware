@@ -50,3 +50,5 @@ publish_release.sh
 .cproject
 
 .project
+
+beta_version

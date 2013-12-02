@@ -295,7 +295,10 @@
 	/* Private Interface - For use in library only: */
 	#if !defined(__DOXYGEN__)
 		/* Macros: */
-			#define SI_COMMAND_DATA_TIMEOUT_MS        10000
+			#ifndef SI_COMMAND_DATA_TIMEOUT_MS
+				#error "SI_COMMAND_DATA_TIMEOUT_MS not set"
+			#endif
+			//#define SI_COMMAND_DATA_TIMEOUT_MS        5000
 
 		/* Function Prototypes: */
 			#if defined(__INCLUDE_FROM_STILLIMAGE_HOST_C)

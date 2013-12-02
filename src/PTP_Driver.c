@@ -149,14 +149,16 @@ uint8_t PTP_Transaction(uint16_t opCode, uint8_t receive_data, uint8_t paramCoun
     if(PTP_Error) return PTP_RETURN_ERROR;
     if(PTP_Bytes_Remaining > 0) return PTP_FetchData(0);
 
+    uint8_t err;
+
     PTP_Run_Task = 0; // Pause task while we're busy with the transaction
 
     if(paramCount > 0 && params)
-        SI_Host_SendCommand(&DigitalCamera_SI_Interface, CPU_TO_LE16(opCode), paramCount, params);
+        err = SI_Host_SendCommand(&DigitalCamera_SI_Interface, CPU_TO_LE16(opCode), paramCount, params);
     else
-        SI_Host_SendCommand(&DigitalCamera_SI_Interface, CPU_TO_LE16(opCode), 0, NULL);
+        err = SI_Host_SendCommand(&DigitalCamera_SI_Interface, CPU_TO_LE16(opCode), 0, NULL);
 
-    if(dataBytes > 0 && data) // send data
+    if(!err && dataBytes > 0 && data) // send data
     {
         DigitalCamera_SI_Interface.State.TransactionID--;
 
@@ -167,47 +169,64 @@ uint8_t PTP_Transaction(uint16_t opCode, uint8_t receive_data, uint8_t paramCoun
             .Code = CPU_TO_LE16(opCode)
         };
         memcpy(&PIMA_Block.Params, data, dataBytes);
-        SI_Host_SendBlockHeader(&DigitalCamera_SI_Interface, &PIMA_Block);
+        err = SI_Host_SendBlockHeader(&DigitalCamera_SI_Interface, &PIMA_Block);
     }
-    else if(receive_data) // receive data
+    else if(!err && receive_data) // receive data
     {
+        PIMA_Block.DataLength = 0;
         PTP_Bytes_Received = 0;
-        SI_Host_ReceiveBlockHeader(&DigitalCamera_SI_Interface, &PIMA_Block);
-        PTP_Bytes_Received = (PIMA_Block.DataLength - PIMA_COMMAND_SIZE(0));
+        err = SI_Host_ReceiveBlockHeader(&DigitalCamera_SI_Interface, &PIMA_Block);
+        if(PIMA_Block.Code != PTP_RESPONSE_OK && PIMA_Block.Code != opCode)
+        {
+            err = PTP_RETURN_ERROR;
+            PTP_Response_Code = PIMA_Block.Code;
+        }
+        else if(PIMA_Block.DataLength >= PIMA_COMMAND_SIZE(0))
+        {
+            PTP_Bytes_Received = (PIMA_Block.DataLength - PIMA_COMMAND_SIZE(0));
+        }
+        else
+        {
+            err = PTP_RETURN_ERROR;
+            PTP_Response_Code = 0x5001;//PIMA_Block.Code;
+        }
         #ifdef PTP_DEBUG
         printf_P(PSTR("   Bytes received: %d\r\n\r\n"), PTP_Bytes_Received);
         #endif
         PTP_Bytes_Total = PTP_Bytes_Received;
-        if(PTP_Bytes_Received > PTP_BUFFER_SIZE)
+        if(!err && PTP_Bytes_Received > PTP_BUFFER_SIZE)
         {
             PTP_Bytes_Remaining = PTP_Bytes_Received - PTP_BUFFER_SIZE;
             PTP_Bytes_Received = PTP_BUFFER_SIZE;
-            SI_Host_ReadData(&DigitalCamera_SI_Interface, PTP_Buffer, PTP_Bytes_Received);
+            err = SI_Host_ReadData(&DigitalCamera_SI_Interface, PTP_Buffer, PTP_Bytes_Received);
             #ifdef PTP_DEBUG
 //            printf_P(PSTR("   Chunk Size: %d\r\n"), PTP_Bytes_Received);
 //            printf_P(PSTR("   (Bytes PTP_Bytes_Remaining: %d)\r\n\r\n"), PTP_Bytes_Remaining);
             #endif
             PTP_Run_Task = 1;
-            return PTP_RETURN_DATA_REMAINING;
+            if(!err) return PTP_RETURN_DATA_REMAINING;
         }
-        else
+        else if(!err)
         {
             PTP_Bytes_Remaining = 0;
-            if(PTP_Bytes_Received > 0) SI_Host_ReadData(&DigitalCamera_SI_Interface, PTP_Buffer, PTP_Bytes_Received);
+            if(PTP_Bytes_Received > 0) err = SI_Host_ReadData(&DigitalCamera_SI_Interface, PTP_Buffer, PTP_Bytes_Received);
         }
     }
 
-    USB_USBTask(); // not sure this is necessary here - trying to fix an occasional crash while reading EOS events
+    if(!err)
+    {
+        USB_USBTask(); // not sure this is necessary here - trying to fix an occasional crash while reading EOS events
 
-    PTP_Response_Code = 0;
-    uint8_t error_code = SI_Host_ReceiveResponseCode(&DigitalCamera_SI_Interface, &PIMA_Block);
-    PTP_Response_Code = PIMA_Block.Code;
-    if(PTP_Response_Code == 0x2019) error_code = 0; // Ignore BUSY error
-    #ifdef PTP_DEBUG
-    printf_P(PSTR("   Response Code: %x\r\n\r\n"), PTP_Response_Code);
-    #endif
+        PTP_Response_Code = 0;
+        err = SI_Host_ReceiveResponseCode(&DigitalCamera_SI_Interface, &PIMA_Block);
+        PTP_Response_Code = PIMA_Block.Code;
+        if(PTP_Response_Code == 0x2019) err = 0; // Ignore BUSY error
+        #ifdef PTP_DEBUG
+        printf_P(PSTR("   Response Code: %x\r\n\r\n"), PTP_Response_Code);
+        #endif
+    }
 
-    if(error_code)
+    if(err)
     {
         #ifdef PTP_DEBUG
         printf_P(PSTR("PTP_Transaction Error (opCode: %x, Error: %x ).\r\n"), opCode, PTP_Response_Code);
@@ -234,7 +253,7 @@ uint8_t PTP_FetchData(uint16_t offset)
             memmove(PTP_Buffer, PTP_Buffer + (PTP_BUFFER_SIZE - offset), offset);
         }
         PTP_Bytes_Remaining -= PTP_Bytes_Received;
-        SI_Host_ReadData(&DigitalCamera_SI_Interface, (PTP_Buffer + offset), PTP_Bytes_Received);
+        if(SI_Host_ReadData(&DigitalCamera_SI_Interface, (PTP_Buffer + offset), PTP_Bytes_Received)) return PTP_RETURN_ERROR;
 
         PTP_Bytes_Received += offset;
 

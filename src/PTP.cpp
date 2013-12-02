@@ -820,9 +820,9 @@ uint8_t PTP::init()
 	    		//case NIKON_OC_CAPTURE:
 	    		//	supports_nikon_capture = true;
 	    		//	break;
-	    		case NIKON_OC_BULBSTART:
-					supports.bulb = 2;
-	    			break;
+	    		//case NIKON_OC_BULBSTART:
+				//	supports.bulb = 2;
+	    		//	break;
 	    		case PTP_OC_PROPERTY_SET:
 	    			supports.iso = true;
 	    			supports.aperture = true;
@@ -854,9 +854,9 @@ uint8_t PTP::init()
     if(PTP_protocol == PROTOCOL_EOS)
     {
 		data[0] = 0x00000001;
-		if(PTP_Transaction(EOS_OC_PC_CONNECT, 0, 1, data, 0, NULL)) return 1; // PC Connect Mode //
+		if(PTP_Transaction(EOS_OC_PC_CONNECT, 0, 1, data, 0, NULL)) return PTP_RETURN_ERROR; // PC Connect Mode //
 		data[0] = 0x00000001;
-		if(PTP_Transaction(EOS_OC_EXTENDED_EVENT_INFO_SET, 0, 1, data, 0, NULL)) return 1; // Extended Event Info Mode //
+		if(PTP_Transaction(EOS_OC_EXTENDED_EVENT_INFO_SET, 0, 1, data, 0, NULL)) return PTP_RETURN_ERROR; // Extended Event Info Mode //
     }
 
 	isoPTP = 0xFF;
@@ -896,7 +896,7 @@ uint8_t PTP::liveView(uint8_t on)
 	if(ret == PTP_RETURN_ERROR)
 	{
 		DEBUG(PSTR("ERROR!\r\n"));
-		return 1;	
+		return PTP_RETURN_ERROR;	
 	}
 	else
 	{
@@ -981,6 +981,7 @@ uint8_t PTP::checkEvent()
 		if(supports.event)
 		{
 			ret = PTP_Transaction(NIKON_OC_EVENT_GET, 1, 0, NULL, 0, NULL);
+			if(ret) return PTP_RETURN_ERROR;
 			uint16_t nevents, tevent;
 			memcpy(&nevents, &PTP_Buffer[i], sizeof(uint16_t));
 			i += sizeof(uint16_t);
@@ -1475,17 +1476,17 @@ uint8_t PTP::capture()
 	busy = true;
 	if(PTP_protocol == PROTOCOL_EOS)
 	{
-		PTP_Transaction(EOS_OC_CAPTURE, 0, 0, NULL, 0, NULL);
+		if(PTP_Transaction(EOS_OC_CAPTURE, 0, 0, NULL, 0, NULL)) return PTP_RETURN_ERROR;
 	}
 	else if(PTP_protocol == PROTOCOL_NIKON && supports_nikon_capture)
 	{
-		PTP_Transaction(NIKON_OC_CAPTURE, 0, 0, NULL, 0, NULL);
+		if(PTP_Transaction(NIKON_OC_CAPTURE, 0, 0, NULL, 0, NULL)) return PTP_RETURN_ERROR;;
 	}
 	else
 	{
 		data[0] = 0x00000000;
 		data[1] = 0x00000000;
-		PTP_Transaction(PTP_OC_CAPTURE, 0, 2, data, 0, NULL);
+		if(PTP_Transaction(PTP_OC_CAPTURE, 0, 2, data, 0, NULL)) return PTP_RETURN_ERROR;;
 	}
 	if(PTP_Response_Code != PTP_RESPONSE_OK) return 1;
 	return 0;
@@ -1560,9 +1561,9 @@ uint8_t PTP::manualMode()
 
 uint8_t PTP::bulbStart()
 {
-	if(!static_ready) return 1;
+	if(!static_ready) return PTP_RETURN_ERROR;
 	//if(bulb_open) return 1;
-	if(!supports.bulb) return 1;
+	if(!supports.bulb) return PTP_RETURN_ERROR;
 	bulb_open = true;
 	busy = true;
 	bulbMode();
@@ -1572,18 +1573,18 @@ uint8_t PTP::bulbStart()
 		data[1] = 0x00;
 //		if(PTP_Transaction(EOS_OC_SETUILOCK, 0, 0, NULL, 0, NULL)) return 1; // SetUILock
 //		if(PTP_Transaction(EOS_OC_BULBSTART, 0, 0, NULL, 0, NULL)) return 1; // Bulb Start
-		if(PTP_Transaction(EOS_OC_REMOTE_RELEASE_ON, 0, 2, data, 0, NULL)) return 1; // Bulb Start
+		if(PTP_Transaction(EOS_OC_REMOTE_RELEASE_ON, 0, 2, data, 0, NULL)) return PTP_RETURN_ERROR; // Bulb Start
 	}
 	else if(PTP_protocol == PROTOCOL_NIKON)
 	{
 		data[0] = 0xFFFFFFFF;
 		data[1] = 0x00000001;
-		if(PTP_Transaction(NIKON_OC_BULBSTART, 0, 2, data, 0, NULL)) return 1; // Bulb Start
+		if(PTP_Transaction(NIKON_OC_BULBSTART, 0, 2, data, 0, NULL)) return PTP_RETURN_ERROR; // Bulb Start
 	}
 	//DEBUG(PSTR("Res: "));
 	//DEBUG(PTP_Response_Code);
 	//DEBUG_NL();
-	if(PTP_Response_Code != PTP_RESPONSE_OK) return 1;
+	if(PTP_Response_Code != PTP_RESPONSE_OK) return PTP_RETURN_ERROR;
 	return 0;
 }
 
@@ -1598,16 +1599,16 @@ uint8_t PTP::bulbEnd()
 		data[0] = 0x03;
 //		if(PTP_Transaction(EOS_OC_BULBEND, 0, 0, NULL, 0, NULL)) return 1; // Bulb End
 //		if(PTP_Transaction(EOS_OC_RESETUILOCK, 0, 0, NULL, 0, NULL)) return 1; // ResetUILock
-		if(PTP_Transaction(EOS_OC_REMOTE_RELEASE_OFF, 0, 1, data, 0, NULL)) return 1; // Bulb End
+		if(PTP_Transaction(EOS_OC_REMOTE_RELEASE_OFF, 0, 1, data, 0, NULL)) return PTP_RETURN_ERROR; // Bulb End
 	}
 	else if(PTP_protocol == PROTOCOL_NIKON)
 	{
 		data[0] = 0x0000D800;
 		data[1] = 0x00000001; // This parameter varies (0x01, 0x21) -- I don't know what it means
-		if(PTP_Transaction(NIKON_OC_BULBEND, 0, 2, data, 0, NULL)) return 1; // Bulb End
+		if(PTP_Transaction(NIKON_OC_BULBEND, 0, 2, data, 0, NULL)) return PTP_RETURN_ERROR; // Bulb End
 	}
 	bulb_open = false;
-	if(PTP_Response_Code != PTP_RESPONSE_OK) return 1;
+	if(PTP_Response_Code != PTP_RESPONSE_OK) return PTP_RETURN_ERROR;
 	return 0;
 }
 
@@ -1690,7 +1691,7 @@ uint8_t PTP::getPtpParameterList(uint16_t param, uint8_t *count, uint16_t *list,
 	uint8_t cnt;
 	data[0] = (uint32_t)param;
 	uint8_t ret = PTP_Transaction(PTP_OC_PROPERTY_LIST, 1, 1, data, 0, NULL);
-	if(PTP_Bytes_Received > 10)
+	if(!ret && PTP_Bytes_Received > 10)
 	{
 		cnt = (uint8_t)PTP_Buffer[10];
 		memcpy(current, &PTP_Buffer[7], sizeof(uint16_t));
@@ -1708,7 +1709,7 @@ uint8_t PTP::getPtpParameterList(uint16_t param, uint8_t *count, uint32_t *list,
 	uint8_t cnt;
 	data[0] = (uint32_t)param;
 	uint8_t ret = PTP_Transaction(PTP_OC_PROPERTY_LIST, 1, 1, data, 0, NULL);
-	if(PTP_Bytes_Received > 10)
+	if(!ret && PTP_Bytes_Received > 10)
 	{
 		cnt = (uint8_t)PTP_Buffer[14];
 		memcpy(current, &PTP_Buffer[9], sizeof(uint32_t));
@@ -1725,7 +1726,7 @@ uint8_t PTP::getPtpParameter(uint16_t param, uint16_t *value)
 {
 	data[0] = (uint32_t)param;
 	uint8_t ret = PTP_Transaction(PTP_OC_PROPERTY_GET, 1, 1, data, 0, NULL);
-	if(PTP_Bytes_Received == sizeof(uint16_t)) *value = (uint16_t)PTP_Buffer;
+	if(!ret && PTP_Bytes_Received == sizeof(uint16_t)) *value = (uint16_t)PTP_Buffer;
 	return ret;
 }
 
@@ -1744,7 +1745,7 @@ uint8_t PTP::updatePtpParameters(void)
 		*/
 		
 		data[0] = (uint32_t)NIKON_DPC_ISO;
-		PTP_Transaction(PTP_OC_PROPERTY_LIST, 1, 1, data, 0, NULL);
+		if(PTP_Transaction(PTP_OC_PROPERTY_LIST, 1, 1, data, 0, NULL)) return PTP_RETURN_ERROR;
 		if(PTP_Bytes_Received > 10 && PTP_Buffer[2] == 4)
 		{
 			isoAvailCount = (uint8_t)PTP_Buffer[10];
@@ -1761,7 +1762,7 @@ uint8_t PTP::updatePtpParameters(void)
 		}
 
 		data[0] = (uint32_t)NIKON_DPC_APERTURE;
-		PTP_Transaction(PTP_OC_PROPERTY_LIST, 1, 1, data, 0, NULL);
+		if(PTP_Transaction(PTP_OC_PROPERTY_LIST, 1, 1, data, 0, NULL)) return PTP_RETURN_ERROR;
 		if(PTP_Bytes_Received > 10 && PTP_Buffer[2] == 4)
 		{
 			apertureAvailCount = (uint8_t)PTP_Buffer[10];
@@ -1778,7 +1779,7 @@ uint8_t PTP::updatePtpParameters(void)
 		}
 
 		data[0] = (uint32_t)NIKON_DPC_SHUTTER;
-		PTP_Transaction(PTP_OC_PROPERTY_LIST, 1, 1, data, 0, NULL);
+		if(PTP_Transaction(PTP_OC_PROPERTY_LIST, 1, 1, data, 0, NULL)) return PTP_RETURN_ERROR;
 		if(PTP_Bytes_Received > 14 && PTP_Buffer[2] == 6)
 		{
 			shutterAvailCount = (uint8_t)PTP_Buffer[14];
@@ -1805,7 +1806,7 @@ uint8_t PTP::getPropertyInfo(uint16_t prop_code, uint8_t expected_size, uint16_t
 
 	// Send a command to the device to describe this property.
 	data[0] = (uint32_t)prop_code;
-	PTP_Transaction(PTP_OC_PROPERTY_LIST, 1, 1, data, 0, NULL);
+	if(PTP_Transaction(PTP_OC_PROPERTY_LIST, 1, 1, data, 0, NULL)) return PTP_RETURN_ERROR;
 
 	// data[0]
 	// data[1] -- Property code back
@@ -1991,9 +1992,6 @@ uint8_t PTP::getThumb(uint32_t handle)
 
 uint8_t PTP::writeFile(char *name, uint8_t *data, uint16_t dataSize)
 {
-	uint32_t parent = 0x0;
-	uint32_t storage = 0x0;
-
     struct ptp_object_info objectinfo;
     memset(&objectinfo,0,sizeof(objectinfo));
 
@@ -2003,17 +2001,18 @@ uint8_t PTP::writeFile(char *name, uint8_t *data, uint16_t dataSize)
     	if(name[i / 2] == 0) break;
     }
 
+    objectinfo.storage_id = 0x0;
     objectinfo.object_format = PTP_OFC_Text;
-	sendObjectInfo(&storage, &parent, &objectinfo);
+	sendObjectInfo(0x0, 0x0, &objectinfo);
 	sendObject(data, dataSize);
 	return 0;
 }
 
-uint8_t PTP::sendObjectInfo(uint32_t *storage, uint32_t *parent, ptp_object_info *objectinfo)
+uint8_t PTP::sendObjectInfo(uint32_t storage, uint32_t parent, ptp_object_info *objectinfo)
 {
-	data[0] = *storage;
-	data[1] = *parent;
-	return PTP_Transaction(PTP_OC_SendObjectInfo, 1, 2, data, sizeof(objectinfo), (uint8_t *)objectinfo);
+	data[0] = storage;
+	data[1] = parent;
+	return PTP_Transaction(PTP_OC_SendObjectInfo, 0, 2, data, sizeof(ptp_object_info), (uint8_t *)objectinfo);
 }
 
 uint8_t PTP::sendObject(uint8_t *data, uint16_t dataSize)

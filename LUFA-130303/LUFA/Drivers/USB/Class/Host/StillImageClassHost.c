@@ -30,6 +30,7 @@
 
 #define  __INCLUDE_FROM_USB_DRIVER
 #include "../../Core/USBMode.h"
+#include <avr/wdt.h>
 
 #if defined(USB_CAN_BE_HOST)
 
@@ -206,6 +207,7 @@ uint8_t SI_Host_ReceiveBlockHeader(USB_ClassInfo_SI_Host_t* const SIInterfaceInf
 
 		if (CurrentFrameNumber != PreviousFrameNumber)
 		{
+			wdt_reset();
 			PreviousFrameNumber = CurrentFrameNumber;
 
 			if (!(TimeoutMSRem--))
