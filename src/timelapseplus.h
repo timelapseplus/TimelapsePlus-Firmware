@@ -8,7 +8,7 @@
  *
  */
 
-#define VERSION 20131015
+#define VERSION 20131126
 
 
 #define TYPE_DEFAULT 0
