@@ -2043,13 +2043,13 @@ volatile char usbPlug(char key, char first)
 					lcd.writeString(3+46, 31, PTEXT("ISO"));
 				}
 
-				uint8_t tmp = (uint8_t) modePTP;
-				lcd.writeCharTiny(84 - 8 + 4, 48-13, '0' + tmp % 10);
-				tmp /= 10;
-				lcd.writeCharTiny(84 - 8, 48-13, '0' + tmp % 10);
+				//uint8_t tmp = (uint8_t) modePTP;
+				//lcd.writeCharTiny(84 - 8 + 4, 48-13, '0' + tmp % 10);
+				//tmp /= 10;
+				//lcd.writeCharTiny(84 - 8, 48-13, '0' + tmp % 10);
 
-				tmp = camera.isInBulbMode();
-				lcd.writeCharTiny(84 - 8 - 4, 48-13, '0' + tmp % 10);
+				//tmp = camera.isInBulbMode();
+				//lcd.writeCharTiny(84 - 8 - 4, 48-13, '0' + tmp % 10);
 
 				menu.setTitle(TEXT("Camera Info"));
 				menu.setBar(TEXT("RETURN"), TEXT("PHOTO"));
@@ -2118,9 +2118,9 @@ volatile char usbPlug(char key, char first)
 	else if(key == RIGHT_KEY)
 	{
 		//remote.send(REMOTE_THUMBNAIL, REMOTE_TYPE_SEND);
-		uint8_t *file = (uint8_t *) STR("Test file contents");
-		char *name = STR("test.txt");
-		camera.writeFile(name, file, 19);
+		//uint8_t *file = (uint8_t *) STR("Test file contents");
+		//char *name = STR("test.txt");
+		//camera.writeFile(name, file, 19);
 	}
 
 	return FN_CONTINUE;
