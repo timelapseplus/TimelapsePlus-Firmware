@@ -454,6 +454,7 @@ void message_notify(uint8_t id)
 			else
 			{
 				menu.message(STR("Disconnected"));
+				bt.advertise(); // this keeps the device awake after disconnecting, regardless of the conf.btMode setting
 			}
 			break;
 
