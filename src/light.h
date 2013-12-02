@@ -4,7 +4,8 @@
 #define LIGHT_INTEGRATION_COUNT 32
 #define FILTER_LENGTH 3
 
-#define ANALOG_THRESHOLD 18
+#define NIGHT_THRESHOLD 15
+#define NIGHT_THRESHOLD_HYSTERESIS 5
 #define OFFSET_UNSET 65535
 
 class Light
@@ -27,6 +28,7 @@ public:
 
     float lockedSlope, slope, integrated, median;
 	uint8_t method, paused;
+	bool underThreshold;
 
 private:
     float iev[LIGHT_INTEGRATION_COUNT];

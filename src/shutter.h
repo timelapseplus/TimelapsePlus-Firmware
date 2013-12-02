@@ -32,14 +32,23 @@
 #define BRAMP_METHOD_GUIDED 1
 #define BRAMP_METHOD_AUTO 2
 
-#define BRAMP_INTERVAL_MIN 80
-#define BRAMP_INTERVAL_VAR_MIN 30
+#define BRAMP_GAP_PADDING conf.brampGap
+#define BRAMP_INTERVAL_MIN ((BRAMP_GAP_PADDING + 2) * 10)
+#define BRAMP_INTERVAL_VAR_MIN (BRAMP_GAP_PADDING * 10)
 
-#define BRAMP_TARGET_AUTO 255
-#define BRAMP_TARGET_STARS (100-4)
-#define BRAMP_TARGET_HALFMOON (100+3)
-#define BRAMP_TARGET_FULLMOON (100+1)
-#define BRAMP_TARGET_CITYLIGHTS (100+5)
+#define BRAMP_RATE_MAX ((float)conf.brampRateMax)
+#define BRAMP_RATE_MIN ((float)conf.brampRateMin)
+#define BRAMP_RATE_FACTOR (((float)conf.brampRateFactor)/10.0)
+
+#define BRAMP_TARGET_CUSTOM 255
+#define BRAMP_TARGET_AUTO 254
+
+#define BRAMP_TARGET_OFFSET 100
+ 
+
+                    //1/25 2.8 100 = 30/3
+                    // 30s 2.8 1600 12*3=36
+                    // 30s 2.8 160 25
 
 #define MAX_EXTENDED_RAMP_SHUTTER 69
 
@@ -74,32 +83,35 @@
 //#define CHECK_CABLE if(getPin(CHECK_CABLE_PIN) || getPin(SHUTTER_SENSE_PIN)) cable_connected = 1; else cable_connected = 0
 #define CHECK_CABLE if(getPin(CHECK_CABLE_PIN)) cable_connected = 1; else cable_connected = 0
 
-#define SHUTTER_VERSION 20131003
+#define SHUTTER_VERSION 20131122
 
 #define CHECK_ALERT(string, test) if(test) { if(!preChecked) menu.alert(string); } else { if(preChecked) menu.clearAlert(string); }
 
 struct program
 {
-    char Name[12];            // 12 bytes
-    unsigned int Mode;        // 2 bytes
-    unsigned int Delay;       // 2 bytes
-    unsigned int Duration;    // 2 bytes
-    unsigned int Photos;      // 2 bytes
-    unsigned int IntervalMode;// 2 bytes
-    unsigned int Gap;         // 2 bytes
-    unsigned int GapMin;      // 2 bytes
-    unsigned int Exps;        // 2 bytes
-    unsigned int Exp;         // 2 bytes
-    unsigned int ArbExp;      // 2 bytes
-    unsigned int Bracket;     // 2 bytes
-    unsigned int BulbStart;   // 2 bytes
-    unsigned int Bulb[10];    // 20 bytes
-    unsigned int Key[10];     // 20 bytes
-    unsigned int Keyframes;   // 2 bytes
-    unsigned int brampMethod; // 2 bytes
-    unsigned int Integration; // 2 bytes
-    uint8_t NightSky; // 2 bytes
-    uint8_t infinitePhotos;   // 1 byte  
+    char Name[12];        
+    uint16_t Mode;        
+    uint16_t Delay;       
+    uint16_t Duration;    
+    uint16_t Photos;      
+    uint16_t IntervalMode;
+    uint16_t Gap;         
+    uint16_t GapMin;      
+    uint16_t Exps;        
+    uint16_t Exp;         
+    uint16_t ArbExp;      
+    uint16_t Bracket;     
+    uint16_t BulbStart;   
+    uint16_t Bulb[10];    
+    uint16_t Key[10];     
+    uint16_t Keyframes;   
+    uint16_t brampMethod; 
+    uint8_t  nightMode;
+    uint8_t  nightISO;
+    uint8_t  nightAperture;
+    uint8_t  nightShutter;
+    uint8_t  infinitePhotos;
+    uint8_t pad[16];
 };
 
 struct timer_status
@@ -115,6 +127,8 @@ struct timer_status
     int8_t rampMax;
     int8_t rampMin;
     unsigned int interval;
+    float rampTarget;
+    int8_t nightTarget;
 };
 
 extern program stored[MAX_STORED+1]EEMEM;
@@ -192,6 +206,7 @@ uint8_t hdrExpsDown(uint8_t hdr_exps);
 uint8_t hdrExpsName(char name[8], uint8_t hdr_exps);
 void calcBulbMax(void);
 int8_t calcRampMax();
+int8_t calcRampTarget(int8_t targetShutter, int8_t targetISO, int8_t targetAperture);
 int8_t calcRampMin();
 uint8_t rampTvUp(uint8_t ev);
 uint8_t rampTvUpStatic(uint8_t ev);

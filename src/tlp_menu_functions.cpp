@@ -55,6 +55,9 @@ volatile uint8_t brampKeyframe = 0;
 volatile uint8_t brampGuided = 0;
 volatile uint8_t brampAuto = 0;
 volatile uint8_t showIntervalMaxMin = INTERVAL_MODE_FIXED;
+volatile uint8_t rampISO = 0;
+volatile uint8_t rampAperture = 0;
+volatile uint8_t rampTargetCustom = 0;
 
 volatile uint8_t brampNotAuto = 0;
 volatile uint8_t brampNotGuided = 0;
@@ -120,6 +123,9 @@ void updateConditions()
 	clock.sleepOk = timerNotRunning && !timer.cableIsConnected() && bt.state != BT_ST_CONNECTED && sleepOk;
 	brampNotGuided = modeRamp && !brampGuided;
 	brampNotAuto = modeRamp && !brampAuto;
+	rampISO = (conf.brampMode & BRAMP_MODE_ISO && camera.supports.iso);
+	rampAperture = (conf.brampMode & BRAMP_MODE_APERTURE && camera.supports.aperture);
+	rampTargetCustom = (timer.current.nightMode == BRAMP_TARGET_CUSTOM && brampAuto);
 	if(modeRamp && timer.current.Gap < BRAMP_INTERVAL_MIN)
 	{
 		timer.current.Gap = BRAMP_INTERVAL_MIN;
@@ -1229,6 +1235,7 @@ volatile char lightMeter(char key, char first)
 	if(first)
 	{
 		light.start();
+		light.integrationStart(1);
 		lcd.backlight(0);
 		hardware_flashlight(0);
 	}
@@ -1253,40 +1260,40 @@ volatile char lightMeter(char key, char first)
 		uint16_t val;
 		char* text;
 
-		val = (uint16_t)light.method;
-		int_to_str(val, buf);
-		text = buf;
-		l = lcd.measureStringTiny(text);
-		lcd.writeStringTiny(80 - l, 6 + SY, text);
-		lcd.writeStringTiny(3, 6 + SY, PTEXT("Method:"));
-
 		val = (uint16_t)hardware_readLight(0);
 		int_to_str(val, buf);
 		text = buf;
 		l = lcd.measureStringTiny(text);
-		lcd.writeStringTiny(80 - l, 12 + SY, text);
-		lcd.writeStringTiny(3, 12 + SY, PTEXT("Level 1:"));
+		lcd.writeStringTiny(80 - l, 6 + SY, text);
+		lcd.writeStringTiny(3, 6 + SY, PTEXT("Level 1:"));
 
 		val = (uint16_t)hardware_readLight(1);
 		int_to_str(val, buf);
 		text = buf;
 		l = lcd.measureStringTiny(text);
-		lcd.writeStringTiny(80 - l, 18 + SY, text);
-		lcd.writeStringTiny(3, 18 + SY, PTEXT("Level 2:"));
+		lcd.writeStringTiny(80 - l, 12 + SY, text);
+		lcd.writeStringTiny(3, 12 + SY, PTEXT("Level 2:"));
 
 		val = (uint16_t)hardware_readLight(2);
 		int_to_str(val, buf);
 		text = buf;
 		l = lcd.measureStringTiny(text);
-		lcd.writeStringTiny(80 - l, 24 + SY, text);
-		lcd.writeStringTiny(3, 24 + SY, PTEXT("Level 3:"));
+		lcd.writeStringTiny(80 - l, 18 + SY, text);
+		lcd.writeStringTiny(3, 18 + SY, PTEXT("Level 3:"));
 
 		val = (uint16_t)(light.readEv());
 		int_to_str(val, buf);
 		text = buf;
 		l = lcd.measureStringTiny(text);
+		lcd.writeStringTiny(80 - l, 24 + SY, text);
+		lcd.writeStringTiny(3, 24 + SY, PTEXT("    I2C:"));
+
+		val = (uint16_t)(light.slope);
+		int_to_str(val, buf);
+		text = buf;
+		l = lcd.measureStringTiny(text);
 		lcd.writeStringTiny(80 - l, 30 + SY, text);
-		lcd.writeStringTiny(3, 30 + SY, PTEXT("    I2C:"));
+		lcd.writeStringTiny(3, 30 + SY, PTEXT("Slope:"));
 
 		lcd.update();
 		_delay_ms(10);
@@ -1958,7 +1965,7 @@ volatile char btConnect(char key, char first)
  *
  *
  ******************************************************************/
-
+extern uint32_t modePTP;
 volatile char usbPlug(char key, char first)
 {
 	static char connected = 0;
@@ -2035,6 +2042,15 @@ volatile char usbPlug(char key, char first)
 					lcd.writeString(3, 31, exp_name);
 					lcd.writeString(3+46, 31, PTEXT("ISO"));
 				}
+
+				uint8_t tmp = (uint8_t) modePTP;
+				lcd.writeCharTiny(84 - 8 + 4, 48-13, '0' + tmp % 10);
+				tmp /= 10;
+				lcd.writeCharTiny(84 - 8, 48-13, '0' + tmp % 10);
+
+				tmp = camera.isInBulbMode();
+				lcd.writeCharTiny(84 - 8 - 4, 48-13, '0' + tmp % 10);
+
 				menu.setTitle(TEXT("Camera Info"));
 				menu.setBar(TEXT("RETURN"), TEXT("PHOTO"));
 				lcd.update();
@@ -2101,9 +2117,10 @@ volatile char usbPlug(char key, char first)
 	}
 	else if(key == RIGHT_KEY)
 	{
-		remote.send(REMOTE_THUMBNAIL, REMOTE_TYPE_SEND);
-		//uint8_t *file = (uint8_t *) STR("Test file contents");
-		//camera.writeFile(STR("test.txt"), file, 19);
+		//remote.send(REMOTE_THUMBNAIL, REMOTE_TYPE_SEND);
+		uint8_t *file = (uint8_t *) STR("Test file contents");
+		char *name = STR("test.txt");
+		camera.writeFile(name, file, 19);
 	}
 
 	return FN_CONTINUE;
@@ -2727,7 +2744,7 @@ volatile char bramp_monitor(char key, char first)
 		buf[3] = '\0';
 		lcd.writeString(34, 8, buf); // Battery Level
 
-		if(timer.current.brampMethod == BRAMP_METHOD_GUIDED || timer.rampRate != 0)
+		if(timer.current.brampMethod == BRAMP_METHOD_GUIDED)// || timer.rampRate != 0)
 		{
 			b = (int16_t)timer.rampRate;
 			if(b > 99) b = 99;
@@ -2916,9 +2933,9 @@ volatile char bramp_monitor(char key, char first)
 				if(y >= 0 && y <= CHART_Y_SPAN) lcd.setPixel(x + CHART_X_TOP, CHART_Y_SPAN + CHART_Y_TOP - y);
 			}
 		}
-		else if(timer.current.brampMethod == BRAMP_METHOD_GUIDED)
+		else if(timer.current.brampMethod == BRAMP_METHOD_GUIDED || timer.current.brampMethod == BRAMP_METHOD_AUTO)
 		{
-			uint8_t x = 0;
+			uint8_t x = 0, x2;
 			uint16_t s, completedS = 0;
 			
 			if(!waiting)
@@ -2935,13 +2952,16 @@ volatile char bramp_monitor(char key, char first)
 				}
 				completedS = s;
 			}
+			x2 = x;
 			for(x++; x < CHART_X_SPAN; x++)
 			{
 				s = (uint16_t)(((float)timer.current.Duration / (float)CHART_X_SPAN) * (float)x);
 
 				s -= completedS;
 
-				float futureRamp = timer.status.rampStops + ((float)timer.rampRate / 1800.0) * (float)s;
+				float futureRamp = timer.status.rampStops + ((float)timer.rampRate / (3600.0 / 3)) * (float)s;
+
+				//if(timer.current.brampMethod == BRAMP_METHOD_AUTO && futureRamp > timer.status.rampTarget) break;
 
 				int16_t y = ((((float)futureRamp - (float)timer.status.rampMin) / (float)(timer.status.rampMax - timer.status.rampMin)) * (float)CHART_Y_SPAN);
 
@@ -2950,7 +2970,28 @@ volatile char bramp_monitor(char key, char first)
 
 				lcd.setPixel(x + CHART_X_TOP, CHART_Y_SPAN + CHART_Y_TOP - y);
 			}
+			x = x2;
+			float intSlope = 0.0 - light.readIntegratedSlope();
+			if(timer.running)
+			{
+				for(x++; x < CHART_X_SPAN; x += 2)
+				{
+					s = (uint16_t)(((float)timer.current.Duration / (float)CHART_X_SPAN) * (float)x);
+
+					s -= completedS;
+
+					float futureRamp = timer.status.rampStops + ((intSlope) / (3600.0 / 3)) * (float)s;
+
+					int16_t y = ((((float)futureRamp - (float)timer.status.rampMin) / (float)(timer.status.rampMax - timer.status.rampMin)) * (float)CHART_Y_SPAN);
+
+					if(y < 0) y = 0;
+					if(y > CHART_Y_SPAN) y = CHART_Y_SPAN;
+
+					lcd.setPixel(x + CHART_X_TOP, CHART_Y_SPAN + CHART_Y_TOP - y);
+				}
+			}
 		}
+/*
 		else if(timer.current.brampMethod == BRAMP_METHOD_AUTO)
 		{
 			uint8_t x = 0;
@@ -2989,7 +3030,7 @@ volatile char bramp_monitor(char key, char first)
 				}
 			}
 		}
-
+*/
 		// Progress Bar //
 		if(!waiting)
 		{
@@ -3072,7 +3113,7 @@ volatile char bramp_monitor(char key, char first)
 		        lcd.drawBox(41 - l - 1, 13, 41 + l + 1, 23);
 		        lcd.writeString(41 - l, 15, message_text);
 			}
-			else if(conf.extendedRamp && !camera.isInBulbMode() && timer.status.bulbLength > camera.bulbTime((int8_t)camera.bulbMin()))
+			else if(camera.ready && conf.extendedRamp && !camera.isInBulbMode() && timer.status.bulbLength > camera.bulbTime((int8_t)camera.bulbMin()))
 			{
 				strcpy(message_text, STR("Turn to BULB"));
 		        uint8_t l = strlen(message_text) * 6 / 2;
@@ -3080,7 +3121,7 @@ volatile char bramp_monitor(char key, char first)
 		        lcd.drawBox(41 - l - 1, 13, 41 + l + 1, 23);
 		        lcd.writeString(41 - l, 15, message_text);
 			}
-			else if(conf.extendedRamp && camera.isInBulbMode() && timer.status.bulbLength <= camera.bulbTime((int8_t)camera.bulbMin()) - camera.bulbTime((int8_t)camera.bulbMin()) / 3)
+			else if(camera.ready && conf.extendedRamp && camera.isInBulbMode() && timer.status.bulbLength <= camera.bulbTime((int8_t)camera.bulbMin()) - camera.bulbTime((int8_t)camera.bulbMin()) / 3)
 			{
 				strcpy(message_text, STR("Turn to M"));
 		        uint8_t l = strlen(message_text) * 6 / 2;
@@ -3135,11 +3176,11 @@ volatile char bramp_monitor(char key, char first)
 			timer.pause(1);	
 		}
 	}
-	else if(key == UP_KEY && timer.running && timer.current.brampMethod != BRAMP_METHOD_KEYFRAME)
+	else if(key == UP_KEY && timer.running && timer.current.brampMethod == BRAMP_METHOD_GUIDED)
 	{
 		if(timer.rampRate < 50 && (timer.status.rampStops < timer.status.rampMax || timer.rampRate < 0)) timer.rampRate++;
 	}
-	else if(key == DOWN_KEY && timer.running && timer.current.brampMethod != BRAMP_METHOD_KEYFRAME)
+	else if(key == DOWN_KEY && timer.running && timer.current.brampMethod == BRAMP_METHOD_GUIDED)
 	{
 		if(timer.rampRate > -50 && (timer.status.rampStops > timer.status.rampMin || timer.rampRate > 0)) timer.rampRate--;
 	}

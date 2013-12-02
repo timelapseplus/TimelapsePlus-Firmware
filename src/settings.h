@@ -85,8 +85,13 @@ struct settings
     uint8_t arbitraryBulb;
     uint8_t menuWrap;
     uint8_t extendedRamp;
-    uint8_t pad[26];
     uint16_t dollyPulse2;
+    uint8_t lightIntegrationMinutes;
+    uint16_t brampGap;
+    uint16_t brampRateMax;
+    uint16_t brampRateMin;
+    uint8_t brampRateFactor;
+    uint8_t pad[16];
 };
 
 void settings_load(void);

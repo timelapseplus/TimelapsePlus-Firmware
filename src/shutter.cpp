@@ -128,8 +128,10 @@ void shutter::setDefault()
     current.Bulb[0] = 36;
     current.Key[0] = 3600;
     current.brampMethod = BRAMP_METHOD_AUTO;
-    current.Integration = 10;
-    current.NightSky = BRAMP_TARGET_AUTO;
+    current.nightMode = BRAMP_TARGET_AUTO;
+    current.nightISO = 31;
+    current.nightShutter = 31;
+    current.nightAperture = 9;
     save(0);
 
     uint8_t i;
@@ -436,6 +438,7 @@ int8_t shutter::nextId(void)
 
 void shutter::begin()
 {
+    saveCurrent();
     running = 1;
 }
 
@@ -501,6 +504,7 @@ char shutter::task()
         }
         status.interval = current.Gap;
 
+
         ////////////////////////////// pre check ////////////////////////////////////
         CHECK_ALERT(STR_NOCAMERA_ALERT, conf.interface != INTERFACE_IR && !camera.supports.capture && !cableIsConnected());
         CHECK_ALERT(STR_APERTURE_ALERT, camera.ready && camera.supports.aperture && camera.aperture() != camera.apertureWideOpen() && (current.Mode & TIMELAPSE) && !((current.Mode & RAMP) && (conf.brampMode & BRAMP_MODE_APERTURE)));
@@ -533,9 +537,23 @@ char shutter::task()
             rampRate = 0;
             status.rampStops = 0;
             internalRampStops = 0;
-            //light.integrationStart(current.Integration, current.NightSky);
-            light.integrationStart(current.Integration, BRAMP_TARGET_AUTO);
+            light.integrationStart(conf.lightIntegrationMinutes);
             lightReading = lightStart = light.readIntegratedEv();
+    
+            if(current.nightMode == BRAMP_TARGET_AUTO)
+            {
+                status.nightTarget = 0;
+            }
+            else if(current.nightMode == BRAMP_TARGET_CUSTOM)
+            {
+                status.nightTarget = calcRampTarget(current.nightShutter, current.nightISO, current.nightAperture);
+            }
+            else
+            {
+                status.nightTarget = ((int8_t)current.nightMode) - BRAMP_TARGET_OFFSET;
+            }
+
+            if(light.underThreshold && current.nightMode != BRAMP_TARGET_AUTO) lightStart = status.nightTarget;
         }
 
         run_state = RUN_DELAY;
@@ -758,9 +776,77 @@ char shutter::task()
                         exp = camera.bulbTime((int8_t)(current.BulbStart - *((int8_t*)&current.Bulb[current.Keyframes - 1]) - (float)evShift));
                     }
                 }
-                else if(current.brampMethod == BRAMP_METHOD_GUIDED) //////////////////////////////// GUIDED RAMP /////////////////////////////////////
+
+                else if(current.brampMethod == BRAMP_METHOD_GUIDED || current.brampMethod == BRAMP_METHOD_AUTO) //////////////////////////////// GUIDED / AUTO RAMP /////////////////////////////////////
                 {
-                    status.rampStops += ((float)rampRate / 1800.0) * ((float)status.interval / 10.0);
+
+//#################### AUTO BRAMP ####################
+                    if(current.brampMethod == BRAMP_METHOD_AUTO)
+                    {
+                        if(light.underThreshold && current.nightMode != BRAMP_TARGET_AUTO)
+                        {
+                            if(current.nightMode == BRAMP_TARGET_CUSTOM)
+                            {
+                                status.rampTarget = (float)status.nightTarget;
+                            }
+                            else
+                            {
+                                if(light.slope < 0 - (BRAMP_RATE_MAX / BRAMP_RATE_FACTOR)) // respond quick during night-to-day
+                                {
+                                    status.rampTarget = lightStart - (float)(NIGHT_THRESHOLD - status.nightTarget);
+                                }
+                                else
+                                {
+                                    status.rampTarget = lightStart - (float)status.nightTarget; // hold at night exposure
+                                }
+                            }
+                        }
+                        else
+                        {
+                            status.rampTarget = (lightStart - lightReading);
+                        }
+                        if(status.rampTarget > status.rampMax) status.rampTarget = status.rampMax;
+                        if(status.rampTarget < status.rampMin) status.rampTarget = status.rampMin;
+                        float delta = status.rampTarget - status.rampStops;
+                        delta *= BRAMP_RATE_FACTOR; // 2 = aim to meet the goal in 30 minutes
+                        if(light.lockedSlope > 0.0 && current.nightMode != BRAMP_TARGET_AUTO)
+                        {
+                            if(light.lockedSlope < delta) delta = light.lockedSlope; // hold the last valid slope reading from the light sensor
+                        }
+                        else
+                        {
+                            if((light.slope > delta &&  delta > 0) || (light.slope < delta && delta < 0)) delta = (delta + light.slope) / 2; // factor in the integrated slope
+                        }
+
+                        // coerce to limits
+                        if(delta > BRAMP_RATE_MAX) delta = BRAMP_RATE_MAX;
+                        if(delta < -BRAMP_RATE_MAX) delta = -BRAMP_RATE_MAX;
+
+                        if(delta < BRAMP_RATE_MIN && delta > -BRAMP_RATE_MIN && (rampRate >= BRAMP_RATE_MIN || rampRate <= -BRAMP_RATE_MIN)) // keep momentum
+                        {
+                            if(delta > 0)
+                            {
+                                rampRate = BRAMP_RATE_MIN;
+                            }
+                            else if(delta < 0)
+                            {
+                                rampRate = -BRAMP_RATE_MIN;
+                            }
+                            else
+                            {
+                                rampRate = 0;
+                            }
+                        }
+                        else
+                        {
+                            //rampRate = (((int8_t) delta) + rampRate) / 2; // ease the change a little
+                            rampRate = (int8_t) delta;
+                        }
+                    }
+//####################################################
+
+                    status.rampStops += ((float)rampRate / (3600.0 / 3)) * ((float)status.interval / 10.0);
+
                     if(status.rampStops >= status.rampMax)
                     {
                         rampRate = 0;
@@ -773,11 +859,25 @@ char shutter::task()
                     }
                     exp = camera.bulbTime(current.BulbStart - status.rampStops - (float)evShift);
                 }
+/*
                 else if(current.brampMethod == BRAMP_METHOD_AUTO) //////////////////////////////// AUTO RAMP /////////////////////////////////////
                 {
-                    internalRampStops += ((float)rampRate / 1800.0) * ((float)status.interval / 10.0);
-                    status.rampStops = (lightStart - lightReading) + internalRampStops;
-                    
+                    //                    
+                    //internalRampStops += ((float)rampRate / (3600.0 / 3)) * ((float)status.interval / 10.0);
+                    //status.rampStops = (lightStart - lightReading) + internalRampStops;
+                    //
+
+                    // EXPERIMENTAL //
+                    float target = (lightStart - lightReading);// + internalRampStops;
+                    if(target > status.rampMax) target = status.rampMax;
+                    if(target < status.rampMin) target = status.rampMin;
+                    float delta = target - status.rampStops;
+                    if(delta > 16.0) delta = 16.0;
+                    if(delta < -16.0) delta = -16.0;
+                    rampRate = (int8_t) delta;
+                    status.rampStops += ((float)rampRate / (3600.0 / 3)) * ((float)status.interval / 10.0);
+                    //////////////////
+
                     if(status.rampStops > status.rampMax)
                     {
                         DEBUG(PSTR("   (ramp max)\n"));
@@ -811,7 +911,7 @@ char shutter::task()
                         DEBUG_NL();                        
                     }
                 }
-
+*/
                 bulb_length = exp;
 
                 if(current.IntervalMode == INTERVAL_MODE_AUTO)
@@ -1099,7 +1199,7 @@ char shutter::task()
 
             status.bulbLength = bulb_length;
 
-            if(current.Mode & RAMP && !camera.isInBulbMode())
+            if(current.Mode & RAMP && (!camera.isInBulbMode() && camera.ready))
             {
                 DEBUG(PSTR("\r\n-->Using Extended Ramp\r\n"));
                 DEBUG(PSTR("    ms: "));
@@ -1164,7 +1264,7 @@ char shutter::task()
     {
         last_photo_end_ms = clock.Ms();
 
-        if(PTP_Error)
+        if(PTP_Connected && PTP_Error)
         {
             run_state = RUN_ERROR;
             return CONTINUE;
@@ -1219,11 +1319,11 @@ char shutter::task()
             run_state = RUN_GAP;
         }
 
-        if(current.Mode & RAMP && conf.extendedRamp && !camera.isInBulbMode() && conf.modeSwitch == USB_CHANGE_MODE_ENABLED && timer.status.bulbLength > camera.bulbTime((int8_t)camera.bulbMin()))
+        if(camera.ready && current.Mode & RAMP && conf.extendedRamp && !camera.isInBulbMode() && conf.modeSwitch == USB_CHANGE_MODE_ENABLED && timer.status.bulbLength > camera.bulbTime((int8_t)camera.bulbMin()))
         {
             camera.bulbMode();
         }
-        else if(current.Mode & RAMP && conf.extendedRamp && camera.isInBulbMode() && conf.modeSwitch == USB_CHANGE_MODE_ENABLED && timer.status.bulbLength < camera.bulbTime((int8_t)camera.bulbMin()))
+        else if(camera.ready && current.Mode & RAMP && conf.extendedRamp && camera.isInBulbMode() && conf.modeSwitch == USB_CHANGE_MODE_ENABLED && timer.status.bulbLength < camera.bulbTime((int8_t)camera.bulbMin()))
         {
             camera.manualMode();
         }
@@ -1441,7 +1541,7 @@ uint8_t stopName(char name[8], uint8_t stop)
 
 void calcBulbMax()
 {
-    BulbMax = (timer.current.Gap / 10 - 6) * 1000;
+    BulbMax = (timer.current.Gap / 10 - BRAMP_GAP_PADDING) * 1000;
 
     BulbMaxEv = 1;
     for(uint8_t i = camera.bulbMax(); i < camera.bulbMin(); i++)
@@ -1490,6 +1590,21 @@ int8_t calcRampMax()
     if(conf.brampMode & BRAMP_MODE_BULB) bulbRange = (int8_t)timer.current.BulbStart - (int8_t)BulbMaxEv;
     if(conf.brampMode & BRAMP_MODE_ISO) isoRange = (int8_t)camera.iso() - (int8_t)camera.isoMax();
     if(conf.brampMode & BRAMP_MODE_APERTURE) apertureRange = (int8_t)camera.aperture() - (int8_t)camera.apertureMin();
+
+    return isoRange + apertureRange + bulbRange;
+}
+
+int8_t calcRampTarget(int8_t targetShutter, int8_t targetISO, int8_t targetAperture)
+{
+    calcBulbMax();
+
+    int8_t bulbRange = 0;
+    int8_t isoRange = 0;
+    int8_t apertureRange = 0;
+
+    if(conf.brampMode & BRAMP_MODE_BULB) bulbRange = (int8_t)timer.current.BulbStart - targetShutter;
+    if(conf.brampMode & BRAMP_MODE_ISO) isoRange = (int8_t)camera.iso() - targetISO;
+    if(conf.brampMode & BRAMP_MODE_APERTURE) apertureRange = (int8_t)camera.aperture() - targetAperture;
 
     return isoRange + apertureRange + bulbRange;
 }

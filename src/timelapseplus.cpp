@@ -74,6 +74,9 @@ extern volatile uint8_t brampNotGuided;
 extern volatile uint8_t showIntervalMaxMin;
 extern volatile uint8_t modeRampNormal;
 extern volatile uint8_t modeRampExtended;
+extern volatile uint8_t rampISO;
+extern volatile uint8_t rampAperture;
+extern volatile uint8_t rampTargetCustom;
 
 volatile uint8_t connectUSBcamera = 0;
 
@@ -326,7 +329,7 @@ int main()
 				   break;
 #endif
 			   case 'I':
-			   	   light.integrationStart(10, 0);
+			   	   light.integrationStart(10);
 			   	   DEBUG(PSTR("Light Sensor Integration Start\r\n"));
 				   break;
 
@@ -467,8 +470,9 @@ void message_notify(uint8_t id)
 				if(PTP_Error && timer.running)
 				{
 					//timerStop(0, 1);
-					menu.push(1);
-					menu.spawn((void*)usbPlug);
+					//menu.push(1);
+					//menu.spawn((void*)usbPlug);
+					menu.message(STR("PTP Error"));
 				}
 				else
 				{

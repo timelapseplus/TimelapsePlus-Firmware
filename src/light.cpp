@@ -142,40 +142,13 @@ float Light::readEv()
     if(paused) return lastReading;
 
     lux = readLux();
-    //lux *= 2^5;
-	  method = 0;
-    //int8_t ev = (int8_t)ilog2(lux); 
-    float ev = libc_log2(lux);
 
-    //DEBUG(STR("LUX = "));
-    //DEBUG(lux);
-    //DEBUG(STR(", EVi = "));
-    //DEBUG(ev);
-    //DEBUG(STR(", EVf = "));
-    //DEBUG(evf);
-    //DEBUG_NL();
+	  method = 0;
+
+    float ev = libc_log2(lux);
 
     ev *= 3;
     ev += 30;
-    //if(ev <= ANALOG_THRESHOLD)
-    //{
-    //	uint16_t tmp = hardware_readLight(2);
-    //  if(offset == OFFSET_UNSET)
-    //  {
-    //    offset = tmp;
-    //  }
-    //  tmp = tmp + ANALOG_THRESHOLD - offset;
-    //	if(tmp <= ANALOG_THRESHOLD)
-    //	{
-    //    ev = tmp;
-    //    if(ev < 6) ev = 6;
-	  //  	method = 1;
-    //	}
-    //}
-    //if(method == 0) // if analog wasn't used
-    //{
-    //  offset = OFFSET_UNSET;
-    //}
 
     if(filterIndex < 0) // initialize buffer
     {
@@ -257,12 +230,14 @@ void Light::task()
     iev[LIGHT_INTEGRATION_COUNT - 1] = readEv();
     slope = readIntegratedSlopeMedian();
 
-    if(iev[LIGHT_INTEGRATION_COUNT - 1] <= 15)
+    if(iev[LIGHT_INTEGRATION_COUNT - 1] <= NIGHT_THRESHOLD)
     {
+      underThreshold = true;
       if(lockedSlope == 0.0 && slope) lockedSlope = slope;
     }
-    else if(iev[LIGHT_INTEGRATION_COUNT - 1] > 20)
+    else if(iev[LIGHT_INTEGRATION_COUNT - 1] > NIGHT_THRESHOLD + NIGHT_THRESHOLD_HYSTERESIS)
     {
+      underThreshold = false;
       lockedSlope = 0.0;
     }
 
@@ -365,4 +340,3 @@ float Light::readLux()
     }
     return lux;
 }
-
