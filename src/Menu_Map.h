@@ -337,18 +337,6 @@ const menu_item menu_timelapse[]PROGMEM =
     { "\0           ", 'F', (void*)&runHandler, (void*)STR_OPTIONS, 0, (void*)STR_RUN }
 };
 
-//    { "Shutter    F", 'E', (void*)&timer.current.Exp, (void*)STR_TIME_TENTHS, 0, (void*)&modeStandard },
-/*
-    { "Bulb 1     F", 'E', (void*)&timer.current.Bulb[0], (void*)STR_TIME_TENTHS, 0, (void*)&modeRamp },
-    { "*Key       T", 'E', (void*)&timer.current.Key[0], (void*)STR_TIME_SINCE_START, 0, (void*)&modeRamp },
-    { "Bulb 2     F", 'E', (void*)&timer.current.Bulb[1], (void*)STR_TIME_TENTHS, 0, (void*)&modeRamp },
-    { "*Key       T", 'E', (void*)&timer.current.Key[1], (void*)STR_TIME_SINCE_START, 0, (void*)&bulb1 },
-    { "Bulb 3     F", 'E', (void*)&timer.current.Bulb[2], (void*)STR_TIME_TENTHS, 0, (void*)&bulb1 },
-    { "*Key       T", 'E', (void*)&timer.current.Key[2], (void*)STR_TIME_SINCE_START, 0, (void*)&bulb2 },
-    { "Bulb 4     F", 'E', (void*)&timer.current.Bulb[3], (void*)STR_TIME_TENTHS, 0, (void*)&bulb2 },
-    { "*Key       T", 'E', (void*)&timer.current.Key[3], (void*)STR_TIME_SINCE_START, 0, (void*)&bulb3 },
-    { "Bulb 5     F", 'E', (void*)&timer.current.Bulb[4], (void*)STR_TIME_TENTHS, 0, (void*)&bulb3 },
-*/
 const menu_item menu_trigger[]PROGMEM =
 {
     { "Cable Remote", 'F', (void*)cableRelease, 0, 0, (void*)&timerNotRunning },
@@ -496,6 +484,16 @@ const settings_item menu_settings_interface[]PROGMEM =
     { "\0           ", 0, 0 }
 };
 
+const char STR_NIKON_USB_CAPTURE[]PROGMEM = "Nikon Prop Code";
+const char STR_GENERIC_USB_CAPTURE[]PROGMEM = "Standard PTP Code";
+
+const settings_item menu_settings_nikon_usb_capture[]PROGMEM =
+{
+    { "Nikon       ", 0, (void*)STR_NIKON_USB_CAPTURE },
+    { "Generic PTP ", 1, (void*)STR_GENERIC_USB_CAPTURE },
+    { "\0           ", 0, 0 }
+};
+
 const char STR_BRAMP_ALL[]PROGMEM = "Bulb Aperture ISO";
 const char STR_BRAMP_BULB_ISO[]PROGMEM = "Bulb and ISO only";
 const char STR_BRAMP_BULB[]PROGMEM = "Only ramp bulb";
@@ -628,6 +626,7 @@ const menu_item menu_settings_display[]PROGMEM =
 const menu_item menu_settings_camera[]PROGMEM =
 {
     { "Camera Make ", 'S', (void*)menu_settings_camera_make, (void*)&conf.cameraMake, (void*)settings_update, 0 },
+    { "Nikon USB   ", 'S', (void*)menu_settings_nikon_usb_capture, (void*)&conf.nikonUSB, (void*)settings_update, (void*)&cameraMakeNikon },
     { "Camera FPS  ", 'S', (void*)menu_settings_camera_fps, (void*)&conf.cameraFPS, (void*)settings_update, 0 },
     { "Bulb Mode   ", 'S', (void*)menu_settings_bulb_mode, (void*)&conf.bulbMode, (void*)settings_update, 0 },
     { "Bulb Offset ", 'C', (void*)&conf.bulbOffset, (void*)STR_BULB_OFFSET, (void*)settings_update, 0 },

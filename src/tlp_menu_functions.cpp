@@ -62,6 +62,8 @@ volatile uint8_t rampTargetCustom = 0;
 volatile uint8_t brampNotAuto = 0;
 volatile uint8_t brampNotGuided = 0;
 
+volatile uint8_t cameraMakeNikon = 0;
+
 extern uint8_t battery_percent;
 extern settings conf;
 extern uint8_t Camera_Connected;
@@ -126,6 +128,7 @@ void updateConditions()
 	rampISO = (conf.brampMode & BRAMP_MODE_ISO && camera.supports.iso);
 	rampAperture = (conf.brampMode & BRAMP_MODE_APERTURE && camera.supports.aperture);
 	rampTargetCustom = (timer.current.nightMode == BRAMP_TARGET_CUSTOM && brampAuto);
+	cameraMakeNikon = conf.cameraMake == NIKON;
 	if(modeRamp && timer.current.Gap < BRAMP_INTERVAL_MIN)
 	{
 		timer.current.Gap = BRAMP_INTERVAL_MIN;
@@ -2012,14 +2015,14 @@ volatile char usbPlug(char key, char first)
 					lcd.writeString(3, 23, PTEXT("Attempting to"));
 					lcd.writeString(3, 31, PTEXT("self-correct..."));
 					menu.setTitle(TEXT("Alert"));
-					menu.setBar(TEXT("RETURN"), TEXT("CANCEL"));
+					menu.setBar(TEXT("RETURN"), BLANK_STR);
 				}
 				else
 				{
 					lcd.writeString(3, 23, PTEXT("Unplug camera"));
 					lcd.writeString(3, 31, PTEXT("to reset...  "));
 					menu.setTitle(TEXT("Camera Info"));
-					menu.setBar(TEXT("RETURN"), BLANK_STR);
+					menu.setBar(TEXT("RETURN"), TEXT("RESET"));
 				}
 				lcd.update();
 				connectUSBcamera = 1;
@@ -2102,17 +2105,21 @@ volatile char usbPlug(char key, char first)
 		{
 			camera.capture();
 		}
+		else if(PTP_Error && !timer.running)
+		{
+			camera.resetConnection();
+		}
 	}
 	else if(key == UP_KEY)
 	{
 //		if(PTP_Ready) camera.moveFocus(1);
-		if(PTP_Ready) camera.setISO(camera.isoUp(camera.iso()));
+		//if(PTP_Ready) camera.setISO(camera.isoUp(camera.iso()));
 		if(PTP_Ready) camera.setShutter(camera.shutterUp(camera.shutter()));
 	}
 	else if(key == DOWN_KEY)
 	{
 //		if(PTP_Ready) camera.moveFocus(0x8001);
-		if(PTP_Ready) camera.setISO(camera.isoDown(camera.iso()));
+		//if(PTP_Ready) camera.setISO(camera.isoDown(camera.iso()));
 		if(PTP_Ready) camera.setShutter(camera.shutterDown(camera.shutter()));
 	}
 	else if(key == RIGHT_KEY)
