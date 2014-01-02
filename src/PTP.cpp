@@ -241,6 +241,7 @@ uint8_t PTP::isoDown(uint8_t ev)
 
 uint8_t PTP::shutterUp(uint8_t ev)
 {
+	if(ev == BULB_EV_CODE) return 28;
 	if(ev < 128)
 	{
 		for(uint8_t i = 0; i < shutterAvailCount; i++)
@@ -281,6 +282,7 @@ uint8_t PTP::shutterUp(uint8_t ev)
 
 uint8_t PTP::shutterDown(uint8_t ev)
 {
+	if(ev == BULB_EV_CODE) return 28;
 	for(uint8_t i = 0; i < shutterAvailCount; i++)
 	{
 		if(shutterAvail[i] == ev - 1)
@@ -817,9 +819,13 @@ uint8_t PTP::init()
 	    		case PTP_OC_CAPTURE:
 	    			supports.capture = true;
 	    			break;
-	    		//case NIKON_OC_CAPTURE:
-	    		//	supports_nikon_capture = true;
-	    		//	break;
+	    		case NIKON_OC_CAPTURE:
+	    			if(conf.nikonUSB)
+	    			{
+						supports.capture = true;
+	    				supports_nikon_capture = true;
+	    			}
+	    			break;
 	    		//case NIKON_OC_BULBSTART:
 				//	supports.bulb = 2;
 	    		//	break;
@@ -1472,7 +1478,7 @@ void PTP::resetConnection()
 uint8_t PTP::capture()
 {
 	if(!static_ready) return 0;
-	if(modePTP == 0x04 || preBulbShutter) manualMode();
+	if(isInBulbMode()) manualMode();
 	busy = true;
 	if(PTP_protocol == PROTOCOL_EOS)
 	{
@@ -1523,9 +1529,29 @@ uint8_t PTP::isInBulbMode()
 uint8_t PTP::bulbMode()
 {
 	if(conf.modeSwitch == USB_CHANGE_MODE_DISABLED) return 0;
+	if(isInBulbMode()) return 0;
+
 	if(PTP_protocol == PROTOCOL_EOS)
 	{
-		if(modePTP != 0x04) return setEosParameter(EOS_DPC_MODE, 0x04); // Bulb Mode
+		bool bulbAsShutter = false;
+		for(uint8_t i = 0; i < shutterAvailCount; i++)
+		{
+			if(shutterAvail[i] == BULB_EV_CODE)
+			{
+				bulbAsShutter = true;
+				break;
+			}
+		}
+		if(bulbAsShutter)
+		{
+			preBulbShutter = shutter();
+			setShutter(BULB_EV_CODE);
+		}
+		else
+		{
+			preBulbShutter = 0;
+			return setEosParameter(EOS_DPC_MODE, 0x04); // Bulb Mode
+		}
 	}
 	else if(PTP_protocol == PROTOCOL_NIKON)
 	{
@@ -1539,9 +1565,27 @@ uint8_t PTP::bulbMode()
 uint8_t PTP::manualMode()
 {
 	if(conf.modeSwitch == USB_CHANGE_MODE_DISABLED) return 0;
+	if(!isInBulbMode()) return 0;
+
 	if(PTP_protocol == PROTOCOL_EOS)
 	{
-		if(modePTP != 0x03) return setEosParameter(EOS_DPC_MODE, 0x03); // Manual Mode
+		if(preBulbShutter)
+		{
+			uint8_t tmp = preBulbShutter;
+			preBulbShutter = 0;
+			setShutter(tmp);
+		}
+		else
+		{
+			if(shutter() == BULB_EV_CODE)
+			{
+				return setShutter(69); // 1/400
+			}
+			else
+			{
+				return setEosParameter(EOS_DPC_MODE, 0x03); // Manual Mode
+			}
+		}
 	}
 	else if(PTP_protocol == PROTOCOL_NIKON)
 	{
@@ -1553,6 +1597,10 @@ uint8_t PTP::manualMode()
 			uint8_t tmp = preBulbShutter;
 			preBulbShutter = 0;
 			setShutter(tmp);
+		}
+		else
+		{
+			setShutter(69); // 1/400
 		}
 	}
 	if(PTP_Response_Code != PTP_RESPONSE_OK) return 1;
@@ -1629,7 +1677,7 @@ uint8_t PTP::setISO(uint8_t ev)
 uint8_t PTP::setShutter(uint8_t ev)
 {
 	if(ev == 0xff) return 1;
-	manualMode();
+	//manualMode();
 	shutterPTP = shutterEvPTP(ev);
 	if(PTP_protocol == PROTOCOL_EOS)
 	{
