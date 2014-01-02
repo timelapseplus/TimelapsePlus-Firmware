@@ -91,7 +91,8 @@ struct settings
     uint16_t brampRateMax;
     uint16_t brampRateMin;
     uint8_t brampRateFactor;
-    uint8_t pad[16];
+    uint8_t nikonUSB;
+    uint8_t pad[15];
 };
 
 void settings_load(void);

@@ -139,6 +139,7 @@ void settings_default()
     conf.brampRateMax = 16;
     conf.brampRateMin = 4;
     conf.brampRateFactor = 20;
+    conf.nikonUSB = 0;
 
     settings_save();
     settings_load();
