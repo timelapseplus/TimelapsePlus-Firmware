@@ -77,6 +77,7 @@ extern volatile uint8_t modeRampExtended;
 extern volatile uint8_t rampISO;
 extern volatile uint8_t rampAperture;
 extern volatile uint8_t rampTargetCustom;
+extern volatile uint8_t cameraMakeNikon;
 
 volatile uint8_t connectUSBcamera = 0;
 

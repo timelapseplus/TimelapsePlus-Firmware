@@ -204,7 +204,7 @@ float Light::readIntegratedSlopeMedian()
 
 void Light::task()
 {
-	if(lastSeconds == 0 || !initialized) return;
+	if(!initialized || !integrationActive) return;
 
   if(paused)
   {
@@ -220,7 +220,7 @@ void Light::task()
     return;
   }
 
-  if(integrationActive && clock.Seconds() > lastSeconds + ((integration * 60) / LIGHT_INTEGRATION_COUNT))
+  if(lastSeconds == 0 || (integrationActive && clock.Seconds() > lastSeconds + ((integration * 60) / LIGHT_INTEGRATION_COUNT)))
   {
     lastSeconds = clock.Seconds();
     for(uint8_t i = 0; i < LIGHT_INTEGRATION_COUNT - 1; i++)
@@ -286,7 +286,7 @@ void Light::integrationStart(uint8_t integration_minutes)
 	  start();
     DEBUG(STR(" ####### LIGHT INTEGRATION START #######\r\n"));
     integration = integration_minutes;
-    lastSeconds = clock.Seconds() + 1; // +1 so it can never be zero
+    lastSeconds = 0;
     for(uint8_t i = 0; i < LIGHT_INTEGRATION_COUNT; i++)
     {
     	iev[i] = readEv(); // initialize array with readings //
@@ -297,6 +297,7 @@ void Light::integrationStart(uint8_t integration_minutes)
     median = iev[0];
     integrated = iev[0];
     lockedSlope = 0.0;
+    task();
 }
 
 float Light::readLux()

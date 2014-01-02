@@ -233,12 +233,12 @@ void shutter::bulbStart(void)
 void shutter_bulbStart(void)
 {
     lastShutterError = 0;
-    lastShutterError = camera.bulbMode();
-    if(lastShutterError) return;
     if((cable_connected == 0 || !(conf.interface & INTERFACE_CABLE)) && ir_shutter_state != 1)
     {
         if(camera.supports.bulb && (conf.interface & INTERFACE_USB))
         {
+            lastShutterError = camera.bulbMode();
+            if(lastShutterError) return;
             lastShutterError = camera.bulbStart();
         }
         else if(conf.interface & INTERFACE_IR)
@@ -539,7 +539,7 @@ char shutter::task()
             internalRampStops = 0;
             light.integrationStart(conf.lightIntegrationMinutes);
             lightReading = lightStart = light.readIntegratedEv();
-    
+
             if(current.nightMode == BRAMP_TARGET_AUTO)
             {
                 status.nightTarget = 0;
@@ -553,7 +553,14 @@ char shutter::task()
                 status.nightTarget = ((int8_t)current.nightMode) - BRAMP_TARGET_OFFSET;
             }
 
-            if(light.underThreshold && current.nightMode != BRAMP_TARGET_AUTO) lightStart = status.nightTarget;
+            DEBUG(STR(" -----> starting light reading: "));
+            DEBUG(lightStart);
+            DEBUG_NL(); 
+            if(light.underThreshold && current.nightMode != BRAMP_TARGET_AUTO)
+            {
+                DEBUG(STR(" -----> starting at night target\r\n"));
+                lightStart = status.nightTarget;
+            }
         }
 
         run_state = RUN_DELAY;
@@ -785,26 +792,33 @@ char shutter::task()
                     {
                         if(light.underThreshold && current.nightMode != BRAMP_TARGET_AUTO)
                         {
+                            DEBUG(STR(" -----> under night threshold\r\n"));
                             if(current.nightMode == BRAMP_TARGET_CUSTOM)
                             {
                                 status.rampTarget = (float)status.nightTarget;
                             }
                             else
                             {
-                                if(light.slope < 0 - (BRAMP_RATE_MAX / BRAMP_RATE_FACTOR)) // respond quick during night-to-day
+                                if(light.slope < 0 - ((NIGHT_THRESHOLD / 3) / BRAMP_RATE_FACTOR) && lightStart == status.nightTarget) // respond quickly during night-to-day once we see light
                                 {
-                                    status.rampTarget = lightStart - (float)(NIGHT_THRESHOLD - status.nightTarget);
+                                    DEBUG(STR(" -----> ramping toward sunrise\r\n"));
+                                    status.rampTarget = BRAMP_RATE_MAX; //lightStart - (float)(NIGHT_THRESHOLD - status.nightTarget);
                                 }
                                 else
                                 {
+                                    DEBUG(STR(" -----> holding night exposure\r\n"));
                                     status.rampTarget = lightStart - (float)status.nightTarget; // hold at night exposure
                                 }
                             }
                         }
                         else
                         {
+                            DEBUG(STR(" -----> using light sensor target\r\n"));
                             status.rampTarget = (lightStart - lightReading);
                         }
+                        DEBUG(STR(" -----> TARGET: "));
+                        DEBUG(status.rampTarget);
+                        DEBUG_NL();
                         if(status.rampTarget > status.rampMax) status.rampTarget = status.rampMax;
                         if(status.rampTarget < status.rampMin) status.rampTarget = status.rampMin;
                         float delta = status.rampTarget - status.rampStops;
@@ -815,25 +829,32 @@ char shutter::task()
                         }
                         else
                         {
-                            if((light.slope > delta &&  delta > 0) || (light.slope < delta && delta < 0)) delta = (delta + light.slope) / 2; // factor in the integrated slope
+                            if((light.slope > delta && delta > 0) || (light.slope < delta && delta < 0)) delta = (delta + light.slope) / 2; // factor in the integrated slope
                         }
 
                         // coerce to limits
                         if(delta > BRAMP_RATE_MAX) delta = BRAMP_RATE_MAX;
                         if(delta < -BRAMP_RATE_MAX) delta = -BRAMP_RATE_MAX;
 
+                        DEBUG(STR(" -----> delta: "));
+                        DEBUG(delta);
+                        DEBUG_NL();
+
                         if(delta < BRAMP_RATE_MIN && delta > -BRAMP_RATE_MIN && (rampRate >= BRAMP_RATE_MIN || rampRate <= -BRAMP_RATE_MIN)) // keep momentum
                         {
                             if(delta > 0)
                             {
+                                DEBUG(STR(" -----> coercing rate to min (+)\r\n"));
                                 rampRate = BRAMP_RATE_MIN;
                             }
                             else if(delta < 0)
                             {
+                                DEBUG(STR(" -----> coercing rate to min (-)\r\n"));
                                 rampRate = -BRAMP_RATE_MIN;
                             }
                             else
                             {
+                                DEBUG(STR(" -----> setting rate to zero\r\n"));
                                 rampRate = 0;
                             }
                         }
@@ -842,6 +863,9 @@ char shutter::task()
                             //rampRate = (((int8_t) delta) + rampRate) / 2; // ease the change a little
                             rampRate = (int8_t) delta;
                         }
+                        DEBUG(STR(" -----> RATE: "));
+                        DEBUG(rampRate);
+                        DEBUG_NL();
                     }
 //####################################################
 
