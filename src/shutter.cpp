@@ -33,7 +33,7 @@
 #include "light.h"
 #include "5110LCD.h"
 #include "button.h"
-#include "menu.h"
+#include "Menu.h"
 
 #define RUN_DELAY 0
 #define RUN_BULB 1
