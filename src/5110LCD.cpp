@@ -271,7 +271,8 @@ unsigned char LCD::writeNumber(unsigned char x, unsigned char y, unsigned int n,
                 eraseBox(x, y, x + (justification - p) * 6, y + 7);
                 justification -= p;
             }
-            break;       
+            break;
+        }       
         
     case 'F': // Fractional time (mm:ss.s) //
         {

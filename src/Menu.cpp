@@ -1143,7 +1143,8 @@ char MENU::editNumber(char key, unsigned int *n, char *name, char *unit, char mo
                 m += (d[3] * 10 + d[2]) * 60; // hours
                 m += d[1] * 10 + d[0]; // minutes
                 DEBUG(m);
-                DEBUG_NL();             
+                DEBUG_NL();
+                break;             
                              
            default:
                 m = d[4];
