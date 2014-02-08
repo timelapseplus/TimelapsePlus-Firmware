@@ -241,6 +241,38 @@ unsigned char LCD::writeNumber(unsigned char x, unsigned char y, unsigned int n,
             break;
         }
         
+    case 'H': // Time (hh:mm) //
+        {
+            char b, p;
+            unsigned int c;
+
+            // minutes //
+            c = n % 60;
+            n -= c; n /= 60;
+            b = c % 10;
+            writeChar(x, y, '0' + b); x -= 6; justification++;
+            c -= b; c /= 10;
+            b = c; if(b) p = justification;
+            writeChar(x, y, '0' + b); x -= 6; justification++;
+
+            writeChar(x, y, ':'); x -= 6; justification++;
+            p = justification;
+
+            // hours //
+            c = n % 100;
+            b = c % 10; if(b) p = justification;
+            writeChar(x, y, '0' + b); x -= 6; justification++;
+            c -= b; c /= 10;
+            b = c; if(b) p = justification;
+            writeChar(x, y, '0' + b); x -= 6; justification++;
+           
+            if(p)
+            {
+                eraseBox(x, y, x + (justification - p) * 6, y + 7);
+                justification -= p;
+            }
+            break;       
+        
     case 'F': // Fractional time (mm:ss.s) //
         {
             char b, p;
