@@ -13,7 +13,7 @@
 #include <avr/interrupt.h>
 #include "button.h"
 #include "5110LCD.h"
-#include "menu.h"
+#include "Menu.h"
 #include "clock.h"
 #include "hardware.h"
 #include "tldefs.h"

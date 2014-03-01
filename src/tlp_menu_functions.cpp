@@ -2890,7 +2890,7 @@ volatile char bramp_monitor(char key, char first)
 		{
 			for(uint8_t x = 0; x < CHART_X_SPAN; x++)
 			{
-				uint16_t s = (uint16_t)(((float)timer.current.Duration / (float)CHART_X_SPAN) * (float)x);
+				uint32_t s = (uint32_t)(((float)timer.current.Duration / (float)CHART_X_SPAN) * (float)x * 60.0); //J.R.
 	            float key1 = 1, key2 = 1, key3 = 1, key4 = 1;
 	            char found = 0;
 	            uint8_t i;
@@ -2943,13 +2943,13 @@ volatile char bramp_monitor(char key, char first)
 		else if(timer.current.brampMethod == BRAMP_METHOD_GUIDED || timer.current.brampMethod == BRAMP_METHOD_AUTO)
 		{
 			uint8_t x = 0, x2;
-			uint16_t s, completedS = 0;
+			uint32_t s, completedS = 0; //J.R.
 			
 			if(!waiting)
 			{
 				for(x = 0; x < CHART_X_SPAN; x++)
 				{
-					s = (uint16_t)(((float)timer.current.Duration / (float)CHART_X_SPAN) * (float)x);
+					s = (uint32_t)(((float)timer.current.Duration / (float)CHART_X_SPAN) * (float)x * 60.0); //J.R.
 
 					if(s >= clock.Seconds()) rampHistory[x] = ((((float)timer.status.rampStops - (float)timer.status.rampMin) / (float)(timer.status.rampMax - timer.status.rampMin)) * (float)CHART_Y_SPAN);
 
@@ -2962,7 +2962,7 @@ volatile char bramp_monitor(char key, char first)
 			x2 = x;
 			for(x++; x < CHART_X_SPAN; x++)
 			{
-				s = (uint16_t)(((float)timer.current.Duration / (float)CHART_X_SPAN) * (float)x);
+				s = (uint32_t)(((float)timer.current.Duration / (float)CHART_X_SPAN) * (float)x * 60.0); //J.R.
 
 				s -= completedS;
 
@@ -2983,7 +2983,7 @@ volatile char bramp_monitor(char key, char first)
 			{
 				for(x++; x < CHART_X_SPAN; x += 2)
 				{
-					s = (uint16_t)(((float)timer.current.Duration / (float)CHART_X_SPAN) * (float)x);
+					s = (uint32_t)(((float)timer.current.Duration / (float)CHART_X_SPAN) * (float)x * 60.0); //J.R.
 
 					s -= completedS;
 
@@ -3043,7 +3043,7 @@ volatile char bramp_monitor(char key, char first)
 		{
 			static float lastSec;
 			if(timer.running) lastSec = (float)clock.Seconds();
-			uint8_t x = (uint8_t)(((float)lastSec / (float)timer.current.Duration) * (float)(CHART_X_SPAN + 1));
+			uint8_t x = (uint8_t)(((float)lastSec / ((float)timer.current.Duration * 60.0)) * (float)(CHART_X_SPAN + 1));  //J.R.
 			if(x > CHART_X_SPAN + 1) x = CHART_X_SPAN + 1;
 			lcd.drawHighlight(CHART_X_TOP - 1, CHART_Y_TOP - 1, x + CHART_X_TOP, CHART_Y_BOTTOM + 1);
 		}

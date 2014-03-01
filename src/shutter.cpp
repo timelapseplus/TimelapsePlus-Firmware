@@ -33,7 +33,7 @@
 #include "light.h"
 #include "5110LCD.h"
 #include "button.h"
-#include "menu.h"
+#include "Menu.h"
 
 #define RUN_DELAY 0
 #define RUN_BULB 1
@@ -123,7 +123,7 @@ void shutter::setDefault()
     current.ArbExp = 100;
     current.Bracket = 6;
     current.Keyframes = 1;
-    current.Duration = 3600;
+    current.Duration = 60;  //J.R.
     current.BulbStart = 53;
     current.Bulb[0] = 36;
     current.Key[0] = 3600;
@@ -498,7 +498,7 @@ char shutter::task()
         pausing = 0;
         if(current.Mode & RAMP)
         {
-            uint32_t tmp = (uint32_t)current.Duration * 10;
+            uint32_t tmp = (uint32_t)current.Duration * 10 * 60;  //J.R.
             tmp /= (uint32_t) current.Gap;
             current.Photos = (uint16_t) tmp;
         }
@@ -1304,7 +1304,7 @@ char shutter::task()
             old_state = run_state;
         }
 
-        if(camera.busy && (photos < current.Photos || ((current.Mode & RAMP) && (clock.Seconds() < current.Duration))))
+        if(camera.busy && (photos < current.Photos || ((current.Mode & RAMP) && (clock.Seconds() < ((uint32_t)current.Duration * 60)))))  //J.R.
         {
             run_state = RUN_NEXT;
         }
@@ -1325,7 +1325,7 @@ char shutter::task()
         {
             if(current.Mode & RAMP)
             {
-                if(clock.Seconds() >= current.Duration)
+                if(clock.Seconds() >= ((uint32_t)current.Duration * 60))  //J.R.
                 {
                     run_state = RUN_END;
                 }

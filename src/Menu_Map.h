@@ -8,6 +8,7 @@
  *
  */
 
+const char STR_TIME_HOURS[]PROGMEM = "hh:mm";
 const char STR_TIME[]PROGMEM = "h:mm:ss";
 const char STR_PHOTOS[]PROGMEM = "0 for inf.";
 const char STR_TIME_TENTHS[]PROGMEM = "mm:ss.s";
@@ -308,7 +309,7 @@ const menu_item menu_timelapse[]PROGMEM =
     { "Mode       *", 'S', (void*)settings_timer_mode, (void*)&timer.current.Mode, 0, 0 },
     { "Method     *", 'S', (void*)settings_bramp_method, (void*)&timer.current.brampMethod, 0, (void*)&modeRamp },
     { "Delay      T", 'E', (void*)&timer.current.Delay, (void*)STR_TIME, 0, 0 },
-    { "Length     T", 'E', (void*)&timer.current.Duration, (void*)STR_TIME, 0, (void*)&modeRamp },
+    { "Length     H", 'E', (void*)&timer.current.Duration, (void*)STR_TIME_HOURS, 0, (void*)&modeRamp },
     { "Frames     U", 'E', (void*)&timer.current.Photos, (void*)STR_PHOTOS, 0, (void*)&modeNoRamp },
     { "Intrvl Mode ", 'S', (void*)settings_interval_mode, (void*)&timer.current.IntervalMode, 0, (void*)&modeRamp },
     { "Intrvl     F", 'E', (void*)&timer.current.Gap, (void*)STR_TIME_TENTHS, 0, (void*)&showGap },
