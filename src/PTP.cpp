@@ -577,25 +577,25 @@ uint8_t PTP::bulbToShutterEv(uint32_t bulb_time)
 		{
 			ev1 = pgm_read_byte(&PTP_Shutter_List[i].ev);
 			delta1 = buf - bulb_time * 10;
-			DEBUG(STR("DELTA: "));
-			DEBUG(delta1);
+			//DEBUG(STR("DELTA: "));
+			//DEBUG(delta1);
 			if(prev_ev && prev_ev == ev1) delta1 /= 2; // hysteresis
 			if(i < sizeof(PTP_Shutter_List) - 1)
 			{
 				buf = pgm_read_u32(&PTP_Shutter_List[i + 1].nikon);
 				ev2 = pgm_read_byte(&PTP_Shutter_List[i + 1].ev);
 				delta2 = buf - bulb_time * 10;
-				DEBUG(STR(", "));
-				DEBUG(delta2);
+				//DEBUG(STR(", "));
+				//DEBUG(delta2);
 				if(prev_ev && prev_ev == ev2) delta2 /= 2; // hysteresis
 				if(delta2 <= delta1)
 				{
-					DEBUG_NL();
+					//DEBUG_NL();
 					ev = ev2;
 					break;
 				}
 			}
-			DEBUG_NL();
+			//DEBUG_NL();
 			ev = ev1;
 			break;
 		}
@@ -1245,13 +1245,13 @@ uint8_t PTP::checkEvent()
 					case EOS_DPC_LiveView:
 						DEBUG(PSTR(" LV:"));
 						if(event_value) modeLiveView = true; else modeLiveView = false;
-						if(modeLiveView) DEBUG(PSTR("ON")); else  DEBUG(PSTR("OFF"));
+						if(modeLiveView) {DEBUG(PSTR("ON"));} else {DEBUG(PSTR("OFF"));}
 						DEBUG_NL();
 						break;
 					case EOS_DPC_Video:
 						DEBUG(PSTR(" VIDEO:"));
 						if(event_value == 4) recording = true; else recording = false;
-						if(recording) DEBUG(PSTR("Recording")); else  DEBUG(PSTR("OFF"));
+						if(recording) {DEBUG(PSTR("Recording"));} else {DEBUG(PSTR("OFF"));}
 						DEBUG_NL();
 						break;
 					case EOS_DPC_PhotosRemaining:
@@ -1269,7 +1269,7 @@ uint8_t PTP::checkEvent()
 					case EOS_DPC_VideoMode:
 						if(event_value == 1) videoMode = true; else videoMode = false;
 						DEBUG(PSTR(" Video Mode:"));
-						if(videoMode) DEBUG(PSTR(" ON")); else  DEBUG(PSTR(" OFF"));
+						if(videoMode) {DEBUG(PSTR(" ON"));} else  {DEBUG(PSTR(" OFF"));}
 						DEBUG_NL();
 						break;
 					//default:
@@ -1468,9 +1468,15 @@ uint8_t PTP::close()
 
 void PTP::resetConnection()
 {
-	close();
-	PTP_Disable();
+	wdt_reset();
 	_delay_ms(1000);
+	close();
+	DEBUG(PSTR("Disabling USB\r\n"));
+	PTP_Disable();
+	wdt_reset();
+	_delay_ms(1000);
+	wdt_reset();
+	DEBUG(PSTR("Enabling USB\r\n"));
 	PTP_Enable();
 
 }

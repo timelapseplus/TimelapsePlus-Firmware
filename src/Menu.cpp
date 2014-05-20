@@ -1253,9 +1253,13 @@ void MENU::menu_push(void *item_addr, char selection, uint8_t type)
         DEBUG(STR("PUSH: "));
         DEBUG(stack_counter);
         if(type == 1)
+        {
           DEBUG(STR(" (function)\r\n"));
+        }
         else
+        {
           DEBUG(STR(" (menu)\r\n"));
+        }
     }
     else
     {

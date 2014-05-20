@@ -134,7 +134,7 @@ void updateConditions()
 		timer.current.Gap = BRAMP_INTERVAL_MIN;
 		menu.refresh();
 	}
-	if(modeRamp && timer.current.GapMin < BRAMP_INTERVAL_VAR_MIN)
+	if(modeRamp && (timer.current.GapMin < BRAMP_INTERVAL_VAR_MIN))
 	{
 		timer.current.GapMin = BRAMP_INTERVAL_VAR_MIN;
 		menu.refresh();
@@ -644,7 +644,7 @@ volatile char shutterLagTest(char key, char first)
 			_delay_ms(1000);
 		}
 
-		SHUTTER_OPEN;
+		shutter_bulbStart();
 		clock.tare();
 
 		while(!AUX_INPUT1)
@@ -657,7 +657,7 @@ volatile char shutterLagTest(char key, char first)
 
 		_delay_ms(50);
 
-		SHUTTER_CLOSE;
+		shutter_bulbEnd();
 		clock.tare();
 
 		while(AUX_INPUT1)
@@ -667,6 +667,9 @@ volatile char shutterLagTest(char key, char first)
 		}
 
 		end_lag = (uint16_t)clock.eventMs();
+
+		conf.bulbEndOffset = end_lag;
+		settings_save();
 
 		lcd.writeNumber(56, 8, start_lag, 'U', 'L');
 		lcd.writeNumber(56, 18, end_lag, 'U', 'L');
@@ -2703,6 +2706,7 @@ volatile char bramp_monitor(char key, char first)
     if(clock.Seconds() - lock_time > LOCK_AFTER)
     {
     	light.paused = 0;
+		lcd.backlight(0);
     	lock_time = clock.Seconds();
     }
     if(key)

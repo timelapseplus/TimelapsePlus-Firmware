@@ -27,7 +27,7 @@ public:
 	float readLux();
 
     float lockedSlope, slope, integrated, median;
-	uint8_t method, paused;
+	uint8_t method, paused, skipTask;
 	bool underThreshold;
 
 private:
@@ -35,8 +35,8 @@ private:
     float filter[FILTER_LENGTH];
     int8_t filterIndex;
     int8_t wasPaused;
-    uint8_t integration;
-    uint16_t lastSeconds;
+    uint16_t integration;
+    uint32_t lastSeconds;
     uint8_t initialized;
     uint16_t offset;
     bool integrationActive;

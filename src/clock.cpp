@@ -11,17 +11,21 @@
 #include <avr/io.h>
 #include <avr/sleep.h>
 #include <avr/interrupt.h>
+#include <avr/eeprom.h>
 #include "clock.h"
 #include "button.h"
 #include "5110LCD.h"
 #include "hardware.h"
+#include "shutter.h"
 #include "settings.h"
 #include "debug.h"
+#include "light.h"
 
 
 extern LCD lcd;
 extern Button button;
 extern settings conf;
+extern Light light;
 
 /******************************************************************
  *
@@ -111,19 +115,28 @@ volatile void Clock::count()
             }
         }
     }
-    if(newJob)
+
+    if(newBulb)
     {
-        if(jobStart) (*jobStart)();
-        newJob = 0;
-        jobRunning = 1;
+        shutter_bulbStart();
+        newBulb = 0;
+        bulbRunning = 1;
+        if(conf.auxPort == AUX_MODE_SYNC && !AUX_INPUT1) bulbDurationPCsync = bulbDuration - conf.bulbEndOffset; else bulbDurationPCsync = 0;   
+        bulbDuration += conf.bulbOffset;
     }
-    else if(jobRunning)
+    else if(bulbRunning)
     {
-        jobDuration--;
-        if(jobDuration <= 0)
+        bulbDuration--;
+        if(bulbDurationPCsync && AUX_INPUT1)
         {
-            if(jobComplete) (*jobComplete)();
-            jobRunning = 0;
+            bulbDuration = bulbDurationPCsync;
+            bulbDurationPCsync = 0;
+        }
+        else if(bulbDuration <= 0)
+        {
+            shutter_bulbEnd();
+            bulbRunning = 0;
+            light.skipTask = 0;
         }
 
     }
@@ -153,8 +166,8 @@ void Clock::reset()
     event_ms = 0;
     seconds = 0;
     ms = 0;
-    jobRunning = 0;
-    newJob = 0;
+    bulbRunning = 0;
+    newBulb = 0;
 }
 
 /******************************************************************
@@ -296,34 +309,33 @@ uint8_t Clock::slept()
 
 /******************************************************************
  *
- *   Clock::job
+ *   Clock::bulb
  *
  *
  ******************************************************************/
 
-void Clock::job(void (*startFunction)(), void (*endFunction)(), uint32_t duration)
+void Clock::bulb(uint32_t duration)
 {
-    jobRunning = 0;
-    jobStart = startFunction;
-    jobComplete = endFunction;
-    jobDuration = duration;
-    newJob = 1;
+    if(conf.auxPort == AUX_MODE_SYNC) ENABLE_AUX_PORT1;
+    light.skipTask = 1; // don't read I2C during timing
+    bulbRunning = 0;
+    bulbDuration = duration;
+    newBulb = 1;
 }
 
 /******************************************************************
  *
- *   Clock::cancelJob
+ *   Clock::cancelBulb
  *
  *
  ******************************************************************/
 
-void Clock::cancelJob()
+void Clock::cancelBulb()
 {
-    jobRunning = 0;
-    jobStart = 0;
-    jobComplete = 0;
-    jobDuration = 0;
-    newJob = 0;
+    light.skipTask = 0;
+    bulbRunning = 0;
+    bulbDuration = 0;
+    newBulb = 0;
 }
 
 /******************************************************************

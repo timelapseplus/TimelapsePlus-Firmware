@@ -1,8 +1,10 @@
 #include <avr/io.h>
+#include "settings.h"
 #include "debug.h"
 #include "tldefs.h"
 #include "notify.h"
 
+extern settings conf;
 
 /******************************************************************
  *

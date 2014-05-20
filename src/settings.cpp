@@ -60,9 +60,9 @@ void settings_load()
     if(conf.apertureMin > 100 || conf.apertureMin < 2) conf.apertureMin = 2;
     if(conf.lightIntegrationMinutes == 255 || conf.lightIntegrationMinutes == 0) conf.lightIntegrationMinutes = 10;
     if(conf.brampGap > 20 || conf.brampGap == 0) conf.brampGap = 6;
-    if(conf.brampRateMax > 50 || conf.brampRateMax == 0) conf.brampRateMax = 16;
+    if(conf.brampRateMax > 50 || conf.brampRateMax == 0) conf.brampRateMax = 20;
     if(conf.brampRateMin > 20) conf.brampRateMin = 4;
-    if(conf.brampRateFactor > 30 || conf.brampRateFactor == 0) conf.brampRateFactor = 20;
+    if(conf.brampRateFactor > 90 || conf.brampRateFactor == 0) conf.brampRateFactor = 30;
     lcd.color(conf.lcdColor);
     ir.init();
     ir.make = conf.cameraMake;
@@ -136,10 +136,11 @@ void settings_default()
     conf.extendedRamp = 0;
     conf.lightIntegrationMinutes = 10;
     conf.brampGap = 6;
-    conf.brampRateMax = 16;
+    conf.brampRateMax = 20;
     conf.brampRateMin = 4;
-    conf.brampRateFactor = 20;
+    conf.brampRateFactor = 30;
     conf.nikonUSB = 0;
+    conf.bulbEndOffset = 8;
 
     settings_save();
     settings_load();

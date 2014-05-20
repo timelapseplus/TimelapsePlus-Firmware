@@ -139,7 +139,7 @@ float Light::readEv()
 
     if(!initialized) return 0;
 
-    if(paused) return lastReading;
+    if(paused || skipTask) return lastReading;
 
     lux = readLux();
 
@@ -206,10 +206,13 @@ void Light::task()
 {
 	if(!initialized || !integrationActive) return;
 
+  if(skipTask) return;
+
   if(paused)
   {
     lcd.backlight(255);
     wasPaused = 5;
+    DEBUG_NL();
     return;
   }
 
@@ -217,10 +220,12 @@ void Light::task()
   {
     lcd.backlight(0);
     wasPaused--;
+    DEBUG_NL();
     return;
   }
 
-  if(lastSeconds == 0 || (integrationActive && clock.Seconds() > lastSeconds + ((integration * 60) / LIGHT_INTEGRATION_COUNT)))
+
+  if(lastSeconds == 0 || (clock.Seconds() > lastSeconds + (uint32_t)((integration * 60) / LIGHT_INTEGRATION_COUNT)))
   {
     lastSeconds = clock.Seconds();
     for(uint8_t i = 0; i < LIGHT_INTEGRATION_COUNT - 1; i++)
@@ -285,7 +290,7 @@ void Light::integrationStart(uint8_t integration_minutes)
 {
 	  start();
     DEBUG(STR(" ####### LIGHT INTEGRATION START #######\r\n"));
-    integration = integration_minutes;
+    integration = (uint16_t)integration_minutes;
     lastSeconds = 0;
     for(uint8_t i = 0; i < LIGHT_INTEGRATION_COUNT; i++)
     {

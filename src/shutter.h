@@ -32,9 +32,10 @@
 #define BRAMP_METHOD_GUIDED 1
 #define BRAMP_METHOD_AUTO 2
 
-#define BRAMP_GAP_PADDING conf.brampGap
-#define BRAMP_INTERVAL_MIN ((BRAMP_GAP_PADDING + 2) * 10)
-#define BRAMP_INTERVAL_VAR_MIN (BRAMP_GAP_PADDING * 10)
+// in 1/10 seconds
+#define BRAMP_GAP_PADDING (conf.brampGap * 10)
+#define BRAMP_INTERVAL_MIN (BRAMP_GAP_PADDING + 20)
+#define BRAMP_INTERVAL_VAR_MIN 20
 
 #define BRAMP_RATE_MAX ((float)conf.brampRateMax)
 #define BRAMP_RATE_MIN ((float)conf.brampRateMin)

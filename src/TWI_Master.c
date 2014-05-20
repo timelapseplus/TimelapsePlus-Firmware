@@ -19,6 +19,7 @@
 
 #include <avr/interrupt.h>
 #include <avr/io.h>
+#include <avr/wdt.h>
 #include "hardware.h"
 #include "TWI_Master.h"
 
@@ -52,9 +53,15 @@ void TWI_Master_Initialise(void)
 /****************************************************************************
 Call this function to test if the TWI_ISR is busy transmitting.
 ****************************************************************************/
-unsigned char TWI_Transceiver_Busy(void)
+unsigned char TWI_Transceiver_BusyWait(void)
 {
-    return (TWCR & (1 << TWIE));                  // IF TWI Interrupt is enabled then the Transceiver is busy
+    uint16_t count = 0;
+    while (TWCR & (1 << TWIE))                  // IF TWI Interrupt is enabled then the Transceiver is busy
+    {
+      wdt_reset();
+      if(count > 1000) return 0; else count++;
+    }
+    return 1;
 }
 
 /****************************************************************************
@@ -65,7 +72,7 @@ the TWI State code.
 ****************************************************************************/
 unsigned char TWI_Get_State_Info(void)
 {
-    while (TWI_Transceiver_Busy());             // Wait until TWI has completed the transmission.
+    TWI_Transceiver_BusyWait();             // Wait until TWI has completed the transmission.
     return (TWI_state);                         // Return error state.
 }
 
@@ -95,21 +102,23 @@ void TWI_Start_Read_Write(unsigned char *msg, unsigned char msgSize)
 {
     unsigned char temp;
 
-    while (TWI_Transceiver_Busy());              // Wait until TWI is ready for next transmission.
-    TWI_msgSize = msgSize;                        // Number of data to transmit.
-    TWI_buf[0] = msg[0];                          // Store slave address with R/W setting.
-    if(!(msg[0] & (TRUE << TWI_READ_BIT)))       // If it is a write operation, then also copy data.
+    if(TWI_Transceiver_BusyWait())              // Wait until TWI is ready for next transmission.
     {
-        for(temp = 1; temp < msgSize; temp++) TWI_buf[temp] = msg[temp];
-    }
-    //TWI_statusReg.all = 0;
-    TWI_statusReg.lastTransOK = FALSE;            //  clear OK bit
-    TWI_state = TWI_NO_STATE;
+      TWI_msgSize = msgSize;                        // Number of data to transmit.
+      TWI_buf[0] = msg[0];                          // Store slave address with R/W setting.
+      if(!(msg[0] & (TRUE << TWI_READ_BIT)))       // If it is a write operation, then also copy data.
+      {
+          for(temp = 1; temp < msgSize; temp++) TWI_buf[temp] = msg[temp];
+      }
+      //TWI_statusReg.all = 0;
+      TWI_statusReg.lastTransOK = FALSE;            //  clear OK bit
+      TWI_state = TWI_NO_STATE;
 
-    TWCR = (1 << TWEN) |                             // TWI Interface enabled.
-          (1 << TWIE) | (1 << TWINT) |                  // Enable TWI Interupt and clear the flag.
-          (0 << TWEA) | (1 << TWSTA) | (0 << TWSTO) |       // Initiate a START condition.
-          (0 << TWWC);
+      TWCR = (1 << TWEN) |                             // TWI Interface enabled.
+            (1 << TWIE) | (1 << TWINT) |                  // Enable TWI Interupt and clear the flag.
+            (0 << TWEA) | (1 << TWSTA) | (0 << TWSTO) |       // Initiate a START condition.
+            (0 << TWWC);
+    }
 }
 
 /****************************************************************************
@@ -120,14 +129,15 @@ then initialize the next operation and return.
 ****************************************************************************/
 void TWI_Start_Transceiver(void)
 {
-    while (TWI_Transceiver_Busy());             // Wait until TWI is ready for next transmission.
-                                                //TWI_statusReg.all = 0;
-    TWI_statusReg.lastTransOK = FALSE;            // can't clear all bits
-    TWI_state = TWI_NO_STATE;
-    TWCR = (1 << TWEN) |                             // TWI Interface enabled.
+    if(TWI_Transceiver_BusyWait())             // Wait until TWI is ready for next transmission.
+    {                                            //TWI_statusReg.all = 0;
+      TWI_statusReg.lastTransOK = FALSE;            // can't clear all bits
+      TWI_state = TWI_NO_STATE;
+      TWCR = (1 << TWEN) |                             // TWI Interface enabled.
           (1 << TWIE) | (1 << TWINT) |                  // Enable TWI Interupt and clear the flag.
           (0 << TWEA) | (1 << TWSTA) | (0 << TWSTO) |       // Initiate a START condition.
           (0 << TWWC);                             //
+    }
 }
 
 /****************************************************************************
@@ -144,18 +154,18 @@ unsigned char TWI_Read_Data_From_Buffer(unsigned char *msg, unsigned char msgSiz
 {
     unsigned char i;
 
-    while (TWI_Transceiver_Busy());             // Wait until TWI is ready for next transmission.
-
-    if(TWI_statusReg.lastTransOK)               // Last transmission competed successfully.
+    if(TWI_Transceiver_BusyWait())             // Wait until TWI is ready for next transmission.
     {
-        for(i = 0; i < msgSize; i++)                 // Copy data from Transceiver buffer.
-        {
-            msg[i] = TWI_buf[i];
-        }
-        //return (TRUE);
+      if(TWI_statusReg.lastTransOK)               // Last transmission competed successfully.
+      {
+          for(i = 0; i < msgSize; i++)                 // Copy data from Transceiver buffer.
+          {
+              msg[i] = TWI_buf[i];
+          }
+          return 1;
+      }
     }
-    return (TWI_statusReg.lastTransOK);         //!!!!!!!!!!!Fix This !!!!!!!!!!!!!!!!!!
-                                                // return (FALSE);
+    return 0;
 }
 
 // ********** Interrupt Handlers ********** //

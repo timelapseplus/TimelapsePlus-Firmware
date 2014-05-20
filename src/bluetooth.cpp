@@ -895,7 +895,14 @@ uint8_t BT::task(void)
 
 	if(len)
 	{
-		if(mode == BT_MODE_CMD) DEBUG(PSTR("CMD:\r\n")); else DEBUG(PSTR("DATA:\r\n"));
+		if(mode == BT_MODE_CMD)
+		{
+			DEBUG(PSTR("CMD:\r\n"));
+		}
+		else
+		{
+			DEBUG(PSTR("DATA:\r\n"));
+		}
 		DEBUG(buf);
 		DEBUG_NL();
 		if(mode == BT_MODE_CMD)

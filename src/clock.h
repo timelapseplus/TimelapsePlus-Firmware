@@ -36,17 +36,16 @@ public:
     uint8_t sleepOk;
     uint8_t sleeping;
 
-    uint8_t jobRunning;
+    uint8_t bulbRunning;
 
-    void job(void (*startFunction)(), void (*endFunction)(), uint32_t duration);
-    void cancelJob(void);
+    void bulb(uint32_t duration);
+    void cancelBulb(void);
     void in(uint16_t stime, void (*func)());
 
 private:
-    void (*jobStart)();
-    void (*jobComplete)();
-    uint32_t jobDuration;
-    uint8_t newJob;
+    uint32_t bulbDuration;
+    uint32_t bulbDurationPCsync;
+    uint8_t newBulb;
 
     uint8_t inIndex;
     uint16_t inTime[CLOCK_IN_QUEUE];

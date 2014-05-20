@@ -28,6 +28,7 @@ const char STR_FLASHLIGHT_TIME[]PROGMEM = "LED auto off time";
 
 const char STR_AUX_DISABLED[]PROGMEM = "AUX port disabled";
 const char STR_AUX_DOLLY[]PROGMEM = "between frames";
+const char STR_AUX_SYNC[]PROGMEM = "PC sync input";
 const char STR_AUX_IR[]PROGMEM = "IR signal out";
 
 const char STR_CAMERA_FPS[]PROGMEM = "Frames per Second";
@@ -81,22 +82,6 @@ const char STR_NIGHT_APERTURE[]PROGMEM = "Night Aperture";
 
 const char STR_INTERVAL_MODE_FIXED[]PROGMEM = "Fixed Interval";
 const char STR_INTERVAL_MODE_VARIABLE[]PROGMEM = "Variable Interval";
-
-const menu_item menu_options[]PROGMEM =
-{
-    { "Stop Timer  ", 'F', (void*)&timerStop, 0, 0, (void*)&timer.running },
-    { "Remote Info ", 'F', (void*)&timerStatusRemote, 0, 0, (void*)&showRemoteInfo },
-    { "Start Remote", 'F', (void*)&timerRemoteStart, 0, 0, (void*)&showRemoteStart },
-    { "Add Keyframe", 'F', (void*)&shutter_addKeyframe, 0, 0, (void*)&modeRampKeyAdd },
-    { "Del Keyframe", 'F', (void*)&shutter_removeKeyframe, 0, 0, (void*)&modeRampKeyDel },
-//    { "View Details", 'F', (void*)&viewSeconds, 0, 0, 0 },
-    { "Load Saved..", 'F', (void*)&shutter_load, 0, 0, (void*)&timerNotRunning },
-    { "Save As..   ", 'F', (void*)&shutter_saveAs, 0, 0, 0 },
-    { "Save        ", 'F', (void*)&timerSaveCurrent, 0, 0, (void*)&timer.currentId },
-    { "Save Default", 'F', (void*)&timerSaveDefault, 0, 0, 0 },
-    { "Revert      ", 'F', (void*)&timerRevert, 0, 0, (void*)&timerNotRunning },
-    { "\0OPTIONS\0   ", 'F', (void*)&menuBack, (void*)STR_RETURN, 0, (void*)STR_NULL }
-};
 
 
 const settings_item settings_timer_mode[]PROGMEM =
@@ -446,9 +431,9 @@ const settings_item menu_settings_aux_port[]PROGMEM =
 {
     { "Disabled    ", AUX_MODE_DISABLED, (void*)STR_AUX_DISABLED },
     { "Dolly Out   ", AUX_MODE_DOLLY, (void*)STR_AUX_DOLLY },
+    { "PC Sync In  ", AUX_MODE_SYNC, (void*)STR_AUX_SYNC },
     { "IR Out      ", AUX_MODE_IR, (void*)STR_AUX_IR },
 //    { "2nd Camera  ", 60, (void*)STR_AUX_DOLLY },
-//    { "PC Sync In  ", 60, (void*)STR_AUX_DOLLY },
     { "\0           ", 0, 0 }
 };
 
@@ -604,6 +589,10 @@ const settings_item menu_settings_bramp_factor[]PROGMEM =
     { "        2.0 ", 20, (void*)STR_BRAMP_RATE_FACTOR },
     { "        2.5 ", 25, (void*)STR_BRAMP_RATE_FACTOR },
     { "        3.0 ", 30, (void*)STR_BRAMP_RATE_FACTOR },
+    { "        4.0 ", 40, (void*)STR_BRAMP_RATE_FACTOR },
+    { "        5.5 ", 55, (void*)STR_BRAMP_RATE_FACTOR },
+    { "        7.0 ", 70, (void*)STR_BRAMP_RATE_FACTOR },
+    { "        9.0 ", 90, (void*)STR_BRAMP_RATE_FACTOR },
     { "\0           ", 0, 0 }
 };
 
@@ -710,5 +699,22 @@ const menu_item menu_main[]PROGMEM =
     { "Settings    ", 'M', (void*)menu_settings, 0, 0, 0 },
     { "Power Off   ", 'F', (void*)hardware_off, 0, 0, (void*)&timerNotRunning },
     { "\0           ", 'V', 0, 0, 0 }
+};
+
+const menu_item menu_options[]PROGMEM =
+{
+    { "Stop Timer  ", 'F', (void*)&timerStop, 0, 0, (void*)&timer.running },
+    { "Remote Info ", 'F', (void*)&timerStatusRemote, 0, 0, (void*)&showRemoteInfo },
+    { "Start Remote", 'F', (void*)&timerRemoteStart, 0, 0, (void*)&showRemoteStart },
+    { "Add Keyframe", 'F', (void*)&shutter_addKeyframe, 0, 0, (void*)&modeRampKeyAdd },
+    { "Del Keyframe", 'F', (void*)&shutter_removeKeyframe, 0, 0, (void*)&modeRampKeyDel },
+//    { "View Details", 'F', (void*)&viewSeconds, 0, 0, 0 },
+    { "Load Saved..", 'F', (void*)&shutter_load, 0, 0, (void*)&timerNotRunning },
+    { "Save As..   ", 'F', (void*)&shutter_saveAs, 0, 0, 0 },
+    { "Save        ", 'F', (void*)&timerSaveCurrent, 0, 0, (void*)&timer.currentId },
+    { "Save Default", 'F', (void*)&timerSaveDefault, 0, 0, 0 },
+    { "Revert      ", 'F', (void*)&timerRevert, 0, 0, (void*)&timerNotRunning },
+    { "Settings    ", 'M', (void*)menu_settings_timelapse, 0, 0, 0 },
+    { "\0OPTIONS\0   ", 'F', (void*)&menuBack, (void*)STR_RETURN, 0, (void*)STR_NULL }
 };
 

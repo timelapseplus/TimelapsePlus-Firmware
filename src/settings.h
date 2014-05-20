@@ -47,6 +47,7 @@
 #define AUX_MODE_DISABLED 0
 #define AUX_MODE_DOLLY 1
 #define AUX_MODE_IR 2
+#define AUX_MODE_SYNC 3
 
 
 struct settings
@@ -92,7 +93,8 @@ struct settings
     uint16_t brampRateMin;
     uint8_t brampRateFactor;
     uint8_t nikonUSB;
-    uint8_t pad[15];
+    uint16_t bulbEndOffset;
+    uint8_t pad[13];
 };
 
 void settings_load(void);
