@@ -69,6 +69,7 @@ struct settings
     uint8_t btMode;
     uint8_t halfPress;
     uint16_t bulbOffset;
+    uint8_t negBulbOffset;
     uint8_t brampMode;
     uint8_t interface;
     uint8_t autoRun;

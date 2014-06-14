@@ -1248,7 +1248,9 @@ char shutter::task()
             {
                 //DEBUG(PSTR("Running BULB\r\n"));
                 camera.bulb_open = true;
-                clock.job(&shutter_bulbStart, &shutter_bulbEnd, bulb_length + conf.bulbOffset);
+                if(conf.negBulbOffset)  //J.R.
+					 clock.job(&shutter_bulbStart, &shutter_bulbEnd, bulb_length - conf.bulbOffset);
+				else clock.job(&shutter_bulbStart, &shutter_bulbEnd, bulb_length + conf.bulbOffset);
                 _delay_ms(100);
                 if(lastShutterError)
                 {

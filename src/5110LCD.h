@@ -31,7 +31,7 @@ public:
     void writeChar(unsigned char x, unsigned char y, unsigned char c);
     unsigned char writeCharTiny(unsigned char x, unsigned char y, unsigned char c);
     void writeUint(unsigned char x, unsigned char y, unsigned int n);
-    unsigned char writeNumber(unsigned char x, unsigned char y, unsigned int n, unsigned char mode, unsigned char justification);
+    unsigned char writeNumber(unsigned char x, unsigned char y, unsigned int n, unsigned char mode, unsigned char justification, bool minus);
     void writeStringBig(unsigned char x, unsigned char y, char *s);
     void writeStringBig(unsigned char x, unsigned char y, const char *s);
     char writeStringTiny(unsigned char x, unsigned char y, char *s);

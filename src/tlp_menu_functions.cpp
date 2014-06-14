@@ -614,7 +614,8 @@ volatile char cableReleaseRemote(char key, char first)
 volatile char shutterLagTest(char key, char first)
 {
 //  static uint8_t cable;
-	uint16_t start_lag, end_lag;
+	uint16_t start_lag, end_lag; //J.R. 2-26-14
+	bool minus;  
 
 	if(first)
 	{
@@ -667,10 +668,22 @@ volatile char shutterLagTest(char key, char first)
 		}
 
 		end_lag = (uint16_t)clock.eventMs();
+		
+		
 
-		lcd.writeNumber(56, 8, start_lag, 'U', 'L');
-		lcd.writeNumber(56, 18, end_lag, 'U', 'L');
-		lcd.writeNumber(56, 28, start_lag - end_lag, 'U', 'L');
+			
+
+		lcd.writeNumber(56, 8, start_lag, 'U', 'L', false);
+		lcd.writeNumber(56, 18, end_lag, 'U', 'L', false);
+		
+		if(start_lag < end_lag)
+		{
+		minus = true;
+		lcd.writeNumber(56, 28, end_lag - start_lag, 'U', 'L', minus);}  //J.R. 2-26-14
+		
+		else{
+		minus = false;	
+		lcd.writeNumber(56, 28, start_lag - end_lag, 'U', 'L', minus);}  //J.R. 2-26-14
 
 		lcd.update();
 	}
@@ -696,7 +709,7 @@ volatile char memoryFree(char key, char first)
 
 		lcd.cls();
 		lcd.writeString(1, 18, PTEXT("Free RAM:"));
-		/*char x =*/lcd.writeNumber(55, 18, mem, 'U', 'L');
+		/*char x =*/lcd.writeNumber(55, 18, mem, 'U', 'L',false);   //J.R.
 		//lcd.writeString(55 + x * 6, 18, PTEXT("b"));
 		menu.setTitle(TEXT("Memory"));
 		menu.setBar(TEXT("RETURN"), BLANK_STR);
@@ -761,7 +774,7 @@ volatile char viewSeconds(char key, char first)
 	}
 
 	lcd.eraseBox(36, 18, 83, 18 + 8);
-	/*char x =*/ lcd.writeNumber(83, 18, clock.Seconds(), 'F', 'R');
+	/*char x =*/ lcd.writeNumber(83, 18, clock.Seconds(), 'F', 'R',false);  //J.R.
 	lcd.update();
 
 	switch(key)
