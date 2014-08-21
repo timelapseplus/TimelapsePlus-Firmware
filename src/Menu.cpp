@@ -630,7 +630,7 @@ void MENU::click()
 
                    uint8_t b = 0, i = 0;
 
-                   while(b < MENU_NAME_LEN - 3)		//J.R.
+                   while(b < MENU_NAME_LEN - 1)		//J.R.
                    {
                        name[b] = pgm_read_byte(&menu[index].name[i]);
                        i++;
@@ -638,7 +638,8 @@ void MENU::click()
 
                        if(name[b] == ' ' && b > 8) //J.R. 3-7-14
                            break;
-
+                       if(name[b] == ' ' && name[b-1] == ' ') //J.R. 8-21-14
+						   {name[b-1] = '\0'; break;  }                                                   
                        b++;
                    }
                    
@@ -677,7 +678,7 @@ void MENU::click()
            case 'D': // Dynamic Settings List Variable
                uint8_t b = 0, i = 0;
                
-               while(b < MENU_NAME_LEN - 2)
+               while(b < MENU_NAME_LEN - 1)
                {
                    name[b] = pgm_read_byte(&menu[index].name[i]);
                    i++;
@@ -685,7 +686,8 @@ void MENU::click()
 
                    if(name[b] == ' ' && b > 8) //J.R. 5-30-14
                        break;
-                   
+                   if(name[b] == ' ' && name[b-1] == ' ') //J.R. 8-21-14
+						{name[b-1] = '\0'; break;  }                     
                    b++;
                }
                
@@ -932,6 +934,7 @@ char MENU::editNumber(char key, unsigned int *n, char *name, char *unit, char mo
         lcd->writeString(80 - l * 6, 32, unit);
 
         l = strlen(name);
+        if(l > 11) {l = 11; *(name + 11) = '\0';}	//J.R. 8-21-14
         x = 42 - ((l * 6) >> 1);
         lcd->drawHighlight(0, 31, 83, 39); // bottom //
 
