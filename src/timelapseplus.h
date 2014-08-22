@@ -8,8 +8,7 @@
  *
  */
 
-#define VERSION 20140514
-
+#define VERSION 20140821
 
 #define TYPE_DEFAULT 0
 #define TYPE_PROTOTYPE 1

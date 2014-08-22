@@ -619,7 +619,7 @@ const menu_item menu_settings_camera[]PROGMEM =
     { "Nikon USB   ", 'S', (void*)menu_settings_nikon_usb_capture, (void*)&conf.nikonUSB, (void*)settings_update, (void*)&cameraMakeNikon },
     { "Camera FPS  ", 'S', (void*)menu_settings_camera_fps, (void*)&conf.cameraFPS, (void*)settings_update, 0 },
     { "Bulb Mode   ", 'S', (void*)menu_settings_bulb_mode, (void*)&conf.bulbMode, (void*)settings_update, 0 },
-    { "Bulb Offset ", 'C', (void*)&conf.bulbOffset, (void*)STR_BULB_OFFSET, (void*)settings_update, 0 },
+    { "Bulb OffsetL", 'C', (void*)&conf.bulbOffset, (void*)STR_BULB_OFFSET, (void*)settings_update, 0 },
     { "Bulb Min    ", 'D', (void*)&dyn_min_bulb, (void*)&conf.bulbMin, (void*)settings_update, 0 },
     { "Half press  ", 'S', (void*)menu_settings_half_press, (void*)&conf.halfPress, (void*)settings_update, 0 },
     { "Interface   ", 'S', (void*)menu_settings_interface, (void*)&conf.interface, (void*)settings_update, 0 },
@@ -632,8 +632,8 @@ const menu_item menu_settings_timelapse_advanced[]PROGMEM =
     { "Integration ", 'S', (void*)settings_auto_bramp_integration, (void*)&conf.lightIntegrationMinutes, (void*)settings_update, 0 },
     { "Bramp Pad   ", 'C', (void*)&conf.brampGap, (void*)STR_BRAMP_PAD, (void*)settings_update, 0 },
     { "Bramp Factor", 'S', (void*)menu_settings_bramp_factor, (void*)&conf.brampRateFactor, (void*)settings_update, 0 },
-    { "Bramp Max   ", 'C', (void*)&conf.brampRateMax, (void*)STR_BRAMP_RATE_MAX, (void*)settings_update, 0 },
-    { "Bramp Min   ", 'C', (void*)&conf.brampRateMin, (void*)STR_BRAMP_RATE_MIN, (void*)settings_update, 0 },
+    { "Bramp Max  M", 'C', (void*)&conf.brampRateMax, (void*)STR_BRAMP_RATE_MAX, (void*)settings_update, 0 },
+    { "Bramp Min  N", 'C', (void*)&conf.brampRateMin, (void*)STR_BRAMP_RATE_MIN, (void*)settings_update, 0 },
     { "Bulb Units  ", 'S', (void*)menu_settings_arbitrary_bulb, (void*)&conf.arbitraryBulb, (void*)settings_update, 0 },
     { "\0           ", 'V', 0, 0, 0 }
 };

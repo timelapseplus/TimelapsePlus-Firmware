@@ -117,6 +117,7 @@ void settings_default()
     conf.btMode = BT_MODE_SLEEP;
     conf.halfPress = HALF_PRESS_ENABLED;
     conf.bulbOffset = 75;
+    conf.negBulbOffset = 0;
     conf.interface = INTERFACE_AUTO;
     conf.brampMode = BRAMP_MODE_BULB_ISO;
     conf.autoRun = AUTO_RUN_OFF;
