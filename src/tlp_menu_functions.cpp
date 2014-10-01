@@ -49,6 +49,11 @@ volatile uint8_t bulb1 = 0;
 volatile uint8_t bulb2 = 0;
 volatile uint8_t bulb3 = 0;
 volatile uint8_t bulb4 = 0;
+volatile uint8_t bulb5 = 0;
+volatile uint8_t bulb6 = 0;
+volatile uint8_t bulb7 = 0;
+volatile uint8_t bulb8 = 0;
+volatile uint8_t bulb9 = 0;
 volatile uint8_t showRemoteStart = 0;
 volatile uint8_t showRemoteInfo = 0;
 volatile uint8_t brampKeyframe = 0;
@@ -118,6 +123,11 @@ void updateConditions()
 	bulb2 = timer.current.Keyframes > 2 && brampKeyframe;
 	bulb3 = timer.current.Keyframes > 3 && brampKeyframe;
 	bulb4 = timer.current.Keyframes > 4 && brampKeyframe;
+	bulb5 = timer.current.Keyframes > 5 && brampKeyframe;
+	bulb6 = timer.current.Keyframes > 6 && brampKeyframe;
+	bulb7 = timer.current.Keyframes > 7 && brampKeyframe;
+	bulb8 = timer.current.Keyframes > 8 && brampKeyframe;
+	bulb9 = timer.current.Keyframes > 9 && brampKeyframe;
 	showGap = timer.current.Photos != 1 && modeTimelapse && (timer.current.IntervalMode == INTERVAL_MODE_FIXED || modeNoRamp);
 	showIntervalMaxMin = timer.current.Photos != 1 && modeTimelapse && modeRamp && timer.current.IntervalMode == INTERVAL_MODE_AUTO;
 	showRemoteStart = (remote.connected && !remote.running && remote.model == REMOTE_MODEL_TLP);	
@@ -1800,13 +1810,14 @@ volatile char focusStack(char key, char first)
 
 	if(photosTaken >= photos)
 	{
+		if(cameraMakeNikon) camera.liveView(false);	
 		menu.message(TEXT("Done!"));
 		photosTaken = 0;
 		first = 1;
 		state = 1;
 	}
 
-	if(!camera.modeLiveView)
+	if(!camera.modeLiveView && !cameraMakeNikon)
 	{
 		if(first || state > 0)
 		{
@@ -1912,7 +1923,7 @@ volatile char focusStack(char key, char first)
 			if(state == 5) lcd.drawHighlight(60, 24-4, 66, 32-4);
 			if(state == 6) lcd.drawHighlight(67, 24-4, 73, 32-4);
 
-			menu.setTitle(TEXT("Focus Stack"));
+			menu.setTitle(TEXT("Focus Stack")); // 9204:A00B
 			uint8_t len;
 			if(fine)
 			{
@@ -1950,6 +1961,8 @@ volatile char focusStack(char key, char first)
 	}
 	if(state == 7) // Running
 	{
+		if(cameraMakeNikon) camera.liveView(true);
+
 		float percent = (float) photosTaken /  (float) photos;
 		uint8_t bar = (uint8_t) (56.0 * percent) + 12;
 
@@ -1986,28 +1999,27 @@ volatile char focusStack(char key, char first)
 	{
 		if(pos != dest)
 		{
-			uint16_t move;
+			uint8_t move;
 			int16_t steps = dest - pos;
 			if(steps < 0)
 			{
 				steps = 0 - steps;
-				if(fine) move = 0x0001; else move = 0x0002;
+				if(fine) move = +1; else move = +2;
 			}
 			else
 			{
-				if(fine) move = 0x8001; else move = 0x8002;
+				if(fine) move = -1; else move = -2;
 			}
-			for(int16_t i = 0; i < steps; i++)
-			{
-				camera.moveFocus(move);
-				_delay_ms(100);
-				wdt_reset();
-			}
+			//camera.setFocus(true);
+			_delay_ms(100);
+			camera.moveFocus(move, steps);
 			pos = dest;
 		}
 
 		if(state == 7)
 		{
+			camera.setFocus(false);
+			_delay_ms(100);
 			camera.capture();
 			photosTaken++;
 			wait = 10;
@@ -2021,11 +2033,13 @@ volatile char focusStack(char key, char first)
 
 	if(key == FR_KEY && state == 7)
 	{
+		if(cameraMakeNikon) camera.liveView(false);	
 		menu.message(TEXT("Cancelled"));
 		state = 1;
 	}
 	if(key == FL_KEY && state < 7)
 	{
+		if(cameraMakeNikon) camera.liveView(false);	
 		state = 0;
 		//camera.liveView(false);
 		return FN_CANCEL;
@@ -2243,10 +2257,9 @@ volatile char usbPlug(char key, char first)
 					lcd.writeString(3, 31, PTEXT("to reset...  "));
 					menu.setTitle(TEXT("Camera Info"));
 					menu.setBar(TEXT("RETURN"), TEXT("RESET"));
+					connectUSBcamera = 1;
 				}
 				lcd.update();
-				connectUSBcamera = 1;
-
 			}
 			else if(PTP_Ready)
 			{
@@ -2317,11 +2330,7 @@ volatile char usbPlug(char key, char first)
 	}
 	else if(key == FR_KEY)
 	{
-		if(0)//PTP_Connected && PTP_Error && timer.running)
-		{
-			timerStop(0, 1);
-		}
-		else if(PTP_Ready)
+		if(PTP_Ready)
 		{
 			camera.capture();
 		}
@@ -2332,22 +2341,24 @@ volatile char usbPlug(char key, char first)
 	}
 	else if(key == UP_KEY)
 	{
+//		camera.setFocus(false);
 //		if(PTP_Ready) camera.moveFocus(1);
-		//if(PTP_Ready) camera.setISO(camera.isoUp(camera.iso()));
-		if(PTP_Ready) camera.setShutter(camera.shutterUp(camera.shutter()));
+		if(PTP_Ready) camera.setISO(camera.isoUp(camera.iso()));
+//		if(PTP_Ready) camera.setShutter(camera.shutterUp(camera.shutter()));
 	}
 	else if(key == DOWN_KEY)
 	{
+//		camera.setFocus(true);
 //		if(PTP_Ready) camera.moveFocus(0x8001);
-		//if(PTP_Ready) camera.setISO(camera.isoDown(camera.iso()));
-		if(PTP_Ready) camera.setShutter(camera.shutterDown(camera.shutter()));
+		if(PTP_Ready) camera.setISO(camera.isoDown(camera.iso()));
+//		if(PTP_Ready) camera.setShutter(camera.shutterDown(camera.shutter()));
 	}
 	else if(key == RIGHT_KEY)
 	{
 		//remote.send(REMOTE_THUMBNAIL, REMOTE_TYPE_SEND);
-		//uint8_t *file = (uint8_t *) STR("Test file contents");
-		//char *name = STR("test.txt");
-		//camera.writeFile(name, file, 19);
+		uint8_t *file = (uint8_t *) STR("Test file contents");
+		char *name = STR("test.txt");
+		camera.writeFile(name, file, 19);
 	}
 
 	return FN_CONTINUE;
@@ -2483,6 +2494,7 @@ volatile char timerStop(char key, char first)
 	if(first)
 		timer.running = 0;
 
+	light.paused = 1;
 	menu.message(TEXT("Stopped"));
 	menu.back();
 	return FN_CANCEL;
@@ -2920,7 +2932,7 @@ volatile char bramp_monitor(char key, char first)
     static uint8_t rampHistory[CHART_X_SPAN], skip_message = 0;
     static uint32_t lock_time;
 
-    if(clock.Seconds() - lock_time > LOCK_AFTER)
+    if(clock.Seconds() - lock_time > LOCK_AFTER && !timer.paused && timer.status.preChecked == 0)
     {
     	light.paused = 0;
 		lcd.backlight(0);

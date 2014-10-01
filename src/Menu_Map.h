@@ -83,6 +83,9 @@ const char STR_NIGHT_APERTURE[]PROGMEM = "Night Aperture";
 const char STR_INTERVAL_MODE_FIXED[]PROGMEM = "Fixed Interval";
 const char STR_INTERVAL_MODE_VARIABLE[]PROGMEM = "Variable Interval";
 
+const char STR_TUNING[]PROGMEM = "PID Multiplier";
+const char STR_THRESHOLD[]PROGMEM = "Dark Value";
+
 
 const settings_item settings_timer_mode[]PROGMEM =
 {
@@ -320,6 +323,16 @@ const menu_item menu_timelapse[]PROGMEM =
     { "  Ramp     +", 'D', (void*)&dyn_stops, (void*)&timer.current.Bulb[3], 0, (void*)&bulb3 },
     { "-By        T", 'E', (void*)&timer.current.Key[4], (void*)STR_TIME_SINCE_START, 0, (void*)&bulb4 },
     { "  Ramp     +", 'D', (void*)&dyn_stops, (void*)&timer.current.Bulb[4], 0, (void*)&bulb4 },
+    { "-By        T", 'E', (void*)&timer.current.Key[5], (void*)STR_TIME_SINCE_START, 0, (void*)&bulb5 },
+    { "  Ramp     +", 'D', (void*)&dyn_stops, (void*)&timer.current.Bulb[5], 0, (void*)&bulb5 },
+    { "-By        T", 'E', (void*)&timer.current.Key[6], (void*)STR_TIME_SINCE_START, 0, (void*)&bulb6 },
+    { "  Ramp     +", 'D', (void*)&dyn_stops, (void*)&timer.current.Bulb[6], 0, (void*)&bulb6 },
+    { "-By        T", 'E', (void*)&timer.current.Key[7], (void*)STR_TIME_SINCE_START, 0, (void*)&bulb7 },
+    { "  Ramp     +", 'D', (void*)&dyn_stops, (void*)&timer.current.Bulb[7], 0, (void*)&bulb7 },
+    { "-By        T", 'E', (void*)&timer.current.Key[8], (void*)STR_TIME_SINCE_START, 0, (void*)&bulb8 },
+    { "  Ramp     +", 'D', (void*)&dyn_stops, (void*)&timer.current.Bulb[8], 0, (void*)&bulb8 },
+    { "-By        T", 'E', (void*)&timer.current.Key[9], (void*)STR_TIME_SINCE_START, 0, (void*)&bulb9 },
+    { "  Ramp     +", 'D', (void*)&dyn_stops, (void*)&timer.current.Bulb[9], 0, (void*)&bulb9 },
     { "\0           ", 'F', (void*)&runHandler, (void*)STR_OPTIONS, 0, (void*)STR_RUN }
 };
 
@@ -354,7 +367,7 @@ const menu_item menu_timelapse_options[]PROGMEM =
 const menu_item menu_connect[]PROGMEM =
 {
     { "Bluetooth   ", 'F', (void*)btConnect, 0, 0, &bt.present },
-    { "USB         ", 'F', (void*)usbPlug, 0, 0, (void*)&timerNotRunning },
+    { "USB         ", 'F', (void*)usbPlug, 0, 0, 0 },
     { "\0           ", 'V', 0, 0, 0 }
 };
 
@@ -574,6 +587,17 @@ const settings_item menu_settings_lcd_contrast[]PROGMEM =
     { "\0           ", 0, 0 }
 };
 
+const char STR_ERROR_ALERT1[]PROGMEM = "Flash LCD only";
+const char STR_ERROR_ALERT2[]PROGMEM = "Flash LCD + Light";
+const char STR_ERROR_ALERT3[]PROGMEM = "No Flashing Lights";
+const settings_item menu_settings_error_alert[]PROGMEM =
+{
+    { "Backlight   ", 0x0, (void*)STR_ERROR_ALERT1 },
+    { "Flashlight  ", 0x1, (void*)STR_ERROR_ALERT2 },
+    { "Disabled    ", 0x2, (void*)STR_ERROR_ALERT3 },
+    { "\0           ", 0, 0 }
+};
+
 const char STR_BRAMP_PAD[]PROGMEM = "Intrvl - Bulb";
 const char STR_BRAMP_RATE_MAX[]PROGMEM = "Max Ramp Rate";
 const char STR_BRAMP_RATE_MIN[]PROGMEM = "Min Ramp Rate";
@@ -610,31 +634,32 @@ const menu_item menu_settings_display[]PROGMEM =
     { "BackLt Color", 'S', (void*)menu_settings_lcd_color, (void*)&conf.lcdColor, (void*)settings_update, 0 },
     { "BackLt Time ", 'S', (void*)menu_settings_backlight_time, (void*)&conf.lcdBacklightTime, (void*)settings_update, 0 },
     { "LCD Contrast", 'S', (void*)menu_settings_lcd_contrast, (void*)&conf.lcdContrast, (void*)settings_update, 0 },
+    { "Error Alert ", 'S', (void*)menu_settings_error_alert, (void*)&conf.errorAlert, (void*)settings_update, 0 },
     { "\0           ", 'V', 0, 0, 0 }
 };
 
 const menu_item menu_settings_camera[]PROGMEM =
 {
-    { "Camera Make ", 'S', (void*)menu_settings_camera_make, (void*)&conf.cameraMake, (void*)settings_update, 0 },
-    { "Nikon USB   ", 'S', (void*)menu_settings_nikon_usb_capture, (void*)&conf.nikonUSB, (void*)settings_update, (void*)&cameraMakeNikon },
-    { "Camera FPS  ", 'S', (void*)menu_settings_camera_fps, (void*)&conf.cameraFPS, (void*)settings_update, 0 },
-    { "Bulb Mode   ", 'S', (void*)menu_settings_bulb_mode, (void*)&conf.bulbMode, (void*)settings_update, 0 },
-    { "Bulb Offset ", 'C', (void*)&conf.bulbOffset, (void*)STR_BULB_OFFSET, (void*)settings_update, 0 },
-    { "Bulb Min    ", 'D', (void*)&dyn_min_bulb, (void*)&conf.bulbMin, (void*)settings_update, 0 },
-    { "Half press  ", 'S', (void*)menu_settings_half_press, (void*)&conf.halfPress, (void*)settings_update, 0 },
-    { "Interface   ", 'S', (void*)menu_settings_interface, (void*)&conf.interface, (void*)settings_update, 0 },
-    { "Mode Switch ", 'S', (void*)menu_settings_mode_switch, (void*)&conf.modeSwitch, (void*)settings_update, 0 },
+    { "Camera Make ", 'S', (void*)menu_settings_camera_make, (void*)&conf.camera.cameraMake, (void*)settings_update, 0 },
+    { "Nikon USB   ", 'S', (void*)menu_settings_nikon_usb_capture, (void*)&conf.camera.nikonUSB, (void*)settings_update, (void*)&cameraMakeNikon },
+    { "Camera FPS  ", 'S', (void*)menu_settings_camera_fps, (void*)&conf.camera.cameraFPS, (void*)settings_update, 0 },
+    { "Bulb Mode   ", 'S', (void*)menu_settings_bulb_mode, (void*)&conf.camera.bulbMode, (void*)settings_update, 0 },
+    { "Bulb Offset ", 'C', (void*)&conf.camera.bulbOffset, (void*)STR_BULB_OFFSET, (void*)settings_update, 0 },
+    { "Bulb Min    ", 'D', (void*)&dyn_min_bulb, (void*)&conf.camera.bulbMin, (void*)settings_update, 0 },
+    { "Half press  ", 'S', (void*)menu_settings_half_press, (void*)&conf.camera.halfPress, (void*)settings_update, 0 },
+    { "Interface   ", 'S', (void*)menu_settings_interface, (void*)&conf.camera.interface, (void*)settings_update, 0 },
+    { "Mode Switch ", 'S', (void*)menu_settings_mode_switch, (void*)&conf.camera.modeSwitch, (void*)settings_update, 0 },
+    { "Bramp Pad   ", 'C', (void*)&conf.camera.brampGap, (void*)STR_BRAMP_PAD, (void*)settings_update, 0 },
     { "\0           ", 'V', 0, 0, 0 }
 };
 
-const menu_item menu_settings_timelapse_advanced[]PROGMEM =
+const menu_item menu_settings_timelapse_tuning[]PROGMEM =
 {
     { "Integration ", 'S', (void*)settings_auto_bramp_integration, (void*)&conf.lightIntegrationMinutes, (void*)settings_update, 0 },
-    { "Bramp Pad   ", 'C', (void*)&conf.brampGap, (void*)STR_BRAMP_PAD, (void*)settings_update, 0 },
-    { "Bramp Factor", 'S', (void*)menu_settings_bramp_factor, (void*)&conf.brampRateFactor, (void*)settings_update, 0 },
-    { "Bramp Max   ", 'C', (void*)&conf.brampRateMax, (void*)STR_BRAMP_RATE_MAX, (void*)settings_update, 0 },
-    { "Bramp Min   ", 'C', (void*)&conf.brampRateMin, (void*)STR_BRAMP_RATE_MIN, (void*)settings_update, 0 },
-    { "Bulb Units  ", 'S', (void*)menu_settings_arbitrary_bulb, (void*)&conf.arbitraryBulb, (void*)settings_update, 0 },
+    { "Threshold   ", 'C', (void*)&conf.lightThreshold,            (void*)STR_THRESHOLD, (void*)settings_update, 0 },
+    { "P Tune     F", 'E', (void*)&conf.pFactor,                   (void*)STR_TUNING,                    (void*)settings_update, 0 },
+    { "I Tune     F", 'E', (void*)&conf.iFactor,                   (void*)STR_TUNING,                    (void*)settings_update, 0 },
+    { "D Tune     F", 'E', (void*)&conf.dFactor,                   (void*)STR_TUNING,                    (void*)settings_update, 0 },
     { "\0           ", 'V', 0, 0, 0 }
 };
 
@@ -645,8 +670,9 @@ const menu_item menu_settings_timelapse[]PROGMEM =
     { "Aperture Min", 'D', (void*)&dyn_min_aperture, (void*)&conf.apertureMin, (void*)settings_update, 0 },
     { "Bramp Mode  ", 'S', (void*)menu_settings_bramp_mode, (void*)&conf.brampMode, (void*)settings_update, 0 },
     { "Ext Bramp   ", 'S', (void*)menu_settings_bramp_extended, (void*)&conf.extendedRamp, (void*)settings_update, 0 },
+    { "Bulb Units  ", 'S', (void*)menu_settings_arbitrary_bulb, (void*)&conf.arbitraryBulb, (void*)settings_update, 0 },
     { "Run on PwrOn", 'S', (void*)menu_settings_auto_run, (void*)&conf.autoRun, (void*)settings_update, 0 },
-    { "Advanced    ", 'M', (void*)menu_settings_timelapse_advanced, 0, 0, 0 },
+    { "Bramp Tuning", 'M', (void*)menu_settings_timelapse_tuning, 0, 0, 0 },
     { "\0           ", 'V', 0, 0, 0 }
 };
 
