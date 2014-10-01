@@ -479,13 +479,18 @@ void message_notify(uint8_t id)
 		case NOTIFY_CAMERA:
 			if(PTP_Ready)
 			{
+				settings_setup_camera_index(PTP_CameraSerial);
 				menu.message(STR("USB Camera"));
 				menu.refresh();
-//				menu.message(PTP_CameraModel);
 				camera.init();
+				if(!conf.camera.autoConfigured && conf.auxPort == AUX_MODE_SYNC)
+				{
+			        menu.spawn((void*)autoConfigureCameraTiming);
+				}
 			}
 			else
 			{
+				settings_load_camera_default();
 				if(PTP_Error && timer.running)
 				{
 					//timerStop(0, 1);
