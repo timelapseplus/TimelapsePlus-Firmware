@@ -81,8 +81,9 @@ char PTP_Buffer[PTP_BUFFER_SIZE];
 uint16_t PTP_Bytes_Received, PTP_Bytes_Remaining, PTP_Bytes_Total;
 char PTP_CameraModel[23];
 char PTP_CameraMake[23];
+char PTP_CameraSerial[23];
 PIMA_Container_t PIMA_Block;
-volatile uint8_t PTP_Ready, PTP_Connected, configured, PTP_Run_Task = 1;
+volatile uint8_t PTP_Ready, PTP_Connected, configured, PTP_Run_Task = 1, PTP_IgnoreErrorsForNextTransaction = 0;
 volatile uint16_t PTP_Error, PTP_Response_Code;
 uint16_t supportedOperationsCount;
 uint16_t *supportedOperations;
@@ -112,6 +113,7 @@ void PTP_Task(void)
 /** Configures the board hardware and chip peripherals for the demo's functionality. */
 void PTP_Enable(void)
 {
+    configured = 0;
     /* Hardware Initialization */
     USB_Init(USB_MODE_Host);
 
@@ -136,10 +138,12 @@ void PTP_Disable(void)
     #ifdef PTP_DEBUG
     puts_P(PSTR("Camera Disabled.\r\n"));
     #endif
+    configured = 0;
     PTP_Ready = 0;
     PTP_Connected = 0;
     PTP_Bytes_Remaining = 0;
     PTP_Run_Task = 1;
+    USB_HostState = 0;
     return;
 }
 
@@ -204,6 +208,7 @@ uint8_t PTP_Transaction(uint16_t opCode, uint8_t receive_data, uint8_t paramCoun
 //            printf_P(PSTR("   (Bytes PTP_Bytes_Remaining: %d)\r\n\r\n"), PTP_Bytes_Remaining);
             #endif
             PTP_Run_Task = 1;
+            PTP_IgnoreErrorsForNextTransaction = 0;
             if(!err) return PTP_RETURN_DATA_REMAINING;
         }
         else if(!err)
@@ -220,17 +225,19 @@ uint8_t PTP_Transaction(uint16_t opCode, uint8_t receive_data, uint8_t paramCoun
         PTP_Response_Code = 0;
         err = SI_Host_ReceiveResponseCode(&DigitalCamera_SI_Interface, &PIMA_Block);
         PTP_Response_Code = PIMA_Block.Code;
-        if(PTP_Response_Code == 0x2019) err = 0; // Ignore BUSY error
+        if(PTP_Response_Code == 0x2019 || PTP_IgnoreErrorsForNextTransaction) err = 0; // Ignore BUSY error
         #ifdef PTP_DEBUG
         printf_P(PSTR("   Response Code: %x\r\n\r\n"), PTP_Response_Code);
         #endif
     }
+    PTP_IgnoreErrorsForNextTransaction = 0;
 
     if(err)
     {
         #ifdef PTP_DEBUG
         printf_P(PSTR("PTP_Transaction Error (opCode: %x, Error: %x ).\r\n"), opCode, PTP_Response_Code);
         #endif
+        if(PTP_Response_Code == PTP_RESPONSE_OK) PTP_Response_Code = err;
         PTP_Error = opCode;
         PTP_Ready = 0;
         //USB_Host_SetDeviceConfiguration(0);
@@ -253,8 +260,11 @@ uint8_t PTP_FetchData(uint16_t offset)
             memmove(PTP_Buffer, PTP_Buffer + (PTP_BUFFER_SIZE - offset), offset);
         }
         PTP_Bytes_Remaining -= PTP_Bytes_Received;
-        if(SI_Host_ReadData(&DigitalCamera_SI_Interface, (PTP_Buffer + offset), PTP_Bytes_Received)) return PTP_RETURN_ERROR;
-
+        if(SI_Host_ReadData(&DigitalCamera_SI_Interface, (PTP_Buffer + offset), PTP_Bytes_Received))
+        {
+            PTP_Run_Task = 1;
+            return PTP_RETURN_ERROR;
+        }
         PTP_Bytes_Received += offset;
 
         if(PTP_Bytes_Remaining == 0)
@@ -430,6 +440,7 @@ uint8_t PTP_GetDeviceInfo()
 {
     if(PTP_Transaction(PIMA_OPERATION_GETDEVICEINFO, 1, 0, NULL, 0, NULL)) return PTP_RETURN_ERROR;
     char *DeviceInfoPos = PTP_Buffer;
+    char buf[44];
 
     /* Skip over the data before the unicode device information strings */
     DeviceInfoPos += 8;                                          // Skip to VendorExtensionDesc String
@@ -444,18 +455,16 @@ uint8_t PTP_GetDeviceInfo()
     DeviceInfoPos += (4 + (*(uint32_t*)DeviceInfoPos << 1));      // Skip over Image Formats Array
 
     /* Extract and convert the Manufacturer Unicode string to ASCII and print it through the USART */
-    char Manufacturer[*DeviceInfoPos];
-    UnicodeToASCII(DeviceInfoPos, Manufacturer);
-    strncpy(PTP_CameraMake, Manufacturer, 22);
+    UnicodeToASCII(DeviceInfoPos, buf, 44);
+    strncpy(PTP_CameraMake, buf, 22);
     #ifdef PTP_DEBUG
-    printf_P(PSTR("   Manufacturer: %s\r\n"), Manufacturer);
+    printf_P(PSTR("   Manufacturer: %s\r\n"), buf);
     #endif
     DeviceInfoPos += 1 + UNICODE_STRING_LENGTH(*DeviceInfoPos);   // Skip over Manufacturer String
 
     /* Extract and convert the Model Unicode string to ASCII and print it through the USART */
-    char Model[*DeviceInfoPos];
-    UnicodeToASCII(DeviceInfoPos, Model);
-    strncpy(PTP_CameraModel, Model, 22);
+    UnicodeToASCII(DeviceInfoPos, buf, 44);
+    strncpy(PTP_CameraModel, buf, 22);
     for(uint8_t c = 0; c < 22; c++)
     {
         if(strncmp(&PTP_CameraModel[c], "Mark", 4) == 0) // Shorten "Mark" to "Mk"
@@ -474,11 +483,17 @@ uint8_t PTP_GetDeviceInfo()
     DeviceInfoPos += 1 + UNICODE_STRING_LENGTH(*DeviceInfoPos);   // Skip over Model String
 
     /* Extract and convert the Device Version Unicode string to ASCII and print it through the USART */
-    char DeviceVersion[*DeviceInfoPos];
-    UnicodeToASCII(DeviceInfoPos, DeviceVersion);
-    #ifdef PTP_DEBUG
-    printf_P(PSTR("   Device Version: %s\r\n\r\n"), DeviceVersion);
-    #endif
+    //UnicodeToASCII(DeviceInfoPos, buf, 44);
+    //#ifdef PTP_DEBUG
+    //printf_P(PSTR("   Device Version: %s\r\n\r\n"), buf);
+    //#endif
+
+    DeviceInfoPos += 1 + UNICODE_STRING_LENGTH(*DeviceInfoPos);   // Skip over Version String
+
+    UnicodeToASCII(DeviceInfoPos, buf, 44);
+    strncpy(PTP_CameraSerial, buf, 22);
+
+
 
     #ifdef PTP_DEBUG
     printf_P(PSTR("   Supported Operations (%d): \r\n"), supportedOperationsCount);
@@ -568,7 +583,7 @@ void EVENT_USB_Host_HostError(const uint8_t ErrorCode)
     printf_P(PSTR( "Host Mode Error\r\n"
                              " -- Error Code %d\r\n" ), ErrorCode);
     #endif
-    for(;;);
+    //for(;;);
 }
 
 /** Event handler for the USB_DeviceEnumerationFailed event. This indicates that a problem occurred while
@@ -593,11 +608,12 @@ void EVENT_USB_Host_DeviceEnumerationFailed(const uint8_t ErrorCode,
  *  \param[out] Buffer        Pointer to a buffer where the converted ASCII string should be stored
  */
 void UnicodeToASCII(char *UnicodeString,
-                    char *Buffer)
+                    char *Buffer, uint8_t MaxLength)
 {
     /* Get the number of characters in the string, skip to the start of the string data */
     uint8_t CharactersRemaining = *(UnicodeString);
     UnicodeString++;
+    if(CharactersRemaining > MaxLength) CharactersRemaining = MaxLength;
 
     /* Loop through the entire unicode string */
     while (--CharactersRemaining)

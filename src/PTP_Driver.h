@@ -47,6 +47,10 @@
 
 #define PTP_BUFFER_SIZE 1280
 
+#define NO_RECEIVE_DATA 0
+#define RECEIVE_DATA 1
+
+
 /* Includes: */
 #include <avr/io.h>
 #include <avr/wdt.h>
@@ -85,14 +89,15 @@ uint8_t PTP_OpenSession(void);
 uint8_t PTP_CloseSession(void);
 uint8_t PTP_GetDeviceInfo(void);
 void UnicodeToASCII(char *UnicodeString,
-                char *Buffer);
+                char *Buffer, uint8_t MaxLength);
 
 extern char PTP_Buffer[PTP_BUFFER_SIZE];
 extern uint16_t PTP_Bytes_Received;
 extern uint16_t PTP_Bytes_Total;
 extern char PTP_CameraModel[23];
 extern char PTP_CameraMake[23];
-extern volatile uint8_t PTP_Ready, PTP_Connected, PTP_Run_Task;
+extern char PTP_CameraSerial[23];
+extern volatile uint8_t PTP_Ready, PTP_Connected, PTP_Run_Task, PTP_IgnoreErrorsForNextTransaction;
 extern volatile uint16_t PTP_Error, PTP_Response_Code;
 extern uint16_t supportedOperationsCount;
 extern uint16_t *supportedOperations; // note that this memory space is reused -- only available immediately after init

@@ -50,6 +50,7 @@
 
 
 #define NIKON_OC_CAPTURE 0x90C0
+#define NIKON_OC_CAPTURE2 0x9207
 #define NIKON_OC_EVENT_GET 0x90C7
 #define NIKON_OC_CAMERA_READY 0x90C8
 
@@ -65,9 +66,11 @@
 #define NIKON_DPC_APERTURE 0x5007
 #define NIKON_DPC_SHUTTER 0x500D
 #define NIKON_DPC_ISO 0x500F
+#define NIKON_DPC_AutofocusMode 0xD161
+//#define NIKON_DPC_AutofocusMode 0x500A
 
-#define PTP_OC_NIKON_StartLiveView	0x9201
-#define PTP_OC_NIKON_EndLiveView	0x9202
+#define NIKON_OC_StartLiveView 0x9201
+#define NIKON_OC_EndLiveView 0x9202
 #define NIKON_OC_MoveFocus 0x9204
 
 #define NIKON_OC_BULBSTART 0x9207

@@ -75,11 +75,12 @@ public:
     void resetConnection(void);
     uint8_t capture(void);
     uint8_t liveView(uint8_t on);
-    uint8_t moveFocus(int16_t step);
+    uint8_t moveFocus(int8_t move, uint16_t steps);
     uint8_t bulbStart(void);
     uint8_t bulbEnd(void);
     uint8_t videoStart(void);
     uint8_t videoStop(void);
+    uint8_t setFocus(uint8_t af);
     uint8_t setEosParameter(uint16_t param, uint32_t value);
     uint8_t setPtpParameter(uint16_t param, uint32_t value);
     uint8_t setPtpParameter(uint16_t param, uint16_t value);
@@ -95,6 +96,8 @@ public:
     uint8_t writeFile(char *name, uint8_t *data, uint16_t dataSize);
     uint8_t sendObjectInfo(uint32_t storage, uint32_t parent, ptp_object_info *objectinfo);
     uint8_t sendObject(uint8_t *data, uint16_t dataSize);
+
+    uint8_t blockWhileBusy(uint16_t timeoutMS);
 
     uint8_t iso(void);
     uint8_t shutter(void);
@@ -121,6 +124,7 @@ public:
 
     static uint8_t bulbMax(void);
     static uint8_t bulbMin(void);
+    static uint8_t bulbMinStatic(void);
     static uint8_t isoMax(void);
     static uint8_t isoMin(void);
     static uint8_t apertureMax(void);
@@ -142,7 +146,7 @@ public:
     static uint8_t bulbDown(uint8_t ev);
 
 
-    uint8_t ready, busy, bulb_open, modeLiveView, recording, videoMode, autofocus;
+    volatile uint8_t ready, busy, bulb_open, modeLiveView, recording, videoMode, autofocus;
 
     uint16_t photosRemaining;
 

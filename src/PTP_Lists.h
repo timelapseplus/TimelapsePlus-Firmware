@@ -162,6 +162,11 @@ const propertyDescription_t PTP_ISO_List[] PROGMEM = {
 
 const bulbSettings_t Bulb_List[] PROGMEM = {
     {" Camera", 0,  254 },
+    {"   1/60", 15, 61 },
+    {"   1/50", 19, 60 },
+    {"   1/40", 25, 59 },
+    {"   1/30", 31, 58 },
+    {"   1/25", 39, 57 },
     {"   1/20", 49, 56 },
     {"   1/15", 62, 55 },
     {"   1/13", 79, 54 },

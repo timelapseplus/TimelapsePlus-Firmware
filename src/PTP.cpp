@@ -51,15 +51,21 @@ PTP::PTP(void)
 	currentObject = 0;
 }
 
-uint8_t PTP::bulbMax() // 7
+uint8_t PTP::bulbMax() // 4
 {
 	return pgm_read_byte(&Bulb_List[sizeof(Bulb_List) / sizeof(Bulb_List[0]) - 1].ev);
 }
 
-uint8_t PTP::bulbMin() // 56 (46 for IR)
+uint8_t PTP::bulbMin() // 61 (46 for IR)
 {
 	uint8_t tmp = pgm_read_byte(&Bulb_List[1].ev);
-	if(tmp > conf.bulbMin) tmp = conf.bulbMin;
+	if(tmp > conf.camera.bulbMin) tmp = conf.camera.bulbMin;
+	return tmp;
+}
+
+uint8_t PTP::bulbMinStatic() // 61 (46 for IR)
+{
+	uint8_t tmp = pgm_read_byte(&Bulb_List[1].ev);
 	return tmp;
 }
 
@@ -750,8 +756,16 @@ uint8_t PTP::init()
 		.event = false
 	};
 
-//	if(strncmp(PTP_CameraMake, "Canon", 5) == 0) // This should be done with VendorID instead
-	if(conf.cameraMake == CANON) // This should be done with VendorID instead
+	if(strncmp(PTP_CameraMake, "Canon", 5) == 0) // This should be done with VendorID instead
+	{
+		conf.camera.cameraMake = CANON;
+	}
+	else if(strncmp(PTP_CameraMake, "Nikon", 5) == 0)
+	{
+		conf.camera.cameraMake = NIKON;
+	}
+
+	if(conf.camera.cameraMake == CANON)
 	{
 		DEBUG(PSTR("Using Canon EOS PTP Protocol\r\n"));
 	    PTP_propertyOffset = (uint16_t)(((uint8_t*)&PTP_ISO_List[0].eos) - (uint8_t *)&PTP_ISO_List[0].name[0]);
@@ -760,8 +774,7 @@ uint8_t PTP::init()
 	    DEBUG_NL();
 	    PTP_protocol = PROTOCOL_EOS;
 	}
-	//else if(strncmp(PTP_CameraMake, "Nikon", 5) == 0)
-	else if(conf.cameraMake == NIKON)
+	else if(conf.camera.cameraMake == NIKON)
 	{
 		DEBUG(PSTR("Using Nikon PTP Protocol\r\n"));
 	    PTP_protocol = PROTOCOL_NIKON;
@@ -820,7 +833,7 @@ uint8_t PTP::init()
 	    			supports.capture = true;
 	    			break;
 	    		case NIKON_OC_CAPTURE:
-	    			if(conf.nikonUSB)
+	    			if(conf.camera.nikonUSB)
 	    			{
 						supports.capture = true;
 	    				supports_nikon_capture = true;
@@ -881,23 +894,33 @@ uint8_t PTP::init()
 uint8_t PTP::liveView(uint8_t on)
 {
 	if(ready == 0) return 0;
-	uint8_t ret;
-	if(lvOCmode)
+	uint8_t ret = 0;
+	if(PTP_protocol == PROTOCOL_EOS)
 	{
-		DEBUG(PSTR("Using LV OC mode\r\n"));
-		if(on)
-			ret = PTP_Transaction(EOS_OC_LV_START, 0, 0, NULL, 0, NULL);
+		if(lvOCmode)
+		{
+			DEBUG(PSTR("Using LV OC mode\r\n"));
+			if(on)
+				ret = PTP_Transaction(EOS_OC_LV_START, 0, 0, NULL, 0, NULL);
+			else
+				ret = PTP_Transaction(EOS_OC_LV_STOP, 0, 0, NULL, 0, NULL);
+		}
 		else
-			ret = PTP_Transaction(EOS_OC_LV_STOP, 0, 0, NULL, 0, NULL);
+		{
+			DEBUG(PSTR("Using LV property mode\r\n"));
+			ret = setEosParameter(EOS_DPC_LiveView, (on) ? 2 : 0);
+		}
+		
+		if(on) setEosParameter(EOS_DPC_LiveViewShow, 0);
+		//if(on) setEosParameter(EOS_DPC_Video, 0x03);
 	}
-	else
+	else if(PTP_protocol == PROTOCOL_NIKON)
 	{
-		DEBUG(PSTR("Using LV property mode\r\n"));
-		ret = setEosParameter(EOS_DPC_LiveView, (on) ? 2 : 0);
+		if(on)
+			ret = PTP_Transaction(NIKON_OC_StartLiveView, 0, 0, NULL, 0, NULL);
+		else
+			ret = PTP_Transaction(NIKON_OC_EndLiveView, 0, 0, NULL, 0, NULL);
 	}
-	
-	if(on) setEosParameter(EOS_DPC_LiveViewShow, 0);
-	//if(on) setEosParameter(EOS_DPC_Video, 0x03);
 
 	if(ret == PTP_RETURN_ERROR)
 	{
@@ -908,12 +931,14 @@ uint8_t PTP::liveView(uint8_t on)
 	{
 		modeLiveView = on;
 	}
-
 	return 0;	
 }
 
-uint8_t PTP::moveFocus(int16_t step)
+// move can be -3 to +3
+uint8_t PTP::moveFocus(int8_t move, uint16_t steps)
 {
+	if(move == 0 || steps == 0) return 0;
+	uint8_t ret = 0;
 	if(PTP_protocol == PROTOCOL_EOS)
 	{
 		if(!modeLiveView) // Only works in live view mode
@@ -921,21 +946,88 @@ uint8_t PTP::moveFocus(int16_t step)
 			return 0;
 			//liveView(true);
 		}
-		data[0] = 0;
-		memcpy(&data[0], &step, sizeof(uint16_t));
-		//data[0] = (uint32_t) step;
-		return PTP_Transaction(EOS_OC_MoveFocus, 0, 1, data, 0, NULL);
+		if(move > 0)
+		{
+			data[0] = 0;
+		}
+		else
+		{
+			data[0] = 0x8000;
+			move = 0 - move;
+		}
+		if(move > 3) move = 3;
+		data[0] += move;
+
+		while(steps && !ret)
+		{
+			if(!ret) ret = PTP_Transaction(EOS_OC_MoveFocus, 0, 1, data, 0, NULL);
+			steps--;
+			wdt_reset();
+			if(PTP_Error) resetConnection(); else _delay_ms(100);
+		}
+
 	}
 	else if(PTP_protocol == PROTOCOL_NIKON)
 	{
-		data[0] = (uint32_t) step > 0 ? 1: 0;
-		if(step < 0) step = 0 - step;
-		data[1] = (uint32_t) step;
-		return PTP_Transaction(NIKON_OC_MoveFocus, 0, 2, data, 0, NULL);
+		uint8_t wasInLiveView = modeLiveView;
+
+		if(!ret) blockWhileBusy(1000);
+		if(!wasInLiveView) ret = liveView(1);
+		_delay_ms(100);
+
+		if(move > 0)
+		{
+			data[0] = 1;	
+		}
+		else
+		{
+			data[0] = 2;	
+			move = 0 - move;
+		}
+
+		if(move > 3) move = 3;
+		if(move == 1) data[1] = (uint32_t) 4;
+		if(move == 2) data[1] = (uint32_t) 64;
+		if(move == 3) { data[1] = (uint32_t) 64; steps *= 2; }
+
+		while(steps > 0 && !ret)
+		{
+			if(!ret) blockWhileBusy(1000);
+			if(!ret)
+			{
+				for(uint8_t i = 0; i < 5; i++)
+				{
+					PTP_IgnoreErrorsForNextTransaction = 1;
+					ret = PTP_Transaction(NIKON_OC_MoveFocus, 0, 2, data, 0, NULL);
+					if(PTP_Response_Code == PTP_RESPONSE_OK) break;
+					_delay_ms(1000);
+					wdt_reset();
+				}
+			}
+			//if(PTP_Error) resetConnection(); else _delay_ms(10);
+			_delay_ms(1500);
+			wdt_reset();
+			steps--;
+		}
+		
+		if(!ret) blockWhileBusy(1000);
+		if(!wasInLiveView && !ret) ret = liveView(0);
+		return ret;
 	}
 	return 0;
 }
 
+uint8_t PTP::blockWhileBusy(uint16_t timeoutMS)
+{
+	while(timeoutMS--)
+	{
+		wdt_reset();
+		checkEvent();
+		if(!busy) return 0;
+		_delay_ms(1);
+	}
+	return 1;
+}
 
 uint8_t PTP::checkEvent()
 {
@@ -971,8 +1063,9 @@ uint8_t PTP::checkEvent()
 	{
 		if(supports.cameraReady)
 		{
+			PTP_IgnoreErrorsForNextTransaction = true;
 			ret = PTP_Transaction(NIKON_OC_CAMERA_READY, 0, 0, NULL, 0, NULL);
-			if(PTP_Response_Code == 0x2019)
+			if(PTP_Response_Code != PTP_RESPONSE_OK)//0x2019)
 			{
 				wdt_reset();
 				busy = true;
@@ -1220,65 +1313,85 @@ uint8_t PTP::checkEvent()
 				{
 					case EOS_DPC_ISO:
 						isoPTP = event_value;
+						#ifdef EXTENDED_DEBUG
 						DEBUG(PSTR(" ISO:"));
 						DEBUG(event_value);
 						DEBUG_NL();
+						#endif
 						break;
 					case EOS_DPC_SHUTTER:
 						shutterPTP = event_value;
+						#ifdef EXTENDED_DEBUG
 						DEBUG(PSTR(" SHUTTER:"));
 						DEBUG(event_value);
 						DEBUG_NL();
+						#endif
 						break;
 					case EOS_DPC_APERTURE:
 						aperturePTP = event_value;
+						#ifdef EXTENDED_DEBUG
 						DEBUG(PSTR(" APERTURE:"));
 						DEBUG(event_value);
 						DEBUG_NL();
+						#endif
 						break;
 					case EOS_DPC_MODE:
 						modePTP = event_value;
+						#ifdef EXTENDED_DEBUG
 						DEBUG(PSTR(" MODE:"));
 						DEBUG(event_value);
 						DEBUG_NL();
+						#endif
 						break;
 					case EOS_DPC_LiveView:
 						DEBUG(PSTR(" LV:"));
 						if(event_value) modeLiveView = true; else modeLiveView = false;
+						#ifdef EXTENDED_DEBUG
 						if(modeLiveView) {DEBUG(PSTR("ON"));} else {DEBUG(PSTR("OFF"));}
 						DEBUG_NL();
+						#endif
 						break;
 					case EOS_DPC_Video:
 						DEBUG(PSTR(" VIDEO:"));
 						if(event_value == 4) recording = true; else recording = false;
+						#ifdef EXTENDED_DEBUG
 						if(recording) {DEBUG(PSTR("Recording"));} else {DEBUG(PSTR("OFF"));}
 						DEBUG_NL();
+						#endif
 						break;
 					case EOS_DPC_PhotosRemaining:
 						photosRemaining = event_value;
+						#ifdef EXTENDED_DEBUG
 						DEBUG(PSTR(" Space Available:"));
 						DEBUG(event_value);
 						DEBUG_NL();
+						#endif
 						break;
 					case EOS_DPC_AFMode:
 						autofocus = (event_value != 3);
+						#ifdef EXTENDED_DEBUG
 						DEBUG(PSTR(" AF mode:"));
 						DEBUG(event_value);
 						DEBUG_NL();
+						#endif
 						break;
 					case EOS_DPC_VideoMode:
 						if(event_value == 1) videoMode = true; else videoMode = false;
+						#ifdef EXTENDED_DEBUG
 						DEBUG(PSTR(" Video Mode:"));
 						if(videoMode) {DEBUG(PSTR(" ON"));} else  {DEBUG(PSTR(" OFF"));}
 						DEBUG_NL();
+						#endif
 						break;
-					//default:
-					//	DEBUG(PSTR(" Prop: "));
-					//	DEBUG(event_item);
-					//	DEBUG(PSTR(", value: "));
-					//	DEBUG(event_value);
-					//	DEBUG_NL();
-					//	break;
+					default:
+						#ifdef EXTENDED_DEBUG
+						DEBUG(PSTR(" Prop: "));
+						DEBUG(event_item);
+						DEBUG(PSTR(", value: "));
+						DEBUG(event_value);
+						DEBUG_NL();
+						#endif
+						break;
 				}
 			}
 			else if(event_type == EOS_EC_PROPERTY_VALUES)
@@ -1371,8 +1484,10 @@ uint8_t PTP::checkEvent()
 																		 //11
 				memcpy(&currentObject, &PTP_Buffer[i + sizeof(uint32_t) * 2], sizeof(uint32_t)); // Save the object ID for later retrieving the thumbnail
 
+				#ifdef EXTENDED_DEBUG
 				DEBUG(PSTR("\r\n Object added: "));
 				sendHex((char *)&currentObject);
+				#endif
 
 				//getThumb(currentObject);
 			}
@@ -1469,16 +1584,33 @@ uint8_t PTP::close()
 void PTP::resetConnection()
 {
 	wdt_reset();
-	_delay_ms(1000);
+
+	USB_ResetInterface();
 	close();
+
 	DEBUG(PSTR("Disabling USB\r\n"));
 	PTP_Disable();
+	hardware_USB_SetDeviceMode();
+	hardware_USB_Disable();
+	
+	#ifdef USB_ENABLE_PIN
+	    setOut(USB_ENABLE_PIN);
+	    setHigh(USB_ENABLE_PIN);
+	#endif
+	
 	wdt_reset();
-	_delay_ms(1000);
-	wdt_reset();
-	DEBUG(PSTR("Enabling USB\r\n"));
-	PTP_Enable();
+	_delay_ms(100);
 
+	DEBUG(PSTR("Enabling USB\r\n"));
+	
+	hardware_USB_Enable();
+	#ifdef USB_ENABLE_PIN
+	    setOut(USB_ENABLE_PIN);
+	    setLow(USB_ENABLE_PIN);
+	#endif
+
+	hardware_USB_SetHostMode();
+	PTP_Enable();
 }
 
 uint8_t PTP::capture()
@@ -1492,7 +1624,10 @@ uint8_t PTP::capture()
 	}
 	else if(PTP_protocol == PROTOCOL_NIKON && supports_nikon_capture)
 	{
-		if(PTP_Transaction(NIKON_OC_CAPTURE, 0, 0, NULL, 0, NULL)) return PTP_RETURN_ERROR;;
+		data[0] = 0xffffffff; // no af
+		data[1] = 0x00000000; // capture to card
+		//if(PTP_Transaction(NIKON_OC_CAPTURE2, 0, 2, data, 0, NULL)) return PTP_RETURN_ERROR;
+		if(PTP_Transaction(NIKON_OC_CAPTURE, 0, 0, NULL, 0, NULL)) return PTP_RETURN_ERROR;
 	}
 	else
 	{
@@ -1534,7 +1669,7 @@ uint8_t PTP::isInBulbMode()
 
 uint8_t PTP::bulbMode()
 {
-	if(conf.modeSwitch == USB_CHANGE_MODE_DISABLED) return 0;
+	if(conf.camera.modeSwitch == USB_CHANGE_MODE_DISABLED) return 0;
 	if(isInBulbMode()) return 0;
 
 	if(PTP_protocol == PROTOCOL_EOS)
@@ -1570,7 +1705,7 @@ uint8_t PTP::bulbMode()
 
 uint8_t PTP::manualMode()
 {
-	if(conf.modeSwitch == USB_CHANGE_MODE_DISABLED) return 0;
+	if(conf.camera.modeSwitch == USB_CHANGE_MODE_DISABLED) return 0;
 	if(!isInBulbMode()) return 0;
 
 	if(PTP_protocol == PROTOCOL_EOS)
@@ -1707,6 +1842,20 @@ uint8_t PTP::setAperture(uint8_t ev)
 	{
 		return setPtpParameter(NIKON_DPC_APERTURE, (uint16_t)apertureEvPTP(ev));
 	}
+}
+
+uint8_t PTP::setFocus(uint8_t af)
+{
+	if(PTP_protocol == PROTOCOL_EOS)
+	{
+		return setEosParameter(EOS_DPC_AFMode, (af ? 0x0 : 0x03));
+	}
+	else if(PTP_protocol == PROTOCOL_NIKON)
+	{
+		//return setPtpParameter(NIKON_DPC_AutofocusMode, (uint16_t)(af ? 32784 : 0));
+		return setPtpParameter(NIKON_DPC_AutofocusMode, (uint8_t)(af ? 0x0 : 0x04));
+	}
+	return 0;
 }
 
 uint8_t PTP::setEosParameter(uint16_t param, uint32_t value)
@@ -1847,7 +1996,13 @@ uint8_t PTP::updatePtpParameters(void)
 				shutterAvail[i] = PTP::shutterEv(tmp32);
 			}
 		}
-		
+
+		//if(supports.AFMode)
+		//{
+		//	uint16_t tmp;
+		//	getPtpParameter(NIKON_DPC_AutofocusMode, &tmp);
+		//	autofocus = (tmp != 0x04);
+		//}
 	}
 	return 0;
 }
@@ -2029,7 +2184,7 @@ uint8_t PTP::getCurrentThumbContinued()
 uint8_t PTP::getThumb(uint32_t handle)
 {
 	data[0] = handle;
-	uint8_t ret = PTP_Transaction(PTP_OC_GET_THUMB, 1, 1, data, 0, NULL);
+	uint8_t ret = PTP_Transaction(PTP_OC_GET_THUMB, RECEIVE_DATA, 1, data, 0, NULL);
 	if(ret == PTP_RETURN_ERROR)
 	{
 		DEBUG(PSTR("Error Retrieving thumbnail!\r\n"));
@@ -2046,7 +2201,7 @@ uint8_t PTP::getThumb(uint32_t handle)
 
 uint8_t PTP::writeFile(char *name, uint8_t *data, uint16_t dataSize)
 {
-    struct ptp_object_info objectinfo;
+    ptp_object_info objectinfo;
     memset(&objectinfo,0,sizeof(objectinfo));
 
     for(uint8_t i = 0; i < sizeof(objectinfo.filename); i += 2)
@@ -2064,14 +2219,16 @@ uint8_t PTP::writeFile(char *name, uint8_t *data, uint16_t dataSize)
 
 uint8_t PTP::sendObjectInfo(uint32_t storage, uint32_t parent, ptp_object_info *objectinfo)
 {
+	void *payload;
+	payload = objectinfo;
 	data[0] = storage;
 	data[1] = parent;
-	return PTP_Transaction(PTP_OC_SendObjectInfo, 0, 2, data, sizeof(ptp_object_info), (uint8_t *)objectinfo);
+	return PTP_Transaction(PTP_OC_SendObjectInfo, NO_RECEIVE_DATA, 2, data, sizeof(ptp_object_info), (uint8_t *)payload);
 }
 
 uint8_t PTP::sendObject(uint8_t *data, uint16_t dataSize)
 {
-	return PTP_Transaction(PTP_OC_SendObject, 0, 0, NULL, dataSize, data);
+	return PTP_Transaction(PTP_OC_SendObject, NO_RECEIVE_DATA, 0, NULL, dataSize, data);
 }
 
 uint32_t pgm_read_u32(const void *addr)
