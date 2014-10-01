@@ -162,7 +162,7 @@ void LCD::writeUint(unsigned char x, unsigned char y, unsigned int n)
  *
  ******************************************************************/
 
-unsigned char LCD::writeNumber(unsigned char x, unsigned char y, unsigned int n, unsigned char mode, unsigned char justification)
+unsigned char LCD::writeNumber(unsigned char x, unsigned char y, unsigned int n, unsigned char mode, unsigned char justification, bool minus)
 {
     if(justification == 'R')
     {
@@ -197,6 +197,11 @@ unsigned char LCD::writeNumber(unsigned char x, unsigned char y, unsigned int n,
             justification++;
         }
         while (n > 0);
+        
+        if(minus)   //J.R.
+        {
+        writeChar(x, y, '-'); x -= 6; justification++;
+		}      
         break;
         
     case 'T': // Time (hh:mm:ss) //

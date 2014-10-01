@@ -109,7 +109,14 @@ volatile void Clock::count()
         shutter_bulbStart();
         newBulb = 0;
         bulbRunning = 1;
-        bulbDuration += conf.camera.bulbOffset;
+        if(conf.camera.negBulbOffset)
+        {
+            bulbDuration -= conf.camera.bulbOffset;
+        }
+        else
+        {
+            bulbDuration += conf.camera.bulbOffset;
+        }
         skips++;
         return;
     }

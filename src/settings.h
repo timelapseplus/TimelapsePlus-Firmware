@@ -64,6 +64,7 @@ struct camera_settings_t
     uint8_t cameraMake;
     uint8_t halfPress;
     uint16_t bulbOffset;
+    uint8_t negBulbOffset;
     uint8_t interface;
     uint8_t modeSwitch;
     uint8_t bulbMin;

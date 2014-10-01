@@ -623,7 +623,6 @@ volatile char cableReleaseRemote(char key, char first)
 
 volatile char autoConfigureCameraTiming(char key, char first)
 {
-//  static uint8_t cable;
 	uint16_t start_lag, end_lag;
 
 	if(first)
@@ -676,7 +675,7 @@ volatile char autoConfigureCameraTiming(char key, char first)
 		}
 		
 		#define SHUTTER_TEST_COUNT 8
-		uint16_t bOffsetArray[SHUTTER_TEST_COUNT];
+		int16_t bOffsetArray[SHUTTER_TEST_COUNT];
 		uint16_t eLagArray[SHUTTER_TEST_COUNT];
 
 		if(AUX_INPUT1) pass = 0;
@@ -850,7 +849,7 @@ volatile char autoConfigureCameraTiming(char key, char first)
 
 				if(i == 0 || conf.camera.bulbMin > bulbMin) conf.camera.bulbMin = bulbMin;
 
-				bOffsetArray[i] = start_lag - end_lag;
+				bOffsetArray[i] = (int16_t)start_lag - (int16_t)end_lag;
 			
 				eLagArray[i] = end_lag;
 			}
@@ -861,7 +860,7 @@ volatile char autoConfigureCameraTiming(char key, char first)
 		} // end of retry loop
 
 		conf.camera.bulbOffset = arrayMedian50Int(bOffsetArray, SHUTTER_TEST_COUNT);
-		conf.camera.bulbEndOffset = arrayMedian50Int(eLagArray, SHUTTER_TEST_COUNT);
+		conf.camera.bulbEndOffset = arrayMedian50UInt(eLagArray, SHUTTER_TEST_COUNT);
 
 		uint16_t eLagMax = eLagArray[0], eLagMin = eLagArray[0];
 		for(uint8_t i = 0; i < SHUTTER_TEST_COUNT && pass; i++)
@@ -886,9 +885,9 @@ volatile char autoConfigureCameraTiming(char key, char first)
 			lcd.writeString(10, 18, PTEXT(" BulbMin:"));
 			lcd.writeString(10, 28, PTEXT(" Error %:"));
 
-			lcd.writeNumber(68, 8, conf.camera.brampGap, 'U', 'L');
-			lcd.writeNumber(68, 18, conf.camera.bulbMin, 'U', 'L');
-			lcd.writeNumber(68, 28, eRange, 'U', 'L');
+			lcd.writeNumber(68, 8, conf.camera.brampGap, 'U', 'L', false);
+			lcd.writeNumber(68, 18, conf.camera.bulbMin, 'U', 'L', false);
+			lcd.writeNumber(68, 28, eRange, 'U', 'L', false);
 
 			menu.setBar(TEXT("Done"), TEXT("Retest"));
 		}
@@ -926,7 +925,7 @@ volatile char memoryFree(char key, char first)
 
 		lcd.cls();
 		lcd.writeString(1, 18, PTEXT("Free RAM:"));
-		/*char x =*/lcd.writeNumber(55, 18, mem, 'U', 'L');
+		/*char x =*/lcd.writeNumber(55, 18, mem, 'U', 'L',false);   //J.R.
 		//lcd.writeString(55 + x * 6, 18, PTEXT("b"));
 		menu.setTitle(TEXT("Memory"));
 		menu.setBar(TEXT("RETURN"), BLANK_STR);
@@ -991,7 +990,7 @@ volatile char viewSeconds(char key, char first)
 	}
 
 	lcd.eraseBox(36, 18, 83, 18 + 8);
-	/*char x =*/ lcd.writeNumber(83, 18, clock.Seconds(), 'F', 'R');
+	/*char x =*/ lcd.writeNumber(83, 18, clock.Seconds(), 'F', 'R',false);  //J.R.
 	lcd.update();
 
 	switch(key)

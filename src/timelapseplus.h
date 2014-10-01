@@ -10,7 +10,6 @@
 
 #define VERSION 20140911
 
-
 #define TYPE_DEFAULT 0
 #define TYPE_PROTOTYPE 1
 #define TYPE_PRODUCTION 2

@@ -86,7 +86,7 @@ void sort(float *array, const uint8_t length)
   }
 }
 
-void sortInteger(uint16_t *array, const uint8_t length)
+void sortUInteger(uint16_t *array, const uint8_t length)
 {
   uint16_t num_swaps = 1; // sort the array
   while (num_swaps > 0) 
@@ -97,6 +97,25 @@ void sortInteger(uint16_t *array, const uint8_t length)
         if(array[i - 1] > array[i]) 
         {
           uint16_t temp = array[i];
+          array[i] = array[i - 1];
+          array[i - 1] = temp;
+          num_swaps++; 
+        } 
+     } 
+  }
+}
+
+void sortInteger(int16_t *array, const uint8_t length)
+{
+  uint16_t num_swaps = 1; // sort the array
+  while (num_swaps > 0) 
+  { 
+     num_swaps = 0; 
+     for (uint8_t i = 1; i < length; i++) 
+     { 
+        if(array[i - 1] > array[i]) 
+        {
+          int16_t temp = array[i];
           array[i] = array[i - 1];
           array[i - 1] = temp;
           num_swaps++; 
@@ -144,14 +163,33 @@ float arrayMedian50(const float *array, const uint8_t length)
   return m;
 }
 
-uint16_t arrayMedian50Int(const uint16_t *array, const uint8_t length)
+uint16_t arrayMedian50UInt(const uint16_t *array, const uint8_t length)
 {
   uint16_t tmpArray[length];
   memcpy(tmpArray, array, length * sizeof(uint16_t));
 
-  sortInteger(tmpArray, length);
+  sortUInteger(tmpArray, length);
 
   uint16_t m = 0.0, count = 0.0;
+ 
+  for(uint8_t i = (length / 4); i < length - (length / 4); i++) // take the average of the middle two quarters
+  {
+    count++;
+    m += tmpArray[i];
+  }
+  m /= count;
+ 
+  return m;
+}
+
+int16_t arrayMedian50Int(const int16_t *array, const uint8_t length)
+{
+  int16_t tmpArray[length];
+  memcpy(tmpArray, array, length * sizeof(int16_t));
+
+  sortInteger(tmpArray, length);
+
+  int16_t m = 0.0, count = 0.0;
  
   for(uint8_t i = (length / 4); i < length - (length / 4); i++) // take the average of the middle two quarters
   {
