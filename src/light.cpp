@@ -1,4 +1,3 @@
-
 #include <avr/io.h>
 #include <avr/wdt.h>
 #include <util/delay.h>
@@ -319,13 +318,21 @@ float Light::readLux()
         if(reading < 45000) break;
     }
 
+    scale = range;
+
+    #define READINGS_COUNT 10
+    uint32_t readings = 0;
+    uint8_t count = 0;
     if(range == 0)
     {
-      for(uint8_t i = 0; i < 5; i++)
+      for(uint8_t i = 0; i < READINGS_COUNT; i++)
 	    {
-		    uint16_t reading2 = readRaw();
-	      if((reading2 < reading && reading2 > 0) || reading == 0) reading = reading2;
-	    }	
+		    reading = readRaw();
+        readings += reading;
+        if(reading > 0) count++;
+	    }
+      if(count == 0) count = 1;
+      reading = (uint16_t) (readings / count);
     }
 	
     switch(range)

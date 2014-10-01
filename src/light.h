@@ -4,7 +4,7 @@
 #define LIGHT_INTEGRATION_COUNT 32
 #define FILTER_LENGTH 3
 
-#define NIGHT_THRESHOLD 15
+#define NIGHT_THRESHOLD 20
 #define NIGHT_THRESHOLD_HYSTERESIS 5
 #define OFFSET_UNSET 65535
 
@@ -27,7 +27,7 @@ public:
 	float readLux();
 
     float lockedSlope, slope, integrated, median;
-	uint8_t method, paused, skipTask;
+	uint8_t method, paused, skipTask, scale;
 	bool underThreshold;
 
 private:
