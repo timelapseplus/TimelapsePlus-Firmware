@@ -450,6 +450,10 @@ char LCD::measureCharTiny(char c)
     {
         return 1;
     } 
+    else if(c == ':')
+    {
+        return 1;
+    } 
     else if(c == '+')
     {
         return 3;
@@ -496,6 +500,13 @@ unsigned char LCD::writeCharTiny(unsigned char x, unsigned char y, unsigned char
     
     if(c == '.')
     {
+        setPixel(x, y + 4);
+        return 1;
+    }
+
+    if(c == ':')
+    {
+        setPixel(x, y + 0);
         setPixel(x, y + 4);
         return 1;
     }
