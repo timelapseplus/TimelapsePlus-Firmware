@@ -1724,26 +1724,29 @@ char MENU::waitingAlert()
 
 void MENU::blink()
 {
-  uint8_t bl = lcd->getBacklight();
-  lcd->backlight(255);
-  hardware_flashlight(1);
-  _delay_ms(100);
-  lcd->backlight(0);
-  hardware_flashlight(0);
-  _delay_ms(100);
-  lcd->backlight(255);
-  hardware_flashlight(1);
-  _delay_ms(100);
-  lcd->backlight(0);
-  hardware_flashlight(0);
-  _delay_ms(100);
-  lcd->backlight(255);
-  hardware_flashlight(1);
-  _delay_ms(100);
-  lcd->backlight(0);
-  hardware_flashlight(0);
-  _delay_ms(100);
+  if(conf.errorAlert != ERROR_ALERT_DISABLED)
+  {
+    uint8_t bl = lcd->getBacklight();
+    lcd->backlight(255);
+    if(conf.errorAlert == ERROR_ALERT_FLASHLIGHT) hardware_flashlight(1);
+    _delay_ms(100);
+    lcd->backlight(0);
+    if(conf.errorAlert == ERROR_ALERT_FLASHLIGHT) hardware_flashlight(0);
+    _delay_ms(100);
+    lcd->backlight(255);
+    if(conf.errorAlert == ERROR_ALERT_FLASHLIGHT) hardware_flashlight(1);
+    _delay_ms(100);
+    lcd->backlight(0);
+    if(conf.errorAlert == ERROR_ALERT_FLASHLIGHT) hardware_flashlight(0);
+    _delay_ms(100);
+    lcd->backlight(255);
+    if(conf.errorAlert == ERROR_ALERT_FLASHLIGHT) hardware_flashlight(1);
+    _delay_ms(100);
+    lcd->backlight(0);
+    if(conf.errorAlert == ERROR_ALERT_FLASHLIGHT) hardware_flashlight(0);
+    _delay_ms(100);
+    lcd->backlight(bl);
+  }
 
-  lcd->backlight(bl);
 }
 
