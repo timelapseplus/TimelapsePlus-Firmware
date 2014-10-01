@@ -148,6 +148,7 @@ void settings_default()
     conf.camera.bulbEndOffset = 8;
     conf.camera.bulbMin = 56;
     conf.camera.bulbOffset = 75;
+    conf.camera.negBulbOffset = 0;
     conf.camera.interface = INTERFACE_AUTO;
     conf.camera.cameraMake = CANON;
     conf.camera.bulbMode = 0;

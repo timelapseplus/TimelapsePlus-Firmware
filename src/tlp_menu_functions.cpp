@@ -859,7 +859,17 @@ volatile char autoConfigureCameraTiming(char key, char first)
 			}
 		} // end of retry loop
 
-		conf.camera.bulbOffset = arrayMedian50Int(bOffsetArray, SHUTTER_TEST_COUNT);
+		int16_t tmp_offset = arrayMedian50Int(bOffsetArray, SHUTTER_TEST_COUNT);
+		if(tmp_offset < 0)
+		{
+			conf.camera.negBulbOffset = 1;
+			conf.camera.bulbOffset = (uint16_t) (0 - tmp_offset);
+		}
+		else
+		{
+			conf.camera.negBulbOffset = 0;
+			conf.camera.bulbOffset = tmp_offset;
+		}
 		conf.camera.bulbEndOffset = arrayMedian50UInt(eLagArray, SHUTTER_TEST_COUNT);
 
 		uint16_t eLagMax = eLagArray[0], eLagMin = eLagArray[0];
