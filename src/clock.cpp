@@ -90,25 +90,55 @@ void Clock::disable()
  *
  *
  ******************************************************************/
-
+uint8_t skips = 0;
 volatile void Clock::count()
 {
     ms++;
     event_ms++;
 
-    if(ms >= 1000)
+    if(newBulb)
     {
-        ms = 0;
-        seconds++;
-        sleep_time++;
-        light_time++;
-        flashlight_time++;
+        if(conf.auxPort == AUX_MODE_SYNC && !AUX_INPUT1)
+        {
+            if(bulbDuration > conf.camera.bulbEndOffset) bulbDurationPCsync = bulbDuration - conf.camera.bulbEndOffset; else bulbDurationPCsync = 0;
+        }
+        else
+        {
+            bulbDurationPCsync = 0;
+        }
+        shutter_bulbStart();
+        newBulb = 0;
+        bulbRunning = 1;
+        bulbDuration += conf.camera.bulbOffset;
+        skips++;
+        return;
     }
+    else if(bulbRunning)
+    {
+        bulbDuration--;
+        if(bulbDuration <= 0)
+        {
+            shutter_bulbEnd();
+            bulbRunning = 0;
+            light.skipTask = 0;
+            if(conf.auxPort == AUX_MODE_SYNC && bulbDurationPCsync == 0) usingSync = 1; else usingSync = 0;
+            skips++;
+            return;
+        }
+        else if(bulbDurationPCsync && AUX_INPUT1)
+        {
+            bulbDuration = bulbDurationPCsync;
+            bulbDurationPCsync = 0;
+            skips++;
+            return;
+        }
+    }
+
     for(uint8_t i = 0; i < CLOCK_IN_QUEUE; i++)
     {
         if(inTime[i] > 0)
         {
-            inTime[i]--;
+            inTime[i] -= 1 + skips;
             if(inTime[i] <= 0)
             {
                 (*inFunction[i])();
@@ -116,30 +146,15 @@ volatile void Clock::count()
         }
     }
 
-    if(newBulb)
+    if(ms >= 1000)
     {
-        shutter_bulbStart();
-        newBulb = 0;
-        bulbRunning = 1;
-        if(conf.auxPort == AUX_MODE_SYNC && !AUX_INPUT1) bulbDurationPCsync = bulbDuration - conf.bulbEndOffset; else bulbDurationPCsync = 0;   
-        bulbDuration += conf.bulbOffset;
+        ms -= 1000;
+        seconds++;
+        sleep_time++;
+        light_time++;
+        flashlight_time++;
     }
-    else if(bulbRunning)
-    {
-        bulbDuration--;
-        if(bulbDurationPCsync && AUX_INPUT1)
-        {
-            bulbDuration = bulbDurationPCsync;
-            bulbDurationPCsync = 0;
-        }
-        else if(bulbDuration <= 0)
-        {
-            shutter_bulbEnd();
-            bulbRunning = 0;
-            light.skipTask = 0;
-        }
-
-    }
+    skips = 0;
 }
 
 /******************************************************************
@@ -168,6 +183,7 @@ void Clock::reset()
     ms = 0;
     bulbRunning = 0;
     newBulb = 0;
+    usingSync = 0;
 }
 
 /******************************************************************

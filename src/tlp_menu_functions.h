@@ -25,7 +25,7 @@ volatile char sysStatus(char key, char first);
 volatile char cableRelease(char key, char first);
 volatile char cableReleaseRemote(char key, char first);
 volatile char shutterTest(char key, char first);
-volatile char shutterLagTest(char key, char first);
+volatile char autoConfigureCameraTiming(char key, char first);
 volatile char lcd_white(char key, char first);
 volatile char lcd_red(char key, char first);
 volatile char notYet(char key, char first);

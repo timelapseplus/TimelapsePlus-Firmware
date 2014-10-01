@@ -36,7 +36,7 @@ public:
     uint8_t sleepOk;
     uint8_t sleeping;
 
-    uint8_t bulbRunning;
+    uint8_t bulbRunning, usingSync;
 
     void bulb(uint32_t duration);
     void cancelBulb(void);

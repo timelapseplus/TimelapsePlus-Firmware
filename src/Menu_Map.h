@@ -663,8 +663,8 @@ const menu_item menu_development[]PROGMEM =
 {
     { "Dev Mode LED", 'S', (void*)menu_settings_dev_mode, (void*)&conf.devMode, (void*)settings_update, 0 },
     { "Debug Mode  ", 'S', (void*)menu_settings_debug_mode, (void*)&conf.debugEnabled, (void*)settings_update, 0 },
+    { "PC-sync Conf", 'F', (void*)autoConfigureCameraTiming, 0, 0, (void*)&timerNotRunning },
     { "Shutter Test", 'F', (void*)shutterTest, 0, 0, (void*)&timerNotRunning },
-    { "Calc BOffset", 'F', (void*)shutterLagTest, 0, 0, (void*)&timerNotRunning },
 #ifdef PRODUCTION
     { "4 Hour Light", 'F', (void*)lightTest, 0, 0, (void*)&timerNotRunning },
 #endif
