@@ -58,7 +58,7 @@
 #define INTERVAL_MODE_AUTO 1
 #define INTERVAL_MODE_KEYFRAME 2
 
-#define MAX_KEYFRAMES 5
+#define MAX_KEYFRAMES 10
 
 #define DISABLE_SHUTTER setIn(SHUTTER_FULL_PIN);  _delay_ms(50); setLow(SHUTTER_FULL_PIN)
 #define DISABLE_MIRROR setIn(SHUTTER_HALF_PIN); _delay_ms(50); setLow(SHUTTER_HALF_PIN)
@@ -87,7 +87,7 @@
 
 #define SHUTTER_VERSION 20131122
 
-#define CHECK_ALERT(string, test) if(test) { if(!preChecked) menu.alert(string); } else { if(preChecked) menu.clearAlert(string); }
+#define CHECK_ALERT(string, test) if(test) { if(status.preChecked == 0) menu.alert(string); } else { if(status.preChecked == 1) menu.clearAlert(string); }
 
 struct program
 {
@@ -131,6 +131,8 @@ struct timer_status
     unsigned int interval;
     float rampTarget;
     int8_t nightTarget;
+    uint8_t preChecked;
+    float lightStart;
 };
 
 extern program stored[MAX_STORED+1]EEMEM;
@@ -146,6 +148,7 @@ public:
     void load(char id);
     void setDefault(void);
     int8_t nextId(void);
+    void calculateExposure(uint32_t *nextBulbLength, uint8_t *nextAperture, uint8_t *nextISO, int8_t *bulbChangeEv);
 
     void saveCurrent(void);
     void restoreCurrent(void);
@@ -166,14 +169,15 @@ public:
     program current;
     timer_status status; 
     volatile char running;  // 0 = not running, 1 = running (shutter closed), 2 = running (shutter open)
-    volatile int8_t currentId;
-    volatile uint16_t length; // in Seconds
-    volatile int8_t rampRate;
-    volatile uint32_t last_photo_ms;
-    volatile float lightReading;
-    volatile float lightStart;
-    volatile float internalRampStops;
-    volatile uint8_t paused, pausing;
+    int8_t currentId;
+    uint16_t length; // in Seconds
+    int8_t rampRate, apertureEvShift;
+    uint32_t last_photo_ms;
+    float lightReading;
+    float internalRampStops;
+    float pastErrors[PAST_ERROR_COUNT];
+    volatile uint8_t paused, pausing, apertureReady;
+    int8_t evShift;
 
 private:
     double test;
@@ -216,5 +220,7 @@ uint8_t rampTvUpExtended(uint8_t ev);
 uint8_t rampTvDown(uint8_t ev);
 uint8_t rampTvDownExtended(uint8_t ev);
 void calcInterval();
+
+extern uint8_t lastShutterError;
 #endif
 
