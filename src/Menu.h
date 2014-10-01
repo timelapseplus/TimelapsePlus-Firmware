@@ -12,7 +12,7 @@
 
 #define MENU_NAME_LEN 13
 #define MENU_STACK_SIZE 5
-#define MENU_MAX 32
+#define MENU_MAX 44
 
 #define MAX_ALERTS 5
 
