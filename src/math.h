@@ -15,6 +15,8 @@ uint32_t curve_int(uint32_t p0, uint32_t p1, uint32_t p2, uint32_t p3, float t);
 float arrayMedian(const float *array, const uint8_t length);
 float arrayMedian50(const float *array, const uint8_t length);
 void sort(const float *array, const uint8_t length);
+uint16_t arrayMedian50Int(const uint16_t *array, const uint8_t length);
+void sortInteger(const uint16_t *array, const uint8_t length);
 
 static inline int32_t ilog2(float x)
 {
