@@ -19,7 +19,7 @@
 #include "tldefs.h"
 #include "PTP_Driver.h"
 
-extern settings conf;
+extern settings_t conf;
 extern Remote remote;
 extern BT bt;
 

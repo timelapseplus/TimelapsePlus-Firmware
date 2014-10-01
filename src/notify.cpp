@@ -4,7 +4,7 @@
 #include "tldefs.h"
 #include "notify.h"
 
-extern settings conf;
+extern settings_t conf;
 
 /******************************************************************
  *

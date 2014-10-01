@@ -65,7 +65,7 @@ volatile uint8_t brampNotGuided = 0;
 volatile uint8_t cameraMakeNikon = 0;
 
 extern uint8_t battery_percent;
-extern settings conf;
+extern settings_t conf;
 extern uint8_t Camera_Connected;
 extern volatile uint8_t connectUSBcamera;
 
@@ -101,8 +101,8 @@ void updateConditions()
 	modeHDR = (timer.current.Mode & HDR);
 	modeStandard = (!modeHDR && !modeRamp);
 
-	modeStandardExp = modeStandard && (conf.cameraMake != NIKON) && !conf.arbitraryBulb;
-	modeStandardExpNikon = modeStandard && (conf.cameraMake == NIKON) && !conf.arbitraryBulb;
+	modeStandardExp = modeStandard && (conf.camera.cameraMake != NIKON) && !conf.arbitraryBulb;
+	modeStandardExpNikon = modeStandard && (conf.camera.cameraMake == NIKON) && !conf.arbitraryBulb;
 	modeStandardExpArb = modeStandard && conf.arbitraryBulb;
 
 	modeRamp = (timer.current.Mode & RAMP);
@@ -128,7 +128,7 @@ void updateConditions()
 	rampISO = (conf.brampMode & BRAMP_MODE_ISO && camera.supports.iso);
 	rampAperture = (conf.brampMode & BRAMP_MODE_APERTURE && camera.supports.aperture);
 	rampTargetCustom = (timer.current.nightMode == BRAMP_TARGET_CUSTOM && brampAuto);
-	cameraMakeNikon = conf.cameraMake == NIKON;
+	cameraMakeNikon = conf.camera.cameraMake == NIKON;
 	if(modeRamp && timer.current.Gap < BRAMP_INTERVAL_MIN)
 	{
 		timer.current.Gap = BRAMP_INTERVAL_MIN;

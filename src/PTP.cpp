@@ -11,7 +11,7 @@
 #include "PTP_Lists.h"
 //#define EXTENDED_DEBUG
 
-extern settings conf;
+extern settings_t conf;
 extern Clock clock;
 
 uint8_t isoAvail[32];

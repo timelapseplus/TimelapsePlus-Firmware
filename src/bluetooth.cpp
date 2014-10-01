@@ -19,7 +19,7 @@
 #include "debug.h"
 #include "settings.h"
 
-extern settings conf;
+extern settings_t conf;
 
 /******************************************************************
  *

@@ -45,7 +45,7 @@
 
 extern IR ir;
 extern PTP camera;
-extern settings conf;
+extern settings_t conf;
 extern shutter timer;
 extern BT bt;
 extern Clock clock;
@@ -188,7 +188,7 @@ void shutter_half(void)
 {
     shutter_off(); // first we completely release the shutter button since some cameras need this to release the bulb
 
-    if(conf.halfPress == HALF_PRESS_ENABLED) clock.in(30, &shutter_half_delayed);
+    if(conf.camera.halfPress == HALF_PRESS_ENABLED) clock.in(30, &shutter_half_delayed);
 }
 void shutter_half_delayed(void)
 {
@@ -233,15 +233,15 @@ void shutter::bulbStart(void)
 void shutter_bulbStart(void)
 {
     lastShutterError = 0;
-    if((cable_connected == 0 || !(conf.interface & INTERFACE_CABLE)) && ir_shutter_state != 1)
+    if((cable_connected == 0 || usbPrimary || !(conf.camera.interface & INTERFACE_CABLE)) && ir_shutter_state != 1)
     {
-        if(camera.supports.bulb && (conf.interface & INTERFACE_USB))
+        if(camera.supports.bulb && (conf.camera.interface & INTERFACE_USB))
         {
             lastShutterError = camera.bulbMode();
             if(lastShutterError) return;
             lastShutterError = camera.bulbStart();
         }
-        else if(conf.interface & INTERFACE_IR && !usbPrimary)
+        else if(conf.camera.interface & INTERFACE_IR && !usbPrimary)
         {
             ir_shutter_state = 1;
             ir.bulbStart();
@@ -252,13 +252,13 @@ void shutter_bulbStart(void)
         //if(camera.supports.capture) camera.busy = true;
     }
 
-    if(conf.interface & INTERFACE_CABLE && !usbPrimary)
+    if(conf.camera.interface & INTERFACE_CABLE && !usbPrimary)
     {
-        if(conf.bulbMode == 0)
+        if(conf.camera.bulbMode == 0)
         {
             shutter_full();
         } 
-        else if(conf.bulbMode == 1 && shutter_state != 1)
+        else if(conf.camera.bulbMode == 1 && shutter_state != 1)
         {
             shutter_full();
             shutter_state = 1;
@@ -286,26 +286,26 @@ void shutter_bulbEnd(void)
     DEBUG(PSTR("Bulb End: "));
     if(camera.bulb_open || ir_shutter_state == 1)
     {
-        if(camera.bulb_open && (conf.interface & INTERFACE_USB))
+        if(camera.bulb_open && (conf.camera.interface & INTERFACE_USB))
         {
             DEBUG(PSTR("USB "));
             camera.bulbEnd();
         }
-        else if(conf.interface & INTERFACE_IR && !usbPrimary)
+        else if(conf.camera.interface & INTERFACE_IR && !usbPrimary)
         {
             DEBUG(PSTR("IR "));
             ir.bulbEnd();
         }
         ir_shutter_state = 0;
     } 
-    if(conf.interface & INTERFACE_CABLE && !usbPrimary)
+    if(conf.camera.interface & INTERFACE_CABLE && !usbPrimary)
     {
-        if(conf.bulbMode == 0)
+        if(conf.camera.bulbMode == 0)
         {
             DEBUG(PSTR("CABLE "));
             shutter_off();
         }
-        else if(conf.bulbMode == 1 && shutter_state == 1)
+        else if(conf.camera.bulbMode == 1 && shutter_state == 1)
         {
             shutter_full();
             shutter_state = 0;
@@ -329,7 +329,7 @@ void shutter::capture(void)
 void shutter_capture(void)
 {
     lastShutterError = 0;
-    if(conf.interface & (INTERFACE_CABLE | INTERFACE_USB))
+    if(conf.camera.interface & (INTERFACE_CABLE | INTERFACE_USB))
     {
         shutter_full();
         clock.in(SHUTTER_PRESS_TIME, &shutter_off);
@@ -343,7 +343,7 @@ void shutter_capture(void)
             }
             else
             {
-                if(conf.interface & INTERFACE_IR) ir.shutterNow();
+                if(conf.camera.interface & INTERFACE_IR) ir.shutterNow();
             }
         }
         else
@@ -351,7 +351,7 @@ void shutter_capture(void)
             if(camera.supports.capture) camera.busy = true;
         }
     }
-    else if(conf.interface == INTERFACE_IR)
+    else if(conf.camera.interface == INTERFACE_IR)
     {
         ir.shutterNow();
     }
@@ -493,7 +493,7 @@ char shutter::task()
             return 0;
     }
 
-    if(enter == 0 || preChecked) // Initialize variables and setup I/O pins
+    if((enter == 0 || status.preChecked > 0) && cancel == 0) // Initialize variables and setup I/O pins
     {
         paused = 0;
         pausing = 0;
@@ -507,10 +507,10 @@ char shutter::task()
 
         usingUSB = camera.ready;
 
-        if(conf.interface == INTERFACE_AUTO && usingUSB && camera.supports.bulb) usbPrimary = 1; else usbPrimary = 0;
+        if(conf.camera.interface == INTERFACE_AUTO && usingUSB && camera.supports.bulb) usbPrimary = 1; else usbPrimary = 0;
 
         ////////////////////////////// pre check ////////////////////////////////////
-        CHECK_ALERT(STR_NOCAMERA_ALERT, conf.interface != INTERFACE_IR && !camera.supports.capture && !cableIsConnected());
+        CHECK_ALERT(STR_NOCAMERA_ALERT, conf.camera.interface != INTERFACE_IR && !camera.supports.capture && !cableIsConnected());
         CHECK_ALERT(STR_APERTURE_ALERT, camera.ready && camera.supports.aperture && camera.aperture() != camera.apertureWideOpen() && (current.Mode & TIMELAPSE) && !((current.Mode & RAMP) && (conf.brampMode & BRAMP_MODE_APERTURE)));
         CHECK_ALERT(STR_BULBSUPPORT_ALERT, (current.Mode & RAMP) && camera.ready && !camera.supports.bulb && !cable_connected);
         CHECK_ALERT(STR_BULBMODE_ALERT, (current.Mode & RAMP) && !(camera.isInBulbMode() || conf.extendedRamp));
@@ -656,7 +656,7 @@ char shutter::task()
         }
     }
 
-    if(run_state == RUN_PHOTO && (exps + photos == 0 || (uint8_t)((clock.Ms() - last_photo_end_ms) / 10) >= conf.cameraFPS))
+    if(run_state == RUN_PHOTO && (exps + photos == 0 || (uint8_t)((clock.Ms() - last_photo_end_ms) / 10) >= conf.camera.cameraFPS))
     {
         last_photo_end_ms = 0;
         if(old_state != run_state)

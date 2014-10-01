@@ -24,7 +24,7 @@
 
 extern LCD lcd;
 extern Button button;
-extern settings conf;
+extern settings_t conf;
 extern Light light;
 
 /******************************************************************

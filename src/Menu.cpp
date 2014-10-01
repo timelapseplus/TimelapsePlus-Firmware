@@ -22,7 +22,7 @@
 #include "hardware.h"
 
 extern Clock clock;
-extern settings conf;
+extern settings_t conf;
 
 /******************************************************************
  *

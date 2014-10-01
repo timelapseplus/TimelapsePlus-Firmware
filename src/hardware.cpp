@@ -43,7 +43,7 @@ extern MENU menu;
 extern Clock clock;
 extern BT bt;
 extern shutter timer;
-extern settings conf;
+extern settings_t conf;
 
 uint16_t battery_low_charging EEMEM;
 uint16_t battery_high_charging EEMEM;

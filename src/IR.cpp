@@ -31,7 +31,7 @@
 #include "clock.h"
 
 extern Clock clock;
-extern settings conf;
+extern settings_t conf;
 
 IR::IR()
 {
@@ -481,4 +481,3 @@ void IR::bulbEnd()
         shutterNow();
     }
 }
-

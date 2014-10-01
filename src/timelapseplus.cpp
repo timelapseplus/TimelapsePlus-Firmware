@@ -83,7 +83,7 @@ volatile uint8_t connectUSBcamera = 0;
 
 uint8_t battery_percent, charge_status, USBmode = 0;
 
-extern settings conf;
+extern settings_t conf;
 
 extern uint8_t Camera_Connected;
 

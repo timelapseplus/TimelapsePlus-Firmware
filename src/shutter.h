@@ -12,7 +12,7 @@
 
 #define MAX_STORED 25
 
-#define SHUTTER_PRESS_TIME (conf.cameraFPS * 4)
+#define SHUTTER_PRESS_TIME (conf.camera.cameraFPS * 4)
 
 #define DONE 0
 #define CONTINUE 1
@@ -33,13 +33,14 @@
 #define BRAMP_METHOD_AUTO 2
 
 // in 1/10 seconds
-#define BRAMP_GAP_PADDING (conf.brampGap * 10)
+#define BRAMP_GAP_PADDING (conf.camera.brampGap * 10)
 #define BRAMP_INTERVAL_MIN (BRAMP_GAP_PADDING + 20)
 #define BRAMP_INTERVAL_VAR_MIN 20
 
-#define BRAMP_RATE_MAX ((float)conf.brampRateMax)
-#define BRAMP_RATE_MIN ((float)conf.brampRateMin)
-#define BRAMP_RATE_FACTOR (((float)conf.brampRateFactor)/10.0)
+#define P_FACTOR (((float)conf.pFactor)/10.0)
+#define I_FACTOR (((float)conf.iFactor)/10.0)
+#define D_FACTOR (((float)conf.dFactor)/10.0)
+#define PAST_ERROR_COUNT 10
 
 #define BRAMP_TARGET_CUSTOM 255
 #define BRAMP_TARGET_AUTO 254
