@@ -64,6 +64,11 @@ extern volatile uint8_t bulb1;
 extern volatile uint8_t bulb2;
 extern volatile uint8_t bulb3;
 extern volatile uint8_t bulb4;
+extern volatile uint8_t bulb5;
+extern volatile uint8_t bulb6;
+extern volatile uint8_t bulb7;
+extern volatile uint8_t bulb8;
+extern volatile uint8_t bulb9;
 extern volatile uint8_t showRemoteStart;
 extern volatile uint8_t showRemoteInfo;
 extern volatile uint8_t brampKeyframe;
@@ -132,11 +137,27 @@ void setup()
 	hardware_init();
 	settings_init();
 
-
+	// Splash Screen
 	lcd.init(conf.lcdContrast);
-    lcd.writeString(12, 15, STR("Timelapse+"));
+    lcd.writeString(12, 07, STR("Timelapse+"));
     uint8_t l = lcd.measureStringTiny(conf.sysName) / 2;
-    lcd.writeStringTiny(41 - l, 25, conf.sysName);
+    lcd.writeStringTiny(41 - l, 17, conf.sysName);
+
+    #define BATT_X 26
+    #define BATT_Y 26
+    lcd.drawLine(0+BATT_X, BATT_Y+0, 30+BATT_X, BATT_Y+0);
+    lcd.drawLine(0+BATT_X, BATT_Y+8, 30+BATT_X, BATT_Y+8);
+    lcd.drawLine(0+BATT_X, BATT_Y+0, 0+BATT_X, BATT_Y+8);
+    lcd.drawLine(30+BATT_X, BATT_Y+0, 30+BATT_X, BATT_Y+8);
+    lcd.drawLine(31+BATT_X, BATT_Y+3, 31+BATT_X, BATT_Y+5);
+
+    uint8_t battery = (uint8_t) ((float)battery_read()/100.0 * 27.0);
+
+    for(uint8_t i = 0; i < battery; i++)
+    {
+	    lcd.drawLine(2+BATT_X+i, BATT_Y+2, 2+BATT_X+i, BATT_Y+6);
+    }
+
 	uint32_t version = VERSION;
 	char buf[2], *text;
 	l = 0;
@@ -153,6 +174,7 @@ void setup()
 		version /= 10;
 	}
     lcd.update();
+
 
 	clock.init();
 
@@ -213,11 +235,6 @@ int main()
 
     if(conf.firmwareVersion != VERSION)
     {
-    	if(conf.firmwareVersion <= 20120212)
-    	{
-    		conf.interface = INTERFACE_AUTO;
-		    conf.brampMode = BRAMP_MODE_ALL;
-    	}
         conf.firmwareVersion = VERSION;
         settings_save();
         menu.spawn((void*)firmwareUpdated);
