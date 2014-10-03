@@ -641,6 +641,7 @@ const menu_item menu_settings_display[]PROGMEM =
 const menu_item menu_settings_camera[]PROGMEM =
 {
     { "Camera Make ", 'S', (void*)menu_settings_camera_make, (void*)&conf.camera.cameraMake, (void*)settings_update, 0 },
+    { "Run Autoconf", 'F', (void*)autoConfigureCameraTiming, 0, 0, (void*)&timerNotRunning },
     { "Nikon USB   ", 'S', (void*)menu_settings_nikon_usb_capture, (void*)&conf.camera.nikonUSB, (void*)settings_update, (void*)&cameraMakeNikon },
     { "Camera FPS  ", 'S', (void*)menu_settings_camera_fps, (void*)&conf.camera.cameraFPS, (void*)settings_update, 0 },
     { "Bulb Mode   ", 'S', (void*)menu_settings_bulb_mode, (void*)&conf.camera.bulbMode, (void*)settings_update, 0 },
@@ -689,7 +690,6 @@ const menu_item menu_development[]PROGMEM =
 {
     { "Dev Mode LED", 'S', (void*)menu_settings_dev_mode, (void*)&conf.devMode, (void*)settings_update, 0 },
     { "Debug Mode  ", 'S', (void*)menu_settings_debug_mode, (void*)&conf.debugEnabled, (void*)settings_update, 0 },
-    { "PC-sync Conf", 'F', (void*)autoConfigureCameraTiming, 0, 0, (void*)&timerNotRunning },
     { "Shutter Test", 'F', (void*)shutterTest, 0, 0, (void*)&timerNotRunning },
 #ifdef PRODUCTION
     { "4 Hour Light", 'F', (void*)lightTest, 0, 0, (void*)&timerNotRunning },

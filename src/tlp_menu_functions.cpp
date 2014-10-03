@@ -687,7 +687,7 @@ volatile char autoConfigureCameraTiming(char key, char first)
 				if(clock.eventMs() > 1000)
 				{
 					pass = 0;
-					menu.message(STR("1"));
+					//menu.message(STR("1"));
 					break;
 				}
 			}
@@ -705,7 +705,7 @@ volatile char autoConfigureCameraTiming(char key, char first)
 					if(clock.eventMs() > 1000)
 					{
 						pass = 0;
-						menu.message(STR("2"));
+						//menu.message(STR("2"));
 						break;
 					}
 				}
@@ -722,7 +722,7 @@ volatile char autoConfigureCameraTiming(char key, char first)
 					if(clock.eventMs() > 1000)
 					{
 						pass = 0;
-						menu.message(STR("3"));
+						//menu.message(STR("3"));
 						break;
 					}
 				}
@@ -773,7 +773,7 @@ volatile char autoConfigureCameraTiming(char key, char first)
 
 				// find bulb min
 				bulbMin = camera.bulbMinStatic();
-				while(end_lag >= camera.bulbTime(bulbMin))
+				while((float)end_lag >= ((float)camera.bulbTime(bulbMin)) * 1.05)
 				{
 					bulbMin = camera.bulbDown(bulbMin);
 				}
@@ -794,7 +794,7 @@ volatile char autoConfigureCameraTiming(char key, char first)
 					if(clock.eventMs() > 1000)
 					{
 						pass = 0;
-						menu.message(STR("4"));
+						//menu.message(STR("4"));
 						break;
 					}
 				}
@@ -812,7 +812,7 @@ volatile char autoConfigureCameraTiming(char key, char first)
 					if(clock.eventMs() > 1000)
 					{
 						pass = 0;
-						menu.message(STR("5"));
+						//menu.message(STR("5"));
 						break;
 					}
 				}
@@ -891,13 +891,17 @@ volatile char autoConfigureCameraTiming(char key, char first)
 			menu.setTitle(TEXT("Configuration"));
 
 			lcd.eraseBox(10, 8, 80, 38);
-			lcd.writeString(10,  8, PTEXT("BrampGap:"));
-			lcd.writeString(10, 18, PTEXT(" BulbMin:"));
-			lcd.writeString(10, 28, PTEXT(" Error %:"));
+			lcd.writeString(2,  8, PTEXT("BrampGap:"));
+			lcd.writeString(2, 18, PTEXT(" BulbMin:"));
+			lcd.writeString(2, 28, PTEXT(" Error %:"));
 
-			lcd.writeNumber(68, 8, conf.camera.brampGap, 'U', 'L', false);
-			lcd.writeNumber(68, 18, conf.camera.bulbMin, 'U', 'L', false);
-			lcd.writeNumber(68, 28, eRange, 'U', 'L', false);
+			char buf[8];
+			camera.shutterName(buf, conf.camera.bulbMin);
+			lcd.writeString(58, 18, &buf[3]); // Bulb Length
+
+			lcd.writeNumber(58, 8, conf.camera.brampGap, 'U', 'L', false);
+			//lcd.writeNumber(58, 18, conf.camera.bulbMin, 'U', 'L', false);
+			lcd.writeNumber(58, 28, eRange, 'U', 'L', false);
 
 			menu.setBar(TEXT("Done"), TEXT("Retest"));
 		}
