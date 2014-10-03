@@ -199,8 +199,8 @@ const dynamicItem_t dyn_night_shutter PROGMEM =
 
 const dynamicItem_t dyn_tv PROGMEM =
 {
-    (void*)PTP::shutterUp,
-    (void*)PTP::shutterDown,
+    (void*)tvUp,
+    (void*)tvDown,
     (void*)PTP::shutterName,
     (void*)STR_TV
 };

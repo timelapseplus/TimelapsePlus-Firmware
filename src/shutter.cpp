@@ -534,7 +534,7 @@ char shutter::task()
             menu.message(TEXT("Loading"));
             menu.task();
 
-            if(current.Mode & RAMP)
+            if(current.Mode & RAMP && current.nightMode != BRAMP_TARGET_AUTO)
             {
                 memset(&pastErrors, 0, sizeof(pastErrors));
                 calcBulbMax();
@@ -572,12 +572,16 @@ char shutter::task()
                 //    DEBUG(STR(" -----> starting at night target\r\n"));
                 //    status.lightStart = status.nightTarget;
                 //}
+                status.preChecked = 2;
+            }
+            else
+            {
+                status.preChecked = 3;
             }
 
             if(camera.supports.aperture) aperture = camera.aperture();
             if(camera.supports.iso) iso = camera.iso();
 
-            status.preChecked = 2;
         }
 
         if(status.preChecked < 3) return CONTINUE;
@@ -1889,6 +1893,21 @@ uint8_t hdrExpsName(char name[8], uint8_t hdr_exps)
 
     return 1;
 }
+
+uint8_t tvUp(uint8_t ev)
+{
+    if(ev == 254) return ev;
+    uint8_t tmp = PTP::bulbUp(ev);
+    if(tmp > 33) tmp = 254;
+    return tmp;
+}
+
+uint8_t tvDown(uint8_t ev)
+{
+    if(ev == 254) return 33;
+    return PTP::bulbDown(ev);
+}
+
 
 uint8_t rampTvUp(uint8_t ev)
 {

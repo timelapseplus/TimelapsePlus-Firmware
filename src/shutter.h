@@ -214,6 +214,8 @@ void calcBulbMax(void);
 int8_t calcRampMax();
 int8_t calcRampTarget(int8_t targetShutter, int8_t targetISO, int8_t targetAperture);
 int8_t calcRampMin();
+uint8_t tvUp(uint8_t ev);
+uint8_t tvDown(uint8_t ev);
 uint8_t rampTvUp(uint8_t ev);
 uint8_t rampTvUpStatic(uint8_t ev);
 uint8_t rampTvUpExtended(uint8_t ev);
