@@ -104,8 +104,8 @@ struct program
     uint16_t ArbExp;      
     uint16_t Bracket;     
     uint16_t BulbStart;   
-    uint16_t Bulb[10];    
-    uint16_t Key[10];     
+    uint16_t Bulb[MAX_KEYFRAMES];    
+    uint16_t Key[MAX_KEYFRAMES];     
     uint16_t Keyframes;   
     uint16_t brampMethod; 
     uint8_t  nightMode;
@@ -136,6 +136,27 @@ struct timer_status
 };
 
 extern program stored[MAX_STORED+1]EEMEM;
+
+struct keyframe_t {
+    int16_t value;
+    uint32_t seconds;
+};
+
+struct keyframeGroup_t {
+    keyframe_t keyframes[MAX_KEYFRAMES];
+    uint8_t count;
+    uint8_t selected;
+    uint8_t type;
+    int16_t max;
+    int16_t min;
+    int16_t steps;
+    uint8_t rangeExtendable;    
+    void (*function)(int16_t pos);
+};
+
+#define KFT_EXPOSURE 0
+#define KFT_MOTION 1
+#define KFT_FOCUS 2
 
 class shutter
 {
@@ -174,7 +195,6 @@ public:
     int8_t rampRate, apertureEvShift;
     uint32_t last_photo_ms;
     float lightReading;
-    float internalRampStops;
     float pastErrors[PAST_ERROR_COUNT];
     volatile uint8_t paused, pausing, apertureReady;
     int8_t evShift;

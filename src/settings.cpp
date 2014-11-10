@@ -73,6 +73,7 @@ void settings_load()
     if(conf.lightIntegrationMinutes == 255 || conf.lightIntegrationMinutes == 0) conf.lightIntegrationMinutes = 10;
     if(conf.camera.brampGap > 20 || conf.camera.brampGap == 0) conf.camera.brampGap = 6;
     if(conf.errorAlert > 5) conf.errorAlert = 0;
+    if(conf.linearInterpolation > 1) conf.linearInterpolation = 0;
     lcd.color(conf.lcdColor);
     ir.init();
     ir.make = conf.camera.cameraMake;
@@ -142,6 +143,7 @@ void settings_default()
     conf.dFactor = 12;
     conf.errorAlert = 0;
     conf.lightThreshold = 20;
+    conf.linearInterpolation = 0;
 
     conf.camera.cameraFPS = 33;
     conf.camera.nikonUSB = 0;

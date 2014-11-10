@@ -511,8 +511,8 @@ unsigned char LCD::writeCharTiny(unsigned char x, unsigned char y, unsigned char
 
     if(c == ':')
     {
-        setPixel(x, y + 0);
-        setPixel(x, y + 4);
+        setPixel(x, y + 1);
+        setPixel(x, y + 3);
         return 1;
     }
 
@@ -802,7 +802,7 @@ void LCD::eraseBox(unsigned char x1, unsigned char y1, unsigned char x2, unsigne
  *
  *
  ******************************************************************/
-
+/*
 void LCD::drawBMP(unsigned char x, unsigned char y, unsigned char *pBMP)
 {
     unsigned char i, j, y2, b, w, h;
@@ -844,14 +844,14 @@ void LCD::drawBMP(unsigned char x, unsigned char y, unsigned char *pBMP)
         }
     }
 }
-
+*/
 /******************************************************************
  *
  *   LCD::drawCircle
  *
  *
  ******************************************************************/
-
+/*
 void LCD::drawCircle(unsigned char x, unsigned char y, unsigned char r)
 {
     char x1, y1, p;
@@ -889,7 +889,7 @@ void LCD::drawCircle(unsigned char x, unsigned char y, unsigned char r)
         setPixel(x - y1, y + x1);
     }
 }
-
+*/
 /******************************************************************
  *
  *   LCD::swapBits

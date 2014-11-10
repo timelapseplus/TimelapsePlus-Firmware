@@ -97,7 +97,11 @@ const propertyDescription_t PTP_Shutter_List[] PROGMEM = {
 const propertyDescription_t PTP_ISO_List[] PROGMEM = {
     {"  Error", 0xFF, 0x000000FF, 255 },
     {"   Auto", 0x00, 0x00000000, 254 },
+    {"     32", 0x3b, 32, 48 },
+    {"     40", 0x3d, 40, 47 },
     {"     50", 0x40, 50, 46 },
+    {"     64", 0x43, 64, 45 },
+    {"     80", 0x45, 80, 44 },
     {"    100", 0x48, 100, 43 },
     {"    125", 0x4b, 125, 42 },
     {"    160", 0x4d, 160, 41 },

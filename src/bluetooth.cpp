@@ -39,14 +39,14 @@ BT::BT(void)
  *
  *   BT::init
  *
- *
+ *ATGW,0,28,0,0000000000FF0300050100
  ******************************************************************/
 
 uint8_t BT::init(void)
 {
 	_delay_ms(100);
 	present = true;
-	DEBUG(PSTR("BT Init\n\r"));
+//	DEBUG(PSTR("BT Init\n\r"));
 
 //	sendCMD(PSTR("ATRST\r")); // Reset module
 //	_delay_ms(200);
@@ -55,9 +55,9 @@ uint8_t BT::init(void)
 
 	sendCMD(PSTR("AT\r")); // Check connection
 
-	DEBUG(PSTR("Data: "));
-	DEBUG(data);
-	DEBUG_NL();
+//	DEBUG(PSTR("Data: "));
+//	DEBUG(data);
+//	DEBUG_NL();
 
 	if(checkOK() == 0)
 	{
@@ -96,7 +96,7 @@ uint8_t BT::init(void)
 	if(checkOK() == 0)
 		return 0;
 
-	DEBUG(PSTR("BT Init: Saved configuration\r\n"));
+//	DEBUG(PSTR("BT Init: Saved configuration\r\n"));
 
 	state = BT_ST_IDLE;
 	mode = BT_MODE_CMD;
@@ -190,7 +190,7 @@ uint8_t BT::cancel(void)
 
 	sendCMD(PSTR("ATDC\r"));
 
-	if(state != BT_ST_CONNECTED) state = BT_ST_IDLE;
+	if(state != BT_ST_CONNECTED && state != BT_ST_CONNECTED_NMX) state = BT_ST_IDLE;
 
 	return checkOK();
 }
@@ -226,7 +226,7 @@ uint8_t BT::cancelScan(void)
 
 	sendCMD(PSTR("ATDC,1,1\r"));
 
-	if(state != BT_ST_CONNECTED) state = BT_ST_IDLE;
+	if(state != BT_ST_CONNECTED && state != BT_ST_CONNECTED_NMX) state = BT_ST_IDLE;
 
 	return checkOK();
 }
@@ -306,7 +306,7 @@ uint8_t BT::scan(void)
 	if(!present)
 		return 1;
 
-	if(state != BT_ST_CONNECTED) state = BT_ST_SCAN;
+	if(state != BT_ST_CONNECTED && state != BT_ST_CONNECTED_NMX) state = BT_ST_SCAN;
 
 	newDevices = 0;
 
@@ -329,7 +329,11 @@ uint8_t BT::connect(char *address)
 
 	cancel();
 
-	sendCMD(PSTR("ATDMLE"));
+	//DEBUG(PSTR("CONNECTING: "));
+	//DEBUG(address);
+	//DEBUG_NL();
+
+	sendCMD(PSTR("ATDMLE,"));
 	sendCMD(address);
 	sendCMD(PSTR("\r"));	
 
@@ -484,6 +488,37 @@ uint8_t BT::checkOK(void)
 
 /******************************************************************
  *
+ *   BT::checkOK
+ *
+ *
+ ******************************************************************/
+
+uint8_t BT::waitEvent(char *str, char **retbuf)
+{
+	if(!present)
+		return 0;
+
+	waitEventString = str;
+	waitEventStatus = 1;
+
+	uint16_t count = 0;
+	while(count++ < 1000)
+	{
+		task();
+		if(waitEventStatus == 2)
+		{
+			waitEventStatus = 0;
+			*retbuf = buf;
+			return strlen(buf);
+		}
+	}
+
+	waitEventStatus = 0;
+	return 0;
+}
+
+/******************************************************************
+ *
  *   BT::sendCMD
  *
  *
@@ -495,6 +530,8 @@ uint8_t BT::sendCMD(char* str)
 		return 1;
 
 	cmdMode();
+
+//	DEBUG(str);
 
 	return send(str);
 }
@@ -514,6 +551,8 @@ uint8_t BT::sendCMD(const char* str)
 
 	cmdMode();
 
+//	DEBUG(str);
+
 	return sendP(str);
 }
 
@@ -531,7 +570,7 @@ uint8_t BT::waitRTS()
 	{
 		if(++i > 250)
 		{
-			DEBUG(PSTR("BT RTS Failed!\r\n"));
+//			DEBUG(PSTR("BT RTS Failed!\r\n"));
 			return 1;
 		}
 		_delay_ms(1);
@@ -544,13 +583,13 @@ uint8_t BT::sendDATA(uint8_t id, uint8_t type, void* buffer, uint16_t bytes)
 	if(!present)
 		return 1;
 
-	DEBUG(PSTR("Sending: "));
-	DEBUG(id);
-	DEBUG(PSTR(", "));
-	DEBUG(type);
-	DEBUG(PSTR(", "));
-	DEBUG(bytes);
-	DEBUG_NL();
+//	DEBUG(PSTR("Sending: "));
+//	DEBUG(id);
+//	DEBUG(PSTR(", "));
+//	DEBUG(type);
+//	DEBUG(PSTR(", "));
+//	DEBUG(bytes);
+//	DEBUG_NL();
 	if(dataMode())
 	{
 		waitRTS();
@@ -589,7 +628,7 @@ uint8_t BT::sendDATA(uint8_t id, uint8_t type, void* buffer, uint16_t bytes)
 		}
 		else
 		{
-			DEBUG(PSTR("BT RTS Failed!\r\n"));
+			//DEBUG(PSTR("BT RTS Failed!\r\n"));
 		}
 	}
 
@@ -684,7 +723,7 @@ uint8_t BT::wake()
 	char i = 0;
 	if(!(BT_RTS) && state == BT_ST_SLEEP)
 	{
-		DEBUG(PSTR("Waking up BT\r\n"));
+		//DEBUG(PSTR("Waking up BT\r\n"));
 		state = BT_ST_IDLE;
 		while(!(BT_RTS))
 		{
@@ -698,7 +737,7 @@ uint8_t BT::wake()
 		}
 		if(state == BT_ST_SLEEP)
 		{
-			DEBUG(PSTR("ERROR: BT didn't wake up!\r\n"));
+			//DEBUG(PSTR("ERROR: BT didn't wake up!\r\n"));
 			return 0; // wakeup failed
 		}
 	}
@@ -728,7 +767,7 @@ uint8_t BT::sendByte(char byte)
 	char i = 0;
 	if(!(BT_RTS) && state == BT_ST_SLEEP)
 	{
-		DEBUG(PSTR("Waking up BT\r\n"));
+		//DEBUG(PSTR("Waking up BT\r\n"));
 		state = BT_ST_IDLE;
 		while(!(BT_RTS))
 		{
@@ -742,7 +781,7 @@ uint8_t BT::sendByte(char byte)
 		}
 		if(state == BT_ST_SLEEP)
 		{
-			DEBUG(PSTR("ERROR: BT didn't wake up!\r\n"));
+			//DEBUG(PSTR("ERROR: BT didn't wake up!\r\n"));
 			return 0; // wakeup failed
 		}
 	}
@@ -798,26 +837,26 @@ uint8_t BT::read(void)
 
 		if(timeout > 50000)
 		{
-			DEBUG(PSTR("TIMED OUT!"));
-			DEBUG(PSTR("\r\n   BYTES: "));
-			DEBUG(bytes);
-			DEBUG(PSTR("\r\n      ID: "));
-			DEBUG((uint8_t)buf[1]);
-			DEBUG(PSTR("\r\n    SIZE: "));
-			DEBUG(dataSize);
-			DEBUG(PSTR("\r\n  DATA[0]: "));
-			DEBUG(buf[0]);
-			DEBUG(PSTR("\r\n  DATA[1]: "));
-			DEBUG((uint8_t)buf[1]);
-			DEBUG(PSTR("\r\n  DATA[2]: "));
-			DEBUG((uint8_t)buf[2]);
-			DEBUG(PSTR("\r\n  DATA[3]: "));
-			DEBUG((uint8_t)buf[3]);
-			DEBUG(PSTR("\r\n  DATA[4]: "));
-			DEBUG(buf[4]);
-			DEBUG(PSTR("\r\n  DATA[5]: "));
-			DEBUG(buf[5]);
-		    DEBUG(PSTR("\r\n"));
+			//DEBUG(PSTR("TIMED OUT!"));
+			//DEBUG(PSTR("\r\n   BYTES: "));
+			//DEBUG(bytes);
+			//DEBUG(PSTR("\r\n      ID: "));
+			//DEBUG((uint8_t)buf[1]);
+			//DEBUG(PSTR("\r\n    SIZE: "));
+			//DEBUG(dataSize);
+			//DEBUG(PSTR("\r\n  DATA[0]: "));
+			//DEBUG(buf[0]);
+			//DEBUG(PSTR("\r\n  DATA[1]: "));
+			//DEBUG((uint8_t)buf[1]);
+			//DEBUG(PSTR("\r\n  DATA[2]: "));
+			//DEBUG((uint8_t)buf[2]);
+			//DEBUG(PSTR("\r\n  DATA[3]: "));
+			//DEBUG((uint8_t)buf[3]);
+			//DEBUG(PSTR("\r\n  DATA[4]: "));
+			//DEBUG(buf[4]);
+			//DEBUG(PSTR("\r\n  DATA[5]: "));
+			//DEBUG(buf[5]);
+		    //DEBUG(PSTR("\r\n"));
 			break;
 		}
 		else if(timeout > 5000 && bytes == 0)
@@ -897,14 +936,14 @@ uint8_t BT::task(void)
 	{
 		if(mode == BT_MODE_CMD)
 		{
-			DEBUG(PSTR("CMD:\r\n"));
+			//DEBUG(PSTR("CMD:\r\n"));
 		}
 		else
 		{
-			DEBUG(PSTR("DATA:\r\n"));
+			//DEBUG(PSTR("DATA:\r\n"));
 		}
-		DEBUG(buf);
-		DEBUG_NL();
+		//DEBUG(buf);
+		//DEBUG_NL();
 		if(mode == BT_MODE_CMD)
 		{
 			if(strncmp(buf, STR("DISCOVERY"), 9) == 0)
@@ -918,6 +957,10 @@ uint8_t BT::task(void)
 						device[newDevices].addr[i] = *(buf + 12 + i);
 					}
 					device[newDevices].addr[BT_ADDR_LEN - 1] = '\0';
+					//DEBUG(PSTR("FOUND:"));
+					//DEBUG(device[newDevices].addr);
+					//DEBUG_NL();
+
 					for(i = 0; i < BT_NAME_LEN; i++)
 					{
 						if(*(buf + 38 + i) == '\r') break;
@@ -937,9 +980,29 @@ uint8_t BT::task(void)
 			}
 			if(strncmp(buf, STR("BRSP"), 4) == 0)
 			{
-				ret = BT_EVENT_CONNECT;
-				mode = BT_MODE_DATA;
-				state = BT_ST_CONNECTED;
+				if(buf[7] == '1')
+				{
+					ret = BT_EVENT_CONNECT;
+					mode = BT_MODE_DATA;
+					state = BT_ST_CONNECTED;
+				}
+				else // check to see if it's an NMX
+				{
+					mode = BT_MODE_CMD;
+					//DEBUG(PSTR("Checking for NMX"));
+					sendCMD(PSTR("ATGDCU,0,BF45E40ADE2A4BC8BBA0E5D6065F1B4B\r"));
+				}
+			}
+			if(strncmp(buf, STR("GATT_DC"), 7) == 0)
+			{
+				if(strncmp(&buf[19], STR("BF45E40ADE2A4BC8BBA0E5D6065F1B4B"), 32) == 0)
+				{
+					ret = BT_EVENT_CONNECT;
+					mode = BT_MODE_CMD;
+					state = BT_ST_CONNECTED_NMX;
+					//DEBUG(PSTR("NMX FOUND!"));
+				}
+
 			}
 			if(strncmp(buf, STR("DISCONNECT"), 10) == 0)
 			{
@@ -951,6 +1014,14 @@ uint8_t BT::task(void)
 			{
 				ret = BT_EVENT_SCAN_COMPLETE;
 				devices = newDevices;
+			}
+			if(waitEventStatus == 1)
+			{
+				if(strncmp(buf, waitEventString, strlen(waitEventString)) == 0)
+				{
+					//DEBUG(PSTR("EVENT FOUND!"));
+					waitEventStatus = 2;
+				}
 			}
 		}
 		else
@@ -967,11 +1038,11 @@ uint8_t BT::task(void)
 			}
 			else if(dataId > 0)
 			{
-				DEBUG(PSTR("Received Packet: "));
-				DEBUG(dataId);
-				DEBUG(PSTR(" ("));
-				DEBUG(dataSize);
-				DEBUG(PSTR(" bytes)\r\n"));
+				//DEBUG(PSTR("Received Packet: "));
+				//DEBUG(dataId);
+				//DEBUG(PSTR(" ("));
+				//DEBUG(dataSize);
+				//DEBUG(PSTR(" bytes)\r\n"));
 				ret = BT_EVENT_DATA;
 			}
 		}

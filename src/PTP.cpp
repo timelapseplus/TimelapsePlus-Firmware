@@ -1403,14 +1403,17 @@ uint8_t PTP::checkEvent()
 				#endif
 
 				uint32_t x;
+				uint8_t ti;
 				switch(event_item)
 				{
 					case EOS_DPC_ISO:
+						ti = 0;
 						for(x = 0; x < event_size / sizeof(uint32_t) - 5; x++)
 						{
-							isoAvail[x] = PTP::isoEv(PTP_Buffer[i+(x+5)*sizeof(uint32_t)]);
+							isoAvail[ti] = PTP::isoEv(PTP_Buffer[i+(x+5)*sizeof(uint32_t)]);
+							if(isoAvail[ti] > 0) ti++;
 						}
-						isoAvailCount = x;
+						isoAvailCount = ti;//x;
 						supports.iso = isoAvailCount > 0;
 
 						#ifdef EXTENDED_DEBUG
@@ -1421,11 +1424,13 @@ uint8_t PTP::checkEvent()
 
 						break;
 					case EOS_DPC_SHUTTER:
+						ti = 0;
 						for(x = 0; x < event_size / sizeof(uint32_t) - 5; x++)
 						{
 							shutterAvail[x] = PTP::shutterEv(PTP_Buffer[i+(x+5)*sizeof(uint32_t)]);
+							if(shutterAvail[ti] > 0) ti++;
 						}
-						shutterAvailCount = x;
+						shutterAvailCount = ti;//x;
 						supports.shutter = shutterAvailCount > 0;
 						
 						#ifdef EXTENDED_DEBUG
@@ -1436,11 +1441,13 @@ uint8_t PTP::checkEvent()
 
 						break;
 					case EOS_DPC_APERTURE:
+						ti = 0;
 						for(x = 0; x < event_size / sizeof(uint32_t) - 5; x++)
 						{
-							apertureAvail[x] = PTP::apertureEv(PTP_Buffer[i+(x+5)*sizeof(uint32_t)]);
+							apertureAvail[ti] = PTP::apertureEv(PTP_Buffer[i+(x+5)*sizeof(uint32_t)]);
+							if(apertureAvail[ti] > 0) ti++;
 						}
-						apertureAvailCount = x;
+						apertureAvailCount = ti;//x;
 						supports.aperture = apertureAvailCount > 0;
 
 						#ifdef EXTENDED_DEBUG

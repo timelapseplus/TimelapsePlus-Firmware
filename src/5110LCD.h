@@ -40,7 +40,7 @@ public:
     char measureStringTiny(const char *s);
     char measureCharTiny(char c);
     void writeCharBig(unsigned char x, unsigned char y, unsigned char c);
-    void drawBMP(unsigned char x, unsigned char y, unsigned char *pBMP);
+    //void drawBMP(unsigned char x, unsigned char y, unsigned char *pBMP);
     void update();
     void init(uint8_t contrast);
     void off(void);
@@ -52,7 +52,7 @@ public:
     void drawLine(unsigned char x1, unsigned char y1, unsigned char x2, unsigned char y2);
     void drawHighlight(unsigned char x1, unsigned char y1, unsigned char x2, unsigned char y2);
     void eraseBox(unsigned char x1, unsigned char y1, unsigned char x2, unsigned char y2);
-    void drawCircle(unsigned char x, unsigned char y, unsigned char r);
+    //void drawCircle(unsigned char x, unsigned char y, unsigned char r);
 
     unsigned char screen[LCD_WIDTH][LCD_HEIGHT>>3];
 

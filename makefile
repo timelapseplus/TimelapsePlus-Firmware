@@ -158,6 +158,7 @@ CPPSRC = src/$(TARGET).cpp 	                \
 			src/notify.cpp 			        \
 			src/PTP.cpp 			        \
 			src/light.cpp 			        \
+			src/nmx.cpp 			        \
 			src/debug.cpp
 
 

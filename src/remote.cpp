@@ -9,7 +9,6 @@
 #include <LUFA/Drivers/Peripheral/Serial.h>
 #include "tldefs.h"
 #include "5110LCD.h"
-#include "AVRS_logo.h"
 #include "clock.h"
 #include "button.h"
 #include "Menu.h"
@@ -29,7 +28,7 @@
 #include "tlp_menu_functions.h"
 #include "notify.h"
 #include "PTP.h"
-#include "thm-sample.h"
+//#include "thm-sample.h"
 
 extern BT bt;
 extern shutter timer;
@@ -141,7 +140,7 @@ uint8_t Remote::send(uint8_t id, uint8_t type)
 		case REMOTE_THUMBNAIL:
 		{
 			menu.message(STR("Busy"));
-/*
+
 			uint8_t ret = camera.getCurrentThumbStart();
 			if(ret != PTP_RETURN_ERROR)
 			{
@@ -153,9 +152,9 @@ uint8_t Remote::send(uint8_t id, uint8_t type)
 					bt.sendDATA(id, type, (void *) PTP_Buffer, PTP_Bytes_Received);
 				}
 			}
-*/
+
 			///////////////////////// DEMO Code ////////////////////////////
-			PTP_Bytes_Total = sizeof(thm);
+/*			PTP_Bytes_Total = sizeof(thm);
 			bt.sendDATA(REMOTE_THUMBNAIL_SIZE, type, (void *) &PTP_Bytes_Total, sizeof(PTP_Bytes_Total));
 			uint16_t total_sent = 0, i;
 			while(total_sent < PTP_Bytes_Total)
@@ -171,7 +170,7 @@ uint8_t Remote::send(uint8_t id, uint8_t type)
 				bt.sendDATA(id, type, (void *) PTP_Buffer, PTP_Bytes_Received);
 				if(total_sent >= PTP_Bytes_Total) break;
 			}
-			/////////////////////////////////////////////////////////////////
+*/			/////////////////////////////////////////////////////////////////
 			return 0;
 		}
 		default:
@@ -188,12 +187,21 @@ void Remote::event()
 			notify.unWatch(&remote_notify); // stop all active notifications
 			//DEBUG(STR("REMOTE::EVENT: Disconnected\r\n"));
 			connected = 0;
+			nmx = 0;
 			break;
 
 		case BT_EVENT_CONNECT:
-			connected = 1;
-			//DEBUG(STR("REMOTE::EVENT: Connected\r\n"));
-			request(REMOTE_MODEL);
+			if(bt.state == BT_ST_CONNECTED)
+			{
+				connected = 1;
+				//DEBUG(STR("REMOTE::EVENT: Connected\r\n"));
+				request(REMOTE_MODEL);
+			}
+			else if(bt.state == BT_ST_CONNECTED_NMX)
+			{
+				DEBUG(PSTR("NMX CONNECTED"));
+				nmx = 1;
+			}
 			break;
 
 		case BT_EVENT_DATA:

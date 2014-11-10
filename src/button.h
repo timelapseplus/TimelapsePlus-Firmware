@@ -36,6 +36,8 @@ public:
     char waitfor(char key);
     void flushBuffer();
 
+    uint8_t verticalRepeat;
+
 private:
     // debounce counters
     char button_count[NUM_KEYS];

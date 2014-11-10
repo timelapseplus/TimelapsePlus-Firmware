@@ -19,7 +19,7 @@
 #include <LUFA/Drivers/Peripheral/Serial.h>
 #include "tldefs.h"
 #include "5110LCD.h"
-#include "AVRS_logo.h"
+//#include "AVRS_logo.h"
 #include "clock.h"
 #include "button.h"
 #include "Menu.h"
@@ -39,6 +39,7 @@
 #include "notify.h"
 #include "PTP.h"
 #include "light.h"
+#include "nmx.h"
 
 #ifdef PRODUCTION
 #include "LCD_Term.h"
@@ -268,7 +269,7 @@ int main()
 	for(;;)
 	{
 		wdt_reset();
-
+#ifdef USB_SERIAL_COMMANDS_ENABLED
 		if(VirtualSerial_CharWaiting()) // Process USB Commands from PC (needs to be moved to sub-module)
 		{
 			char c = VirtualSerial_GetChar();
@@ -380,7 +381,7 @@ int main()
 				    }
 			}
 		}
-
+#endif
 
 		/****************************
 		   Tasks

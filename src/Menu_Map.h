@@ -545,6 +545,15 @@ const settings_item menu_settings_menu_wrap[]PROGMEM =
     { "\0           ", 0, 0 }
 };
 
+const char STR_INTERPOLATION[]PROGMEM = "KF Interpolation";
+
+const settings_item menu_settings_interpolation[]PROGMEM =
+{
+    { "Spline      ", 0, (void*)STR_INTERPOLATION },
+    { "Linear      ", 1, (void*)STR_INTERPOLATION },
+    { "\0           ", 0, 0 }
+};
+
 const settings_item menu_settings_flashlight_time[]PROGMEM =
 {
     { "10 Minutes  ", 60, (void*)STR_FLASHLIGHT_TIME },
@@ -671,6 +680,7 @@ const menu_item menu_settings_timelapse[]PROGMEM =
     { "Aperture Min", 'D', (void*)&dyn_min_aperture, (void*)&conf.apertureMin, (void*)settings_update, 0 },
     { "Bramp Mode  ", 'S', (void*)menu_settings_bramp_mode, (void*)&conf.brampMode, (void*)settings_update, 0 },
     { "Ext Bramp   ", 'S', (void*)menu_settings_bramp_extended, (void*)&conf.extendedRamp, (void*)settings_update, 0 },
+    { "Keyframes   ", 'S', (void*)menu_settings_interpolation, (void*)&conf.linearInterpolation, (void*)settings_update, 0 },
     { "Bulb Units  ", 'S', (void*)menu_settings_arbitrary_bulb, (void*)&conf.arbitraryBulb, (void*)settings_update, 0 },
     { "Run on PwrOn", 'S', (void*)menu_settings_auto_run, (void*)&conf.autoRun, (void*)settings_update, 0 },
     { "Bramp Tuning", 'M', (void*)menu_settings_timelapse_tuning, 0, 0, 0 },
@@ -690,12 +700,11 @@ const menu_item menu_development[]PROGMEM =
 {
     { "Dev Mode LED", 'S', (void*)menu_settings_dev_mode, (void*)&conf.devMode, (void*)settings_update, 0 },
     { "Debug Mode  ", 'S', (void*)menu_settings_debug_mode, (void*)&conf.debugEnabled, (void*)settings_update, 0 },
+    { "KeyframeEdit", 'F', (void*)keyFrameEditor, 0, 0, 0 },
     { "Shutter Test", 'F', (void*)shutterTest, 0, 0, (void*)&timerNotRunning },
 #ifdef PRODUCTION
     { "4 Hour Light", 'F', (void*)lightTest, 0, 0, (void*)&timerNotRunning },
 #endif
-    { "Sys Status  ", 'F', (void*)sysStatus, 0, 0, 0 },
-    { "Battery     ", 'F', (void*)batteryStatus, 0, 0, 0 },
     { "Light Meter ", 'F', (void*)lightMeter, 0, 0, (void*)&timerNotRunning },
 //    { "BT Flood    ", 'F', (void*)btFloodTest, 0, 0, 0 },
     { "Reset All   ", 'F', (void*)factoryReset, 0, 0, (void*)&timerNotRunning },

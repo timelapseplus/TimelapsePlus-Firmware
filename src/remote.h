@@ -53,6 +53,7 @@ public:
     void event(void);
 
     uint8_t connected;
+    uint8_t nmx;
     uint8_t running;
     uint8_t battery;
     uint8_t recording;

@@ -39,9 +39,9 @@ void debug(char *s)
         VirtualSerial_PutString(s);
 //    else if(remote.connected && remote.model == REMOTE_MODEL_TLP)
 //        remote.debug(s);
-    else if(bt.state == BT_ST_CONNECTED && remote.model == 0)
+//    else if(bt.state == BT_ST_CONNECTED && remote.model == 0)
 #endif
-       if(bt.state == BT_ST_CONNECTED) bt.send(s);
+//       if(bt.state == BT_ST_CONNECTED) bt.send(s);
 }
 
 /******************************************************************
@@ -67,9 +67,9 @@ void debug(const char *s)
     }
 //    else if(remote.connected && remote.model == REMOTE_MODEL_TLP)
 //        remote.debug(s);
-    else if(bt.state == BT_ST_CONNECTED && remote.model == 0)
+//    else if(bt.state == BT_ST_CONNECTED && remote.model == 0)
 #endif
-       if(bt.state == BT_ST_CONNECTED) bt.sendP(s);
+//       if(bt.state == BT_ST_CONNECTED) bt.sendP(s);
 }
 
 /******************************************************************

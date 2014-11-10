@@ -75,6 +75,7 @@ const char STR_DEVMODE_ALERT[]PROGMEM = "DEV Mode can interfere with the light s
 const char STR_ZEROLENGTH_ALERT[]PROGMEM = "Length greater than zero required in bulb ramp mode. Set the length before running";
 const char STR_NOCAMERA_ALERT[]PROGMEM = "Camera not connected. Connect a camera or press ok to use the IR interface";
 
+keyframeGroup_t kfg;
 
 /******************************************************************
  *
@@ -534,7 +535,7 @@ char shutter::task()
             menu.message(TEXT("Loading"));
             menu.task();
 
-            if(current.Mode & RAMP && current.nightMode != BRAMP_TARGET_AUTO)
+            if(current.Mode & RAMP)
             {
                 memset(&pastErrors, 0, sizeof(pastErrors));
                 calcBulbMax();
@@ -542,7 +543,6 @@ char shutter::task()
                 status.rampMin = calcRampMin();
                 rampRate = 0;
                 status.rampStops = 0.0;
-                internalRampStops = 0.0;
                 light.integrationStart(conf.lightIntegrationMinutes);
                 lightReading = status.lightStart = light.readIntegratedEv();
 
@@ -574,7 +574,8 @@ char shutter::task()
                 //}
                 status.preChecked = 2;
             }
-            else
+            
+            if(!current.Mode & RAMP || current.nightMode == BRAMP_TARGET_AUTO || current.brampMethod != BRAMP_METHOD_AUTO)
             {
                 status.preChecked = 3;
             }
@@ -1245,10 +1246,6 @@ char shutter::task()
                 }
             }
         }
-        else
-        {
-            run_state = RUN_GAP;
-        }
 
         if(camera.ready && current.Mode & RAMP && conf.extendedRamp && !camera.isInBulbMode() && conf.camera.modeSwitch == USB_CHANGE_MODE_ENABLED && timer.status.bulbLength > camera.bulbTime((int8_t)camera.bulbMin()))
         {
@@ -1535,9 +1532,10 @@ void shutter::switchToGuided()
 
 void shutter::switchToAuto()
 {
+    light.integrationStart(conf.lightIntegrationMinutes);
     lightReading = status.lightStart = light.readIntegratedEv();
-    internalRampStops = status.rampStops;
     current.brampMethod = BRAMP_METHOD_AUTO;
+    current.nightMode = BRAMP_TARGET_AUTO;
 }
 
 void check_cable()

@@ -23,6 +23,7 @@
 #define BT_ST_IDLE 1
 #define BT_ST_SCAN 2
 #define BT_ST_CONNECTED 3
+#define BT_ST_CONNECTED_NMX 4
 
 #define BT_MODE_CMD 0
 #define BT_MODE_DATA 1
@@ -37,8 +38,8 @@
 
 struct discovery
 {
-    char name[BT_NAME_LEN];
-    char addr[BT_ADDR_LEN];
+    char name[BT_NAME_LEN + 1];
+    char addr[BT_ADDR_LEN + 1];
 };
 
 class BT
@@ -68,6 +69,9 @@ public:
     uint8_t disconnect(void);
     uint8_t task(void);
 
+    uint8_t checkOK(void);
+    uint8_t waitEvent(char *str, char **retbuf);
+
     uint8_t present;
     uint8_t state;
     uint8_t mode;
@@ -86,9 +90,10 @@ public:
 private:
     char buf[BT_BUF_SIZE];
     uint8_t wake(void);
-    uint8_t checkOK(void);
     uint8_t btPower;
     uint8_t dataMode(void);
     uint8_t cmdMode(void);
     uint8_t newDevices;
+    uint8_t waitEventStatus;
+    char *waitEventString;
 };

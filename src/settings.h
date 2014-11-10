@@ -110,6 +110,7 @@ struct settings_t
     uint8_t errorAlert;
     uint16_t lightThreshold;
     camera_settings_t camera;
+    uint8_t linearInterpolation;
     uint8_t pad[12];
 };
 

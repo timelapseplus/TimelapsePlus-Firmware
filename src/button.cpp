@@ -45,6 +45,8 @@ Button::Button()
     // reset button arrays
     char p;
     
+    verticalRepeat = 0;
+
     for(uint8_t i = 0; i < NUM_KEYS; i++)
     {
         button_count[i] = 0;
@@ -105,7 +107,7 @@ volatile void Button::poll()
             }
             else
             {
-                if(i + 1 == UP_KEY || i + 1 == DOWN_KEY)
+                if(i + 1 == UP_KEY || i + 1 == DOWN_KEY || (verticalRepeat && (i + 1 == LEFT_KEY || i + 1 == RIGHT_KEY)))
                 {
                     button_flag[i] = 1;
                     button_status[i] = 1; //button debounced to 'pressed' status

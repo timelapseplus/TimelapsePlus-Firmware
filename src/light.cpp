@@ -253,34 +253,34 @@ void Light::task()
 
     if(conf.debugEnabled)
     {
-      DEBUG(STR("\r\nIEV: "));
-      for(uint8_t i = 0; i < LIGHT_INTEGRATION_COUNT; i++)
-      {
-        DEBUG(iev[i]);
-        DEBUG(STR(","));
-      }
-      DEBUG_NL();
-
-      DEBUG(STR("#######LOCKED "));
-      DEBUG(lockedSlope);
-      DEBUG(STR(" #######\r\n"));
-
-      DEBUG(STR("####### SLOPE "));
-      DEBUG(slope);
-      DEBUG(STR(" #######\r\n"));
-
-
-      DEBUG(STR("#######   INT "));
-      DEBUG(integrated);
-      DEBUG(STR(" #######\r\n"));
-
-      DEBUG(STR("#######   MED "));
-      DEBUG(median);
-      DEBUG(STR(" #######\r\n"));
-
-      DEBUG(STR("#######    EV "));
-      DEBUG(iev[LIGHT_INTEGRATION_COUNT - 1]);
-      DEBUG(STR(" #######\r\n"));
+      //DEBUG(STR("\r\nIEV: "));
+      //for(uint8_t i = 0; i < LIGHT_INTEGRATION_COUNT; i++)
+      //{
+      //  DEBUG(iev[i]);
+      //  DEBUG(STR(","));
+      //}
+      //DEBUG_NL();
+//
+      //DEBUG(STR("#######LOCKED "));
+      //DEBUG(lockedSlope);
+      //DEBUG(STR(" #######\r\n"));
+//
+      //DEBUG(STR("####### SLOPE "));
+      //DEBUG(slope);
+      //DEBUG(STR(" #######\r\n"));
+//
+//
+      //DEBUG(STR("#######   INT "));
+      //DEBUG(integrated);
+      //DEBUG(STR(" #######\r\n"));
+//
+      //DEBUG(STR("#######   MED "));
+      //DEBUG(median);
+      //DEBUG(STR(" #######\r\n"));
+//
+      //DEBUG(STR("#######    EV "));
+      //DEBUG(iev[LIGHT_INTEGRATION_COUNT - 1]);
+      //DEBUG(STR(" #######\r\n"));
     }
   }
 }
@@ -288,7 +288,7 @@ void Light::task()
 void Light::integrationStart(uint8_t integration_minutes)
 {
 	  start();
-    DEBUG(STR(" ####### LIGHT INTEGRATION START #######\r\n"));
+    //DEBUG(STR(" ####### LIGHT INTEGRATION START #######\r\n"));
     integration = (uint16_t)integration_minutes;
     lastSeconds = 0;
     for(uint8_t i = 0; i < LIGHT_INTEGRATION_COUNT; i++)
