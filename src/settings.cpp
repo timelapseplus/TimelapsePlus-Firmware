@@ -137,6 +137,7 @@ void settings_default()
     conf.arbitraryBulb = 0;
     conf.menuWrap = 1;
     conf.extendedRamp = 0;
+    strcpy((char*)conf.test, "Test       ");
     conf.lightIntegrationMinutes = 5;
     conf.pFactor = 10;
     conf.iFactor = 12;
@@ -164,7 +165,6 @@ void settings_default()
         memset((void*)&cs, 0, sizeof(camera_settings_t));
         eeprom_write_block((const void*)&cs, &camera_settings_eep[i], sizeof(camera_settings_t));
     }
-
     settings_save();
     settings_load();
 }

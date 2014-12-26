@@ -112,7 +112,7 @@
 			#include <math.h>
 
 			// === TODO: Find abstracted way to handle these ===
-			#define PROGMEM                  
+			#define PROGMEM                  __attribute__(( section(".progmem.data") ))
 			#define pgm_read_byte(x)         *x
 			#define memcmp_P(...)            memcmp(__VA_ARGS__)
 			#define memcpy_P(...)            memcpy(__VA_ARGS__)

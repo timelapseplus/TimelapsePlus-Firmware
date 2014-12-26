@@ -2,8 +2,8 @@
 ; AVR bitmap - size 84x48 pixels, black/white image
 ------------------------------------------------------------------------------*/
 #include <avr/pgmspace.h>
-const unsigned char PROGMEM Logo[] =
 
+const unsigned char __attribute__(( section(".progmem.data") )) Logo[] =
 
 {
 

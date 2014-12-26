@@ -2,6 +2,7 @@
 // 1 pixel space at left and bottom
 // index = ASCII - 32
 #include <avr/pgmspace.h>
+#include "settings.h"
 
 // Font is represented below as rotated right 90 degrees
 const unsigned char font6_8[] [6] PROGMEM =

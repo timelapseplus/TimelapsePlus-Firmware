@@ -742,20 +742,19 @@ uint8_t PTP::init()
 	currentObject = 0;
 	isoAvailCount = 0;
 	apertureAvailCount = 0;
-	shutterAvailCount = 0;
+	shutterAvailCount = 0;	
 	supports = (CameraSupports_t)
 	{
-		.capture = false,
-		.bulb = false,
-		.iso = false,
-		.shutter = false,
-		.aperture = false,
-		.focus = false,
-		.video = false,
-		.cameraReady = false,
-		.event = false
-	};
-
+		false,	//.capture
+		false,	//.bulb
+		false,	//.iso
+		false,	//.shutter
+		false,	//.aperture
+		false,	//.focus
+		false,	//.video
+		false,	//.cameraReady
+		false	//.event
+	};	
 	if(strncmp(PTP_CameraMake, "Canon", 5) == 0) // This should be done with VendorID instead
 	{
 		conf.camera.cameraMake = CANON;
@@ -1566,19 +1565,19 @@ uint8_t PTP::close()
 	static_ready = 0;
 	ready = 0;
 	busy = false;
-	bulb_open = false;
+	bulb_open = false;	
 	supports = (CameraSupports_t)
 	{
-		.capture = false,
-		.bulb = false,
-		.iso = false,
-		.shutter = false,
-		.aperture = false,
-		.focus = false,
-		.video = false,
-		.cameraReady = false,
-		.event = false
-	};
+		false,	//.capture
+		false,	//.bulb
+		false,	//.iso
+		false,	//.shutter
+		false,	//.aperture
+		false,	//.focus
+		false,	//.video
+		false,	//.cameraReady
+		false	//.event
+	};	
 	isoPTP = 0xFF;
 	aperturePTP = 0xFF;
 	shutterPTP = 0xFF;

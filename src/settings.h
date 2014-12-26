@@ -49,6 +49,11 @@
 #define AUX_MODE_IR 2
 #define AUX_MODE_SYNC 3
 
+#undef PROGMEM
+#define PROGMEM __attribute__(( section(".progmem.data") ))
+
+#undef PSTR
+#define PSTR(s) (__extension__({static const char __c[] PROGMEM = (s); &__c[0];}))
 #define ERROR_ALERT_SCREEN 0
 #define ERROR_ALERT_FLASHLIGHT 1
 #define ERROR_ALERT_DISABLED 2
@@ -102,6 +107,7 @@ struct settings_t
     uint8_t arbitraryBulb;
     uint8_t menuWrap;
     uint8_t extendedRamp;
+    char test[13];
     uint16_t dollyPulse2;
     uint8_t lightIntegrationMinutes;
     uint16_t pFactor;

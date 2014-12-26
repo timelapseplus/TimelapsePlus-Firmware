@@ -334,13 +334,16 @@ void MENU::init(menu_item *newmenu)
             } 
             else
             {
+				uint8_t n = 0; 								//J.R. 11-25-14         
                 for(uint8_t b = 0; b < MENU_NAME_LEN - 1; b++) // Write menu item text //
                 {
                     if((type != 'E' && type != 'P') || b < MENU_NAME_LEN - var_len - 1)
                     {
                         ch = pgm_read_byte(&menu[i].name[b]);
+                        if(b == 0 && ch == '-') continue;   //J.R. 11-25-14 
+                        n++;  								//J.R. 11-25-14 
                         if(ch == '+') continue;
-                        lcd->writeChar(2 + b * 6, 8 + 9 * menuSize - menuScroll, ch);
+                        lcd->writeChar(2 + n * 6, 8 + 9 * menuSize - menuScroll, ch);  //J.R. 11-25-14 
                     }
                 }
                 if(type == 'M')
@@ -348,7 +351,7 @@ void MENU::init(menu_item *newmenu)
                   lcd->writeChar(2 + (MENU_NAME_LEN - 1) * 6, 8 + 9 * menuSize - menuScroll, '>');
                 }
                 ch = pgm_read_byte(&menu[i].name[MENU_NAME_LEN - 2]);                                             
-                if(type == 'C' && (ch == 'M' || ch == 'N' || ch == 'L'))  //Correction for Bramp Min-Max J.R.
+                if(type == 'C' && (ch == 'M' || ch == 'N'))  //Correction for Bramp Min-Max J.R. 11-25-14 
                 {
                   //lcd->writeChar(2 + (MENU_NAME_LEN - 2) * 6, 8 + 9 * menuSize - menuScroll, '*');
                   lcd->eraseBox(2 + (MENU_NAME_LEN - 2) * 6, 8 + 9 * menuSize - menuScroll, 8 + (MENU_NAME_LEN - 2) * 6, 16 + 9 * menuSize - menuScroll);  //J.R.  
@@ -1051,7 +1054,7 @@ char MENU::editNumber(char key, unsigned int *n, char *name, char *unit, char mo
                 lcd->drawBox(68 - 1 * 16 - 3, 20, 68 - 1 * 16 - 2, 22);
                 break;
            
-           case 'L': // negative number J.R.//
+           case 't': // negative number J.R.//
 				lcd->eraseBox(67 - 3 * 16, 8, 67 - 2 * 16, 30);
 				if(conf.camera.negBulbOffset) lcd->writeCharBig(67 - 3 * 16, 7, '-');              
         }
@@ -1101,7 +1104,7 @@ char MENU::editNumber(char key, unsigned int *n, char *name, char *unit, char mo
 				}	    			   										   
 			   break;
 			   
-           case 'L':		//  Added case for Bulb Offset  J.R.
+           case 't':		//  Added case for Bulb Offset  J.R.
 				   l = 4;
                if(i == 3) 
                    t = 0;
@@ -1156,7 +1159,7 @@ char MENU::editNumber(char key, unsigned int *n, char *name, char *unit, char mo
                        d[i] = 0;
                    break;
             }
-            if(mode == 'L' && i == 3)   //J.R.
+            if(mode == 't' && i == 3)   //J.R.
 				if(key == UP_KEY || key == DOWN_KEY)
 				{
 					if(conf.camera.negBulbOffset) conf.camera.negBulbOffset = 0;
@@ -1191,7 +1194,7 @@ char MENU::editNumber(char key, unsigned int *n, char *name, char *unit, char mo
                 DEBUG_NL();
                 break; 
                 
-           case 'L':		//  Added case for Bulb Offset  J.R.
+           case 't':		//  Added case for Bulb Offset  J.R.
                 m = d[2];
                 m *= 10;
                 m += d[1];

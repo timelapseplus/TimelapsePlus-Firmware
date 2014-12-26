@@ -17,6 +17,7 @@
 #include "clock.h"
 #include "hardware.h"
 #include "tldefs.h"
+#include "settings.h"
 // The followinging are interrupt-driven keypad reading functions
 //  which includes DEBOUNCE ON/OFF mechanism, and continuous pressing detection
 

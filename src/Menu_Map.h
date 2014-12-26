@@ -632,6 +632,7 @@ const settings_item menu_settings_bramp_factor[]PROGMEM =
 const menu_item menu_settings_system[]PROGMEM =
 {
     { "System Name ", 'F', (void*)system_name, 0, 0, 0 },
+    { "Debug test  ", 'F', (void*)testing, 0, 0, 0 },
     { "Menu Wrap   ", 'S', (void*)menu_settings_menu_wrap, (void*)&conf.menuWrap, (void*)settings_update, 0 },
     { "PWR Auto Off", 'S', (void*)menu_settings_power_off_time, (void*)&conf.sysOffTime, (void*)settings_update, 0 },
     { "LED Auto Off", 'S', (void*)menu_settings_flashlight_time, (void*)&conf.flashlightOffTime, (void*)settings_update, 0 },
@@ -654,7 +655,7 @@ const menu_item menu_settings_camera[]PROGMEM =
     { "Nikon USB   ", 'S', (void*)menu_settings_nikon_usb_capture, (void*)&conf.camera.nikonUSB, (void*)settings_update, (void*)&cameraMakeNikon },
     { "Camera FPS  ", 'S', (void*)menu_settings_camera_fps, (void*)&conf.camera.cameraFPS, (void*)settings_update, 0 },
     { "Bulb Mode   ", 'S', (void*)menu_settings_bulb_mode, (void*)&conf.camera.bulbMode, (void*)settings_update, 0 },
-    { "Bulb Offset ", 'C', (void*)&conf.camera.bulbOffset, (void*)STR_BULB_OFFSET, (void*)settings_update, 0 },
+    { "-Bulb Offset", 'C', (void*)&conf.camera.bulbOffset, (void*)STR_BULB_OFFSET, (void*)settings_update, 0 },
     { "Bulb Min    ", 'D', (void*)&dyn_min_bulb, (void*)&conf.camera.bulbMin, (void*)settings_update, 0 },
     { "Half press  ", 'S', (void*)menu_settings_half_press, (void*)&conf.camera.halfPress, (void*)settings_update, 0 },
     { "Interface   ", 'S', (void*)menu_settings_interface, (void*)&conf.camera.interface, (void*)settings_update, 0 },
@@ -709,7 +710,7 @@ const menu_item menu_development[]PROGMEM =
 //    { "BT Flood    ", 'F', (void*)btFloodTest, 0, 0, 0 },
     { "Reset All   ", 'F', (void*)factoryReset, 0, 0, (void*)&timerNotRunning },
 //    { "WDT Reset   ", 'F', (void*)wdtReset, 0, 0, 0 },
-    { "DFU Mode    ", 'F', (void*)hardware_bootloader, 0, 0, (void*)&timerNotRunning },
+    { "Program TL  ", 'F', (void*)hardware_bootloader, 0, 0, (void*)&timerNotRunning },
     { "\0           ", 'V', 0, 0, 0 }
 };
 
@@ -719,7 +720,7 @@ const menu_item menu_settings[]PROGMEM =
     { "System      ", 'M', (void*)menu_settings_system, 0, 0, 0 },
     { "Display     ", 'M', (void*)menu_settings_display, 0, 0, 0 },
     { "Time-lapse  ", 'M', (void*)menu_settings_timelapse, 0, 0, 0 },
-    { "Camera      ", 'M', (void*)menu_settings_camera, 0, 0, 0 },
+    { "Camera Info ", 'M', (void*)menu_settings_camera, 0, 0, 0 },
     { "Auxiliary   ", 'M', (void*)menu_settings_auxiliary, 0, 0, 0 },
     { "Development ", 'M', (void*)menu_development, 0, 0, 0 },
     { "\0           ", 'V', 0, 0, 0, 0 }

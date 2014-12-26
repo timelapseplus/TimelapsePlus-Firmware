@@ -104,7 +104,7 @@
 			#include <avr32/io.h>
 
 			// === TODO: Find abstracted way to handle these ===
-			#define PROGMEM                  const
+			#define PROGMEM                  __attribute__(( section(".progmem.data") ))
 			#define pgm_read_byte(x)         *x
 			#define memcmp_P(...)            memcmp(__VA_ARGS__)
 			#define memcpy_P(...)            memcpy(__VA_ARGS__)
