@@ -672,12 +672,16 @@ void MENU::click()
                {
                    name[b] = pgm_read_byte(&menu[index].name[i]);
                    i++;
-                   if(b == 0 && (name[b] == ' ' || name[b] == '-')) continue;
+                   if(b == 0 && (name[b] == ' ' || name[b] == '-')) 
+                       continue;
 
                    if(name[b] == ' ' && b > 8) //J.R. 5-30-14
                        break;
                    if(name[b] == ' ' && name[b-1] == ' ') //J.R. 8-21-14
-						{name[b-1] = '\0'; break;  }                     
+						       {
+                       name[b-1] = '\0'; 
+                       break;  
+                   }                     
                    b++;
                }
                
