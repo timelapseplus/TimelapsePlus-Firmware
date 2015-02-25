@@ -128,7 +128,7 @@ volatile void Clock::count()
             shutter_bulbEnd();
             bulbRunning = 0;
             light.skipTask = 0;
-            if(conf.auxPort == AUX_MODE_SYNC && bulbDurationPCsync == 0) usingSync = 1; else usingSync = 0;
+            if(bulbDurationPCsync) usingSync = 0;
             skips++;
             return;
         }
@@ -136,6 +136,7 @@ volatile void Clock::count()
         {
             bulbDuration = bulbDurationPCsync;
             bulbDurationPCsync = 0;
+            usingSync = 1;
             skips++;
             return;
         }

@@ -712,11 +712,14 @@ volatile char autoConfigureCameraTiming(char key, char first)
 				}
 
 				start_lag = (uint16_t)clock.eventMs();
+				DEBUG(PSTR("SL:"));
+				DEBUG(start_lag);
+				DEBUG_NL();
 			}
 			if(pass) // end bulb
 			{
-				shutter_bulbEnd();
 				clock.tare();
+				shutter_bulbEnd();
 
 				while(AUX_INPUT1)
 				{
@@ -743,8 +746,8 @@ volatile char autoConfigureCameraTiming(char key, char first)
 				camera.checkEvent();
 				if(camera.busy)
 				{
-					camera.checkEvent();
 					clock.tare();
+					camera.checkEvent();
 					while(camera.busy)
 					{
 						camera.checkEvent();
@@ -774,7 +777,9 @@ volatile char autoConfigureCameraTiming(char key, char first)
 
 				// find bulb min
 				bulbMin = camera.bulbMinStatic();
-				while((float)end_lag >= ((float)camera.bulbTime(bulbMin)) * 1.05)
+				float minTime = (float)start_lag - (float)end_lag;
+				if((float)end_lag > minTime) minTime = (float)end_lag;
+				while(minTime >= ((float)camera.bulbTime(bulbMin)) * 1.05)
 				{
 					bulbMin = camera.bulbDown(bulbMin);
 				}
@@ -783,9 +788,9 @@ volatile char autoConfigureCameraTiming(char key, char first)
 				uint32_t tmpMs;
 				do {
 					shutter_bulbStart();  // start bulb
+					clock.tare();
 				} while(lastShutterError);
 				tmpMs = clock.eventMs();
-				clock.tare();
 
 				uint16_t bGap = (uint16_t)((tmpMs + 500) / 1000) + 1;
 				if(conf.camera.brampGap < bGap) conf.camera.brampGap = bGap;
@@ -805,8 +810,8 @@ volatile char autoConfigureCameraTiming(char key, char first)
 			if(pass) // end bulb
 			{
 				while(clock.eventMs() < bulbMinMs);
-				shutter_bulbEnd();
 				clock.tare();
+				shutter_bulbEnd();
 
 				while(AUX_INPUT1)
 				{
@@ -833,8 +838,8 @@ volatile char autoConfigureCameraTiming(char key, char first)
 				lcd.update();
 				if(camera.busy)
 				{
-					camera.checkEvent();
 					clock.tare();
+					camera.checkEvent();
 					while(camera.busy)
 					{
 						camera.checkEvent();
@@ -851,7 +856,6 @@ volatile char autoConfigureCameraTiming(char key, char first)
 				if(i == 0 || conf.camera.bulbMin > bulbMin) conf.camera.bulbMin = bulbMin;
 
 				bOffsetArray[i] = (int16_t)start_lag - (int16_t)end_lag;
-			
 				eLagArray[i] = end_lag;
 			}
 			else
