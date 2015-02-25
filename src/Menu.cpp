@@ -294,20 +294,14 @@ void MENU::init(menu_item *newmenu)
             type = pgm_read_byte(&menu[i].type);
             c = pgm_read_byte(&menu[i].name[MENU_NAME_LEN - 2]);
 
-            if(type == 'E' || type == 'P')  // Edit variable type //
+            if(type == 'E')  // Edit variable type //
             {
                 unsigned int *var;
-                unsigned int val;
-
                 var = (unsigned int*)pgm_read_word(&menu[i].function);
                 
-                if(type == 'P')
-                {
-                    eeprom_read_block(&val, var, 2);
-                    var = &val;
+                if(type != 'C') {
+                    var_len = lcd->writeNumber(2 + MENU_NAME_LEN * 6, 8 + 9 * menuSize - menuScroll, *var, c, 'R',false);  //J.R. 2-27-14
                 }
-                
-                if(type != 'C') var_len = lcd->writeNumber(2 + MENU_NAME_LEN * 6, 8 + 9 * menuSize - menuScroll, *var, c, 'R',false);  //J.R. 2-27-14
             }
 
             if(type == 'S' && c == '*') // Display setting selection in place of menu text
@@ -336,7 +330,7 @@ void MENU::init(menu_item *newmenu)
             {
                 for(uint8_t b = 0; b < MENU_NAME_LEN - 1; b++) // Write menu item text //
                 {
-                    if((type != 'E' && type != 'P') || b < MENU_NAME_LEN - var_len - 1)
+                    if((type != 'E') || b < MENU_NAME_LEN - var_len - 1)
                     {
                         ch = pgm_read_byte(&menu[i].name[b]);
                         if(ch == '+') continue;
@@ -623,8 +617,7 @@ void MENU::click()
                break;
 
            case 'C':
-           case 'E':
-           case 'P': // Edit Variable
+           case 'E': // Edit Variable
                {
                    unsigned char *desc_addr;
 
@@ -663,10 +656,7 @@ void MENU::click()
                    
                    desc[b] = '\0';
 
-                   if(type == 'P') 
-                       state = ST_EEPR;
-                   else 
-                       state = ST_EDIT;
+                   state = ST_EDIT;
 
                    func_short = (char (*)(void))pgm_read_word(&menu[index].short_function);
                    type = pgm_read_byte(&menu[index].name[MENU_NAME_LEN - 2]);
@@ -682,12 +672,16 @@ void MENU::click()
                {
                    name[b] = pgm_read_byte(&menu[index].name[i]);
                    i++;
-                   if(b == 0 && (name[b] == ' ' || name[b] == '-')) continue;
+                   if(b == 0 && (name[b] == ' ' || name[b] == '-')) 
+                       continue;
 
                    if(name[b] == ' ' && b > 8) //J.R. 5-30-14
                        break;
                    if(name[b] == ' ' && name[b-1] == ' ') //J.R. 8-21-14
-						{name[b-1] = '\0'; break;  }                     
+						       {
+                       name[b-1] = '\0'; 
+                       break;  
+                   }                     
                    b++;
                }
                
