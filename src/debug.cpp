@@ -33,15 +33,12 @@ extern BT bt;
 void debug(char *s)
 {
     if(conf.debugEnabled == 0) return;
-//#ifndef PTP_DEBUG
-#ifndef LOGGER_ENABLED
     if(VirtualSerial_connected)
         VirtualSerial_PutString(s);
-//    else if(remote.connected && remote.model == REMOTE_MODEL_TLP)
-//        remote.debug(s);
-//    else if(bt.state == BT_ST_CONNECTED && remote.model == 0)
-#endif
-//       if(bt.state == BT_ST_CONNECTED) bt.send(s);
+    //else if(remote.connected && remote.model == REMOTE_MODEL_TLP)
+        //remote.debug(s);
+    else if(bt.state == BT_ST_CONNECTED)
+        bt.send(s);
 }
 
 /******************************************************************
@@ -54,7 +51,6 @@ void debug(char *s)
 void debug(const char *s)
 {
     if(conf.debugEnabled == 0) return;
-#ifndef LOGGER_ENABLED
     if(VirtualSerial_connected)
     {
         char c = pgm_read_byte(s);
@@ -65,11 +61,10 @@ void debug(const char *s)
             c = pgm_read_byte(s);
         }
     }
-//    else if(remote.connected && remote.model == REMOTE_MODEL_TLP)
-//        remote.debug(s);
-//    else if(bt.state == BT_ST_CONNECTED && remote.model == 0)
-#endif
-//       if(bt.state == BT_ST_CONNECTED) bt.sendP(s);
+    //else if(remote.connected && remote.model == REMOTE_MODEL_TLP)
+        //remote.debug(s);
+    else if(bt.state == BT_ST_CONNECTED)
+        bt.sendP(s);
 }
 
 /******************************************************************
@@ -204,6 +199,24 @@ void debug(uint32_t n)
         n /= 10;
     }
     debug((char*)&buf[i]);
+}
+
+/******************************************************************
+ *
+ *   debug
+ *
+ *
+ ******************************************************************/
+
+void debug(int32_t n)
+{
+    if(conf.debugEnabled == 0) return;
+    if(n < 0)
+    {
+        n = 0 - n;
+        debug(STR("-"));
+    }
+    debug((uint32_t) n);
 }
 
 /******************************************************************
