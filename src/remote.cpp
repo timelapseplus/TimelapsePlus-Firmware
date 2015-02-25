@@ -221,8 +221,8 @@ void Remote::event()
 						memcpy((void*)&timer.current, bt.data, bt.dataSize);
 						menu.refresh();
 					}
-					if(bt.dataType == REMOTE_TYPE_NOTIFY_WATCH) notify.watch(REMOTE_PROGRAM, (void *)&timer.current, sizeof(timer.current), &remote_notify);
-					if(bt.dataType == REMOTE_TYPE_NOTIFY_UNWATCH) notify.unWatch(REMOTE_PROGRAM, &remote_notify);
+					//if(bt.dataType == REMOTE_TYPE_NOTIFY_WATCH) notify.watch(REMOTE_PROGRAM, (void *)&timer.current, sizeof(timer.current), &remote_notify);
+					//if(bt.dataType == REMOTE_TYPE_NOTIFY_UNWATCH) notify.unWatch(REMOTE_PROGRAM, &remote_notify);
 					break;
 				case REMOTE_BATTERY:
 					if(bt.dataType == REMOTE_TYPE_REQUEST) send(bt.dataId, REMOTE_TYPE_SEND);

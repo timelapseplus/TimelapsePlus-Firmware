@@ -32,6 +32,10 @@ float curve(float p0, float p1, float p2, float p3, float t)
     {
       return t * (p2 - p1) + p1;
     }
+    if(p1 == p2)
+    {
+      return p1;
+    }
     else
     {
       float t2 = t * t;
@@ -187,16 +191,16 @@ uint16_t arrayMedian50UInt(const uint16_t *array, const uint8_t length)
 
   sortUInteger(tmpArray, length);
 
-  uint16_t m = 0.0, count = 0.0;
+  float m = 0.0, count = 0.0;
  
   for(uint8_t i = (length / 4); i < length - (length / 4); i++) // take the average of the middle two quarters
   {
     count++;
-    m += tmpArray[i];
+    m += (float)tmpArray[i];
   }
   m /= count;
  
-  return m;
+  return (uint16_t)m;
 }
 
 int16_t arrayMedian50Int(const int16_t *array, const uint8_t length)
@@ -206,16 +210,16 @@ int16_t arrayMedian50Int(const int16_t *array, const uint8_t length)
 
   sortInteger(tmpArray, length);
 
-  int16_t m = 0.0, count = 0.0;
+  float m = 0.0, count = 0.0;
  
   for(uint8_t i = (length / 4); i < length - (length / 4); i++) // take the average of the middle two quarters
   {
     count++;
-    m += tmpArray[i];
+    m += (float)tmpArray[i];
   }
   m /= count;
  
-  return m;
+  return (int16_t)m;
 }
 
 

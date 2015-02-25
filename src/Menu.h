@@ -7,6 +7,8 @@
  *  Licensed under GPLv3
  *
  */
+
+#include "shutter.h"
  
 #define MENU_MESSAGE_DISPLAY_TIME 900
 
@@ -28,6 +30,7 @@
 #define ST_SUBMENU 9
 #define ST_ALERT 10
 #define ST_ALERT_NEW 11
+#define ST_KEYFRAME 12
 
 #define FN_CONTINUE 0
 #define FN_CANCEL 1
@@ -92,6 +95,7 @@ public:
     char editSelect(char key, char *n, void *settingslist, char *name, char first);
     char editDynamic(char key, uint8_t *var, void *ditem, char *name, char first);
     char editText(char key, char text[MENU_NAME_LEN], char *name, char first);
+    char editKeyframe(char key, keyframeGroup_t *kf, char first);
     char alertTask(char key, char first);
     void alert(const char *progmem_string);
     void clearAlert(const char *progmem_string);
@@ -101,6 +105,8 @@ public:
     void push();
     void push(uint8_t type);
     void blink();
+
+    char state;
     
     uint8_t unusedKey;
 
@@ -110,6 +116,8 @@ private:
     char checkScroll();
     uint8_t getIndex(menu_item *cmenu, uint8_t selected);
     uint8_t getSelected(menu_item *cmenu, uint8_t index);
+    uint8_t addKeyframe(keyframeGroup_t *kf, int32_t value, uint32_t seconds);
+    uint8_t removeKeyframe(keyframeGroup_t *kf, uint8_t index);
 
     menu_stack stack[MENU_STACK_SIZE]; // stack for nested menus
     uint8_t stack_counter;
@@ -119,15 +127,16 @@ private:
     char menuSize;
     menu_item *menu;
 
-    char state;
     char m_refresh;
     unsigned char type;
     unsigned int *var;
     char *bvar;
     settings_item *list;
     dynamicItem_t *dlist;
+    keyframeGroup_t *kfg;
     char (*func)(char key, char first);
     char (*func_short)(void);
+    void (*func_updater)(keyframeGroup_t *kf);
     char (*handlerFunction)(char key, char first);
     char name[MENU_NAME_LEN - 2];
     char desc[MENU_NAME_LEN + 1];

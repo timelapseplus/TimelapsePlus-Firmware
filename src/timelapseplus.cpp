@@ -58,18 +58,7 @@ extern volatile uint8_t modeStandardExpNikon;
 extern volatile uint8_t modeStandardExpArb;
 extern volatile uint8_t modeRamp;
 extern volatile uint8_t modeNoRamp;
-extern volatile uint8_t modeRampKeyAdd;
-extern volatile uint8_t modeRampKeyDel;
 extern volatile uint8_t modeBulb;
-extern volatile uint8_t bulb1;
-extern volatile uint8_t bulb2;
-extern volatile uint8_t bulb3;
-extern volatile uint8_t bulb4;
-extern volatile uint8_t bulb5;
-extern volatile uint8_t bulb6;
-extern volatile uint8_t bulb7;
-extern volatile uint8_t bulb8;
-extern volatile uint8_t bulb9;
 extern volatile uint8_t showRemoteStart;
 extern volatile uint8_t showRemoteInfo;
 extern volatile uint8_t brampKeyframe;
@@ -84,6 +73,7 @@ extern volatile uint8_t rampISO;
 extern volatile uint8_t rampAperture;
 extern volatile uint8_t rampTargetCustom;
 extern volatile uint8_t cameraMakeNikon;
+extern volatile uint8_t showFocus;
 
 volatile uint8_t connectUSBcamera = 0;
 
@@ -104,6 +94,9 @@ Remote remote = Remote();
 Notify notify = Notify();
 PTP camera = PTP();
 Light light = Light();
+NMX motor1 = NMX(3, 1);
+NMX motor2 = NMX(3, 2);
+NMX motor3 = NMX(3, 3);
 
 #include "Menu_Map.h"
 
@@ -137,7 +130,7 @@ void setup()
 
 	hardware_init();
 	settings_init();
-
+	
 	// Splash Screen
 	lcd.init(conf.lcdContrast);
     lcd.writeString(12, 07, STR("Timelapse+"));
@@ -175,7 +168,6 @@ void setup()
 		version /= 10;
 	}
     lcd.update();
-
 
 	clock.init();
 
@@ -224,8 +216,6 @@ void setup()
 
 int main()
 {
-//    setOut(POWER_HOLD_PIN); // Hold PWR on
-//    setLow(POWER_HOLD_PIN);
 	/****************************
 	   Initialization
 	*****************************/
@@ -253,6 +243,7 @@ int main()
 
 	notify.watch(NOTIFY_CHARGE, (void *)&charge_status, sizeof(charge_status), &message_notify);
 	notify.watch(NOTIFY_BT, (void *)&remote.connected, sizeof(remote.connected), &message_notify);
+	notify.watch(NOTIFY_NMX, (void *)&remote.nmx, sizeof(remote.nmx), &message_notify);
 	notify.watch(NOTIFY_CAMERA, (void *)&PTP_Ready, sizeof(PTP_Ready), &message_notify);
 
 	if(conf.autoRun)
@@ -473,7 +464,24 @@ void message_notify(uint8_t id)
 			else
 			{
 				menu.message(STR("Disconnected"));
-				bt.advertise(); // this keeps the device awake after disconnecting, regardless of the conf.btMode setting
+				bt.advertise(); // this keeps the BT awake after disconnecting, regardless of the conf.btMode setting
+			}
+			break;
+
+		case NOTIFY_NMX:
+			if(remote.nmx)
+			{
+				menu.message(STR("NMX Connected"));
+				motor1.checkConnected();
+				motor2.checkConnected();
+				motor3.checkConnected();
+			}
+			else
+			{
+				menu.message(STR("Disconnected"));
+				motor1.checkConnected();
+				motor2.checkConnected();
+				motor3.checkConnected();
 			}
 			break;
 

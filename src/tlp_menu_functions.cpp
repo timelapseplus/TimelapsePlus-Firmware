@@ -43,18 +43,7 @@ volatile uint8_t modeRamp = 0;
 volatile uint8_t modeRampNormal = 0;
 volatile uint8_t modeRampExtended = 0;
 volatile uint8_t modeNoRamp = 1;
-volatile uint8_t modeRampKeyAdd = 0;
-volatile uint8_t modeRampKeyDel = 0;
 volatile uint8_t modeBulb = 0;
-volatile uint8_t bulb1 = 0;
-volatile uint8_t bulb2 = 0;
-volatile uint8_t bulb3 = 0;
-volatile uint8_t bulb4 = 0;
-volatile uint8_t bulb5 = 0;
-volatile uint8_t bulb6 = 0;
-volatile uint8_t bulb7 = 0;
-volatile uint8_t bulb8 = 0;
-volatile uint8_t bulb9 = 0;
 volatile uint8_t showRemoteStart = 0;
 volatile uint8_t showRemoteInfo = 0;
 volatile uint8_t brampKeyframe = 0;
@@ -64,6 +53,7 @@ volatile uint8_t showIntervalMaxMin = INTERVAL_MODE_FIXED;
 volatile uint8_t rampISO = 0;
 volatile uint8_t rampAperture = 0;
 volatile uint8_t rampTargetCustom = 0;
+volatile uint8_t showFocus = 0;
 
 volatile uint8_t brampNotAuto = 0;
 volatile uint8_t brampNotGuided = 0;
@@ -85,6 +75,9 @@ extern IR ir;
 extern Remote remote;
 extern PTP camera;
 extern Light light;
+extern NMX motor1;
+extern NMX motor2;
+extern NMX motor3;
 
 uint8_t sleepOk = 1;
 
@@ -118,17 +111,6 @@ void updateConditions()
 	brampAuto = timer.current.brampMethod == BRAMP_METHOD_AUTO && modeRamp;
 	brampGuided = timer.current.brampMethod == BRAMP_METHOD_GUIDED && modeRamp;
 	brampKeyframe = timer.current.brampMethod == BRAMP_METHOD_KEYFRAME && modeRamp;
-	modeRampKeyAdd = (brampKeyframe && (timer.current.Keyframes < MAX_KEYFRAMES));
-	modeRampKeyDel = (brampKeyframe && (timer.current.Keyframes > 1));
-	bulb1 = timer.current.Keyframes > 1 && brampKeyframe;
-	bulb2 = timer.current.Keyframes > 2 && brampKeyframe;
-	bulb3 = timer.current.Keyframes > 3 && brampKeyframe;
-	bulb4 = timer.current.Keyframes > 4 && brampKeyframe;
-	bulb5 = timer.current.Keyframes > 5 && brampKeyframe;
-	bulb6 = timer.current.Keyframes > 6 && brampKeyframe;
-	bulb7 = timer.current.Keyframes > 7 && brampKeyframe;
-	bulb8 = timer.current.Keyframes > 8 && brampKeyframe;
-	bulb9 = timer.current.Keyframes > 9 && brampKeyframe;
 	showGap = timer.current.Photos != 1 && modeTimelapse && (timer.current.IntervalMode == INTERVAL_MODE_FIXED || modeNoRamp);
 	showIntervalMaxMin = timer.current.Photos != 1 && modeTimelapse && modeRamp && timer.current.IntervalMode == INTERVAL_MODE_AUTO;
 	showRemoteStart = (remote.connected && !remote.running && remote.model == REMOTE_MODEL_TLP);	
@@ -140,6 +122,7 @@ void updateConditions()
 	rampAperture = (conf.brampMode & BRAMP_MODE_APERTURE && camera.supports.aperture);
 	rampTargetCustom = (timer.current.nightMode == BRAMP_TARGET_CUSTOM && brampAuto);
 	cameraMakeNikon = conf.camera.cameraMake == NIKON;
+	showFocus = conf.focusEnabled && camera.supports.focus;
 	if(modeRamp && timer.current.Gap < BRAMP_INTERVAL_MIN)
 	{
 		timer.current.Gap = BRAMP_INTERVAL_MIN;
@@ -698,8 +681,8 @@ volatile char autoConfigureCameraTiming(char key, char first)
 				_delay_ms(1000);
 				do {
 					shutter_bulbStart();  // start bulb
+					clock.tare();
 				} while(lastShutterError);
-				clock.tare();
 
 				while(!AUX_INPUT1)
 				{
@@ -2073,8 +2056,6 @@ volatile char focusStack(char key, char first)
  *
  ******************************************************************/
 
-NMX motor = NMX(3, 1);
-
 volatile char btConnect(char key, char first)
 {
 	static uint8_t sfirst = 1;
@@ -2092,7 +2073,7 @@ volatile char btConnect(char key, char first)
 		sfirst = 0;
 
 		update = 1;
-		if(bt.state != BT_ST_CONNECTED && bt.state != BT_ST_CONNECTED_NMX)
+		if(bt.state != BT_ST_CONNECTED && bt.state != BT_ST_CONNECTED_NMX && !remote.nmx)
 		{
 			DEBUG(STR("BT Advertising!\r\n"));
 			bt.advertise();
@@ -2103,30 +2084,30 @@ volatile char btConnect(char key, char first)
 	switch(key)
 	{
 		case UP_KEY:
-			if(bt.state == BT_ST_CONNECTED_NMX)
-			{
-				motor.enable();
-				motor.moveForward();
-			}
-			break;
+			//if(bt.state == BT_ST_CONNECTED_NMX)
+			//{
+			//	motor.enable();
+			//	motor.moveForward();
+			//}
+			//break;
 		case DOWN_KEY:
-			if(bt.state == BT_ST_CONNECTED_NMX)
-			{
-				motor.enable();
-				motor.moveBackward();
-			}
+			//if(bt.state == BT_ST_CONNECTED_NMX)
+			//{
+			//	motor.enable();
+			//	motor.moveBackward();
+			//}
 			break;
 		case LEFT_KEY:
 		case FL_KEY:
 			sfirst = 1;
-			if(bt.state != BT_ST_CONNECTED && bt.state != BT_ST_CONNECTED_NMX)
+			if(bt.state != BT_ST_CONNECTED && bt.state != BT_ST_CONNECTED_NMX && !remote.nmx)
 			{
 				if(conf.btMode == BT_MODE_SLEEP) bt.sleep(); else bt.advertise();
 			}
 			return FN_CANCEL;
 
 		case FR_KEY:
-			if(bt.state == BT_ST_CONNECTED || bt.state == BT_ST_CONNECTED_NMX)
+			if(bt.state == BT_ST_CONNECTED || bt.state == BT_ST_CONNECTED_NMX || remote.nmx)
 			{
 				bt.disconnect();
 			}
@@ -2145,7 +2126,7 @@ volatile char btConnect(char key, char first)
 			break;
 		case BT_EVENT_SCAN_COMPLETE:
 			DEBUG(STR("done!\r\n"));
-			if(bt.state != BT_ST_CONNECTED && bt.state != BT_ST_CONNECTED_NMX)
+			if(bt.state != BT_ST_CONNECTED && bt.state != BT_ST_CONNECTED_NMX && !remote.nmx)
 			{
 				bt.advertise();
 				bt.scan();
@@ -2179,7 +2160,7 @@ volatile char btConnect(char key, char first)
 	{
 		lcd.cls();
 
-		if(bt.state == BT_ST_CONNECTED || bt.state == BT_ST_CONNECTED_NMX)
+		if(bt.state == BT_ST_CONNECTED || bt.state == BT_ST_CONNECTED_NMX || remote.nmx)
 		{
 			menu.setTitle(TEXT("Connect"));
 			lcd.writeStringTiny(18, 20, PTEXT("Connected!"));
@@ -2647,7 +2628,7 @@ volatile char timerRevert(char key, char first)
  *   shutter_addKeyframe
  *
  *
- ******************************************************************/
+ ******************************************************************
 
 volatile char shutter_addKeyframe(char key, char first)
 {
@@ -2666,12 +2647,12 @@ volatile char shutter_addKeyframe(char key, char first)
 	return FN_CANCEL;
 }
 
-/******************************************************************
+ ******************************************************************
  *
  *   shutter_removeKeyframe
  *
  *
- ******************************************************************/
+ ******************************************************************
 
 volatile char shutter_removeKeyframe(char key, char first)
 {
@@ -2686,7 +2667,7 @@ volatile char shutter_removeKeyframe(char key, char first)
 	return FN_CANCEL;
 }
 
-/******************************************************************
+ ******************************************************************
  *
  *   shutter_saveAs
  *
@@ -3158,51 +3139,9 @@ volatile char bramp_monitor(char key, char first)
 			for(uint8_t x = 0; x < CHART_X_SPAN; x++)
 			{
 				uint32_t s = (uint32_t)(((float)timer.current.Duration / (float)CHART_X_SPAN) * (float)x * 60.0); //J.R.
-	            float key1 = 1, key2 = 1, key3 = 1, key4 = 1;
-	            char found = 0;
-	            uint8_t i;
+	            float ev = interpolateKeyframe(&timer.current.kfExposure, s);
 
-	            for(i = 0; i < timer.current.Keyframes; i++)
-	            {
-	                if(s <= timer.current.Key[i])
-	                {
-	                    found = 1;
-	                    if(i == 0)
-	                    {
-	                        key2 = key1 = (float)(timer.current.BulbStart);
-	                    }
-	                    else if(i == 1)
-	                    {
-	                        key1 = (float)(timer.current.BulbStart);
-	                        key2 = (float)((int8_t)timer.current.BulbStart - *((int8_t*)&timer.current.Bulb[i - 1]));
-	                    }
-	                    else
-	                    {
-	                        key1 = (float)((int8_t)timer.current.BulbStart - *((int8_t*)&timer.current.Bulb[i - 2]));
-	                        key2 = (float)((int8_t)timer.current.BulbStart - *((int8_t*)&timer.current.Bulb[i - 1]));
-	                    }
-	                    key3 = (float)((int8_t)timer.current.BulbStart - *((int8_t*)&timer.current.Bulb[i]));
-	                    key4 = (float)((int8_t)timer.current.BulbStart - *((int8_t*)&timer.current.Bulb[i < (timer.current.Keyframes - 1) ? i + 1 : i]));
-	                    break;
-	                }
-	            }
-	            
-	            if(found)
-	            {
-	                uint32_t var1 = s;
-	                uint32_t var2 = (i > 0 ? timer.current.Key[i - 1] : 0);
-	                uint32_t var3 = timer.current.Key[i];
-
-	                float t = (float)(var1 - var2) / (float)(var3 - var2);
-	                float curveEv = curve(key1, key2, key3, key4, t);
-	                key1 = (float)timer.current.BulbStart - curveEv;
-	            }
-	            else
-	            {
-	                key1 = (float)((int8_t)(timer.current.BulbStart - (timer.current.BulbStart - *((int8_t*)&timer.current.Bulb[timer.current.Keyframes - 1]))));
-	            }
-
-	            int8_t y = ((((float)key1 - (float)timer.status.rampMin) / (float)(timer.status.rampMax - timer.status.rampMin)) * (float)CHART_Y_SPAN);
+	            int8_t y = ((ev / (float)(timer.status.rampMax - timer.status.rampMin)) * (float)CHART_Y_SPAN);
 
 				if(y >= 0 && y <= CHART_Y_SPAN) lcd.setPixel(x + CHART_X_TOP, CHART_Y_SPAN + CHART_Y_TOP - y);
 			}
@@ -3609,333 +3548,5 @@ volatile char bramp_monitor(char key, char first)
 	}
 
 	return FN_CONTINUE;
-}
-
-#define CHARTBOX_X1 0
-#define CHARTBOX_Y1 12
-#define CHARTBOX_X2 83
-#define CHARTBOX_Y2 39
-
-#define CHARTBOX_HEIGHT (CHARTBOX_Y2 - CHARTBOX_Y1 - 2)
-#define CHARTBOX_WIDTH (CHARTBOX_X2 - CHARTBOX_X1 - 2)
-
-uint8_t addKeyframe(int16_t value, uint32_t seconds)
-{
-	extern keyframeGroup_t kfg;
-	if(kfg.count >= MAX_KEYFRAMES - 1) return 0; // no space left
-
-	for(uint8_t i = 0; i < kfg.count; i++)
-	{
-		if(kfg.keyframes[i].seconds >= seconds)
-		{
-			for(uint8_t j = kfg.count + 1; j > i; j--)
-			{
-				memmove(&kfg.keyframes[j], &kfg.keyframes[j - 1], sizeof(kfg.keyframes[0]));
-			}
-			kfg.keyframes[i].value = value;
-			kfg.keyframes[i].seconds = seconds;
-			kfg.count++;
-			return i + 1;
-		}
-	}
-	return 0;
-}
-uint8_t removeKeyframe(uint8_t index)
-{
-	extern keyframeGroup_t kfg;
-	if(index >= kfg.count || kfg.count <= 2 || index == 0 || index == kfg.count - 1) return 0; // the first or last can't be deleted
-
-	for(uint8_t i = index; i < kfg.count - 1; i++)
-	{
-		memmove(&kfg.keyframes[i], &kfg.keyframes[i + 1], sizeof(kfg.keyframes[0]));
-	}
-	kfg.count--;
-	return kfg.count;
-}
-
-void moveTo(int16_t pos)
-{
-	//NMX m = NMX(3, 1);
-
-	motor.enable();
-	motor.moveToPosition((int32_t) pos);
-}
-
-volatile char keyFrameEditor(char key, char first)
-{
-	extern keyframeGroup_t kfg;
-	static uint8_t cursor = 0, edit = 0;
-	button.verticalRepeat = 1;
-
-	if(first)
-	{
-		cursor = 0;
-		edit = 0;
-		kfg.count = 2;
-		kfg.selected = 0;
-		kfg.type = KFT_MOTION;
-		kfg.keyframes[0].seconds = 0;
-		kfg.keyframes[0].value = 0;
-		kfg.keyframes[1].seconds = 14400;
-		kfg.keyframes[1].value = 0;
-		kfg.max = 10000;
-		kfg.min = -10000;
-		kfg.steps = 500;
-		kfg.rangeExtendable = 1;
-		kfg.function = &moveTo;
-	}
-
-	lcd.cls();
-
-	//chart outline
-	//lcd.drawBox(CHARTBOX_X1, CHARTBOX_Y1, CHARTBOX_X2, CHARTBOX_Y2);
-	lcd.drawLine(CHARTBOX_X1, CHARTBOX_Y1, CHARTBOX_X2, CHARTBOX_Y1);
-
-	//draw cursor
-	if(edit == 0) lcd.drawLine(CHARTBOX_X1 + 1 + cursor, CHARTBOX_Y1, CHARTBOX_X1 + 1 + cursor, CHARTBOX_Y2);
-
-	//draw plot
-	uint32_t cSeconds = 0;
-	uint16_t cValue = 0;
-	for(uint8_t i = 0; i <= CHARTBOX_WIDTH; i++)
-	{
-		uint32_t seconds = (uint32_t)(((float)i / CHARTBOX_WIDTH) * (float)(kfg.keyframes[kfg.count - 1].seconds - kfg.keyframes[0].seconds)) + kfg.keyframes[0].seconds;
-		float key1 = 0, key2 = 0, key3 = 0, key4 = 0;
-		uint8_t ki = 0;
-		for(uint8_t k = 0; k < kfg.count; k++)
-		{
-			if(kfg.keyframes[k].seconds >= seconds && k > 0)
-			{
-				ki = k;
-				key1 = key2 = key3 = key4 = (float)kfg.keyframes[ki].value;
-				if(ki > 0)
-				{
-					ki--;
-					key1 = key2 = (float)kfg.keyframes[ki].value;
-				}
-				if(ki > 0)
-				{
-					ki--;
-					key1 = (float)kfg.keyframes[ki].value;
-				}
-				ki = k;
-				if(ki < kfg.count - 1)
-				{
-					ki++;
-					key4 = (float)kfg.keyframes[ki].value;
-				}
-				ki = k;
-				break;
-			}
-		}
-        uint32_t lastKFseconds = kfg.keyframes[ki > 0 ? ki - 1 : 0].seconds;
-        float t = (float)(seconds - lastKFseconds) / (float)(kfg.keyframes[ki].seconds - lastKFseconds);
-
-		float val = curve(key1, key2, key3, key4, t);
-		if(i == cursor)
-		{
-			cSeconds = seconds;
-			cValue = (uint16_t)val;
-			if(edit == 1 && kfg.selected > 0)
-			{
-				kfg.keyframes[kfg.selected - 1].seconds = cSeconds;
-			}
-		}
-		uint8_t yval = (uint8_t)(((float)kfg.max - val) / (float)(kfg.max - kfg.min) * (float)CHARTBOX_HEIGHT);
-		lcd.setPixel(CHARTBOX_X1 + 1 + i, CHARTBOX_Y1 + 1 + yval);
-	}
-
-	//draw keyframes
-	kfg.selected = 0;
-	uint8_t lastKf = 0, nextKf = 0;
-	for(uint8_t i = 0; i < kfg.count; i++)
-	{
-		uint8_t x = CHARTBOX_X1 + 1 + (uint8_t) ((float)CHARTBOX_WIDTH * ((float)kfg.keyframes[i].seconds / (float)kfg.keyframes[kfg.count - 1].seconds) + 0.5);
-		uint8_t y = CHARTBOX_Y1 + 1 + (uint8_t) ((float)CHARTBOX_HEIGHT * ((float)(kfg.max - kfg.keyframes[i].value) / (float)(kfg.max - kfg.min)));
-
-		lcd.setPixel(x, y);
-		lcd.setPixel(x, y - 1);
-		lcd.setPixel(x, y + 1);
-
-		if(CHARTBOX_X1 + 1 + cursor == x)
-		{
-			kfg.selected = i + 1;
-			lcd.clearPixel(x, y);
-			cSeconds = kfg.keyframes[i].seconds;
-			cValue = kfg.keyframes[i].value;
-		}
-
-		if(CHARTBOX_X1 + 1 + cursor <= x && lastKf == 0) lastKf = i;
-		if(CHARTBOX_X1 + 1 + cursor < x && nextKf == 0) nextKf = i + 1;
-
-	}
-
-
-	//move to position
-	if(kfg.function) (*kfg.function)(cValue);
-
-	//value at cursor
-	char buf[9];
-	int16_t tmp = cValue;
-	buf[0] = '+';
-    if(tmp < 0)
-    {
-    	tmp = 0 - tmp;
-    	buf[0] = '-';
-    }
-    buf[4] = tmp % 10 + '0';
-    tmp /= 10;
-    buf[3] = tmp % 10 + '0';
-    tmp /= 10;
-    buf[2] = tmp % 10 + '0';
-    tmp /= 10;
-    buf[1] = tmp % 10 + '0';
-    buf[5] = '\0';
-    lcd.writeStringTiny(6, 6, buf);
-
-    //cursor time
-    uint8_t h, m, s;
-    tmp = cSeconds;
-    s = (uint8_t)(tmp % 60);
-    tmp -= s;
-    tmp /= 60;
-    m = (uint8_t)(tmp % 60);
-    tmp -= m;
-    tmp /= 60;
-    h = (uint8_t)tmp;
-
-    buf[7] = s % 10 + '0';
-    s -= s % 10;
-    s /= 10;
-    buf[6] = s % 10 + '0';
-
-    buf[5] = ':';
-
-    buf[4] = m % 10 + '0';
-    m -= m % 10;
-    m /= 10;
-    buf[3] = m % 10 + '0';
-
-    buf[2] = ':';
-
-    buf[1] = h % 10 + '0';
-    h -= h % 10;
-    h /= 10;
-    buf[0] = h % 10 + '0';
-
-    buf[8] = '\0';
-
-    lcd.writeStringTiny(45, 6, buf);    
-
-    if(kfg.selected == 0)
-    {
-	    lcd.writeStringTiny(76, 6, STR("+"));
-	    lcd.drawHighlight(75, 6, 79, 10);    
-    }
-
-    menu.setTitle(TEXT("KEYFRAMES"));
-    if(edit == 1)
-    {
-	    menu.setBar(BLANK_STR, TEXT("SAVE POINT"));
-    }
-    else if(kfg.selected > 1 && kfg.selected < kfg.count)
-    {
-	    menu.setBar(TEXT("REMOVE"), TEXT("DONE"));
-    }
-    else
-    {
-	    menu.setBar(BLANK_STR, TEXT("DONE"));
-    }
-
-    lcd.update();
-
-	uint8_t lx = 0;
-	uint8_t nx = 0;
-
-	if(lastKf) lx = CHARTBOX_X1 + 1 + (uint8_t) ((float)CHARTBOX_WIDTH * ((float)kfg.keyframes[lastKf - 1].seconds / (float)kfg.keyframes[kfg.count - 1].seconds) + 0.5);
-	if(nextKf) nx = CHARTBOX_X1 + 1 + (uint8_t) ((float)CHARTBOX_WIDTH * ((float)kfg.keyframes[nextKf - 1].seconds / (float)kfg.keyframes[kfg.count - 1].seconds) + 0.5);
-
-    if(key == LEFT_KEY)
-    {
-    	uint8_t move = 0;
-    	if(edit)
-    	{
-    		if(kfg.selected > 1 && kfg.selected < kfg.count && cursor > (lx - CHARTBOX_X1 - 1)) move = 1;
-    	}
-    	else
-    	{
-    		if(lx) move = cursor - (lx - CHARTBOX_X1 - 1);
-	    	if(kfg.selected > 0) move /= 2;
-    	}
-    	if(cursor > move) cursor -= move; else cursor = 0;	
-    }
-    if(key == RIGHT_KEY)
-    {
-    	uint8_t move = 0;
-    	if(edit)
-    	{
-    		if(kfg.selected > 1 && kfg.selected < kfg.count && cursor < (nx - CHARTBOX_X1 - 1)) move = 1;
-    	}
-    	else
-    	{
-    		if(nx) move = (nx - CHARTBOX_X1 - 1) - cursor;
-	    	if(kfg.selected > 0) move /= 2;
-    	}
-    	if(cursor < CHARTBOX_WIDTH + move) cursor += move; else cursor = CHARTBOX_WIDTH;	
-    }
-    if(key == UP_KEY)
-    {
-		if(edit == 0)
-		{
-			if(kfg.selected == 0) kfg.selected = addKeyframe(cValue, cSeconds);
-			if(kfg.selected) edit = 1;
-		}    	
-		else
-		{
-			if(kfg.selected > 0)
-			{
-				if(kfg.keyframes[kfg.selected - 1].value + kfg.steps < kfg.max || kfg.rangeExtendable) kfg.keyframes[kfg.selected - 1].value += kfg.steps; else kfg.keyframes[kfg.selected - 1].value = kfg.max;
-				if(kfg.keyframes[kfg.selected - 1].value > kfg.max && kfg.rangeExtendable) kfg.max = kfg.keyframes[kfg.selected - 1].value;
-			}
-		}
-    }
-    if(key == DOWN_KEY)
-    {
-		if(edit == 0)
-		{
-			if(kfg.selected == 0) kfg.selected = addKeyframe(cValue, cSeconds);
-			if(kfg.selected) edit = 1;
-		} 	
-		else
-		{
-			if(kfg.selected > 0)
-			{
-				if(kfg.keyframes[kfg.selected - 1].value - kfg.steps > kfg.min || kfg.rangeExtendable) kfg.keyframes[kfg.selected - 1].value -= kfg.steps; else kfg.keyframes[kfg.selected - 1].value = kfg.min;
-				if(kfg.keyframes[kfg.selected - 1].value < kfg.min && kfg.rangeExtendable) kfg.min = kfg.keyframes[kfg.selected - 1].value;
-			}
-		}
-    }
-    if(key == FL_KEY)
-    {
-    	if(edit == 0 && kfg.selected > 1 && kfg.selected < kfg.count)
-    	{
-    		removeKeyframe(kfg.selected - 1);
-    		kfg.selected = 0;
-    		edit = 0;
-    	}
-    }
-    if(key == FR_KEY)
-    {
-    	if(edit == 1)
-    	{
-    		edit = 0;
-    	}
-    	else
-    	{
-	    	button.verticalRepeat = 0;
-	    	return FN_CANCEL;
-    	}
-    }
-    return FN_CONTINUE;
 }
 

@@ -8,7 +8,7 @@
  *
  */
  
-#define SETTINGS_VERSION 20140910
+#define SETTINGS_VERSION 20141122
 
 #define ALL -1
 #define CANON 0
@@ -111,6 +111,17 @@ struct settings_t
     uint16_t lightThreshold;
     camera_settings_t camera;
     uint8_t linearInterpolation;
+    uint16_t motionStep1;
+    uint16_t motionStep2;
+    uint16_t motionStep3;
+    uint16_t focusStep;
+    uint16_t focusEnabled;
+    uint16_t motionBacklash1;
+    uint16_t motionBacklash2;
+    uint16_t motionBacklash3;
+    uint8_t motionPowerSave1;
+    uint8_t motionPowerSave2;
+    uint8_t motionPowerSave3;
     uint8_t pad[12];
 };
 

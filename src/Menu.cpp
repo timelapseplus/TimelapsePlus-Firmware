@@ -17,6 +17,7 @@
 #include "button.h"
 #include "clock.h"
 #include "Menu.h"
+#include "math.h"
 #include "debug.h"
 #include "settings.h"
 #include "hardware.h"
@@ -120,6 +121,16 @@ void MENU::task()
                {
                    (*func_short)();
                }
+               state = ST_MENU;
+           }
+           break;
+
+       case ST_KEYFRAME:
+           ret = editKeyframe(key, kfg, first);
+           first = 0;
+           
+           if(ret != FN_CONTINUE)
+           {
                state = ST_MENU;
            }
            break;
@@ -673,6 +684,14 @@ void MENU::click()
                    var = (unsigned int (*))pgm_read_word(&menu[index].function);
                    break;
                }
+
+           case 'K':
+              {
+                 kfg = (keyframeGroup_t (*))pgm_read_word(&menu[index].function);
+                 func_updater = (void (*)(keyframeGroup_t*))pgm_read_word(&menu[index].short_function);
+                 state = ST_KEYFRAME;
+                 break;
+              }
 
            case 'S': // Settings List Variable
            case 'D': // Dynamic Settings List Variable
@@ -1803,4 +1822,423 @@ void MENU::blink()
   }
 
 }
+
+#define CHARTBOX_X1 0
+#define CHARTBOX_Y1 12
+#define CHARTBOX_X2 83
+#define CHARTBOX_Y2 39
+
+#define CHARTBOX_HEIGHT (CHARTBOX_Y2 - CHARTBOX_Y1 - 2)
+#define CHARTBOX_WIDTH (CHARTBOX_X2 - CHARTBOX_X1 - 2)
+
+uint8_t MENU::addKeyframe(keyframeGroup_t *kf, int32_t value, uint32_t seconds)
+{
+  if(kf->count >= MAX_KEYFRAMES - 1) return 0; // no space left
+
+  for(uint8_t i = 0; i < kf->count; i++)
+  {
+    if(kf->keyframes[i].seconds >= seconds)
+    {
+      for(uint8_t j = kf->count + 1; j > i; j--)
+      {
+        memmove(&kf->keyframes[j], &kf->keyframes[j - 1], sizeof(kf->keyframes[0]));
+      }
+      kf->keyframes[i].value = value;
+      kf->keyframes[i].seconds = seconds;
+      kf->count++;
+      return i + 1;
+    }
+  }
+  return 0;
+}
+uint8_t MENU::removeKeyframe(keyframeGroup_t *kf, uint8_t index)
+{
+  if(index >= kf->count || kf->count <= 2 || index == 0 || index == kf->count - 1) return 0; // the first or last can't be deleted
+
+  for(uint8_t i = index; i < kf->count - 1; i++)
+  {
+    memmove(&kf->keyframes[i], &kf->keyframes[i + 1], sizeof(kf->keyframes[0]));
+  }
+  kf->count--;
+  return kf->count;
+}
+
+char MENU::editKeyframe(char key, keyframeGroup_t *kf, char first)
+{
+  static uint8_t cursor = 0, edit = 0, draw = 1;
+  button->verticalRepeat = 1;
+  static uint32_t cSeconds = 0;
+  static int32_t cValue = 0;
+  static uint8_t lastKf = 0, nextKf = 0, needMove = 1;
+
+  if(first)
+  {
+    //cursor = 0;
+    edit = 0;
+    draw = 1;
+  }
+
+  if(draw)
+  {
+    draw = 0;
+    if(func_updater) (func_updater)(kf);
+
+    lcd->cls();
+
+    //chart outline
+    lcd->drawBox(CHARTBOX_X1, CHARTBOX_Y1, CHARTBOX_X2, CHARTBOX_Y2);
+    //lcd->drawLine(CHARTBOX_X1, CHARTBOX_Y1, CHARTBOX_X2, CHARTBOX_Y1);
+
+    //draw cursor
+    if(edit == 0) lcd->drawLine(CHARTBOX_X1 + 1 + cursor, CHARTBOX_Y1, CHARTBOX_X1 + 1 + cursor, CHARTBOX_Y2);
+
+    //draw plot
+    cSeconds = 0;
+    cValue = 0;
+    for(uint8_t i = 0; i <= CHARTBOX_WIDTH; i++)
+    {
+      uint32_t seconds = (uint32_t)(((float)i / CHARTBOX_WIDTH) * (float)(kf->keyframes[kf->count - 1].seconds - kf->keyframes[0].seconds)) + kf->keyframes[0].seconds;
+      float key1 = 0, key2 = 0, key3 = 0, key4 = 0;
+      uint8_t ki = 0;
+      for(uint8_t k = 0; k < kf->count; k++)
+      {
+        if(kf->keyframes[k].seconds >= seconds && k > 0)
+        {
+          ki = k;
+          key1 = key2 = key3 = key4 = (float)kf->keyframes[ki].value;
+          if(ki > 0)
+          {
+            ki--;
+            key1 = key2 = (float)kf->keyframes[ki].value;
+          }
+          if(ki > 0)
+          {
+            ki--;
+            key1 = (float)kf->keyframes[ki].value;
+          }
+          ki = k;
+          if(ki < kf->count - 1)
+          {
+            ki++;
+            key4 = (float)kf->keyframes[ki].value;
+          }
+          ki = k;
+          break;
+        }
+      }
+      uint32_t lastKFseconds = kf->keyframes[ki > 0 ? ki - 1 : 0].seconds;
+      float t = (float)(seconds - lastKFseconds) / (float)(kf->keyframes[ki].seconds - lastKFseconds);
+
+      float val = curve(key1, key2, key3, key4, t);
+      if(i == cursor)
+      {
+        cSeconds = seconds;
+        cValue = (uint32_t)val;
+        if(edit == 1 && kf->selected > 0)
+        {
+          kf->keyframes[kf->selected - 1].seconds = cSeconds;
+        }
+      }
+      uint8_t yval = (uint8_t)(((float)kf->max - val) / (float)(kf->max - kf->min) * (float)CHARTBOX_HEIGHT);
+      lcd->setPixel(CHARTBOX_X1 + 1 + i, CHARTBOX_Y1 + 1 + yval);
+    }
+
+    //draw keyframes
+    kf->selected = 0;
+    lastKf = 0;
+    nextKf = 0;
+    for(uint8_t i = 0; i < kf->count; i++)
+    {
+      uint8_t x = CHARTBOX_X1 + 1 + (uint8_t) ((float)CHARTBOX_WIDTH * ((float)kf->keyframes[i].seconds / (float)kf->keyframes[kf->count - 1].seconds) + 0.5);
+      uint8_t y = CHARTBOX_Y1 + 1 + (uint8_t) ((float)CHARTBOX_HEIGHT * ((float)(kf->max - kf->keyframes[i].value) / (float)(kf->max - kf->min)));
+
+      if(i < kf->count - 1 || kf->hasEndKeyframe)
+      {
+        lcd->setPixel(x, y);
+        lcd->setPixel(x, y - 1);
+        lcd->setPixel(x, y + 1);
+      }
+
+      if(CHARTBOX_X1 + 1 + cursor == x)
+      {
+        kf->selected = i + 1;
+        lcd->clearPixel(x, y);
+        cSeconds = kf->keyframes[i].seconds;
+        cValue = kf->keyframes[i].value;
+      }
+
+      if(CHARTBOX_X1 + 1 + cursor <= x && lastKf == 0) lastKf = i;
+      if(CHARTBOX_X1 + 1 + cursor < x && nextKf == 0) nextKf = i + 1;
+
+    }
+
+      //value at cursor
+      char buf[9];
+      int32_t tmp = cValue;
+      uint8_t spos = 0;
+      if(kf->type == KFT_EXPOSURE)
+      {
+        stopName(buf, *((uint8_t*)&cValue));
+      }
+      else
+      {
+        buf[0] = '+';
+        if(tmp < 0)
+        {
+          tmp = 0 - tmp;
+          buf[0] = '-';
+        }
+        buf[6] = tmp % 10 + '0';
+        tmp /= 10;
+        buf[5] = tmp % 10 + '0';
+        tmp /= 10;
+        buf[4] = tmp % 10 + '0';
+        tmp /= 10;
+        buf[3] = tmp % 10 + '0';
+        tmp /= 10;
+        buf[2] = tmp % 10 + '0';
+        tmp /= 10;
+        buf[1] = tmp % 10 + '0';
+        buf[7] = '\0';
+        for(uint8_t i = 1; i < 6; i++) // strip leading zeros
+        {
+          if(buf[i] == '0')
+          {
+            buf[i] = buf[0];
+            spos = i;
+          }
+          else
+          {
+            break;
+          }
+        }
+      }
+      lcd->writeStringTiny(6, 6, &buf[spos]);
+
+      //cursor time
+      uint8_t h, m, s;
+      tmp = cSeconds;
+      s = (uint8_t)(tmp % 60);
+      tmp -= s;
+      tmp /= 60;
+      m = (uint8_t)(tmp % 60);
+      tmp -= m;
+      tmp /= 60;
+      h = (uint8_t)tmp;
+
+      buf[7] = s % 10 + '0';
+      s -= s % 10;
+      s /= 10;
+      buf[6] = s % 10 + '0';
+
+      buf[5] = ':';
+
+      buf[4] = m % 10 + '0';
+      m -= m % 10;
+      m /= 10;
+      buf[3] = m % 10 + '0';
+
+      buf[2] = ':';
+
+      buf[1] = h % 10 + '0';
+      h -= h % 10;
+      h /= 10;
+      buf[0] = h % 10 + '0';
+
+      buf[8] = '\0';
+
+      lcd->writeStringTiny(45, 6, buf);    
+
+      if(kf->selected == 0 || (kf->selected == kf->count && !kf->hasEndKeyframe))
+      {
+        lcd->writeStringTiny(76, 6, STR("+"));
+        lcd->drawHighlight(75, 6, 79, 10);    
+      }
+
+      setTitle(TEXT("KEYFRAMES"));
+      if(edit == 1)
+      {
+        setBar(BLANK_STR, TEXT("SAVE POINT"));
+      }
+      else if((kf->selected > 1 && kf->selected < kf->count) || (kf->selected == kf->count && kf->hasEndKeyframe))
+      {
+        setBar(TEXT("REMOVE"), TEXT("DONE"));
+      }
+      else if(kf->selected == 1)
+      {
+        setBar(TEXT("RESET"), TEXT("DONE"));
+      }
+      else
+      {
+        setBar(BLANK_STR, TEXT("DONE"));
+      }
+
+      lcd->update();
+
+      //move to position
+      if(kf->move && needMove)
+      {
+        char *message_text = TEXT("busy");
+        uint8_t l = strlen(message_text) * 6 / 2;
+        lcd->eraseBox(41 - l - 2, 12, 41 + l + 2, 24);
+        lcd->drawBox(41 - l - 1, 13, 41 + l + 1, 23);
+        lcd->writeString(41 - l, 15, message_text);
+        lcd->update();
+
+        (*kf->move)(cSeconds, cValue, kf->type);
+        draw = 1;
+        needMove = 0;
+      }
+
+  }
+
+  uint8_t lx = 0;
+  uint8_t nx = 0;
+
+  if(lastKf) lx = CHARTBOX_X1 + 1 + (uint8_t) ((float)CHARTBOX_WIDTH * ((float)kf->keyframes[lastKf - 1].seconds / (float)kf->keyframes[kf->count - 1].seconds) + 0.5);
+  if(nextKf) nx = CHARTBOX_X1 + 1 + (uint8_t) ((float)CHARTBOX_WIDTH * ((float)kf->keyframes[nextKf - 1].seconds / (float)kf->keyframes[kf->count - 1].seconds) + 0.5);
+
+  if(key) draw = 1;
+
+  if(key == LEFT_KEY)
+  {
+    uint8_t move = 0;
+    if(edit)
+    {
+      if(kf->selected > 1 && kf->selected < kf->count && cursor > (lx - CHARTBOX_X1 - 1)) move = 1;
+    }
+    else
+    {
+      if(lx) move = cursor - (lx - CHARTBOX_X1 - 1);
+      if(kf->selected > 0) move /= 2;
+    }
+    if(cursor > move)
+    {
+      cursor -= move;
+      needMove = 1;
+    }
+    else if(cursor != 0) 
+    {
+      needMove = 1;
+      cursor = 0;  
+    }
+  }
+  if(key == RIGHT_KEY)
+  {
+    uint8_t move = 0;
+    if(edit)
+    {
+      if(kf->selected > 1 && kf->selected < kf->count && cursor < (nx - CHARTBOX_X1 - 1)) move = 1;
+    }
+    else
+    {
+      if(nx) move = (nx - CHARTBOX_X1 - 1) - cursor;
+      if(kf->selected > 0) move /= 2;
+    }
+    if(cursor < CHARTBOX_WIDTH + move)
+    {
+      cursor += move;
+      needMove = 1;
+    }
+    else if(cursor != CHARTBOX_WIDTH)
+    {
+      cursor = CHARTBOX_WIDTH;
+      needMove = 1;
+    }
+  }
+  if(key == UP_KEY)
+  {
+    if(edit == 0)
+    {
+      if(kf->selected == 0) kf->selected = addKeyframe(kf, cValue - (cValue % kf->steps), cSeconds);
+      if(cValue != cValue - (cValue % kf->steps)) needMove = 1;
+      if(kf->selected) edit = 1;
+      if(kf->selected == kf->count) kf->hasEndKeyframe = 1;
+    }     
+    else
+    {
+      if(kf->selected > 0)
+      {
+        int16_t steps = kf->steps - (kf->keyframes[kf->selected - 1].value % kf->steps);
+        if((kf->keyframes[kf->selected - 1].value + steps < kf->max) || kf->rangeExtendable)
+        {
+          kf->keyframes[kf->selected - 1].value += steps;
+          needMove = 1;
+        }
+        else if(kf->keyframes[kf->selected - 1].value != kf->max)
+        {
+          kf->keyframes[kf->selected - 1].value = kf->max;
+          needMove = 1;
+        }
+      }
+    }
+  }
+  if(key == DOWN_KEY)
+  {
+    if(edit == 0)
+    {
+      if(kf->selected == 0) kf->selected = addKeyframe(kf, cValue - (cValue % kf->steps), cSeconds);
+      if(cValue != cValue - (cValue % kf->steps)) needMove = 1;
+      if(kf->selected) edit = 1;
+      if(kf->selected == kf->count) kf->hasEndKeyframe = 1;
+    }   
+    else
+    {
+      if(kf->selected > 0)
+      {
+        int16_t steps = kf->keyframes[kf->selected - 1].value % kf->steps;
+        if(steps == 0) steps = kf->steps;
+        if((kf->keyframes[kf->selected - 1].value - steps > kf->min) || kf->rangeExtendable)
+        {
+          kf->keyframes[kf->selected - 1].value -= steps;
+          needMove = 1;
+        }
+        else if(kf->keyframes[kf->selected - 1].value != kf->min)
+        {
+          kf->keyframes[kf->selected - 1].value = kf->min;
+          needMove = 1;
+        }
+      }
+    }
+  }
+  if(key == FL_KEY)
+  {
+    if(edit == 0 && kf->selected > 1 && kf->selected < kf->count)
+    {
+      removeKeyframe(kf, kf->selected - 1);
+      kf->selected = 0;
+      edit = 0;
+      needMove = 1;
+    }
+    else if(edit == 0 && kf->selected == kf->count)
+    {
+      kf->hasEndKeyframe = 0;
+      needMove = 1;
+    }
+    else if(edit == 0 && kf->selected == 1) // flatten/reset
+    {
+      kf->count = 2;
+      kf->selected = 0;
+      kf->hasEndKeyframe = 0;
+      kf->keyframes[0].value = 0;
+      kf->keyframes[1].value = 0;
+      needMove = 1;
+    }
+  }
+  if(key == FR_KEY)
+  {
+    if(edit == 1)
+    {
+      edit = 0;
+    }
+    else
+    {
+      button->verticalRepeat = 0;
+      return FN_CANCEL;
+    }
+  }
+
+  return FN_CONTINUE;
+}
+
 

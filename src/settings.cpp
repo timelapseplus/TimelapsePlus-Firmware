@@ -10,6 +10,7 @@
  
 #include <avr/eeprom.h>
 #include <string.h>
+#include <avr/wdt.h>
 #include "settings.h"
 #include "5110LCD.h"
 #include "IR.h"
@@ -139,11 +140,22 @@ void settings_default()
     conf.extendedRamp = 0;
     conf.lightIntegrationMinutes = 5;
     conf.pFactor = 10;
-    conf.iFactor = 12;
-    conf.dFactor = 12;
+    conf.iFactor = 11;
+    conf.dFactor = 11;
     conf.errorAlert = 0;
     conf.lightThreshold = 20;
     conf.linearInterpolation = 0;
+    conf.motionStep1 = 1000;
+    conf.motionStep2 = 250;
+    conf.motionStep3 = 250;
+    conf.focusStep = 10;
+    conf.focusEnabled = 1;
+    conf.motionBacklash1 = 0;
+    conf.motionBacklash2 = 0;
+    conf.motionBacklash3 = 0;
+    conf.motionPowerSave1 = 0;
+    conf.motionPowerSave2 = 0;
+    conf.motionPowerSave3 = 0;
 
     conf.camera.cameraFPS = 33;
     conf.camera.nikonUSB = 0;
@@ -163,10 +175,13 @@ void settings_default()
         camera_settings_t cs;
         memset((void*)&cs, 0, sizeof(camera_settings_t));
         eeprom_write_block((const void*)&cs, &camera_settings_eep[i], sizeof(camera_settings_t));
+        wdt_reset();
     }
 
     settings_save();
+    wdt_reset();
     settings_load();
+    wdt_reset();
 }
 
 /******************************************************************
@@ -182,17 +197,20 @@ void settings_init()
     uint8_t need_save = 0;
     if(conf.shutterVersion != SHUTTER_VERSION)
     {
+        wdt_reset();
         timer.setDefault();
         conf.shutterVersion = SHUTTER_VERSION;
         need_save = 1;
     }
     if(conf.settingsVersion != SETTINGS_VERSION)
     {
+        wdt_reset();
         settings_default();
         need_save = 0;
         settings_reset = 1;
         // This is where we'd put a setup wizard
     }
+    wdt_reset();
     if(need_save) settings_save();
 }
 
@@ -217,6 +235,7 @@ void settings_setup_camera_index(char *serial)
 
     for(uint8_t i = 0; i < MAX_CAMERAS_SETTINGS; i++)
     {
+        wdt_reset();
         eeprom_read_block((void*)&cs, &camera_settings_eep[i], sizeof(camera_settings_t));
         if(strncmp(serial, cs.cameraSerial, 21) == 0)
         {

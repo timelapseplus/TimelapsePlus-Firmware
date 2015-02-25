@@ -8,7 +8,7 @@
  *
  */
 
-#define VERSION 20141023
+#define VERSION 20150212
 
 #define TYPE_DEFAULT 0
 #define TYPE_PROTOTYPE 1
@@ -27,7 +27,8 @@
 #define NOTIFY_CHARGE 1
 #define NOTIFY_BT 2
 #define NOTIFY_CAMERA 3
-
+#define NOTIFY_NMX 4
+ 
 int main();
 void setup(void);
 

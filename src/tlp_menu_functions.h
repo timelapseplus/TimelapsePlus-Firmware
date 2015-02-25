@@ -31,8 +31,8 @@ volatile char lcd_red(char key, char first);
 volatile char notYet(char key, char first);
 volatile char btConnect(char key, char first);
 volatile char usbPlug(char key, char first);
-volatile char shutter_addKeyframe(char key, char first);
-volatile char shutter_removeKeyframe(char key, char first);
+//volatile char shutter_addKeyframe(char key, char first);
+//volatile char shutter_removeKeyframe(char key, char first);
 volatile char shutter_saveAs(char key, char first);
 volatile char shutter_load(char key, char first);
 volatile char shutter_delete(char key, char first);
@@ -49,7 +49,6 @@ volatile char lightTrigger(char key, char first);
 volatile char backToMain(char key, char first);
 volatile char timerToGuided(char key, char first);
 volatile char timerToAuto(char key, char first);
-volatile char keyFrameEditor(char key, char first);
 
 void int_to_str(uint16_t n, char buf[6]);
 void updateConditions();

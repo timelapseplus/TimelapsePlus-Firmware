@@ -16,6 +16,11 @@
 
 extern BT bt;
 extern Remote remote;
+extern settings_t conf;
+extern Clock clock;
+
+uint8_t connectedResponse = 0;
+uint32_t lastCommandMs = 0;
 
 void uint8tohex(char str[3], uint8_t b)
 {
@@ -65,6 +70,7 @@ NMX::NMX(uint8_t node, uint8_t motor)
 	endPos = 0;
 	currentPos = 0;
 	stepSize = 256;
+	connectedResponse = 0;
 }
 
 void NMX::setStart()
@@ -116,6 +122,11 @@ uint8_t NMX::moveToPosition(int32_t pos)
 
 uint8_t NMX::moveSteps(uint8_t dir, uint32_t steps)
 {
+	while(running())
+	{
+		wdt_reset();
+	}
+
 	uint8_t buf[5], buf2[4];
 	memcpy(buf2, &steps, sizeof(uint32_t));
 	buf[1] = buf2[3];
@@ -124,11 +135,6 @@ uint8_t NMX::moveSteps(uint8_t dir, uint32_t steps)
 	buf[4] = buf2[0];
 	buf[0] = dir;
 
-	while(running())
-	{
-		wdt_reset();
-	}
-
 	if(dir == 0) currentPos += steps; else currentPos -= steps;
 
 	return sendCommand(0xF, 5, buf);	
@@ -136,30 +142,85 @@ uint8_t NMX::moveSteps(uint8_t dir, uint32_t steps)
 
 uint8_t NMX::enable()
 {
-	uint8_t buf = 1;
-	return sendCommand(0x3, 1, &buf);	
-	return sendCommand(0x2, 0, &buf);	
+	if(!enabled)
+	{
+		enabled = true;
+		uint8_t buf = 1;
+		sendCommand(0x3, 1, &buf); //enable
+		if(motorAddress == 1) buf = conf.motionPowerSave1;
+		if(motorAddress == 2) buf = conf.motionPowerSave2;
+		if(motorAddress == 3) buf = conf.motionPowerSave3;
+		if(buf) buf = 1;
+		return sendCommand(0x2, 1, &buf); //disable sleep (hold between moves)
+		uint8_t backlash[2], buf2[2];
+		uint16_t steps = 0;
+		if(motorAddress == 1) steps = conf.motionBacklash1;
+		if(motorAddress == 2) steps = conf.motionBacklash2;
+		if(motorAddress == 3) steps = conf.motionBacklash3;
+		memcpy(backlash, &steps, sizeof(uint16_t));
+		buf2[0] = backlash[1];
+		buf2[1] = backlash[0];
+		return sendCommand(0x5, 2, buf2); //set backlash
+	}
+	return 0;
 }
 
 uint8_t NMX::disable()
 {
+	enabled = false;
 	uint8_t buf = 0;
-	return sendCommand(0x2, 1, &buf);	
+	sendCommand(0x2, 1, &buf);	
 	return sendCommand(0x3, 1, &buf);	
 }
 
 uint8_t NMX::running()
 {
-	if(sendQuery(0x6B) == 1) return 1; else return 0;
+	if(sendQuery(0x6B) != 0) return 1; else return 0;
 }
 
-// returns data length in bytes (max 4)
-uint32_t NMX::sendQuery(uint8_t command)
+uint8_t NMX::checkConnected()
+{
+	if(!remote.nmx)
+	{
+		connected = 0;
+		connectedResponse = 0;
+	}
+	else
+	{
+		if(connectedResponse == 0)
+		{
+			connectedResponse = (uint8_t)sendQueryGeneral(3, 0, 0x7C, 10) | 0b10000000;
+			DEBUG(STR("Response:"));
+			DEBUG(connectedResponse);
+			DEBUG_NL();
+		}
+		if(connectedResponse & (1 << (motorAddress - 1)))
+		{
+			DEBUG(STR(" Motor:"));
+			DEBUG(motorAddress);
+			DEBUG_NL();
+			connected = 1;
+		}
+		else
+		{
+			connected = 0;
+		}
+	}
+	return connected;
+}
+
+// returns response as uint32 (max 4)
+uint32_t NMX::sendQueryGeneral(uint8_t node, uint8_t motor, uint8_t command, uint8_t delay)
 {
 	uint8_t b;
 	uint32_t value = 0;
-	if(sendCommand(command, 0, 0))
+	if(sendCommandGeneral(node, motor, command, 0, 0))
 	{
+		while(delay)
+		{
+			_delay_ms(100);
+			delay--;
+		}
 		bt.sendCMD(PSTR("ATGR,0,24\r"));
 		if(bt.checkOK())
 		{
@@ -193,18 +254,28 @@ uint32_t NMX::sendQuery(uint8_t command)
 	return 0;
 }
 
+// returns response as uint32 (max 4)
+uint32_t NMX::sendQuery(uint8_t command)
+{
+	return sendQueryGeneral(nodeAddress, motorAddress, command, 1);
+}
 
-uint8_t NMX::sendCommand(uint8_t command, uint8_t dataLength, uint8_t *data)
+uint8_t NMX::sendCommandGeneral(uint8_t node, uint8_t motor, uint8_t command, uint8_t dataLength, uint8_t *data)
 {
 	if(!remote.nmx) return 0;
+
+	if(clock.Ms() < lastCommandMs) lastCommandMs = clock.Ms();
+	while(clock.Ms() - lastCommandMs < NMX_COMMAND_SPACING_MS);
+
+	lastCommandMs = clock.Ms();
 
 	char hexbuf[3];
 	bt.sendCMD(PSTR("ATGW,0,28,0,0000000000FF"));
 
-	uint8tohex(hexbuf, nodeAddress);
+	uint8tohex(hexbuf, node);
 	bt.sendCMD((char*)hexbuf);
 
-	uint8tohex(hexbuf, motorAddress);
+	uint8tohex(hexbuf, motor);
 	bt.sendCMD((char*)hexbuf);
 
 	uint8tohex(hexbuf, command);
@@ -221,5 +292,10 @@ uint8_t NMX::sendCommand(uint8_t command, uint8_t dataLength, uint8_t *data)
 
 	bt.sendCMD(PSTR("\r"));
 	return bt.checkOK();
+}
+
+uint8_t NMX::sendCommand(uint8_t command, uint8_t dataLength, uint8_t *data)
+{
+	return sendCommandGeneral(nodeAddress, motorAddress, command, dataLength, data);
 }
 

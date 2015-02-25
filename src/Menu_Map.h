@@ -311,28 +311,13 @@ const menu_item menu_timelapse[]PROGMEM =
     { "Bracket    +", 'D', (void*)&dyn_bracket,            (void*)&timer.current.Bracket, 0, (void*)&modeHDR },
     { "StartTv    +", 'D', (void*)&dyn_bulb, (void*)&timer.current.BulbStart, 0, (void*)&modeRampNormal },
     { "StartTv    +", 'D', (void*)&dyn_ramp_ext, (void*)&timer.current.BulbStart, 0, (void*)&modeRampExtended },
+    { "EV Ramp     ", 'K', (void*)&timer.current.kfExposure, 0, (void*)&updateKeyframeGroup, (void*)&brampKeyframe },
+    { "Axis1 Ramp  ", 'K', (void*)&timer.current.kfMotor1, 0, (void*)&updateKeyframeGroup, (void*)&motor1.connected },
+    { "Axis2 Ramp  ", 'K', (void*)&timer.current.kfMotor2, 0, (void*)&updateKeyframeGroup, (void*)&motor2.connected },
+    { "Axis3 Ramp  ", 'K', (void*)&timer.current.kfMotor3, 0, (void*)&updateKeyframeGroup, (void*)&motor3.connected },
+    { "Focus Ramp  ", 'K', (void*)&timer.current.kfFocus, 0, (void*)&updateKeyframeGroup, (void*)&showFocus },
     { "Night Target", 'S', (void*)settings_bramp_target, (void*)&timer.current.nightMode, 0, (void*)&brampAuto },
     { "  Night Exp ", 'M', (void*)menu_timelapse_night_exp, 0, 0, (void*)&rampTargetCustom },
-    { "-By        T", 'E', (void*)&timer.current.Key[0], (void*)STR_TIME_SINCE_START, 0, (void*)&brampKeyframe },
-    { "  Ramp     +", 'D', (void*)&dyn_stops, (void*)&timer.current.Bulb[0], 0, (void*)&brampKeyframe },
-    { "-By        T", 'E', (void*)&timer.current.Key[1], (void*)STR_TIME_SINCE_START, 0, (void*)&bulb1 },
-    { "  Ramp     +", 'D', (void*)&dyn_stops, (void*)&timer.current.Bulb[1], 0, (void*)&bulb1 },
-    { "-By        T", 'E', (void*)&timer.current.Key[2], (void*)STR_TIME_SINCE_START, 0, (void*)&bulb2 },
-    { "  Ramp     +", 'D', (void*)&dyn_stops, (void*)&timer.current.Bulb[2], 0, (void*)&bulb2 },
-    { "-By        T", 'E', (void*)&timer.current.Key[3], (void*)STR_TIME_SINCE_START, 0, (void*)&bulb3 },
-    { "  Ramp     +", 'D', (void*)&dyn_stops, (void*)&timer.current.Bulb[3], 0, (void*)&bulb3 },
-    { "-By        T", 'E', (void*)&timer.current.Key[4], (void*)STR_TIME_SINCE_START, 0, (void*)&bulb4 },
-    { "  Ramp     +", 'D', (void*)&dyn_stops, (void*)&timer.current.Bulb[4], 0, (void*)&bulb4 },
-    { "-By        T", 'E', (void*)&timer.current.Key[5], (void*)STR_TIME_SINCE_START, 0, (void*)&bulb5 },
-    { "  Ramp     +", 'D', (void*)&dyn_stops, (void*)&timer.current.Bulb[5], 0, (void*)&bulb5 },
-    { "-By        T", 'E', (void*)&timer.current.Key[6], (void*)STR_TIME_SINCE_START, 0, (void*)&bulb6 },
-    { "  Ramp     +", 'D', (void*)&dyn_stops, (void*)&timer.current.Bulb[6], 0, (void*)&bulb6 },
-    { "-By        T", 'E', (void*)&timer.current.Key[7], (void*)STR_TIME_SINCE_START, 0, (void*)&bulb7 },
-    { "  Ramp     +", 'D', (void*)&dyn_stops, (void*)&timer.current.Bulb[7], 0, (void*)&bulb7 },
-    { "-By        T", 'E', (void*)&timer.current.Key[8], (void*)STR_TIME_SINCE_START, 0, (void*)&bulb8 },
-    { "  Ramp     +", 'D', (void*)&dyn_stops, (void*)&timer.current.Bulb[8], 0, (void*)&bulb8 },
-    { "-By        T", 'E', (void*)&timer.current.Key[9], (void*)STR_TIME_SINCE_START, 0, (void*)&bulb9 },
-    { "  Ramp     +", 'D', (void*)&dyn_stops, (void*)&timer.current.Bulb[9], 0, (void*)&bulb9 },
     { "\0           ", 'F', (void*)&runHandler, (void*)STR_OPTIONS, 0, (void*)STR_RUN }
 };
 
@@ -673,6 +658,45 @@ const menu_item menu_settings_timelapse_tuning[]PROGMEM =
     { "\0           ", 'V', 0, 0, 0 }
 };
 
+
+const char STR_FOCUS_RAMP[]PROGMEM = "Focus Ramp";
+
+const settings_item settings_focus_enabled[]PROGMEM =
+{
+    { "Disabled    ", 0, (void*)STR_FOCUS_RAMP },
+    { "Enabled     ", 1, (void*)STR_FOCUS_RAMP },
+    { "\0           ", 0, 0 }
+};
+
+const char STR_MOTION_HOLD[]PROGMEM = "Power Save";
+
+const settings_item settings_motion_hold[]PROGMEM =
+{
+    { "Disabled    ", 0, (void*)STR_MOTION_HOLD },
+    { "Enabled     ", 1, (void*)STR_MOTION_HOLD },
+    { "\0           ", 0, 0 }
+};
+
+const char STR_MOTION_STEPS[]PROGMEM = "Step Size";
+const char STR_MOTION_BACKLASH[]PROGMEM = "Backlash Steps";
+
+const menu_item menu_settings_timelapse_ramping[]PROGMEM =
+{
+    { "Interpolate ", 'S', (void*)menu_settings_interpolation, (void*)&conf.linearInterpolation, (void*)settings_update, 0 },
+    { "Focus Enable", 'S', (void*)settings_focus_enabled, (void*)&conf.focusEnabled, (void*)settings_update, &conf.focusEnabled },
+    { "Focus Steps ", 'C', (void*)&conf.focusStep, (void*)STR_MOTION_STEPS, (void*)settings_update, 0 },
+    { "NMX M1 Steps", 'C', (void*)&conf.motionStep1, (void*)STR_MOTION_STEPS, (void*)settings_update, 0 },
+    { "NMX M2 Steps", 'C', (void*)&conf.motionStep2, (void*)STR_MOTION_STEPS, (void*)settings_update, 0 },
+    { "NMX M3 Steps", 'C', (void*)&conf.motionStep3, (void*)STR_MOTION_STEPS, (void*)settings_update, 0 },
+    { "NMX M1 BkLsh", 'C', (void*)&conf.motionBacklash1, (void*)STR_MOTION_BACKLASH, (void*)settings_update, 0 },
+    { "NMX M2 BkLsh", 'C', (void*)&conf.motionBacklash2, (void*)STR_MOTION_BACKLASH, (void*)settings_update, 0 },
+    { "NMX M3 BkLsh", 'C', (void*)&conf.motionBacklash3, (void*)STR_MOTION_BACKLASH, (void*)settings_update, 0 },
+    { "NMX M1 Sleep", 'S', (void*)settings_motion_hold, (void*)&conf.motionPowerSave1, (void*)settings_update, 0 },
+    { "NMX M2 Sleep", 'S', (void*)settings_motion_hold, (void*)&conf.motionPowerSave2, (void*)settings_update, 0 },
+    { "NMX M3 Sleep", 'S', (void*)settings_motion_hold, (void*)&conf.motionPowerSave3, (void*)settings_update, 0 },
+    { "\0           ", 'V', 0, 0, 0 }
+};
+
 const menu_item menu_settings_timelapse[]PROGMEM =
 {
     { "ISO Max     ", 'D', (void*)&dyn_max_iso, (void*)&conf.isoMax, (void*)settings_update, 0 },
@@ -680,9 +704,9 @@ const menu_item menu_settings_timelapse[]PROGMEM =
     { "Aperture Min", 'D', (void*)&dyn_min_aperture, (void*)&conf.apertureMin, (void*)settings_update, 0 },
     { "Bramp Mode  ", 'S', (void*)menu_settings_bramp_mode, (void*)&conf.brampMode, (void*)settings_update, 0 },
     { "Ext Bramp   ", 'S', (void*)menu_settings_bramp_extended, (void*)&conf.extendedRamp, (void*)settings_update, 0 },
-    { "Keyframes   ", 'S', (void*)menu_settings_interpolation, (void*)&conf.linearInterpolation, (void*)settings_update, 0 },
     { "Bulb Units  ", 'S', (void*)menu_settings_arbitrary_bulb, (void*)&conf.arbitraryBulb, (void*)settings_update, 0 },
     { "Run on PwrOn", 'S', (void*)menu_settings_auto_run, (void*)&conf.autoRun, (void*)settings_update, 0 },
+    { "KF Ramping  ", 'M', (void*)menu_settings_timelapse_ramping, 0, 0, 0 },
     { "Bramp Tuning", 'M', (void*)menu_settings_timelapse_tuning, 0, 0, 0 },
     { "\0           ", 'V', 0, 0, 0 }
 };
@@ -700,7 +724,7 @@ const menu_item menu_development[]PROGMEM =
 {
     { "Dev Mode LED", 'S', (void*)menu_settings_dev_mode, (void*)&conf.devMode, (void*)settings_update, 0 },
     { "Debug Mode  ", 'S', (void*)menu_settings_debug_mode, (void*)&conf.debugEnabled, (void*)settings_update, 0 },
-    { "KeyframeEdit", 'F', (void*)keyFrameEditor, 0, 0, 0 },
+    //{ "KeyframeEdit", 'F', (void*)keyFrameEditor, 0, 0, 0 },
     { "Shutter Test", 'F', (void*)shutterTest, 0, 0, (void*)&timerNotRunning },
 #ifdef PRODUCTION
     { "4 Hour Light", 'F', (void*)lightTest, 0, 0, (void*)&timerNotRunning },
@@ -741,8 +765,8 @@ const menu_item menu_options[]PROGMEM =
     { "Stop Timer  ", 'F', (void*)&timerStop, 0, 0, (void*)&timer.running },
     { "Remote Info ", 'F', (void*)&timerStatusRemote, 0, 0, (void*)&showRemoteInfo },
     { "Start Remote", 'F', (void*)&timerRemoteStart, 0, 0, (void*)&showRemoteStart },
-    { "Add Keyframe", 'F', (void*)&shutter_addKeyframe, 0, 0, (void*)&modeRampKeyAdd },
-    { "Del Keyframe", 'F', (void*)&shutter_removeKeyframe, 0, 0, (void*)&modeRampKeyDel },
+//    { "Add Keyframe", 'F', (void*)&shutter_addKeyframe, 0, 0, (void*)&modeRampKeyAdd },
+//    { "Del Keyframe", 'F', (void*)&shutter_removeKeyframe, 0, 0, (void*)&modeRampKeyDel },
 //    { "View Details", 'F', (void*)&viewSeconds, 0, 0, 0 },
     { "Load Saved..", 'F', (void*)&shutter_load, 0, 0, (void*)&timerNotRunning },
     { "Save As..   ", 'F', (void*)&shutter_saveAs, 0, 0, 0 },

@@ -6,11 +6,21 @@
  *  Copyright 2010 __MyCompanyName__. All rights reserved.
  *
  */
- 
 #ifndef shutter_h
 #define shutter_h
 
-#define MAX_STORED 25
+#include <avr/io.h>
+#include <util/delay.h>
+#include <avr/interrupt.h>
+#include <avr/pgmspace.h>
+#include <avr/sleep.h>
+#include <avr/wdt.h>
+#include <avr/version.h>
+#include <avr/eeprom.h>
+#include <string.h>
+
+
+#define MAX_STORED 4
 
 #define SHUTTER_PRESS_TIME (conf.camera.cameraFPS * 4)
 
@@ -85,9 +95,34 @@
 //#define CHECK_CABLE if(getPin(CHECK_CABLE_PIN) || getPin(SHUTTER_SENSE_PIN)) cable_connected = 1; else cable_connected = 0
 #define CHECK_CABLE if(getPin(CHECK_CABLE_PIN)) cable_connected = 1; else cable_connected = 0
 
-#define SHUTTER_VERSION 20131122
+#define SHUTTER_VERSION 20141122
 
 #define CHECK_ALERT(string, test) if(test) { if(status.preChecked == 0) menu.alert(string); } else { if(status.preChecked == 1) menu.clearAlert(string); }
+
+struct keyframe_t {
+    int32_t value;
+    uint32_t seconds;
+};
+
+struct keyframeGroup_t {
+    keyframe_t keyframes[MAX_KEYFRAMES];
+    uint8_t count;
+    uint8_t selected;
+    uint8_t hasEndKeyframe;
+    uint8_t type;
+    int32_t max;
+    int32_t min;
+    int16_t steps;
+    uint8_t rangeExtendable;    
+    void (*move)(uint32_t seconds, int32_t pos, uint8_t type);
+};
+
+#define KFT_EXPOSURE 0
+#define KFT_MOTOR1 1
+#define KFT_MOTOR2 2
+#define KFT_MOTOR3 3
+#define KFT_FOCUS 4
+#define KFT_INTERVAL 5
 
 struct program
 {
@@ -104,16 +139,21 @@ struct program
     uint16_t ArbExp;      
     uint16_t Bracket;     
     uint16_t BulbStart;   
-    uint16_t Bulb[MAX_KEYFRAMES];    
-    uint16_t Key[MAX_KEYFRAMES];     
-    uint16_t Keyframes;   
+    //uint16_t Bulb[MAX_KEYFRAMES];    
+    //uint16_t Key[MAX_KEYFRAMES];     
+    //uint16_t Keyframes;
+    keyframeGroup_t kfMotor1;   
+    keyframeGroup_t kfMotor2;   
+    keyframeGroup_t kfMotor3;   
+    keyframeGroup_t kfExposure;   
+    keyframeGroup_t kfFocus;   
+    keyframeGroup_t kfInterval;   
     uint16_t brampMethod; 
     uint8_t  nightMode;
     uint8_t  nightISO;
     uint8_t  nightAperture;
     uint8_t  nightShutter;
     uint8_t  infinitePhotos;
-    uint8_t pad[16];
 };
 
 struct timer_status
@@ -137,26 +177,6 @@ struct timer_status
 
 extern program stored[MAX_STORED+1]EEMEM;
 
-struct keyframe_t {
-    int16_t value;
-    uint32_t seconds;
-};
-
-struct keyframeGroup_t {
-    keyframe_t keyframes[MAX_KEYFRAMES];
-    uint8_t count;
-    uint8_t selected;
-    uint8_t type;
-    int16_t max;
-    int16_t min;
-    int16_t steps;
-    uint8_t rangeExtendable;    
-    void (*function)(int16_t pos);
-};
-
-#define KFT_EXPOSURE 0
-#define KFT_MOTION 1
-#define KFT_FOCUS 2
 
 class shutter
 {
@@ -203,6 +223,7 @@ private:
     double test;
     uint8_t iso;
     uint8_t aperture;
+    uint8_t movedFocus;
 };
 
 void check_cable();
@@ -242,6 +263,13 @@ uint8_t rampTvUpExtended(uint8_t ev);
 uint8_t rampTvDown(uint8_t ev);
 uint8_t rampTvDownExtended(uint8_t ev);
 void calcInterval();
+float interpolateKeyframe(keyframeGroup_t *kf, uint32_t seconds);
+void updateKeyframeGroup(keyframeGroup_t *kf);
+void moveFocus(int32_t pos);
+void moveMotor1(int32_t pos);
+void moveMotor2(int32_t pos);
+void moveMotor3(int32_t pos);
+void moveAxes(uint32_t seconds, int32_t pos, uint8_t type);
 
 extern uint8_t lastShutterError;
 #endif
