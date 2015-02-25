@@ -40,7 +40,7 @@
 struct menu_item  // 20 bytes total
 {
     char name[MENU_NAME_LEN];  // 13 bytes
-    char type;                 // 1 byte
+    char type;                 // 1 byte; F = Function; M M = SubMenu; E || C = Edit Variable; S = Edit Setting; D = Edit Dynamic Setting
     void *function;            // 2 bytes
     void *description;         // 2 bytes
     void *short_function;      // 2 bytes
