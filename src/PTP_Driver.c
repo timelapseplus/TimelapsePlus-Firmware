@@ -87,6 +87,8 @@ volatile uint8_t PTP_Ready, PTP_Connected, configured, PTP_Run_Task = 1, PTP_Ign
 volatile uint16_t PTP_Error, PTP_Response_Code;
 uint16_t supportedOperationsCount;
 uint16_t *supportedOperations;
+uint16_t supportedPropertiesCount;
+uint16_t *supportedProperties;
 
 /** Task to print device information through the serial port, and open/close a test PIMA session with the
  *  attached Still Image device.
@@ -450,6 +452,8 @@ uint8_t PTP_GetDeviceInfo()
     supportedOperations = (uint16_t*)(DeviceInfoPos + 4);
     DeviceInfoPos += (4 + (*(uint32_t*)DeviceInfoPos << 1));      // Skip over Supported Operations Array
     DeviceInfoPos += (4 + (*(uint32_t*)DeviceInfoPos << 1));      // Skip over Supported Events Array
+    supportedPropertiesCount = (uint16_t) *(uint32_t*)DeviceInfoPos;
+    supportedProperties = (uint16_t*)(DeviceInfoPos + 4);
     DeviceInfoPos += (4 + (*(uint32_t*)DeviceInfoPos << 1));      // Skip over Supported Device Properties Array
     DeviceInfoPos += (4 + (*(uint32_t*)DeviceInfoPos << 1));      // Skip over Capture Formats Array
     DeviceInfoPos += (4 + (*(uint32_t*)DeviceInfoPos << 1));      // Skip over Image Formats Array

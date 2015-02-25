@@ -101,6 +101,8 @@ extern volatile uint8_t PTP_Ready, PTP_Connected, PTP_Run_Task, PTP_IgnoreErrors
 extern volatile uint16_t PTP_Error, PTP_Response_Code;
 extern uint16_t supportedOperationsCount;
 extern uint16_t *supportedOperations; // note that this memory space is reused -- only available immediately after init
+extern uint16_t supportedPropertiesCount;
+extern uint16_t *supportedProperties; // note that this memory space is reused -- only available immediately after init
 
 
 #ifdef __cplusplus

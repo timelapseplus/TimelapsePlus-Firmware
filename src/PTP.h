@@ -164,7 +164,7 @@ private:
 
 };
 
-void sendHex(char *hex);
-void sendByte(char byte);
+//void sendHex(char *hex);
+//void sendByte(char byte);
 
 uint32_t pgm_read_u32(const void *addr);
