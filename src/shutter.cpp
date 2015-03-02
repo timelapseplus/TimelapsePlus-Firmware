@@ -951,6 +951,12 @@ char shutter::task()
                         }
 
                         rampRate = (int8_t) delta;
+
+                        if(rampRate == 0 && light.underThreshold && current.nightMode != BRAMP_TARGET_AUTO)
+                        {
+                          // if we've met the night target, switch to guided mode to hold exposure
+                          switchToGuided();
+                        }
                     }
 //####################################################
 
