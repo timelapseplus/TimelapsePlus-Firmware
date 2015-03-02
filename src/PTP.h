@@ -97,7 +97,7 @@ public:
     uint8_t sendObjectInfo(uint32_t storage, uint32_t parent, ptp_object_info *objectinfo);
     uint8_t sendObject(uint8_t *data, uint16_t dataSize);
 
-    uint8_t blockWhileBusy(uint16_t timeoutMS);
+    uint8_t blockWhileBusy(int16_t timeoutMS);
 
     uint8_t iso(void);
     uint8_t shutter(void);

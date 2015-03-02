@@ -968,7 +968,7 @@ uint8_t PTP::liveView(uint8_t on)
 	return 0;	
 }
 
-// move can be -3 to +3
+// move can be -3 to +3 (step size & direction)
 uint8_t PTP::moveFocus(int8_t move, uint16_t steps)
 {
 	if(move == 0 || steps == 0) return 0;
@@ -1009,37 +1009,20 @@ uint8_t PTP::moveFocus(int8_t move, uint16_t steps)
 		if(!wasInLiveView) ret = liveView(1);
 		_delay_ms(100);
 
-		if(move > 0)
-		{
-			data[0] = 1;	
-		}
-		else
-		{
-			data[0] = 2;	
-			move = 0 - move;
-		}
-
-		if(move > 3) move = 3;
-		if(move == 1) data[1] = (uint32_t) 4;
-		if(move == 2) data[1] = (uint32_t) 64;
-		if(move == 3) { data[1] = (uint32_t) 64; steps *= 2; }
-
 		while(steps > 0 && !ret)
 		{
-			if(!ret) blockWhileBusy(1000);
 			if(!ret)
 			{
-				for(uint8_t i = 0; i < 5; i++)
-				{
-					PTP_IgnoreErrorsForNextTransaction = 1;
-					ret = PTP_Transaction(NIKON_OC_MoveFocus, 0, 2, data, 0, NULL);
-					if(PTP_Response_Code == PTP_RESPONSE_OK) break;
-					_delay_ms(1000);
-					wdt_reset();
-				}
+        blockWhileBusy(1000);
+        if(move > 0) data[0] = 1; else data[0] = 2; 
+        if(move > 3) move = 3;
+        if(move < -3) move = -3;
+        if(move == 1 || move == -1) data[1] = (uint32_t) 0x0A; // small steps
+        if(move == 2 || move == -2) data[1] = (uint32_t) 0x28; // medium steps
+        if(move == 3 || move == -3) data[1] = (uint32_t) 0x50; // large steps
+				ret = PTP_Transaction(NIKON_OC_MoveFocus, 0, 2, data, 0, NULL);
 			}
-			//if(PTP_Error) resetConnection(); else _delay_ms(10);
-			_delay_ms(1500);
+			if(PTP_Error) resetConnection(); else _delay_ms(50);
 			wdt_reset();
 			steps--;
 		}
@@ -1051,14 +1034,15 @@ uint8_t PTP::moveFocus(int8_t move, uint16_t steps)
 	return 0;
 }
 
-uint8_t PTP::blockWhileBusy(uint16_t timeoutMS)
+uint8_t PTP::blockWhileBusy(int16_t timeoutMS)
 {
-	while(timeoutMS--)
+	while(timeoutMS > 0)
 	{
 		wdt_reset();
+    _delay_ms(10);
 		checkEvent();
 		if(!busy) return 0;
-		_delay_ms(1);
+    timeoutMS -= 10;
 	}
 	return 1;
 }

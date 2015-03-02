@@ -71,6 +71,7 @@
 
 #define NIKON_OC_StartLiveView 0x9201
 #define NIKON_OC_EndLiveView 0x9202
+#define NIKON_OC_GetLiveViewImage 0x9203
 #define NIKON_OC_MoveFocus 0x9204
 
 #define NIKON_OC_BULBSTART 0x9207
@@ -83,5 +84,9 @@
 #define PTP_RESPONSE_OK 0x2001
 #define PTP_RESPONSE_BUSY 0x2019
 
-
-
+/*#A0
+#50
+#28
+#14
+#0A
+*/
