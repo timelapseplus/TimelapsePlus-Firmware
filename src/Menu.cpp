@@ -1065,8 +1065,8 @@ char MENU::editNumber(char key, unsigned int *n, char *name, char *unit, char mo
                 break;
            
            case 'L': // negative number J.R.//
-				lcd->eraseBox(67 - 3 * 16, 8, 67 - 2 * 16, 30);
-				if(conf.camera.negBulbOffset) lcd->writeCharBig(67 - 3 * 16, 7, '-');              
+				        lcd->eraseBox(67 - 3 * 16, 8, 67 - 2 * 16, 30);
+				        if(conf.camera.negBulbOffset) lcd->writeCharBig(67 - 3 * 16, 7, '-');              
         }
 
         lcd->drawHighlight(68 - (i * 16) - 1, 8, 68 - (i * 16) + 12, 29);
@@ -1170,11 +1170,13 @@ char MENU::editNumber(char key, unsigned int *n, char *name, char *unit, char mo
                    break;
             }
             if(mode == 'L' && i == 3)   //J.R.
-				if(key == UP_KEY || key == DOWN_KEY)
-				{
-					if(conf.camera.negBulbOffset) conf.camera.negBulbOffset = 0;
-					else conf.camera.negBulbOffset = 1;
-				}
+            {
+      				if(key == UP_KEY || key == DOWN_KEY)
+      				{
+      					if(conf.camera.negBulbOffset) conf.camera.negBulbOffset = 0;
+      					else conf.camera.negBulbOffset = 1;
+      				}
+            }
         }
     } else
     {
