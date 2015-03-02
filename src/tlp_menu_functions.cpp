@@ -1798,6 +1798,8 @@ volatile char focusStack(char key, char first)
 	static uint8_t state, photos = 3, photosTaken, wait, fine = 0;
 	static int8_t start = 0, end = 0, pos = 0;
 
+  if(!camera.supports.focus) return FN_CANCEL;
+
 	if(state == 0)
 	{
 		state = 1;
@@ -1811,7 +1813,6 @@ volatile char focusStack(char key, char first)
 
 	if(photosTaken >= photos)
 	{
-		if(cameraMakeNikon) camera.liveView(false);	
 		menu.message(TEXT("Done!"));
 		photosTaken = 0;
 		first = 1;
@@ -1962,8 +1963,6 @@ volatile char focusStack(char key, char first)
 	}
 	if(state == 7) // Running
 	{
-		if(cameraMakeNikon) camera.liveView(true);
-
 		float percent = (float) photosTaken /  (float) photos;
 		uint8_t bar = (uint8_t) (56.0 * percent) + 12;
 
@@ -2011,7 +2010,7 @@ volatile char focusStack(char key, char first)
 			{
 				if(fine) move = -1; else move = -2;
 			}
-			//camera.setFocus(true);
+			camera.setFocus(true);
 			_delay_ms(100);
 			camera.moveFocus(move, steps);
 			pos = dest;
@@ -2034,13 +2033,11 @@ volatile char focusStack(char key, char first)
 
 	if(key == FR_KEY && state == 7)
 	{
-		if(cameraMakeNikon) camera.liveView(false);	
 		menu.message(TEXT("Cancelled"));
 		state = 1;
 	}
 	if(key == FL_KEY && state < 7)
 	{
-		if(cameraMakeNikon) camera.liveView(false);	
 		state = 0;
 		//camera.liveView(false);
 		return FN_CANCEL;
