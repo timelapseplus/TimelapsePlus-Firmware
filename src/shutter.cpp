@@ -357,7 +357,7 @@ void shutter_bulbEnd(void)
             clock.in(SHUTTER_PRESS_TIME, &shutter_off);
         }
     }
-    DEBUG_NL();
+    //DEBUG_NL();
 }
 
 /******************************************************************
@@ -768,11 +768,11 @@ char shutter::task()
     {
         if(old_state != run_state)
         {
-            if(conf.debugEnabled)
-            {
-                DEBUG(PSTR("State: RUN_DELAY"));
-                DEBUG_NL();
-            }
+            //if(conf.debugEnabled)
+            //{
+            //    DEBUG(PSTR("State: RUN_DELAY"));
+            //    DEBUG_NL();
+            //}
             strcpy((char *) status.textStatus, TEXT("Delay"));
             old_state = run_state;
         }
@@ -810,11 +810,11 @@ char shutter::task()
         last_photo_end_ms = 0;
         if(old_state != run_state)
         {
-            if(conf.debugEnabled)
-            {
-                DEBUG(PSTR("State: RUN_PHOTO"));
-                DEBUG_NL();
-            }
+            //if(conf.debugEnabled)
+            //{
+            //    DEBUG(PSTR("State: RUN_PHOTO"));
+            //    DEBUG_NL();
+            //}
             strcpy((char *) status.textStatus, TEXT("Photo"));
             old_state = run_state;
 
@@ -853,11 +853,11 @@ char shutter::task()
         {
             old_state = run_state;
 
-            if(conf.debugEnabled)
-            {
-                DEBUG(PSTR("State: RUN_BULB"));
-                DEBUG_NL();
-            }
+            //if(conf.debugEnabled)
+            //{
+            //    DEBUG(PSTR("State: RUN_BULB"));
+            //    DEBUG_NL();
+            //}
             strcpy((char *) status.textStatus, TEXT("Bulb"));
 
             m = camera.shutterType(current.Exp);
@@ -1040,7 +1040,7 @@ char shutter::task()
                             run_state = RUN_ERROR;
                             return CONTINUE;
                         }
-                        DEBUG_NL();
+                        //DEBUG_NL();
                     }
                 }
                 if((conf.brampMode & BRAMP_MODE_ISO) && camera.supports.iso)
@@ -1055,7 +1055,7 @@ char shutter::task()
                             run_state = RUN_ERROR;
                             return CONTINUE;
                         }
-                        DEBUG_NL();
+                        //DEBUG_NL();
                     }
                 }
                 
@@ -1182,7 +1182,7 @@ char shutter::task()
             }
             else
             {
-                DEBUG(PSTR("Running Capture\r\n"));
+                //DEBUG(PSTR("Running Capture\r\n"));
                 shutter_capture();
             }
         }
@@ -1221,11 +1221,11 @@ char shutter::task()
 
         if(old_state != run_state)
         {
-            if(conf.debugEnabled)
-            {
-                DEBUG(PSTR("State: RUN_NEXT"));
-                DEBUG_NL();
-            }
+            //if(conf.debugEnabled)
+            //{
+            //    DEBUG(PSTR("State: RUN_NEXT"));
+            //    DEBUG_NL();
+            //}
             old_state = run_state;
         }
 
@@ -1270,11 +1270,11 @@ char shutter::task()
         {
             movedFocus = 0;
             if(conf.auxPort == AUX_MODE_DOLLY) aux_pulse();
-            if(conf.debugEnabled)
-            {
-                DEBUG(PSTR("State: RUN_GAP"));
-                DEBUG_NL();
-            }
+            //if(conf.debugEnabled)
+            //{
+            //    DEBUG(PSTR("State: RUN_GAP"));
+            //    DEBUG_NL();
+            //}
             strcpy((char *) status.textStatus, TEXT("Waiting"));
             old_state = run_state;
             if(motor1.connected) moveMotor1((int32_t)interpolateKeyframe(&current.kfMotor1, clock.Seconds()));
@@ -1353,11 +1353,11 @@ char shutter::task()
             shutter_off();
             camera.bulbEnd();
 
-            if(conf.debugEnabled)
-            {
-                DEBUG(PSTR("State: RUN_ERROR"));
-                DEBUG_NL();
-            }
+            //if(conf.debugEnabled)
+            //{
+            //    DEBUG(PSTR("State: RUN_ERROR"));
+            //    DEBUG_NL();
+            //}
             menu.blink();
             strcpy((char *) status.textStatus, TEXT("Error"));
             old_state = run_state;
@@ -1387,11 +1387,11 @@ char shutter::task()
     {
         if(old_state != run_state)
         {
-            if(conf.debugEnabled)
-            {
-                DEBUG(PSTR("State: RUN_END"));
-                DEBUG_NL();
-            }
+            //if(conf.debugEnabled)
+            //{
+            //    DEBUG(PSTR("State: RUN_END"));
+            //    DEBUG_NL();
+            //}
             strcpy((char *) status.textStatus, TEXT("Done"));
             old_state = run_state;
         }
@@ -2015,11 +2015,11 @@ float interpolateKeyframe(keyframeGroup_t *kf, uint32_t seconds)
 
 void moveMotor1(int32_t pos)
 {
-  DEBUG(STR("SEQ:"));
-  DEBUG(timer.status.photosTaken);
-  DEBUG(STR(", M1:"));
-  DEBUG(pos);
-  DEBUG_NL();
+  //DEBUG(STR("SEQ:"));
+  //DEBUG(timer.status.photosTaken);
+  //DEBUG(STR(", M1:"));
+  //DEBUG(pos);
+  //DEBUG_NL();
   motor1.enable();
   motor1.moveToPosition((int32_t) pos);
 }

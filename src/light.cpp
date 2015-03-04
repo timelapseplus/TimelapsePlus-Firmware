@@ -211,7 +211,6 @@ void Light::task()
   {
     lcd.backlight(255);
     wasPaused = 5;
-    DEBUG_NL();
     return;
   }
 
@@ -219,7 +218,6 @@ void Light::task()
   {
     lcd.backlight(0);
     wasPaused--;
-    DEBUG_NL();
     return;
   }
 

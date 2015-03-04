@@ -872,7 +872,7 @@ uint8_t PTP::init()
         	switch(supportedProperties[i])
 	    	{
 	    		case EOS_DPC_LiveView:
-		    		DEBUG(PSTR("Supports DPC_LiveView\r\n"));
+		    		//DEBUG(PSTR("Supports DPC_LiveView\r\n"));
 	    			lvOCmode = 0;
 	    			break;
 	    	}
@@ -1142,7 +1142,7 @@ uint8_t PTP::checkEvent()
 			if((tevent = PTP_GetEvent(&event_value)))
 			{
 				busy = false;
-				DEBUG(PSTR("Received Asynchronous Event!\r\n"));
+				//DEBUG(PSTR("Received Asynchronous Event!\r\n"));
 				switch(tevent)
 				{
 					case PTP_EC_OBJECT_CREATED:
