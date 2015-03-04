@@ -54,6 +54,8 @@ volatile uint8_t rampISO = 0;
 volatile uint8_t rampAperture = 0;
 volatile uint8_t rampTargetCustom = 0;
 volatile uint8_t showFocus = 0;
+volatile uint8_t pcSyncAux = 0;
+volatile uint8_t dollyAux = 0;
 
 volatile uint8_t brampNotAuto = 0;
 volatile uint8_t brampNotGuided = 0;
@@ -123,6 +125,9 @@ void updateConditions()
 	rampTargetCustom = (timer.current.nightMode == BRAMP_TARGET_CUSTOM && brampAuto);
 	cameraMakeNikon = conf.camera.cameraMake == NIKON;
 	showFocus = conf.focusEnabled && camera.supports.focus;
+  pcSyncAux = (conf.auxPort == AUX_MODE_SYNC);
+  dollyAux = (conf.auxPort == AUX_MODE_DOLLY);
+
 	if(modeRamp && timer.current.Gap < BRAMP_INTERVAL_MIN)
 	{
 		timer.current.Gap = BRAMP_INTERVAL_MIN;

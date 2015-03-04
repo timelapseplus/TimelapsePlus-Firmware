@@ -677,6 +677,17 @@ const settings_item settings_motion_hold[]PROGMEM =
     { "\0           ", 0, 0 }
 };
 
+const char STR_PC_SYNC_MODE1[]PROGMEM = "Possible Flicker";
+const char STR_PC_SYNC_MODE2[]PROGMEM = "Fail on Disconnect";
+
+const settings_item menu_settings_pc_sync_mode[]PROGMEM =
+{
+    { "Auto Detect ", 0, (void*)STR_PC_SYNC_MODE1 },
+    { "Required    ", 1, (void*)STR_PC_SYNC_MODE2 },
+    { "\0           ", 0, 0 }
+};
+
+
 const char STR_MOTION_STEPS[]PROGMEM = "Step Size";
 const char STR_MOTION_BACKLASH[]PROGMEM = "Backlash Steps";
 
@@ -714,9 +725,10 @@ const menu_item menu_settings_timelapse[]PROGMEM =
 const menu_item menu_settings_auxiliary[]PROGMEM =
 {
     { "AUX Port    ", 'S', (void*)menu_settings_aux_port, (void*)&conf.auxPort, (void*)settings_update, 0 },
-    { "Dolly Pulse1", 'C', (void*)&conf.dollyPulse, (void*)STR_DOLLY_PULSE, (void*)settings_update, &conf.auxPort },
-    { "Dolly Pulse2", 'C', (void*)&conf.dollyPulse2, (void*)STR_DOLLY_PULSE, (void*)settings_update, &conf.auxPort },
-    { "BT Default  ", 'S', (void*)menu_settings_bt_default, (void*)&conf.btMode, (void*)settings_update, &bt.present },
+    { "PC-Sync Mode", 'S', (void*)menu_settings_pc_sync_mode, (void*)&conf.pcSyncRequired, (void*)settings_update, (void*)&pcSyncAux },
+    { "Dolly Pulse1", 'C', (void*)&conf.dollyPulse, (void*)STR_DOLLY_PULSE, (void*)settings_update, (void*)&dollyAux },
+    { "Dolly Pulse2", 'C', (void*)&conf.dollyPulse2, (void*)STR_DOLLY_PULSE, (void*)settings_update, (void*)&dollyAux },
+    { "BT Default  ", 'S', (void*)menu_settings_bt_default, (void*)&conf.btMode, (void*)settings_update, (void*)&bt.present },
     { "\0           ", 'V', 0, 0, 0 }
 };
 

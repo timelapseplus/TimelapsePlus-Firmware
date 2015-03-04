@@ -101,6 +101,7 @@ volatile void Clock::count()
         if(conf.auxPort == AUX_MODE_SYNC && !AUX_INPUT1)
         {
             if(bulbDuration > conf.camera.bulbEndOffset) bulbDurationPCsync = bulbDuration - conf.camera.bulbEndOffset; else bulbDurationPCsync = 0;
+            if(conf.pcSyncRequired) bulbDuration += 2000; // wait up to 2 seconds for pc-sync input
         }
         else
         {

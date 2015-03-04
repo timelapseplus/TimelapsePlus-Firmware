@@ -8,7 +8,7 @@
  *
  */
  
-#define SETTINGS_VERSION 20141122
+#define SETTINGS_VERSION 20150303
 
 #define ALL -1
 #define CANON 0
@@ -122,6 +122,7 @@ struct settings_t
     uint8_t motionPowerSave1;
     uint8_t motionPowerSave2;
     uint8_t motionPowerSave3;
+    uint8_t pcSyncRequired;
     uint8_t pad[12];
 };
 

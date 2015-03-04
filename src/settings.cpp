@@ -150,6 +150,7 @@ void settings_default()
     conf.motionStep3 = 250;
     conf.focusStep = 10;
     conf.focusEnabled = 1;
+    conf.pcSyncRequired = 0;
     conf.motionBacklash1 = 0;
     conf.motionBacklash2 = 0;
     conf.motionBacklash3 = 0;
