@@ -765,7 +765,15 @@ volatile char autoConfigureCameraTiming(char key, char first)
 
 				// find bulb min
 				bulbMin = camera.bulbMinStatic();
-				float minTime = (float)start_lag - (float)end_lag;
+				float minTime;
+        if(conf.pcSyncRequired)
+        {
+          minTime = (float)end_lag;
+        }
+        else
+        {
+          minTime = (float)start_lag - (float)end_lag;
+        }
 				if((float)end_lag > minTime) minTime = (float)end_lag;
 				while(minTime >= ((float)camera.bulbTime(bulbMin)) * 1.05)
 				{
@@ -3265,7 +3273,14 @@ volatile char bramp_monitor(char key, char first)
 		        }
 				if(timer.apertureReady || timer.apertureEvShift)
 				{
-					strcpy(message_text, STR("Aperture +/-"));
+              if(timer.apertureReady)
+              {
+                strcpy(message_text, STR("Aperture +/-"));
+              }
+              else
+              {
+                strcpy(message_text, STR("Shift +/-"));
+              }
 			        uint8_t l = strlen(message_text) * 6 / 2;
 			        lcd.eraseBox(41 - l - 2, 12, 41 + l + 2, 24 + 10);
 			        lcd.drawBox(41 - l - 1, 13, 41 + l + 1, 23 + 10);

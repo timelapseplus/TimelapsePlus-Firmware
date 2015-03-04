@@ -1883,16 +1883,19 @@ uint8_t PTP::setAperture(uint8_t ev)
 
 uint8_t PTP::setFocus(uint8_t af)
 {
-	if(PTP_protocol == PROTOCOL_EOS)
-	{
-		return setEosParameter(EOS_DPC_AFMode, (af ? 0x0 : 0x03));
-	}
-	else if(PTP_protocol == PROTOCOL_NIKON)
-	{
-		//return setPtpParameter(NIKON_DPC_AutofocusMode, (uint16_t)(af ? 32784 : 0));
-		return setPtpParameter(NIKON_DPC_AutofocusMode, (uint8_t)(af ? 0x0 : 0x04));
-	}
-	return 0;
+  if(ready)
+  {
+    if(PTP_protocol == PROTOCOL_EOS)
+    {
+      return setEosParameter(EOS_DPC_AFMode, (af ? 0x0 : 0x03));
+    }
+    else if(PTP_protocol == PROTOCOL_NIKON)
+    {
+      //return setPtpParameter(NIKON_DPC_AutofocusMode, (uint16_t)(af ? 32784 : 0));
+      return setPtpParameter(NIKON_DPC_AutofocusMode, (uint8_t)(af ? 0x00 : 0x04));
+    }
+  }
+  return 0;
 }
 
 uint8_t PTP::setEosParameter(uint16_t param, uint32_t value)

@@ -488,8 +488,11 @@ void shutter::begin()
     if(camera.modeLiveView)
     {
         camera.liveView(false);
-        _delay_ms(300);
+        _delay_ms(1000);
+        camera.checkEvent();
     }
+    paused = 0;
+    pausing = 0;
     running = 1;
 }
 
@@ -587,8 +590,14 @@ char shutter::task()
         {
             
             menu.message(TEXT("Loading"));
-            moveAxes(0,0,0);
             menu.task();
+
+            moveAxes(0,0,0);
+            if(camera.modeLiveView)
+            {
+                camera.liveView(false);
+                _delay_ms(300);
+            }
 
             if(current.Mode & RAMP)
             {
@@ -635,9 +644,15 @@ char shutter::task()
                 status.preChecked = 3;
             }
 
-            if(camera.supports.aperture) aperture = camera.aperture();
-            if(camera.supports.iso) iso = camera.iso();
 
+            if(camera.ready)
+            {
+              _delay_ms(500);
+              camera.checkEvent();
+              if(camera.supports.aperture) aperture = camera.aperture();
+              if(camera.supports.iso) iso = camera.iso();
+              camera.setFocus(false);
+            }
         }
 
         if(status.preChecked < 3) return CONTINUE;
@@ -705,6 +720,9 @@ char shutter::task()
             if(avMax > conf.apertureMax) avMax = conf.apertureMax;
             if(avMin < conf.apertureMin) avMin = conf.apertureMin;
 
+            if(avMax > camera.apertureMax()) avMax = camera.apertureMax();
+            if(avMin < camera.apertureMin()) avMin = camera.apertureMin();
+
             //DEBUG(PSTR("rampMin: "));
             //DEBUG(status.rampMin);
             //DEBUG_NL();
@@ -741,6 +759,8 @@ char shutter::task()
 
             // limit any manual changes to the limits
             int8_t rampCurrent = (int8_t) status.rampStops;
+            if(status.rampStops > (float) rampCurrent) rampCurrent++;
+            else if(status.rampStops < (float) rampCurrent) rampCurrent--;
             if(apertureEvShift > status.rampMax - rampCurrent) apertureEvShift = status.rampMax - rampCurrent; // max stops darker
             if(apertureEvShift < status.rampMin - rampCurrent) apertureEvShift = status.rampMin - rampCurrent; // max stops brighter
 
@@ -1307,10 +1327,12 @@ char shutter::task()
                 int32_t pos = (int32_t)interpolateKeyframe(&current.kfFocus, clock.Seconds());
                 if(pos != focusPos)
                 {
+                    camera.setFocus(true);
                     _delay_ms(100);
                     wdt_reset();
                     moveFocus(pos);
                     _delay_ms(100);
+                    camera.setFocus(false);
                     wdt_reset();
                     if(camera.modeLiveView)
                     {
