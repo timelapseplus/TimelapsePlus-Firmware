@@ -2135,8 +2135,8 @@ void updateKeyframeGroup(keyframeGroup_t *kf)
     }
     else if(kf->type == KFT_EXPOSURE)
     {
-        if(kf->max == 0) kf->max = (int32_t) calcRampMax();
-        if(kf->min == 0) kf->min = (int32_t) calcRampMin();
+        kf->max = (int32_t) calcRampMax();
+        kf->min = (int32_t) calcRampMin();
         kf->steps = 1;
         kf->rangeExtendable = 0;
         kf->move = NULL;
