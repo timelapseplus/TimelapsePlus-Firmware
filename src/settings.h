@@ -8,7 +8,7 @@
  *
  */
  
-#define SETTINGS_VERSION 20150303
+#define SETTINGS_VERSION 20150313
 
 #define ALL -1
 #define CANON 0
@@ -72,6 +72,7 @@ struct camera_settings_t
     uint16_t bulbEndOffset;
     uint8_t autoConfigured;
     uint16_t brampGap;
+    uint8_t canonLVOC;
 };
 
 struct settings_t
@@ -123,6 +124,12 @@ struct settings_t
     uint8_t motionPowerSave2;
     uint8_t motionPowerSave3;
     uint8_t pcSyncRequired;
+    uint8_t motionSetupMove1;
+    uint8_t motionSetupMove2;
+    uint8_t motionSetupMove3;
+    uint16_t motionUnit1;
+    uint16_t motionUnit2;
+    uint16_t motionUnit3;
     uint8_t pad[12];
 };
 

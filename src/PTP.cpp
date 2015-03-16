@@ -37,7 +37,7 @@ uint16_t PTP_propertyOffset;
 
 uint32_t currentObject;
 
-uint8_t lvOCmode, ptpBulbMode;
+uint8_t ptpBulbMode;
 uint8_t supports_nikon_capture;
 
 PTP::PTP(void)
@@ -791,7 +791,7 @@ uint8_t PTP::init()
 
 	videoMode = true; // overwritten if camera has video mode property
 
-	lvOCmode = 0;
+	//lvOCmode = 0;
 	ptpBulbMode = 0;
 	uint8_t bulbSupport = 0;
 
@@ -812,7 +812,7 @@ uint8_t PTP::init()
 	    			break;
 	    		case EOS_OC_LV_START:
 	    		case EOS_OC_LV_STOP:
-	    			lvOCmode++;
+	    			//lvOCmode++;
 	    			break;
 				case EOS_OC_REMOTE_RELEASE_ON:
 				case EOS_OC_REMOTE_RELEASE_OFF:
@@ -865,11 +865,11 @@ uint8_t PTP::init()
 			//sendHex((char *)&supportedOperations[i]);
     	}
     }
-    for(uint16_t i = 0; i < supportedPropertiesCount; i++)
+    /*for(uint16_t i = 0; i < supportedPropertiesCount; i++)
     {
     	if(PTP_protocol == PROTOCOL_EOS)
     	{
-        	switch(supportedProperties[i])
+        switch(supportedProperties[i])
 	    	{
 	    		case EOS_DPC_LiveView:
 		    		//DEBUG(PSTR("Supports DPC_LiveView\r\n"));
@@ -886,8 +886,8 @@ uint8_t PTP::init()
 	    //			break;
 	    //	}
     	//}
-    }
-	if(lvOCmode > 1) lvOCmode = true; else lvOCmode = false;		
+    }*/
+	  //if(lvOCmode > 1) lvOCmode = true; else lvOCmode = false;		
     if(bulbSupport > 1) supports.bulb = true; else supports.bulb = false;		    
     if(!supports.bulb)
     {
@@ -931,7 +931,7 @@ uint8_t PTP::liveView(uint8_t on)
 	uint8_t ret = 0;
 	if(PTP_protocol == PROTOCOL_EOS)
 	{
-		if(lvOCmode)
+		if(conf.camera.canonLVOC) //lvOCmode)
 		{
 			//DEBUG(PSTR("Using LV OC mode\r\n"));
 			if(on)
