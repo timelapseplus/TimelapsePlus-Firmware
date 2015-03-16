@@ -3,7 +3,6 @@
  *  AVR_Shutter
  *
  *  Created by Elijah Parker on 10/25/10.
- *  Copyright 2010 __MyCompanyName__. All rights reserved.
  *
  */
 #ifndef shutter_h
@@ -101,7 +100,7 @@
 
 struct keyframe_t {
     int32_t value;
-    uint32_t seconds;
+    uint32_t ms;
 };
 
 struct keyframeGroup_t {
@@ -114,7 +113,7 @@ struct keyframeGroup_t {
     int32_t min;
     int16_t steps;
     uint8_t rangeExtendable;    
-    void (*move)(uint32_t seconds, int32_t pos, uint8_t type);
+    void (*move)(uint32_t ms, int32_t pos, uint8_t type, uint8_t force);
 };
 
 #define KFT_EXPOSURE 0
@@ -139,9 +138,6 @@ struct program
     uint16_t ArbExp;      
     uint16_t Bracket;     
     uint16_t BulbStart;   
-    //uint16_t Bulb[MAX_KEYFRAMES];    
-    //uint16_t Key[MAX_KEYFRAMES];     
-    //uint16_t Keyframes;
     keyframeGroup_t kfMotor1;   
     keyframeGroup_t kfMotor2;   
     keyframeGroup_t kfMotor3;   
@@ -263,13 +259,13 @@ uint8_t rampTvUpExtended(uint8_t ev);
 uint8_t rampTvDown(uint8_t ev);
 uint8_t rampTvDownExtended(uint8_t ev);
 void calcInterval();
-float interpolateKeyframe(keyframeGroup_t *kf, uint32_t seconds);
+float interpolateKeyframe(keyframeGroup_t *kf, uint32_t ms);
 void updateKeyframeGroup(keyframeGroup_t *kf);
 void moveFocus(int32_t pos);
 void moveMotor1(int32_t pos);
 void moveMotor2(int32_t pos);
 void moveMotor3(int32_t pos);
-void moveAxes(uint32_t seconds, int32_t pos, uint8_t type);
+void moveAxes(uint32_t seconds, int32_t pos, uint8_t type, uint8_t force);
 
 extern uint8_t lastShutterError;
 #endif

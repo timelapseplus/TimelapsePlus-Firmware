@@ -1827,20 +1827,20 @@ void MENU::blink()
 #define CHARTBOX_HEIGHT (CHARTBOX_Y2 - CHARTBOX_Y1 - 2)
 #define CHARTBOX_WIDTH (CHARTBOX_X2 - CHARTBOX_X1 - 2)
 
-uint8_t MENU::addKeyframe(keyframeGroup_t *kf, int32_t value, uint32_t seconds)
+uint8_t MENU::addKeyframe(keyframeGroup_t *kf, int32_t value, uint32_t ms)
 {
   if(kf->count >= MAX_KEYFRAMES - 1) return 0; // no space left
 
   for(uint8_t i = 0; i < kf->count; i++)
   {
-    if(kf->keyframes[i].seconds >= seconds)
+    if(kf->keyframes[i].ms >= ms)
     {
       for(uint8_t j = kf->count + 1; j > i; j--)
       {
         memmove(&kf->keyframes[j], &kf->keyframes[j - 1], sizeof(kf->keyframes[0]));
       }
       kf->keyframes[i].value = value;
-      kf->keyframes[i].seconds = seconds;
+      kf->keyframes[i].ms = ms;
       kf->count++;
       return i + 1;
     }
@@ -1863,7 +1863,7 @@ char MENU::editKeyframe(char key, keyframeGroup_t *kf, char first)
 {
   static uint8_t cursor = 0, edit = 0, draw = 1;
   button->verticalRepeat = 1;
-  static uint32_t cSeconds = 0;
+  static uint32_t cMs = 0;
   static int32_t cValue = 0;
   static uint8_t lastKf = 0, nextKf = 0, needMove = 1;
 
@@ -1889,16 +1889,16 @@ char MENU::editKeyframe(char key, keyframeGroup_t *kf, char first)
     if(edit == 0) lcd->drawLine(CHARTBOX_X1 + 1 + cursor, CHARTBOX_Y1, CHARTBOX_X1 + 1 + cursor, CHARTBOX_Y2);
 
     //draw plot
-    cSeconds = 0;
+    cMs = 0;
     cValue = 0;
     for(uint8_t i = 0; i <= CHARTBOX_WIDTH; i++)
     {
-      uint32_t seconds = (uint32_t)(((float)i / CHARTBOX_WIDTH) * (float)(kf->keyframes[kf->count - 1].seconds - kf->keyframes[0].seconds)) + kf->keyframes[0].seconds;
+      uint32_t ms = (uint32_t)(((float)i / CHARTBOX_WIDTH) * (float)(kf->keyframes[kf->count - 1].ms - kf->keyframes[0].ms)) + kf->keyframes[0].ms;
       float key1 = 0, key2 = 0, key3 = 0, key4 = 0;
       uint8_t ki = 0;
       for(uint8_t k = 0; k < kf->count; k++)
       {
-        if(kf->keyframes[k].seconds >= seconds && k > 0)
+        if(kf->keyframes[k].ms >= ms && k > 0)
         {
           ki = k;
           key1 = key2 = key3 = key4 = (float)kf->keyframes[ki].value;
@@ -1922,17 +1922,17 @@ char MENU::editKeyframe(char key, keyframeGroup_t *kf, char first)
           break;
         }
       }
-      uint32_t lastKFseconds = kf->keyframes[ki > 0 ? ki - 1 : 0].seconds;
-      float t = (float)(seconds - lastKFseconds) / (float)(kf->keyframes[ki].seconds - lastKFseconds);
+      uint32_t lastKFms = kf->keyframes[ki > 0 ? ki - 1 : 0].ms;
+      float t = (float)(ms - lastKFms) / (float)(kf->keyframes[ki].ms - lastKFms);
 
       float val = curve(key1, key2, key3, key4, t);
       if(i == cursor)
       {
-        cSeconds = seconds;
+        cMs = ms;
         cValue = (uint32_t)val;
         if(edit == 1 && kf->selected > 0)
         {
-          kf->keyframes[kf->selected - 1].seconds = cSeconds;
+          kf->keyframes[kf->selected - 1].ms = cMs;
         }
       }
       uint8_t yval = (uint8_t)(((float)kf->max - val) / (float)(kf->max - kf->min) * (float)CHARTBOX_HEIGHT);
@@ -1945,7 +1945,7 @@ char MENU::editKeyframe(char key, keyframeGroup_t *kf, char first)
     nextKf = 0;
     for(uint8_t i = 0; i < kf->count; i++)
     {
-      uint8_t x = CHARTBOX_X1 + 1 + (uint8_t) ((float)CHARTBOX_WIDTH * ((float)kf->keyframes[i].seconds / (float)kf->keyframes[kf->count - 1].seconds) + 0.5);
+      uint8_t x = CHARTBOX_X1 + 1 + (uint8_t) ((float)CHARTBOX_WIDTH * ((float)kf->keyframes[i].ms / (float)kf->keyframes[kf->count - 1].ms) + 0.5);
       uint8_t y = CHARTBOX_Y1 + 1 + (uint8_t) ((float)CHARTBOX_HEIGHT * ((float)(kf->max - kf->keyframes[i].value) / (float)(kf->max - kf->min)));
 
       if(i < kf->count - 1 || kf->hasEndKeyframe)
@@ -1959,7 +1959,7 @@ char MENU::editKeyframe(char key, keyframeGroup_t *kf, char first)
       {
         kf->selected = i + 1;
         lcd->clearPixel(x, y);
-        cSeconds = kf->keyframes[i].seconds;
+        cMs = kf->keyframes[i].ms;
         cValue = kf->keyframes[i].value;
       }
 
@@ -1978,6 +1978,12 @@ char MENU::editKeyframe(char key, keyframeGroup_t *kf, char first)
       }
       else
       {
+        if(kf->type == KFT_MOTOR1 && conf.motionUnit1)
+          tmp /= conf.motionUnit1;
+        else if(kf->type == KFT_MOTOR2 && conf.motionUnit2)
+          tmp /= conf.motionUnit2;
+        else if(kf->type == KFT_MOTOR3 && conf.motionUnit3)
+          tmp /= conf.motionUnit3;
         buf[0] = '+';
         if(tmp < 0)
         {
@@ -2013,7 +2019,7 @@ char MENU::editKeyframe(char key, keyframeGroup_t *kf, char first)
 
       //cursor time
       uint8_t h, m, s;
-      tmp = cSeconds;
+      tmp = cMs / 1000;
       s = (uint8_t)(tmp % 60);
       tmp -= s;
       tmp /= 60;
@@ -2081,7 +2087,7 @@ char MENU::editKeyframe(char key, keyframeGroup_t *kf, char first)
         lcd->writeString(41 - l, 15, message_text);
         lcd->update();
 
-        (*kf->move)(cSeconds, cValue, kf->type);
+        (*kf->move)(cMs, cValue, kf->type, 0);
         draw = 1;
         needMove = 0;
       }
@@ -2091,8 +2097,8 @@ char MENU::editKeyframe(char key, keyframeGroup_t *kf, char first)
   uint8_t lx = 0;
   uint8_t nx = 0;
 
-  if(lastKf) lx = CHARTBOX_X1 + 1 + (uint8_t) ((float)CHARTBOX_WIDTH * ((float)kf->keyframes[lastKf - 1].seconds / (float)kf->keyframes[kf->count - 1].seconds) + 0.5);
-  if(nextKf) nx = CHARTBOX_X1 + 1 + (uint8_t) ((float)CHARTBOX_WIDTH * ((float)kf->keyframes[nextKf - 1].seconds / (float)kf->keyframes[kf->count - 1].seconds) + 0.5);
+  if(lastKf) lx = CHARTBOX_X1 + 1 + (uint8_t) ((float)CHARTBOX_WIDTH * ((float)kf->keyframes[lastKf - 1].ms / (float)kf->keyframes[kf->count - 1].ms) + 0.5);
+  if(nextKf) nx = CHARTBOX_X1 + 1 + (uint8_t) ((float)CHARTBOX_WIDTH * ((float)kf->keyframes[nextKf - 1].ms / (float)kf->keyframes[kf->count - 1].ms) + 0.5);
 
   if(key) draw = 1;
 
@@ -2146,7 +2152,7 @@ char MENU::editKeyframe(char key, keyframeGroup_t *kf, char first)
   {
     if(edit == 0)
     {
-      if(kf->selected == 0) kf->selected = addKeyframe(kf, cValue - (cValue % kf->steps), cSeconds);
+      if(kf->selected == 0) kf->selected = addKeyframe(kf, cValue - (cValue % kf->steps), cMs);
       if(cValue != cValue - (cValue % kf->steps)) needMove = 1;
       if(kf->selected) edit = 1;
       if(kf->selected == kf->count) kf->hasEndKeyframe = 1;
@@ -2173,7 +2179,7 @@ char MENU::editKeyframe(char key, keyframeGroup_t *kf, char first)
   {
     if(edit == 0)
     {
-      if(kf->selected == 0) kf->selected = addKeyframe(kf, cValue - (cValue % kf->steps), cSeconds);
+      if(kf->selected == 0) kf->selected = addKeyframe(kf, cValue - (cValue % kf->steps), cMs);
       if(cValue != cValue - (cValue % kf->steps)) needMove = 1;
       if(kf->selected) edit = 1;
       if(kf->selected == kf->count) kf->hasEndKeyframe = 1;
