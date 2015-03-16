@@ -323,9 +323,6 @@ void MENU::init(menu_item *newmenu)
 
                 for(uint8_t x = 0; x < MENU_MAX; x++)
                 {
-                    if(pgm_read_byte(&set[x].name[0]) == '0') 
-                        break;
-                    
                     if(pgm_read_byte(&set[x].value) == *var)
                     {
                         for(c = 0; c < MENU_NAME_LEN - 1; c++) // Write settings item text //
@@ -335,6 +332,9 @@ void MENU::init(menu_item *newmenu)
                         }
                         break;
                     }
+                    if(pgm_read_byte(&set[x].end)) 
+                        break;
+                    
                 }
             } 
             else
@@ -367,10 +367,7 @@ void MENU::init(menu_item *newmenu)
                 var = (unsigned int*)pgm_read_word(&menu[i].description);
 
                 for(uint8_t x = 0; x < MENU_MAX; x++)
-                {
-                    if(pgm_read_byte(&set[x].name[0]) == '0') 
-                        break;
-                    
+                {                    
                     if(pgm_read_byte(&set[x].value) == *var)
                     {
                         for(c = 0; c < MENU_NAME_LEN - 1; c++) // Write settings item text //
@@ -380,6 +377,8 @@ void MENU::init(menu_item *newmenu)
                         }
                         break;
                     }
+                    if(pgm_read_byte(&set[x].end)) 
+                        break;
                 }
             }
             else if(type == 'D' && c == '+') // Write setting selection over menu text
@@ -1431,12 +1430,13 @@ char MENU::editSelect(char key, char *n, void *settingslist, char *name, char fi
         i = 0;
         l = 0;
         
-        while (pgm_read_byte(&slist[l].name[0]) != 0)
+        for(uint8_t t = 0; t < MENU_MAX; t++)
         {
             if(*n == pgm_read_byte(&slist[l].value)) 
                 i = l;
             
             l++;
+            if(pgm_read_byte(&slist[l - 1].end)) break;
         }
     }
 
