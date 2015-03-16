@@ -56,11 +56,13 @@ volatile uint8_t rampTargetCustom = 0;
 volatile uint8_t showFocus = 0;
 volatile uint8_t pcSyncAux = 0;
 volatile uint8_t dollyAux = 0;
+volatile uint8_t showKfInterval = 0;
 
 volatile uint8_t brampNotAuto = 0;
 volatile uint8_t brampNotGuided = 0;
 
 volatile uint8_t cameraMakeNikon = 0;
+volatile uint8_t cameraMakeCanon = 0;
 
 extern uint8_t battery_percent;
 extern settings_t conf;
@@ -115,6 +117,7 @@ void updateConditions()
 	brampKeyframe = timer.current.brampMethod == BRAMP_METHOD_KEYFRAME && modeRamp;
 	showGap = timer.current.Photos != 1 && modeTimelapse && (timer.current.IntervalMode == INTERVAL_MODE_FIXED || modeNoRamp);
 	showIntervalMaxMin = timer.current.Photos != 1 && modeTimelapse && modeRamp && timer.current.IntervalMode == INTERVAL_MODE_AUTO;
+  showKfInterval = timer.current.Photos != 1 && modeTimelapse && modeRamp && timer.current.IntervalMode == INTERVAL_MODE_KEYFRAME;
 	showRemoteStart = (remote.connected && !remote.running && remote.model == REMOTE_MODEL_TLP);	
 	showRemoteInfo = (remote.connected && (remote.model == REMOTE_MODEL_TLP || remote.model == REMOTE_MODEL_IPHONE));
 	clock.sleepOk = timerNotRunning && !timer.cableIsConnected() && bt.state != BT_ST_CONNECTED && bt.state != BT_ST_CONNECTED_NMX && sleepOk;
@@ -124,6 +127,7 @@ void updateConditions()
 	rampAperture = (conf.brampMode & BRAMP_MODE_APERTURE && camera.supports.aperture);
 	rampTargetCustom = (timer.current.nightMode == BRAMP_TARGET_CUSTOM && brampAuto);
 	cameraMakeNikon = conf.camera.cameraMake == NIKON;
+  cameraMakeCanon = conf.camera.cameraMake == CANON;
 	showFocus = conf.focusEnabled && camera.supports.focus;
   pcSyncAux = (conf.auxPort == AUX_MODE_SYNC);
   dollyAux = (conf.auxPort == AUX_MODE_DOLLY);
@@ -619,23 +623,12 @@ volatile char autoConfigureCameraTiming(char key, char first)
 		lcd.cls();
 		menu.setTitle(TEXT("Auto Configure"));
 
-		if(!conf.camera.autoConfigured && camera.ready)
-		{
-			lcd.writeStringTiny(2, 8,  PTEXT(" Camera requires  "));
-			lcd.writeStringTiny(2, 14, PTEXT(" calibration for  "));
-			lcd.writeStringTiny(2, 20, PTEXT(" Bramping. Please "));
-			lcd.writeStringTiny(2, 26, PTEXT(" Connect PC sync  "));
-			lcd.writeStringTiny(2, 32, PTEXT(" and press run... "));
-			menu.setBar(TEXT("Later"), TEXT("Run"));
-		}
-		else
-		{
-			lcd.writeStringTiny(2, 10, PTEXT(" Connect PC Sync  "));
-			lcd.writeStringTiny(2, 16, PTEXT(" cable and USB and"));
-			lcd.writeStringTiny(2, 22, PTEXT(" or shutter cable "));
-			lcd.writeStringTiny(2, 28, PTEXT(" before continuing"));
-			menu.setBar(TEXT("Cancel"), TEXT("Continue"));
-		}
+		lcd.writeStringTiny(2, 8,  PTEXT(" Camera requires  "));
+		lcd.writeStringTiny(2, 14, PTEXT(" calibration for  "));
+		lcd.writeStringTiny(2, 20, PTEXT(" Bramping. Please "));
+		lcd.writeStringTiny(2, 26, PTEXT(" Connect PC sync  "));
+		lcd.writeStringTiny(2, 32, PTEXT(" set to bulb mode."));
+		menu.setBar(TEXT("Later"), TEXT("Run"));
 		lcd.update();
 	}
 
@@ -982,40 +975,6 @@ volatile char factoryReset(char key, char first)
 	   		timer.setDefault();
 	   		menu.message(TEXT("Factory Reset"));
 		    return FN_CANCEL;
-	}
-
-	return FN_CONTINUE;
-}
-
-/******************************************************************
- *
- *   viewSeconds
- *
- *
- ******************************************************************/
-
-volatile char viewSeconds(char key, char first)
-{
-	if(first)
-	{
-		lcd.cls();
-		lcd.writeString(1, 18, PTEXT("Clock:"));
-		menu.setTitle(TEXT("Clock"));
-		menu.setBar(TEXT("TARE"), TEXT("RETURN"));
-	}
-
-	lcd.eraseBox(36, 18, 83, 18 + 8);
-	/*char x =*/ lcd.writeNumber(83, 18, clock.Seconds(), 'F', 'R',false);  //J.R.
-	lcd.update();
-
-	switch(key)
-	{
-	   case FL_KEY:
-		   clock.tare();
-		   break;
-
-	   case FR_KEY:
-		   return FN_CANCEL;
 	}
 
 	return FN_CONTINUE;
@@ -1772,32 +1731,6 @@ void int_to_str(uint16_t n, char buf[6] )
 	return;
 }
 
-/******************************************************************
- *
- *   notYet
- *
- *
- ******************************************************************/
-
-volatile char notYet(char key, char first)
-{
-	if(first)
-	{
-		lcd.cls();
-		lcd.writeString(3, 7, PTEXT("Sorry, this  "));
-		lcd.writeString(3, 15, PTEXT("feature has  "));
-		lcd.writeString(3, 23, PTEXT("not yet been "));
-		lcd.writeString(3, 31, PTEXT("implemented  "));
-		menu.setTitle(TEXT("Not Yet"));
-		menu.setBar(TEXT("RETURN"), BLANK_STR);
-		lcd.update();
-	}
-
-	if(key)
-		return FN_CANCEL;
-
-	return FN_CONTINUE;
-}
 
 /******************************************************************
  *
@@ -2083,7 +2016,7 @@ volatile char btConnect(char key, char first)
 		sfirst = 0;
 
 		update = 1;
-		if(bt.state != BT_ST_CONNECTED && bt.state != BT_ST_CONNECTED_NMX && !remote.nmx)
+		if(bt.state != BT_ST_CONNECTED && bt.state != BT_ST_CONNECTED_NMX)
 		{
 			DEBUG(STR("BT Advertising!\r\n"));
 			bt.advertise();
@@ -2093,32 +2026,23 @@ volatile char btConnect(char key, char first)
 
 	switch(key)
 	{
-		case UP_KEY:
-			//if(bt.state == BT_ST_CONNECTED_NMX)
-			//{
-			//	motor.enable();
-			//	motor.moveForward();
-			//}
-			//break;
-		case DOWN_KEY:
-			//if(bt.state == BT_ST_CONNECTED_NMX)
-			//{
-			//	motor.enable();
-			//	motor.moveBackward();
-			//}
-			break;
-		case LEFT_KEY:
 		case FL_KEY:
 			sfirst = 1;
-			if(bt.state != BT_ST_CONNECTED && bt.state != BT_ST_CONNECTED_NMX && !remote.nmx)
+			if(bt.state != BT_ST_CONNECTED && bt.state != BT_ST_CONNECTED_NMX)
 			{
 				if(conf.btMode == BT_MODE_SLEEP) bt.sleep(); else bt.advertise();
 			}
+      else if(remote.nmx)
+      {
+        if(motor1.connected) motor1.stop();
+        if(motor2.connected) motor2.stop();
+        if(motor3.connected) motor3.stop();
+      }
 			return FN_CANCEL;
-
 		case FR_KEY:
-			if(bt.state == BT_ST_CONNECTED || bt.state == BT_ST_CONNECTED_NMX || remote.nmx)
+			if(bt.state == BT_ST_CONNECTED || bt.state == BT_ST_CONNECTED_NMX)
 			{
+        remote.nmx = 0;
 				bt.disconnect();
 			}
 			else
@@ -2136,7 +2060,7 @@ volatile char btConnect(char key, char first)
 			break;
 		case BT_EVENT_SCAN_COMPLETE:
 			DEBUG(STR("done!\r\n"));
-			if(bt.state != BT_ST_CONNECTED && bt.state != BT_ST_CONNECTED_NMX && !remote.nmx)
+			if(bt.state != BT_ST_CONNECTED && bt.state != BT_ST_CONNECTED_NMX)
 			{
 				bt.advertise();
 				bt.scan();
@@ -2155,25 +2079,135 @@ volatile char btConnect(char key, char first)
 		update = 1;
 	}
 
-	if(key == UP_KEY && menuSelected > 0)
-	{
-		menuSelected--;
-		update = 1;
-	}
-	else if(key == DOWN_KEY && menuSelected < menuSize - 1)
-	{
-		menuSelected++;
-		update = 1;
-	}
+  if(remote.nmx && bt.state == BT_ST_CONNECTED_NMX)
+  {
+    if(menuSelected > 2) menuSelected = 0;
+    if(key == UP_KEY && menuSelected > 0)
+    {
+      menuSelected--;
+      update = 1;
+    }
+    else if(key == DOWN_KEY && menuSelected < 2)
+    {
+      menuSelected++;
+      update = 1;
+    }
+
+    if(button.isHeld(RIGHT_KEY) && !first)
+    {
+      if(motor1.connected && !motor1.running() && menuSelected == 0)
+      {
+        motor1.enable();
+        motor1.move(0, 100000, 0);
+      }
+      if(motor2.connected && !motor2.running() && menuSelected == 1)
+      {
+        motor2.enable();
+        motor2.move(0, 100000, 0);
+      }
+      if(motor3.connected && !motor3.running() && menuSelected == 2)
+      {
+        motor3.enable();
+        motor3.move(0, 100000, 0);
+      }
+      menuSize = 1;
+    }
+    else if(button.isHeld(LEFT_KEY) && !first)
+    {
+      if(motor1.connected && !motor1.running() && menuSelected == 0)
+      {
+        motor1.enable();
+        motor1.move(1, 100000, 0);
+      }
+      if(motor2.connected && !motor2.running() && menuSelected == 1)
+      {
+        motor2.enable();
+        motor2.move(1, 100000, 0);
+      }
+      if(motor3.connected && !motor3.running() && menuSelected == 2)
+      {
+        motor3.enable();
+        motor3.move(1, 100000, 0);
+      }
+      menuSize = 1;
+    }
+    else if(menuSize)
+    {
+      if(motor1.connected) motor1.stop();
+      if(motor2.connected) motor2.stop();
+      if(motor3.connected) motor3.stop();
+      menuSize = 0;
+    }
+  }
+  else
+  {
+    if(key == UP_KEY && menuSelected > 0)
+    {
+      menuSelected--;
+      update = 1;
+    }
+    else if(key == DOWN_KEY && menuSelected < menuSize - 1)
+    {
+      menuSelected++;
+      update = 1;
+    }
+  }
 
 	if(update)
 	{
 		lcd.cls();
 
-		if(bt.state == BT_ST_CONNECTED || bt.state == BT_ST_CONNECTED_NMX || remote.nmx)
+		if(bt.state == BT_ST_CONNECTED || bt.state == BT_ST_CONNECTED_NMX)
 		{
 			menu.setTitle(TEXT("Connect"));
-			lcd.writeStringTiny(18, 20, PTEXT("Connected!"));
+      if(remote.nmx)
+      {
+        lcd.writeStringTiny(10, 8, PTEXT("NMX Connected!"));
+        if(motor1.connected)
+        {
+          lcd.writeStringTiny(28, 18, PTEXT("Axis 1"));
+        }
+        else if(menuSelected == 0)
+        {
+          menuSelected++;
+        }
+        if(motor2.connected)
+        {
+          lcd.writeStringTiny(28, 25, PTEXT("Axis 2"));
+        }
+        else if(menuSelected == 1)
+        {
+          menuSelected++;
+        }
+        if(motor3.connected)
+        {
+          lcd.writeStringTiny(28, 32, PTEXT("Axis 3"));
+        }
+        else if(menuSelected == 2)
+        {
+          if(motor1.connected)
+            menuSelected = 0;
+          else if(motor2.connected)
+            menuSelected = 1;
+          else
+            menuSelected = 3;
+        }
+
+        if(menuSelected < 3)
+        {
+          lcd.drawLine(25, 18 + menuSelected * 7, 25, 22 + menuSelected * 7);
+          lcd.drawLine(24, 19 + menuSelected * 7, 24, 21 + menuSelected * 7);
+          lcd.setPixel(23, 20 + menuSelected * 7);
+
+          lcd.drawLine(55, 18 + menuSelected * 7, 55, 22 + menuSelected * 7);
+          lcd.drawLine(56, 19 + menuSelected * 7, 56, 21 + menuSelected * 7);
+          lcd.setPixel(57, 20 + menuSelected * 7);
+        }
+      }
+      else
+      {
+        lcd.writeStringTiny(18, 20, PTEXT("Connected!"));
+      }
 			menu.setBar(TEXT("RETURN"), TEXT("DISCONNECT"));
 		}
 		else
@@ -2471,39 +2505,6 @@ volatile char timerRemoteStart(char key, char first)
 	return FN_JUMP;
 }
 
-/******************************************************************
- *
- *   btFloodTest
- *
- *
- ******************************************************************/
-
-volatile char btFloodTest(char key, char first)
-{
-	if(first)
-	{
-		lcd.cls();
-		menu.setTitle(TEXT("BT Flood"));
-		menu.setBar(TEXT("CANCEL"), TEXT("FLOOD"));
-		lcd.update();
-	}
-
-	if(key == LEFT_KEY)
-	{
-		return FN_CANCEL;
-	}
-	else if(key == FR_KEY)
-	{
-		remote.send(REMOTE_PROGRAM, REMOTE_TYPE_SEND);
-		remote.send(REMOTE_PROGRAM, REMOTE_TYPE_SEND);
-		remote.send(REMOTE_PROGRAM, REMOTE_TYPE_SEND);
-		remote.send(REMOTE_PROGRAM, REMOTE_TYPE_SEND);
-		remote.send(REMOTE_PROGRAM, REMOTE_TYPE_SEND);
-		menu.message(TEXT("Sent 5 Packets"));
-	}
-
-	return FN_CONTINUE;
-}
 
 /******************************************************************
  *
@@ -2633,51 +2634,8 @@ volatile char timerRevert(char key, char first)
 	return FN_CANCEL;
 }
 
+
 /******************************************************************
- *
- *   shutter_addKeyframe
- *
- *
- ******************************************************************
-
-volatile char shutter_addKeyframe(char key, char first)
-{
-	if(timer.current.Keyframes < MAX_KEYFRAMES)
-	{
-		if(timer.current.Keyframes < 1)
-			timer.current.Keyframes = 1;
-
-		timer.current.Key[timer.current.Keyframes] = timer.current.Key[timer.current.Keyframes - 1] + 3600;
-		timer.current.Bulb[timer.current.Keyframes + 1] = timer.current.Bulb[timer.current.Keyframes];
-		timer.current.Keyframes++;
-	}
-
-	menu.back();
-
-	return FN_CANCEL;
-}
-
- ******************************************************************
- *
- *   shutter_removeKeyframe
- *
- *
- ******************************************************************
-
-volatile char shutter_removeKeyframe(char key, char first)
-{
-	if(timer.current.Keyframes > 1)
-	{
-		timer.current.Keyframes--;
-	}
-
-	menu.back();
-	menu.select(0);
-
-	return FN_CANCEL;
-}
-
- ******************************************************************
  *
  *   shutter_saveAs
  *

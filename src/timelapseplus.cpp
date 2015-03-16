@@ -19,7 +19,6 @@
 #include <LUFA/Drivers/Peripheral/Serial.h>
 #include "tldefs.h"
 #include "5110LCD.h"
-//#include "AVRS_logo.h"
 #include "clock.h"
 #include "button.h"
 #include "Menu.h"
@@ -27,7 +26,9 @@
 #include "shutter.h"
 #include "IR.h"
 #include "timelapseplus.h"
-#include "VirtualSerial.h"
+#ifdef USB_SERIAL_COMMANDS_ENABLED
+  #include "VirtualSerial.h"
+#endif
 #include "TWI_Master.h"
 #include "debug.h"
 #include "bluetooth.h"
@@ -76,6 +77,8 @@ extern volatile uint8_t cameraMakeNikon;
 extern volatile uint8_t showFocus;
 extern volatile uint8_t pcSyncAux;
 extern volatile uint8_t dollyAux;
+extern volatile uint8_t showKfInterval;
+extern volatile uint8_t cameraMakeCanon;
 
 volatile uint8_t connectUSBcamera = 0;
 
@@ -181,7 +184,9 @@ void setup()
 
 	battery_percent = battery_read();
 
+#ifdef USB_SERIAL_COMMANDS_ENABLED
 	VirtualSerial_Init();
+#endif
 
 	bt.init();
 	if(!bt.present)
@@ -334,12 +339,6 @@ int main()
 			   	   light.setRange(0);
 			   	   DEBUG(PSTR("Light Sensor INIT\r\n"));
 				   break;
-#ifdef PRODUCTION
-			   case 'R':
-			   	   DEBUG(PSTR("Light Sensor Test Results:\r\n"));
-			   	   readLightTest();
-				   break;
-#endif
 			   case 'I':
 			   	   light.integrationStart(10);
 			   	   DEBUG(PSTR("Light Sensor Integration Start\r\n"));
@@ -390,9 +389,10 @@ int main()
 
 		if(USBmode == 1)
 			PTP_Task();
+#ifdef USB_SERIAL_COMMANDS_ENABLED
 		else
 			VirtualSerial_Task();
-
+#endif
 
 		/****************************
 		   Events / Notifications
@@ -433,7 +433,9 @@ int main()
 			USBmode = 0;
 			PTP_Disable();
 			hardware_USB_SetDeviceMode();
+#ifdef USB_SERIAL_COMMANDS_ENABLED
 			VirtualSerial_Init();
+#endif
 		}
 
 	}

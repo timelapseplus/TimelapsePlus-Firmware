@@ -70,11 +70,7 @@ void settings_load()
     if(conf.lcdContrast > 0xf || conf.lcdContrast < 0x1) conf.lcdContrast = 0x8;
     if(conf.lcdCoefficent > 0x7 || conf.lcdCoefficent < 0x3) conf.lcdCoefficent = 0x7;
     if(conf.lcdBias > 0x4 || conf.lcdBias < 0x3) conf.lcdBias = 0x4;
-    if(conf.apertureMin > 100 || conf.apertureMin < 2) conf.apertureMin = 2;
-    if(conf.lightIntegrationMinutes == 255 || conf.lightIntegrationMinutes == 0) conf.lightIntegrationMinutes = 10;
     if(conf.camera.brampGap > 20 || conf.camera.brampGap == 0) conf.camera.brampGap = 6;
-    if(conf.errorAlert > 5) conf.errorAlert = 0;
-    if(conf.linearInterpolation > 1) conf.linearInterpolation = 0;
     lcd.color(conf.lcdColor);
     ir.init();
     ir.make = conf.camera.cameraMake;
