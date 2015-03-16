@@ -122,23 +122,37 @@ uint8_t NMX::moveToPosition(int32_t pos)
 
 uint8_t NMX::moveSteps(uint8_t dir, uint32_t steps)
 {
-	while(running())
-	{
-		wdt_reset();
-	}
-
-	uint8_t buf[5], buf2[4];
-	memcpy(buf2, &steps, sizeof(uint32_t));
-	buf[1] = buf2[3];
-	buf[2] = buf2[2];
-	buf[3] = buf2[1];
-	buf[4] = buf2[0];
-	buf[0] = dir;
-
-	if(dir == 0) currentPos += steps; else currentPos -= steps;
-
-	return sendCommand(0xF, 5, buf);	
+	return move(dir, steps, 1);
 }
+
+uint8_t NMX::move(uint8_t dir, uint32_t steps, uint8_t update)
+{
+  while(running())
+  {
+    wdt_reset();
+  }
+
+  uint8_t buf[5], buf2[4];
+  memcpy(buf2, &steps, sizeof(uint32_t));
+  buf[1] = buf2[3];
+  buf[2] = buf2[2];
+  buf[3] = buf2[1];
+  buf[4] = buf2[0];
+  buf[0] = dir;
+
+  if(update)
+  {
+    if(dir == 0) currentPos += steps; else currentPos -= steps;
+  }
+
+  return sendCommand(0xF, 5, buf);  
+}
+
+uint8_t NMX::stop()
+{
+  return sendCommand(0x4, 0, 0);  
+}
+
 
 uint8_t NMX::enable()
 {
@@ -207,6 +221,17 @@ uint8_t NMX::checkConnected()
 		}
 	}
 	return connected;
+}
+
+uint8_t NMX::setSpeed(float rate)
+{
+  uint8_t *ptr = (uint8_t*)&rate;
+  uint8_t buf[4];
+  buf[3] = ptr[0];
+  buf[2] = ptr[1];
+  buf[1] = ptr[2];
+  buf[0] = ptr[3];
+  return sendCommand(0xD, 4, buf);
 }
 
 // returns response as uint32 (max 4)

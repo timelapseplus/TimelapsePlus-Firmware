@@ -26,6 +26,10 @@ public:
 
     uint8_t checkConnected();
 
+    uint8_t setSpeed(float rate);
+    uint8_t move(uint8_t dir, uint32_t steps, uint8_t update);
+    uint8_t stop();
+
     int32_t currentPos;
     int32_t endPos;
     uint16_t stepSize;
