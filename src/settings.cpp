@@ -71,6 +71,7 @@ void settings_load()
     if(conf.lcdCoefficent > 0x7 || conf.lcdCoefficent < 0x3) conf.lcdCoefficent = 0x7;
     if(conf.lcdBias > 0x4 || conf.lcdBias < 0x3) conf.lcdBias = 0x4;
     if(conf.camera.brampGap > 20 || conf.camera.brampGap == 0) conf.camera.brampGap = 6;
+    if(conf.camera.canonLVOC > 0) conf.camera.canonLVOC = 0;
     lcd.color(conf.lcdColor);
     ir.init();
     ir.make = conf.camera.cameraMake;
@@ -153,7 +154,13 @@ void settings_default()
     conf.motionPowerSave1 = 0;
     conf.motionPowerSave2 = 0;
     conf.motionPowerSave3 = 0;
-
+    conf.motionSetupMove1 = 1;
+    conf.motionSetupMove2 = 1;
+    conf.motionSetupMove3 = 1;
+    conf.motionUnit1 = 0;
+    conf.motionUnit2 = 0;
+    conf.motionUnit3 = 0;
+    
     conf.camera.cameraFPS = 33;
     conf.camera.nikonUSB = 0;
     conf.camera.bulbEndOffset = 8;
@@ -166,6 +173,7 @@ void settings_default()
     conf.camera.halfPress = HALF_PRESS_ENABLED;
     conf.camera.modeSwitch = USB_CHANGE_MODE_DISABLED;
     conf.camera.brampGap = 6;
+    conf.camera.canonLVOC = 0;
 
     for(uint8_t i = 0; i < MAX_CAMERAS_SETTINGS; i++)
     {
