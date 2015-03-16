@@ -52,6 +52,7 @@ struct settings_item  // 14 bytes total
     char name[MENU_NAME_LEN];  // 13 bytes
     uint8_t value;             // 1 byte
     void *description;         // 2 bytes
+    uint8_t end;               // indicates last item
 };
 
 struct menu_stack  // 3 bytes total
