@@ -128,12 +128,12 @@ volatile void Button::poll()
             }
 
         } 
-        else // no button pressed
+        else // not pressed
         {
             if(i + 1 == FL_KEY) off_count = 0;
             if(button_count[i] > 0)
             {
-                button_flag[i] = 0;
+                //button_flag[i] = 0;
                 if(button_count[i] > DEBOUNCE_MAX) button_count[i] = DEBOUNCE_MAX;
                 button_count[i]--;
                 
@@ -209,6 +209,22 @@ char Button::pressed()
     }
     
     return key;
+}
+
+/******************************************************************
+ *
+ *   Button::isHeld
+ * 
+ *   checks if key is currently pressed
+ *
+ ******************************************************************/
+
+char Button::isHeld(char key)
+{
+    if(clock.slept()) 
+        flushBuffer();
+        
+    return button_status[key - 1];
 }
 
 /******************************************************************

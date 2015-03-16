@@ -33,6 +33,7 @@ public:
     volatile void poll();
     char get();
     char pressed();
+    char isHeld(char key);
     char waitfor(char key);
     void flushBuffer();
 
