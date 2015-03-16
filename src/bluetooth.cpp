@@ -207,9 +207,15 @@ uint8_t BT::advertise(void)
 	if(!present)
 		return 1;
 
-	sendCMD(PSTR("ATDSLE\r"));
-
-	return checkOK();
+  if(state == BT_ST_CONNECTED || state == BT_ST_CONNECTED_NMX)
+  {
+    return 0;
+  }
+  else
+  {
+    sendCMD(PSTR("ATDSLE\r"));    
+    return checkOK();
+  }
 }
 
 /******************************************************************
@@ -352,20 +358,28 @@ uint8_t BT::sleep(void)
 	if(!present)
 		return 1;
 
-	cancel();
+  if(state == BT_ST_CONNECTED || state == BT_ST_CONNECTED_NMX)
+  {
+    return 0;
+  }
+  else
+  {
+    cancel();
 
-	state = BT_ST_SLEEP;
+    state = BT_ST_SLEEP;
 
-	if(version() >= 3)
-	{
-		sendCMD(PSTR("ATZ\r"));
+    if(version() >= 3)
+    {
+      sendCMD(PSTR("ATZ\r"));
 
-		return checkOK();
-	}
-	else
-	{
-		return 1;
-	}
+      return checkOK();
+    }
+    else
+    {
+      return 1;
+    }
+  }
+
 }
 
 /******************************************************************
@@ -934,16 +948,7 @@ uint8_t BT::task(void)
 
 	if(len)
 	{
-		if(mode == BT_MODE_CMD)
-		{
-			//DEBUG(PSTR("CMD:\r\n"));
-		}
-		else
-		{
-			//DEBUG(PSTR("DATA:\r\n"));
-		}
-		//DEBUG(buf);
-		//DEBUG_NL();
+
 		if(mode == BT_MODE_CMD)
 		{
 			if(strncmp(buf, STR("DISCOVERY"), 9) == 0)
