@@ -300,7 +300,7 @@ uint32_t Clock::eventMs()
 
 uint32_t Clock::Ms()
 {
-    return (uint32_t)ms + seconds * 1000;
+    return ((uint32_t)ms) + seconds * 1000;
 }
 
 /******************************************************************
