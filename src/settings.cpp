@@ -17,6 +17,7 @@
 #include "shutter.h"
 #include "bluetooth.h"
 #include "remote.h"
+#include "nmx.h"
 #include "timelapseplus.h"
 #include "tlp_menu_functions.h"
 
@@ -31,6 +32,9 @@ extern IR ir;
 extern Remote remote;
 extern shutter timer;
 extern BT bt;
+extern NMX motor1;
+extern NMX motor2;
+extern NMX motor3;
 
 /******************************************************************
  *
@@ -82,7 +86,22 @@ void settings_load()
     }
     if(bt.present && !remote.connected)
     {
-        if(conf.btMode == BT_MODE_SLEEP) bt.sleep(); else bt.advertise();
+        if(conf.btMode == BT_MODE_SLEEP && !remote.nmx) bt.sleep(); else bt.advertise();
+        if(remote.nmx)
+        {
+          if(motor1.connected && motor1.enabled && !motor1.running())
+          {
+            motor1.enable();
+          }
+          if(motor2.connected && motor2.enabled && !motor2.running())
+          {
+            motor2.enable();
+          }
+          if(motor3.connected && motor3.enabled && !motor3.running())
+          {
+            motor3.enable();
+          }
+        }
     }
 }
 
@@ -160,7 +179,15 @@ void settings_default()
     conf.motionUnit1 = 0;
     conf.motionUnit2 = 0;
     conf.motionUnit3 = 0;
-    
+    conf.motionMicroSteps1 = 0;
+    conf.motionMicroSteps2 = 0;
+    conf.motionMicroSteps3 = 0;
+    conf.motionSpeed1 = 256;
+    conf.motionSpeed2 = 256;
+    conf.motionSpeed3 = 256;
+    conf.keyframeTimeByMinute = 0;
+
+
     conf.camera.cameraFPS = 33;
     conf.camera.nikonUSB = 0;
     conf.camera.bulbEndOffset = 8;

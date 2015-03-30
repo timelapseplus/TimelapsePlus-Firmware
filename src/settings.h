@@ -8,7 +8,7 @@
  *
  */
  
-#define SETTINGS_VERSION 20150313
+#define SETTINGS_VERSION 20150324
 
 #define ALL -1
 #define CANON 0
@@ -112,9 +112,9 @@ struct settings_t
     uint16_t lightThreshold;
     camera_settings_t camera;
     uint8_t linearInterpolation;
-    uint16_t motionStep1;
-    uint16_t motionStep2;
-    uint16_t motionStep3;
+    uint32_t motionStep1;
+    uint32_t motionStep2;
+    uint32_t motionStep3;
     uint16_t focusStep;
     uint16_t focusEnabled;
     uint16_t motionBacklash1;
@@ -127,10 +127,16 @@ struct settings_t
     uint8_t motionSetupMove1;
     uint8_t motionSetupMove2;
     uint8_t motionSetupMove3;
-    uint16_t motionUnit1;
-    uint16_t motionUnit2;
-    uint16_t motionUnit3;
-    uint8_t pad[12];
+    uint32_t motionUnit1;
+    uint32_t motionUnit2;
+    uint32_t motionUnit3;
+    uint8_t motionMicroSteps1;
+    uint8_t motionMicroSteps2;
+    uint8_t motionMicroSteps3;
+    uint16_t motionSpeed1;
+    uint16_t motionSpeed2;
+    uint16_t motionSpeed3;
+    uint8_t keyframeTimeByMinute;
 };
 
 void settings_load(void);

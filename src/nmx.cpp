@@ -67,41 +67,8 @@ NMX::NMX(uint8_t node, uint8_t motor)
 {
 	nodeAddress = node;
 	motorAddress = motor;
-	endPos = 0;
 	currentPos = 0;
-	stepSize = 256;
 	connectedResponse = 0;
-}
-
-void NMX::setStart()
-{
-	endPos += currentPos;
-	currentPos = 0;
-}
-
-void NMX::setEnd()
-{
-	endPos = currentPos;
-}
-
-uint8_t NMX::moveForward()
-{
-	return moveSteps(0, stepSize);
-}
-
-uint8_t NMX::moveBackward()
-{
-	return moveSteps(1, stepSize);
-}
-
-uint8_t NMX::gotoStart()
-{
-	return moveToPosition(0);
-}
-
-uint8_t NMX::gotoEnd()
-{
-	return moveToPosition(endPos);
 }
 
 uint8_t NMX::moveToPosition(int32_t pos)
@@ -161,17 +128,35 @@ uint8_t NMX::enable()
 		enabled = true;
 		uint8_t buf = 1;
 		sendCommand(0x3, 1, &buf); //enable
+
 		if(motorAddress == 1) buf = conf.motionPowerSave1;
 		if(motorAddress == 2) buf = conf.motionPowerSave2;
 		if(motorAddress == 3) buf = conf.motionPowerSave3;
 		if(buf) buf = 1;
-		return sendCommand(0x2, 1, &buf); //disable sleep (hold between moves)
-		uint8_t backlash[2], buf2[2];
-		uint16_t steps = 0;
-		if(motorAddress == 1) steps = conf.motionBacklash1;
-		if(motorAddress == 2) steps = conf.motionBacklash2;
-		if(motorAddress == 3) steps = conf.motionBacklash3;
-		memcpy(backlash, &steps, sizeof(uint16_t));
+		sendCommand(0x2, 1, &buf); //disable sleep (hold between moves)
+
+    if(motorAddress == 1 && conf.motionMicroSteps1) sendCommand(0x6, 1, &conf.motionMicroSteps1);
+    if(motorAddress == 2 && conf.motionMicroSteps2) sendCommand(0x6, 1, &conf.motionMicroSteps2);
+    if(motorAddress == 3 && conf.motionMicroSteps3) sendCommand(0x6, 1, &conf.motionMicroSteps3);
+
+    uint8_t backlash[2], buf2[2];		
+    float speed = 0.0;
+    if(motorAddress == 1 && conf.motionSpeed1) speed = (float)conf.motionSpeed1 * (float)conf.motionMicroSteps1;
+    if(motorAddress == 2 && conf.motionSpeed2) speed = (float)conf.motionSpeed2 * (float)conf.motionMicroSteps2;
+    if(motorAddress == 3 && conf.motionSpeed3) speed = (float)conf.motionSpeed3 * (float)conf.motionMicroSteps3;
+    if(speed > 0.0)
+    {
+      buf2[0] = 255;
+      buf2[1] = 255;
+      sendCommand(0x7, 2, buf2); // no max speed limit
+      setSpeed(speed);
+      setAccel(speed * 2);
+    }
+    uint16_t steps = 0;
+    if(motorAddress == 1) steps = conf.motionBacklash1;
+    if(motorAddress == 2) steps = conf.motionBacklash2;
+    if(motorAddress == 3) steps = conf.motionBacklash3;
+    memcpy(backlash, &steps, sizeof(uint16_t));
 		buf2[0] = backlash[1];
 		buf2[1] = backlash[0];
 		return sendCommand(0x5, 2, buf2); //set backlash
@@ -182,8 +167,9 @@ uint8_t NMX::enable()
 uint8_t NMX::disable()
 {
 	enabled = false;
-	uint8_t buf = 0;
+	uint8_t buf = 1;
 	sendCommand(0x2, 1, &buf);	
+  buf = 0;
 	return sendCommand(0x3, 1, &buf);	
 }
 
@@ -204,15 +190,9 @@ uint8_t NMX::checkConnected()
 		if(connectedResponse == 0)
 		{
 			connectedResponse = (uint8_t)sendQueryGeneral(3, 0, 0x7C, 10) | 0b10000000;
-			DEBUG(STR("Response:"));
-			DEBUG(connectedResponse);
-			DEBUG_NL();
 		}
 		if(connectedResponse & (1 << (motorAddress - 1)))
 		{
-			DEBUG(STR(" Motor:"));
-			DEBUG(motorAddress);
-			DEBUG_NL();
 			connected = 1;
 		}
 		else
@@ -234,6 +214,17 @@ uint8_t NMX::setSpeed(float rate)
   return sendCommand(0xD, 4, buf);
 }
 
+uint8_t NMX::setAccel(float rate)
+{
+  uint8_t *ptr = (uint8_t*)&rate;
+  uint8_t buf[4];
+  buf[3] = ptr[0];
+  buf[2] = ptr[1];
+  buf[1] = ptr[2];
+  buf[0] = ptr[3];
+  return sendCommand(0xE, 4, buf);
+}
+
 // returns response as uint32 (max 4)
 uint32_t NMX::sendQueryGeneral(uint8_t node, uint8_t motor, uint8_t command, uint8_t delay)
 {
@@ -252,9 +243,6 @@ uint32_t NMX::sendQueryGeneral(uint8_t node, uint8_t motor, uint8_t command, uin
 			char *buf;
 			if(bt.waitEvent(STR("GATT_VAL"), &buf))
 			{
-				DEBUG(STR("GATT RESPONSE: "));
-				DEBUG(buf);
-
 				if(strncmp(buf, STR("GATT_VAL"), 8) == 0 && strlen(buf) >= 21)
 				{
 					uint8_t len;

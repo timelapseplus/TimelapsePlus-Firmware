@@ -10,15 +10,6 @@ public:
 
     uint8_t running();
 
-    void setStart();
-    void setEnd();
-
-    uint8_t moveForward();
-    uint8_t moveBackward();
-
-    uint8_t gotoStart();
-    uint8_t gotoEnd();
-
     uint8_t gotoPercent(float pos);
 
     uint8_t moveSteps(uint8_t dir, uint32_t steps);
@@ -27,12 +18,11 @@ public:
     uint8_t checkConnected();
 
     uint8_t setSpeed(float rate);
+    uint8_t setAccel(float rate);
     uint8_t move(uint8_t dir, uint32_t steps, uint8_t update);
     uint8_t stop();
 
     int32_t currentPos;
-    int32_t endPos;
-    uint16_t stepSize;
     uint8_t connected;
     bool enabled;
 

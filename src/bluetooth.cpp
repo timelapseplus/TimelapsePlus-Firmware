@@ -46,7 +46,6 @@ uint8_t BT::init(void)
 {
 	_delay_ms(100);
 	present = true;
-//	DEBUG(PSTR("BT Init\n\r"));
 
 //	sendCMD(PSTR("ATRST\r")); // Reset module
 //	_delay_ms(200);
@@ -54,10 +53,6 @@ uint8_t BT::init(void)
 	while(read()); // Flush buffer
 
 	sendCMD(PSTR("AT\r")); // Check connection
-
-//	DEBUG(PSTR("Data: "));
-//	DEBUG(data);
-//	DEBUG_NL();
 
 	if(checkOK() == 0)
 	{
@@ -96,15 +91,11 @@ uint8_t BT::init(void)
 	if(checkOK() == 0)
 		return 0;
 
-//	DEBUG(PSTR("BT Init: Saved configuration\r\n"));
-
 	state = BT_ST_IDLE;
 	mode = BT_MODE_CMD;
 
 	devices = 0;
 	newDevices = 0;
-
-//	updateVersion();
 
 	return power(3);
 }
@@ -188,11 +179,18 @@ uint8_t BT::cancel(void)
 	if(!present)
 		return 1;
 
-	sendCMD(PSTR("ATDC\r"));
+  if(state == BT_ST_CONNECTED || state == BT_ST_CONNECTED_NMX)
+  {
+    return 0;
+  }
+  else
+  {
+  	sendCMD(PSTR("ATDC\r"));
 
-	if(state != BT_ST_CONNECTED && state != BT_ST_CONNECTED_NMX) state = BT_ST_IDLE;
+  	state = BT_ST_IDLE;
 
-	return checkOK();
+  	return checkOK();
+  }
 }
 
 /******************************************************************
@@ -230,11 +228,18 @@ uint8_t BT::cancelScan(void)
 	if(!present)
 		return 1;
 
-	sendCMD(PSTR("ATDC,1,1\r"));
+  if(state == BT_ST_CONNECTED || state == BT_ST_CONNECTED_NMX)
+  {
+    return 0;
+  }
+  else
+  {
+  	sendCMD(PSTR("ATDC,1,1\r"));
 
-	if(state != BT_ST_CONNECTED && state != BT_ST_CONNECTED_NMX) state = BT_ST_IDLE;
+  	state = BT_ST_IDLE;
 
-	return checkOK();
+  	return checkOK();
+  }
 }
 
 /******************************************************************
@@ -312,13 +317,21 @@ uint8_t BT::scan(void)
 	if(!present)
 		return 1;
 
-	if(state != BT_ST_CONNECTED && state != BT_ST_CONNECTED_NMX) state = BT_ST_SCAN;
+	if(state == BT_ST_CONNECTED || state == BT_ST_CONNECTED_NMX)
+  {
+    return 0;
+  }
+  else
+  {
+    state = BT_ST_SCAN;
+  
+    newDevices = 0;
 
-	newDevices = 0;
+    sendCMD(PSTR("ATDILE\r"));
 
-	sendCMD(PSTR("ATDILE\r"));
+    return checkOK();
+  }
 
-	return checkOK();
 }
 
 /******************************************************************
