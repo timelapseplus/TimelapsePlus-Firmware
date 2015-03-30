@@ -45,7 +45,8 @@
 #define PTP_RETURN_DATA_REMAINING 2
 #define PTP_FIRST_TIME 255
 
-#define PTP_BUFFER_SIZE 1280
+// was 1280
+#define PTP_BUFFER_SIZE 1024
 
 #define NO_RECEIVE_DATA 0
 #define RECEIVE_DATA 1
@@ -62,8 +63,9 @@
 #include "PTP_Codes.h"
 
 #include <LUFA/Drivers/USB/USB.h>
+#if defined(PTP_DEBUG) || defined(PTP_DEBUG_SELECTIVE)
 #include <LUFA/Drivers/Peripheral/Serial.h>
-
+#endif
 #ifdef __cplusplus
 extern "C"
 {

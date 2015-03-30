@@ -929,11 +929,6 @@ void LCD::cls()
     }
 }
 
-/*void LCD::flash(char *message, unsigned int duration)
-{
-
-}
-*/
 
 /******************************************************************
  *

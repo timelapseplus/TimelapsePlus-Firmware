@@ -8,6 +8,15 @@
  *
  */
 
+// This can be set per file -- set here to enable globally
+/*
+#ifndef PRODUCTION
+  #define DEBUG_ENABLED
+//  #define LOGGER_ENABLED
+#endif
+*/
+
+#ifdef DEBUG_ENABLED
 void debug(char c);
 void debug(uint8_t c);
 void debug(uint16_t n);
@@ -19,14 +28,8 @@ void debug(char *s);
 void debug(const char *s);
 void debug_nl(void);
 void debug_remote(char *s);
-
-// This can be set per file -- set here to enable globally
-/*
-#ifndef PRODUCTION
-	#define DEBUG_ENABLED
-//	#define LOGGER_ENABLED
 #endif
-*/
+
 #ifdef DEBUG_ENABLED
 #define DEBUG(x) debug(x)
 #define DEBUG_NL debug_nl

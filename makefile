@@ -135,8 +135,8 @@ SRC = src/Descriptors.c 	\
 	  $(LUFA_SRC_SERIAL)	\
 	  src/TWI_Master.c      \
 	  src/TWI_Master.c      \
-	  src/PTP_Driver.c      \
-	  src/VirtualSerial.c
+	  src/PTP_Driver.c      
+#	  src/VirtualSerial.c
 
 
 # List C++ source files here. (C dependencies are automatically generated.)

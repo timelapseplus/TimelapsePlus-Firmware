@@ -8,8 +8,9 @@
  *
  */
  
-#include "VirtualSerial.h"
 #include "debug.h"
+#ifdef DEBUG_ENABLED
+#include "VirtualSerial.h"
 #include "timelapseplus.h"
 #include "tlp_menu_functions.h"
 #include "settings.h"
@@ -19,9 +20,11 @@
 #include "tldefs.h"
 #include "PTP_Driver.h"
 
+
 extern settings_t conf;
 extern Remote remote;
 extern BT bt;
+
 
 /******************************************************************
  *
@@ -232,3 +235,4 @@ void debug_nl()
     debug((char*)STR("\r\n"));
 }
 
+#endif

@@ -137,7 +137,7 @@ uint8_t Remote::send(uint8_t id, uint8_t type)
 			uint8_t tmp = camera.modeLiveView;
 			return bt.sendDATA(id, type, (void *) &tmp, sizeof(tmp));
 		}
-		case REMOTE_THUMBNAIL:
+	/*	case REMOTE_THUMBNAIL:
 		{
 			menu.message(STR("Busy"));
 
@@ -154,25 +154,25 @@ uint8_t Remote::send(uint8_t id, uint8_t type)
 			}
 
 			///////////////////////// DEMO Code ////////////////////////////
-/*			PTP_Bytes_Total = sizeof(thm);
-			bt.sendDATA(REMOTE_THUMBNAIL_SIZE, type, (void *) &PTP_Bytes_Total, sizeof(PTP_Bytes_Total));
-			uint16_t total_sent = 0, i;
-			while(total_sent < PTP_Bytes_Total)
-			{
-				for(i = 0; i < PTP_BUFFER_SIZE; i++)
-				{
-					PTP_Buffer[i] = pgm_read_byte(&thm[i + total_sent]);
-					if(total_sent + i >= PTP_Bytes_Total) break;
-				}
-				PTP_Bytes_Received = i;
-				total_sent += PTP_Bytes_Received;
-				if(PTP_Bytes_Received == 0) break;
-				bt.sendDATA(id, type, (void *) PTP_Buffer, PTP_Bytes_Received);
-				if(total_sent >= PTP_Bytes_Total) break;
-			}
-*/			/////////////////////////////////////////////////////////////////
+//			PTP_Bytes_Total = sizeof(thm);
+//			bt.sendDATA(REMOTE_THUMBNAIL_SIZE, type, (void *) &PTP_Bytes_Total, sizeof(PTP_Bytes_Total));
+//			uint16_t total_sent = 0, i;
+//			while(total_sent < PTP_Bytes_Total)
+//			{
+//				for(i = 0; i < PTP_BUFFER_SIZE; i++)
+//				{
+//					PTP_Buffer[i] = pgm_read_byte(&thm[i + total_sent]);
+//					if(total_sent + i >= PTP_Bytes_Total) break;
+//				}
+//				PTP_Bytes_Received = i;
+//				total_sent += PTP_Bytes_Received;
+//				if(PTP_Bytes_Received == 0) break;
+//				bt.sendDATA(id, type, (void *) PTP_Buffer, PTP_Bytes_Received);
+//				if(total_sent >= PTP_Bytes_Total) break;
+//			}
+//			/////////////////////////////////////////////////////////////////
 			return 0;
-		}
+		}*/
 		default:
 			return bt.sendDATA(id, type, 0, 0);
 	}
@@ -272,6 +272,7 @@ void Remote::event()
 					if(bt.dataType == REMOTE_TYPE_NOTIFY_WATCH) notify.watch(REMOTE_CAMERA_MAKE, (void *)&conf.camera.cameraMake, sizeof(conf.camera.cameraMake), &remote_notify);
 					if(bt.dataType == REMOTE_TYPE_NOTIFY_UNWATCH) notify.unWatch(REMOTE_CAMERA_MAKE, &remote_notify);
 					break;
+#ifdef DEBUG_ENABLED
 				case REMOTE_DEBUG:
 					if(bt.dataType == REMOTE_TYPE_SEND)
 					{
@@ -279,6 +280,7 @@ void Remote::event()
 						debug_remote(bt.data);
 					}
 					break;
+#endif
 				case REMOTE_ISO:
 					if(bt.dataType == REMOTE_TYPE_REQUEST) send(bt.dataId, REMOTE_TYPE_SEND);
 					if(bt.dataType == REMOTE_TYPE_SET && bt.dataSize == sizeof(uint8_t))
