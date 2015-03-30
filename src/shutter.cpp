@@ -2021,6 +2021,11 @@ void shutter::resetKeyframes()
   current.kfMotor3.min = 0;
   current.kfMotor3.keyframes[0].value = 0;
   current.kfMotor3.keyframes[1].value = 0;
+
+  focusPos = 0;
+  motor1.currentPos = 0;
+  motor2.currentPos = 0;
+  motor3.currentPos = 0;
 }
 
 void moveToStart()
