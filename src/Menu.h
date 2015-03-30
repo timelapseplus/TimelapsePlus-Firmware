@@ -92,7 +92,7 @@ public:
     void select(char menuItem);
     void setTitle(char *title);
     void setBar(char *left, char *right);
-    char editNumber(char key, unsigned int *n, char *name, char *unit, char mode, char first);
+    char editNumber(char key, void *n, char *name, char *unit, char mode, char first);
     char editSelect(char key, char *n, void *settingslist, char *name, char first);
     char editDynamic(char key, uint8_t *var, void *ditem, char *name, char first);
     char editText(char key, char text[MENU_NAME_LEN], char *name, char first);
@@ -108,7 +108,8 @@ public:
     void blink();
 
     char state;
-    
+
+    uint8_t cursor;
     uint8_t unusedKey;
 
 private:
@@ -130,7 +131,8 @@ private:
 
     char m_refresh;
     unsigned char type;
-    unsigned int *var;
+    uint16_t *var16;
+    uint32_t *var32;
     char *bvar;
     settings_item *list;
     dynamicItem_t *dlist;

@@ -8,7 +8,6 @@
 #include <LUFA/Drivers/Peripheral/Serial.h>
 #include "tldefs.h"
 #include "5110LCD.h"
-//#include "AVRS_logo.h"
 #include "clock.h"
 #include "button.h"
 #include "Menu.h"
@@ -609,6 +608,60 @@ volatile char cableReleaseRemote(char key, char first)
 
 /******************************************************************
  *
+ *   flattenKeyframes
+ *
+ *
+ ******************************************************************/
+
+volatile char flattenKeyframes(char key, char first)
+{
+  if(first)
+  {
+    lcd.cls();
+    menu.setTitle(TEXT("Confirm"));
+
+    lcd.writeString(8, 14, PTEXT("Reset all"));
+    lcd.writeString(8, 24, PTEXT("Keyframes?"));
+    menu.setBar(TEXT("Cancel"), TEXT("Reset"));
+    lcd.update();
+  }
+
+  if(key == FR_KEY)
+  {
+    menu.message(TEXT("Reset KFs"));
+    timer.resetKeyframes();
+    moveToStart();
+    menu.back();
+    return FN_CANCEL;
+  }
+  else if(key == FL_KEY)
+  {
+    return FN_CANCEL;
+  }
+  else
+  {
+    return FN_CONTINUE;
+  }
+}
+
+
+/******************************************************************
+ *
+ *   flattenKeyframes
+ *
+ *
+ ******************************************************************/
+
+volatile char gotoStart(char key, char first)
+{
+  menu.message(TEXT("Moving..."));
+  moveToStart();
+  menu.back();
+  return FN_CANCEL;
+}
+
+/******************************************************************
+ *
  *   autoConfigureCameraTiming
  *
  *
@@ -971,6 +1024,7 @@ volatile char factoryReset(char key, char first)
 		    return FN_CANCEL;
 
 	   case FR_KEY:
+        menu.message(TEXT("Busy"));
 	   		settings_default();
 	   		timer.setDefault();
 	   		menu.message(TEXT("Factory Reset"));
@@ -2042,6 +2096,12 @@ volatile char btConnect(char key, char first)
 		case FR_KEY:
 			if(bt.state == BT_ST_CONNECTED || bt.state == BT_ST_CONNECTED_NMX)
 			{
+        if(remote.nmx)
+        {
+          motor1.disable();
+          motor2.disable();
+          motor3.disable();
+        }
         remote.nmx = 0;
 				bt.disconnect();
 			}
@@ -2413,9 +2473,9 @@ volatile char usbPlug(char key, char first)
 	else if(key == RIGHT_KEY)
 	{
 		//remote.send(REMOTE_THUMBNAIL, REMOTE_TYPE_SEND);
-		uint8_t *file = (uint8_t *) STR("Test file contents");
-		char *name = STR("test.txt");
-		camera.writeFile(name, file, 19);
+		//uint8_t *file = (uint8_t *) STR("Test file contents");
+		//char *name = STR("test.txt");
+		//camera.writeFile(name, file, 19);
 	}
 
 	return FN_CONTINUE;
@@ -2518,7 +2578,7 @@ volatile char timerStop(char key, char first)
 	if(first)
 		timer.running = 0;
 
-	light.paused = 1;
+	//light.paused = 1;
 	menu.message(TEXT("Stopped"));
 	menu.back();
 	return FN_CANCEL;

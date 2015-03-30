@@ -543,15 +543,10 @@ const char STR_LCD_CONTRAST[]PROGMEM = "LCD Contrast";
 const settings_item menu_settings_lcd_contrast[]PROGMEM =
 {
     { "Contrast: 1 ", 0x1, (void*)STR_LCD_CONTRAST, 0 },
-    { "Contrast: 2 ", 0x2, (void*)STR_LCD_CONTRAST, 0 },
-    { "Contrast: 3 ", 0x3, (void*)STR_LCD_CONTRAST, 0 },
-    { "Contrast: 4 ", 0x4, (void*)STR_LCD_CONTRAST, 0 },
-    { "Contrast: 5 ", 0x5, (void*)STR_LCD_CONTRAST, 0 },
-    { "Contrast: 6 ", 0x6, (void*)STR_LCD_CONTRAST, 0 },
-    { "Contrast: 7 ", 0x7, (void*)STR_LCD_CONTRAST, 0 },
-    { "Contrast: 8 ", 0x8, (void*)STR_LCD_CONTRAST, 0 },
-    { "Contrast: 9 ", 0x9, (void*)STR_LCD_CONTRAST, 0 },
-    { "Contrast:10 ", 0xA, (void*)STR_LCD_CONTRAST, 1 }
+    { "Contrast: 2 ", 0x3, (void*)STR_LCD_CONTRAST, 0 },
+    { "Contrast: 3 ", 0x6, (void*)STR_LCD_CONTRAST, 0 },
+    { "Contrast: 4 ", 0x8, (void*)STR_LCD_CONTRAST, 0 },
+    { "Contrast: 5 ", 0xA, (void*)STR_LCD_CONTRAST, 1 }
 };
 
 const char STR_ERROR_ALERT1[]PROGMEM = "Flash LCD only";
@@ -565,25 +560,6 @@ const settings_item menu_settings_error_alert[]PROGMEM =
 };
 
 const char STR_BRAMP_PAD[]PROGMEM = "Intrvl - Bulb";
-const char STR_BRAMP_RATE_MAX[]PROGMEM = "Max Ramp Rate";
-const char STR_BRAMP_RATE_MIN[]PROGMEM = "Min Ramp Rate";
-const char STR_BRAMP_RATE_FACTOR[]PROGMEM = "Rate Multiplier";
-
-const settings_item menu_settings_bramp_factor[]PROGMEM =
-{
-    { "        0.5 ", 5, (void*)STR_BRAMP_RATE_FACTOR, 0 },
-    { "        0.7 ", 7, (void*)STR_BRAMP_RATE_FACTOR, 0 },
-    { "        1.0 ", 10, (void*)STR_BRAMP_RATE_FACTOR, 0 },
-    { "        1.3 ", 13, (void*)STR_BRAMP_RATE_FACTOR, 0 },
-    { "        1.5 ", 15, (void*)STR_BRAMP_RATE_FACTOR, 0 },
-    { "        2.0 ", 20, (void*)STR_BRAMP_RATE_FACTOR, 0 },
-    { "        2.5 ", 25, (void*)STR_BRAMP_RATE_FACTOR, 0 },
-    { "        3.0 ", 30, (void*)STR_BRAMP_RATE_FACTOR, 0 },
-    { "        4.0 ", 40, (void*)STR_BRAMP_RATE_FACTOR, 0 },
-    { "        5.5 ", 55, (void*)STR_BRAMP_RATE_FACTOR, 0 },
-    { "        7.0 ", 70, (void*)STR_BRAMP_RATE_FACTOR, 0 },
-    { "        9.0 ", 90, (void*)STR_BRAMP_RATE_FACTOR, 1 }
-};
 
 const menu_item menu_settings_system[]PROGMEM =
 {
@@ -591,6 +567,7 @@ const menu_item menu_settings_system[]PROGMEM =
     { "Menu Wrap   ", 'S', (void*)menu_settings_menu_wrap, (void*)&conf.menuWrap, (void*)settings_update, 0 },
     { "PWR Auto Off", 'S', (void*)menu_settings_power_off_time, (void*)&conf.sysOffTime, (void*)settings_update, 0 },
     { "LED Auto Off", 'S', (void*)menu_settings_flashlight_time, (void*)&conf.flashlightOffTime, (void*)settings_update, 0 },
+    { "Reset All   ", 'F', (void*)factoryReset, 0, 0, (void*)&timerNotRunning },
     { "\0           ", 'V', 0, 0, 0 }
 };
 
@@ -618,7 +595,7 @@ const menu_item menu_settings_camera[]PROGMEM =
     { "Canon LV    ", 'S', (void*)menu_settings_canon_lv_mode, (void*)&conf.camera.canonLVOC, (void*)settings_update, (void*)&cameraMakeCanon },
     { "Camera FPS  ", 'S', (void*)menu_settings_camera_fps, (void*)&conf.camera.cameraFPS, (void*)settings_update, 0 },
     { "Bulb Mode   ", 'S', (void*)menu_settings_bulb_mode, (void*)&conf.camera.bulbMode, (void*)settings_update, 0 },
-    { "Bulb OffsetL", 'C', (void*)&conf.camera.bulbOffset, (void*)STR_BULB_OFFSET, (void*)settings_update, 0 },
+    { "Bulb OffsetB", 'C', (void*)&conf.camera.bulbOffset, (void*)STR_BULB_OFFSET, (void*)settings_update, 0 },
     { "Bulb Min    ", 'D', (void*)&dyn_min_bulb, (void*)&conf.camera.bulbMin, (void*)settings_update, 0 },
     { "Half press  ", 'S', (void*)menu_settings_half_press, (void*)&conf.camera.halfPress, (void*)settings_update, 0 },
     { "Interface   ", 'S', (void*)menu_settings_interface, (void*)&conf.camera.interface, (void*)settings_update, 0 },
@@ -670,30 +647,75 @@ const settings_item menu_settings_pc_sync_mode[]PROGMEM =
     { "Required    ", 1, (void*)STR_PC_SYNC_MODE2, 1 }
 };
 
+const char STR_KFTIMEUNIT[]PROGMEM = "per button press";
+
+const settings_item settings_keyframeTime[]PROGMEM =
+{
+    { "1 Pixel     ", 0, (void*)STR_KFTIMEUNIT, 0 },
+    { "1 Minute    ", 1, (void*)STR_KFTIMEUNIT, 1 }
+};
+
+const char STR_MICROSTEPS[]PROGMEM = "Substep resolution";
+const settings_item settings_motion_microsteps[]PROGMEM =
+{
+    { "Default     ", 0, (void*)STR_MICROSTEPS, 0 },
+    { "Full Steps  ", 1, (void*)STR_MICROSTEPS, 0 },
+    { "Half Steps  ", 2, (void*)STR_MICROSTEPS, 0 },
+    { "1/4 Steps   ", 4, (void*)STR_MICROSTEPS, 0 },
+    { "1/8 Steps   ", 8, (void*)STR_MICROSTEPS, 0 },
+    { "1/16 Steps  ", 16, (void*)STR_MICROSTEPS, 1 }
+};
+
 const char STR_MOTION_UNITS[]PROGMEM = "Unit Conversion";
 const char STR_MOTION_STEPS[]PROGMEM = "Step Size";
 const char STR_MOTION_BACKLASH[]PROGMEM = "Backlash Steps";
+const char STR_MOTION_SPEED[]PROGMEM = "Steps per second";
+
+const menu_item menu_settings_timelapse_ramping_nmx1[]PROGMEM =
+{
+    { "Setup Steps ", 'L', (void*)&conf.motionStep1, (void*)STR_MOTION_STEPS, (void*)settings_update, 0 },
+    { "Setup Units ", 'L', (void*)&conf.motionUnit1, (void*)STR_MOTION_UNITS, (void*)settings_update, 0 },
+    { "MicroSteps  ", 'S', (void*)settings_motion_microsteps, (void*)&conf.motionMicroSteps1, (void*)settings_update, 0 },
+    { "Speed       ", 'C', (void*)&conf.motionSpeed1, (void*)STR_MOTION_SPEED, (void*)settings_update, (void*)&conf.motionMicroSteps1 },
+    { "BackLash    ", 'C', (void*)&conf.motionBacklash1, (void*)STR_MOTION_BACKLASH, (void*)settings_update, 0 },
+    { "Power Save  ", 'S', (void*)settings_motion_hold, (void*)&conf.motionPowerSave1, (void*)settings_update, 0 },
+    { "Setup Move  ", 'S', (void*)settings_motion_setup, (void*)&conf.motionSetupMove1, (void*)settings_update, 0 },
+    { "\0           ", 'V', 0, 0, 0 }
+};
+
+const menu_item menu_settings_timelapse_ramping_nmx2[]PROGMEM =
+{
+    { "Setup Steps ", 'L', (void*)&conf.motionStep2, (void*)STR_MOTION_STEPS, (void*)settings_update, 0 },
+    { "Setup Units ", 'L', (void*)&conf.motionUnit2, (void*)STR_MOTION_UNITS, (void*)settings_update, 0 },
+    { "MicroSteps  ", 'S', (void*)settings_motion_microsteps, (void*)&conf.motionMicroSteps2, (void*)settings_update, 0 },
+    { "Speed       ", 'C', (void*)&conf.motionSpeed2, (void*)STR_MOTION_SPEED, (void*)settings_update, (void*)&conf.motionMicroSteps2 },
+    { "BackLash    ", 'C', (void*)&conf.motionBacklash2, (void*)STR_MOTION_BACKLASH, (void*)settings_update, 0 },
+    { "Power Save  ", 'S', (void*)settings_motion_hold, (void*)&conf.motionPowerSave2, (void*)settings_update, 0 },
+    { "Setup Move  ", 'S', (void*)settings_motion_setup, (void*)&conf.motionSetupMove2, (void*)settings_update, 0 },
+    { "\0           ", 'V', 0, 0, 0 }
+};
+
+const menu_item menu_settings_timelapse_ramping_nmx3[]PROGMEM =
+{
+    { "Setup Steps ", 'L', (void*)&conf.motionStep3, (void*)STR_MOTION_STEPS, (void*)settings_update, 0 },
+    { "Setup Units ", 'L', (void*)&conf.motionUnit3, (void*)STR_MOTION_UNITS, (void*)settings_update, 0 },
+    { "MicroSteps  ", 'S', (void*)settings_motion_microsteps, (void*)&conf.motionMicroSteps3, (void*)settings_update, 0 },
+    { "Speed       ", 'C', (void*)&conf.motionSpeed3, (void*)STR_MOTION_SPEED, (void*)settings_update, (void*)&conf.motionMicroSteps3 },
+    { "BackLash    ", 'C', (void*)&conf.motionBacklash3, (void*)STR_MOTION_BACKLASH, (void*)settings_update, 0 },
+    { "Power Save  ", 'S', (void*)settings_motion_hold, (void*)&conf.motionPowerSave3, (void*)settings_update, 0 },
+    { "Setup Move  ", 'S', (void*)settings_motion_setup, (void*)&conf.motionSetupMove3, (void*)settings_update, 0 },
+    { "\0           ", 'V', 0, 0, 0 }
+};
 
 const menu_item menu_settings_timelapse_ramping[]PROGMEM =
 {
     { "Interpolate ", 'S', (void*)menu_settings_interpolation, (void*)&conf.linearInterpolation, (void*)settings_update, 0 },
     { "Focus Enable", 'S', (void*)settings_focus_enabled, (void*)&conf.focusEnabled, (void*)settings_update, &conf.focusEnabled },
     { "Focus Steps ", 'C', (void*)&conf.focusStep, (void*)STR_MOTION_STEPS, (void*)settings_update, 0 },
-    { "NMX M1 Steps", 'C', (void*)&conf.motionStep1, (void*)STR_MOTION_STEPS, (void*)settings_update, 0 },
-    { "NMX M2 Steps", 'C', (void*)&conf.motionStep2, (void*)STR_MOTION_STEPS, (void*)settings_update, 0 },
-    { "NMX M3 Steps", 'C', (void*)&conf.motionStep3, (void*)STR_MOTION_STEPS, (void*)settings_update, 0 },
-    { "NMX M1 BkLsh", 'C', (void*)&conf.motionBacklash1, (void*)STR_MOTION_BACKLASH, (void*)settings_update, 0 },
-    { "NMX M2 BkLsh", 'C', (void*)&conf.motionBacklash2, (void*)STR_MOTION_BACKLASH, (void*)settings_update, 0 },
-    { "NMX M3 BkLsh", 'C', (void*)&conf.motionBacklash3, (void*)STR_MOTION_BACKLASH, (void*)settings_update, 0 },
-    { "NMX M1 Sleep", 'S', (void*)settings_motion_hold, (void*)&conf.motionPowerSave1, (void*)settings_update, 0 },
-    { "NMX M2 Sleep", 'S', (void*)settings_motion_hold, (void*)&conf.motionPowerSave2, (void*)settings_update, 0 },
-    { "NMX M3 Sleep", 'S', (void*)settings_motion_hold, (void*)&conf.motionPowerSave3, (void*)settings_update, 0 },
-    { "NMX M1 Setup", 'S', (void*)settings_motion_setup, (void*)&conf.motionSetupMove1, (void*)settings_update, 0 },
-    { "NMX M2 Setup", 'S', (void*)settings_motion_setup, (void*)&conf.motionSetupMove2, (void*)settings_update, 0 },
-    { "NMX M3 Setup", 'S', (void*)settings_motion_setup, (void*)&conf.motionSetupMove3, (void*)settings_update, 0 },
-    { "NMX M1 Units", 'C', (void*)&conf.motionUnit1, (void*)STR_MOTION_UNITS, (void*)settings_update, 0 },
-    { "NMX M2 Units", 'C', (void*)&conf.motionUnit2, (void*)STR_MOTION_UNITS, (void*)settings_update, 0 },
-    { "NMX M3 Units", 'C', (void*)&conf.motionUnit3, (void*)STR_MOTION_UNITS, (void*)settings_update, 0 },
+    { "KF Time Unit", 'S', (void*)settings_keyframeTime, (void*)&conf.keyframeTimeByMinute, (void*)settings_update, 0 },
+    { "NMX Motor 1 ", 'M', (void*)menu_settings_timelapse_ramping_nmx1, 0, 0, 0 },
+    { "NMX Motor 2 ", 'M', (void*)menu_settings_timelapse_ramping_nmx2, 0, 0, 0 },
+    { "NMX Motor 3 ", 'M', (void*)menu_settings_timelapse_ramping_nmx3, 0, 0, 0 },
     { "\0           ", 'V', 0, 0, 0 }
 };
 
@@ -724,8 +746,8 @@ const menu_item menu_settings_auxiliary[]PROGMEM =
 const menu_item menu_development[]PROGMEM =
 {
     { "Dev Mode LED", 'S', (void*)menu_settings_dev_mode, (void*)&conf.devMode, (void*)settings_update, 0 },
-    { "Debug Mode  ", 'S', (void*)menu_settings_debug_mode, (void*)&conf.debugEnabled, (void*)settings_update, 0 },
-    { "Shutter Test", 'F', (void*)shutterTest, 0, 0, (void*)&timerNotRunning },
+//    { "Debug Mode  ", 'S', (void*)menu_settings_debug_mode, (void*)&conf.debugEnabled, (void*)settings_update, 0 },
+//    { "Shutter Test", 'F', (void*)shutterTest, 0, 0, (void*)&timerNotRunning },
     { "Light Meter ", 'F', (void*)lightMeter, 0, 0, (void*)&timerNotRunning },
     { "Reset All   ", 'F', (void*)factoryReset, 0, 0, (void*)&timerNotRunning },
     { "DFU Mode    ", 'F', (void*)hardware_bootloader, 0, 0, (void*)&timerNotRunning },
@@ -758,6 +780,8 @@ const menu_item menu_main[]PROGMEM =
 const menu_item menu_options[]PROGMEM =
 {
     { "Stop Timer  ", 'F', (void*)&timerStop, 0, 0, (void*)&timer.running },
+    { "Goto StartKF", 'F', (void*)&gotoStart, 0, 0, (void*)&timerNotRunning },
+    { "Flatten KFs ", 'F', (void*)&flattenKeyframes, 0, 0, (void*)&timerNotRunning },
     { "Remote Info ", 'F', (void*)&timerStatusRemote, 0, 0, (void*)&showRemoteInfo },
     { "Start Remote", 'F', (void*)&timerRemoteStart, 0, 0, (void*)&showRemoteStart },
     { "Load Saved..", 'F', (void*)&shutter_load, 0, 0, (void*)&timerNotRunning },

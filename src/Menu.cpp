@@ -39,6 +39,7 @@ MENU::MENU()
     hx2 = 0;
     hy2 = 0;
     m_refresh = 0;
+    cursor = 0;
 }
 
 /******************************************************************
@@ -98,7 +99,11 @@ void MENU::task()
            break;
 
        case ST_EDIT:
-           ret = editNumber(key, var, name, desc, type, first);
+           if(type == 'L')
+             ret = editNumber(key, var32, name, desc, type, first);
+           else
+             ret = editNumber(key, var16, name, desc, type, first);
+
            first = 0;
            
            if(ret != FN_CONTINUE) 
@@ -112,7 +117,7 @@ void MENU::task()
            break;
 
        case ST_TEXT:
-           ret = editNumber(key, var, name, desc, type, first);
+           ret = editNumber(key, var16, name, desc, type, first);
            first = 0;
            
            if(ret != FN_CONTINUE)
@@ -164,7 +169,7 @@ void MENU::task()
        case ST_EEPR:
            if(first)
            {
-               eeprom_read_block(&e_val, var, 2);
+               eeprom_read_block(&e_val, var16, 2);
            }
            ret = editNumber(key, &e_val, name, desc, type, first);
            first = 0;
@@ -174,10 +179,10 @@ void MENU::task()
                if(ret == FN_SAVE)
                {
                    unsigned int tmp;
-                   eeprom_read_block(&tmp, var, 2);
+                   eeprom_read_block(&tmp, var16, 2);
                    
                    if(tmp != e_val) 
-                       eeprom_write_block(&e_val, var, 2);
+                       eeprom_write_block(&e_val, var16, 2);
                }
                state = ST_MENU;
            }
@@ -307,23 +312,20 @@ void MENU::init(menu_item *newmenu)
 
             if(type == 'E')  // Edit variable type //
             {
-                unsigned int *var;
-                var = (unsigned int*)pgm_read_word(&menu[i].function);
+                var16 = (uint16_t*)pgm_read_word(&menu[i].function);
                 
-                if(type != 'C') {
-                    var_len = lcd->writeNumber(2 + MENU_NAME_LEN * 6, 8 + 9 * menuSize - menuScroll, *var, c, 'R',false);  //J.R. 2-27-14
-                }
+                var_len = lcd->writeNumber(2 + MENU_NAME_LEN * 6, 8 + 9 * menuSize - menuScroll, *var16, c, 'R',false);  //J.R. 2-27-14
             }
 
             if(type == 'S' && c == '*') // Display setting selection in place of menu text
             {
                 settings_item *set;
                 set = (settings_item*)pgm_read_word(&menu[i].function);
-                var = (unsigned int*)pgm_read_word(&menu[i].description);
+                var16 = (uint16_t*)pgm_read_word(&menu[i].description);
 
                 for(uint8_t x = 0; x < MENU_MAX; x++)
                 {
-                    if(pgm_read_byte(&set[x].value) == *var)
+                    if(pgm_read_byte(&set[x].value) == *var16)
                     {
                         for(c = 0; c < MENU_NAME_LEN - 1; c++) // Write settings item text //
                         {
@@ -353,22 +355,17 @@ void MENU::init(menu_item *newmenu)
                   lcd->writeChar(2 + (MENU_NAME_LEN - 1) * 6, 8 + 9 * menuSize - menuScroll, '>');
                 }
                 ch = pgm_read_byte(&menu[i].name[MENU_NAME_LEN - 2]);                                             
-                if(type == 'C' && (ch == 'M' || ch == 'N' || ch == 'L'))  //Correction for Bramp Min-Max J.R.
-                {
-                  //lcd->writeChar(2 + (MENU_NAME_LEN - 2) * 6, 8 + 9 * menuSize - menuScroll, '*');
-                  lcd->eraseBox(2 + (MENU_NAME_LEN - 2) * 6, 8 + 9 * menuSize - menuScroll, 8 + (MENU_NAME_LEN - 2) * 6, 16 + 9 * menuSize - menuScroll);  //J.R.  
-                }
             }
             
             if(type == 'S' && c == '+') // Write setting selection over menu text
             {
                 settings_item *set;
                 set = (settings_item*)pgm_read_word(&menu[i].function);
-                var = (unsigned int*)pgm_read_word(&menu[i].description);
+                var16 = (uint16_t*)pgm_read_word(&menu[i].description);
 
                 for(uint8_t x = 0; x < MENU_MAX; x++)
                 {                    
-                    if(pgm_read_byte(&set[x].value) == *var)
+                    if(pgm_read_byte(&set[x].value) == *var16)
                     {
                         for(c = 0; c < MENU_NAME_LEN - 1; c++) // Write settings item text //
                         {
@@ -385,12 +382,12 @@ void MENU::init(menu_item *newmenu)
             {
                 dynamicItem_t *set;
                 set = (dynamicItem_t*)pgm_read_word(&menu[i].function);
-                var = (unsigned int*)pgm_read_word(&menu[i].description);
+                var16 = (uint16_t*)pgm_read_word(&menu[i].description);
 
                 char item_name[8];
                 uint8_t (*nameFunc)(char name[8], uint8_t id);
                 nameFunc = (uint8_t (*)(char*, uint8_t))pgm_read_word(&set->nameFunc);
-                if((nameFunc)(item_name, *var))
+                if((nameFunc)(item_name, *var16))
                 {
                   for(c = 0; c < 7; c++) // Write item text //
                   {
@@ -451,14 +448,6 @@ void MENU::setTitle(char *title)
     lcd->drawHighlight(0, 1, 83, 3);
     lcd->eraseBox(41 - l - 1, 0, 41 + l + 1, 5);
     lcd->writeStringTiny(41 - l, 0, title);
-
-/*  lcd->eraseBox(0, 0, 83, 6);
-  lcd->writeStringTiny(2, 1, title);
-  lcd->drawHighlight(0, 0, 83, 6);
-  lcd->clearPixel(0, 0);
-  lcd->clearPixel(83, 0);
-  lcd->clearPixel(0, 6);
-  lcd->clearPixel(83, 6); */
 }
 
 /******************************************************************
@@ -474,10 +463,6 @@ void MENU::setBar(char *left, char *right)
     lcd->writeStringTiny(2, 42, left);
     lcd->writeStringTiny(83 - lcd->measureStringTiny(right), 42, right);
     lcd->drawHighlight(0, 41, 83, 47);
-/*  lcd->clearPixel(0, 41);
-  lcd->clearPixel(83, 41);
-  lcd->clearPixel(0, 47);
-  lcd->clearPixel(83, 47); */
 }
 
 /******************************************************************
@@ -626,6 +611,7 @@ void MENU::click()
                state = ST_FUNC;
                break;
 
+           case 'L':
            case 'C':
            case 'E': // Edit Variable
                {
@@ -669,8 +655,15 @@ void MENU::click()
                    state = ST_EDIT;
 
                    func_short = (char (*)(void))pgm_read_word(&menu[index].short_function);
-                   type = pgm_read_byte(&menu[index].name[MENU_NAME_LEN - 2]);
-                   var = (unsigned int (*))pgm_read_word(&menu[index].function);
+                   if(type == 'L')
+                   {
+                     var32 = (uint32_t (*))pgm_read_dword(&menu[index].function);
+                   }
+                   else
+                   {
+                     type = pgm_read_byte(&menu[index].name[MENU_NAME_LEN - 2]);
+                     var16 = (uint16_t (*))pgm_read_word(&menu[index].function);
+                   }
                    break;
                }
 
@@ -920,7 +913,7 @@ void MENU::up()
  *
  ******************************************************************/
 
-char MENU::editNumber(char key, unsigned int *n, char *name, char *unit, char mode, char first)
+char MENU::editNumber(char key, void *n, char *name, char *unit, char mode, char first)
 {
     static char t;
     static uint8_t i;
@@ -929,13 +922,17 @@ char MENU::editNumber(char key, unsigned int *n, char *name, char *unit, char mo
     static uint8_t l;
     static uint8_t x;
     static char d[5];
-    unsigned int m;
+    uint32_t m;
 
     ret = FN_CONTINUE;
 
     if(first)
     {
-        m = *n;
+        if(type == 'L')
+          m = *((uint32_t *)n);
+        else
+          m = (uint32_t)*((uint16_t *)n);
+  
         lcd->cls();
 
         // Draw frame //
@@ -1063,7 +1060,7 @@ char MENU::editNumber(char key, unsigned int *n, char *name, char *unit, char mo
                 lcd->drawBox(68 - 1 * 16 - 3, 20, 68 - 1 * 16 - 2, 22);
                 break;
            
-           case 'L': // negative number J.R.//
+           case 'B': // negative number J.R.//
 				        lcd->eraseBox(67 - 3 * 16, 8, 67 - 2 * 16, 30);
 				        if(conf.camera.negBulbOffset) lcd->writeCharBig(67 - 3 * 16, 7, '-');              
         }
@@ -1093,34 +1090,19 @@ char MENU::editNumber(char key, unsigned int *n, char *name, char *unit, char mo
                else				   
                    t = 9;
                break;
-           case 'N':
-           case 'M':		//J.R. Added case for Bramp Max/Min
-				   l = 2;
-			   if(i == 1)
-			   {
-				   if(mode == 'N') t = 2; 	//case = 'N'  - Bramp Min	
-				   else 		   t = 5;	//case = 'M'  - Bramp Max
-				   if(d[1] == 5 && mode == 'M') d[0] = 0;		
-				   if(d[1] == 2 && mode == 'N') d[0] = 0;
-			   }
-			   else
-			   {
-				   t = 9; 
-				   if(d[0] == 1 && d[1] == 5 && mode == 'M') d[1] = 0;		
-				   if(d[0] == 1 && d[1] == 2 && mode == 'N') d[1] = 0;
-				   if(d[0] == 9 && d[1] == 5 && mode == 'M') d[1] = 4;		
-				   if(d[0] == 9 && d[1] == 2 && mode == 'N') d[1] = 1;		   
-				}	    			   										   
-			   break;
 			   
-           case 'L':		//  Added case for Bulb Offset  J.R.
-				   l = 4;
+           case 'B':		//  Added case for Bulb Offset  J.R.
+    				   l = 4;
                if(i == 3) 
                    t = 0;
                else				   
                    t = 9;
                break;			   
 			   			   
+           case 'L':    //  uint32
+               t = 9;
+               break;        
+                 
 			   
            default:
                if(i == 4) 
@@ -1168,7 +1150,7 @@ char MENU::editNumber(char key, unsigned int *n, char *name, char *unit, char mo
                        d[i] = 0;
                    break;
             }
-            if(mode == 'L' && i == 3)   //J.R.
+            if(mode == 'B' && i == 3)   //J.R.
             {
       				if(key == UP_KEY || key == DOWN_KEY)
       				{
@@ -1198,14 +1180,14 @@ char MENU::editNumber(char key, unsigned int *n, char *name, char *unit, char mo
                DEBUG_NL();
                break;
                
-		   case 'H':		//  Added case for hh:mm
+		       case 'H':		//  Added case for hh:mm
                 m += (d[3] * 10 + d[2]) * 60; // hours
                 m += d[1] * 10 + d[0]; // minutes
                 DEBUG(m);
                 DEBUG_NL();
                 break; 
                 
-           case 'L':		//  Added case for Bulb Offset  J.R.
+           case 'B':		//  Added case for Bulb Offset  J.R.
                 m = d[2];
                 m *= 10;
                 m += d[1];
@@ -1231,7 +1213,10 @@ char MENU::editNumber(char key, unsigned int *n, char *name, char *unit, char mo
         {
            case FR_KEY:
                 message(TEXT("Saved"));
-                *n = m; // Save new Value if not cancelled //
+                if(type == 'L')
+                  *((uint32_t *)n) = m; // Save new Value if not cancelled //
+                else
+                  *((uint16_t *)n) = (uint16_t)m;
                 ret = FN_SAVE;
                 break;
                 
@@ -1861,7 +1846,7 @@ uint8_t MENU::removeKeyframe(keyframeGroup_t *kf, uint8_t index)
 
 char MENU::editKeyframe(char key, keyframeGroup_t *kf, char first)
 {
-  static uint8_t cursor = 0, edit = 0, draw = 1;
+  static uint8_t edit = 0, draw = 1;
   button->verticalRepeat = 1;
   static uint32_t cMs = 0;
   static int32_t cValue = 0;
@@ -1932,7 +1917,10 @@ char MENU::editKeyframe(char key, keyframeGroup_t *kf, char first)
         cValue = (uint32_t)val;
         if(edit == 1 && kf->selected > 0)
         {
-          kf->keyframes[kf->selected - 1].ms = cMs;
+          if(!conf.keyframeTimeByMinute)
+          {
+            kf->keyframes[kf->selected - 1].ms = cMs;
+          }
         }
       }
       uint8_t yval = (uint8_t)(((float)kf->max - val) / (float)(kf->max - kf->min) * (float)CHARTBOX_HEIGHT);
@@ -1940,7 +1928,7 @@ char MENU::editKeyframe(char key, keyframeGroup_t *kf, char first)
     }
 
     //draw keyframes
-    kf->selected = 0;
+    if(!edit) kf->selected = 0;
     lastKf = 0;
     nextKf = 0;
     for(uint8_t i = 0; i < kf->count; i++)
@@ -1955,6 +1943,10 @@ char MENU::editKeyframe(char key, keyframeGroup_t *kf, char first)
         lcd->setPixel(x, y + 1);
       }
 
+      if(edit && i + 1 == kf->selected && conf.keyframeTimeByMinute)
+      {
+        cursor = x - 1 - CHARTBOX_X1;
+      }
       if(CHARTBOX_X1 + 1 + cursor == x)
       {
         kf->selected = i + 1;
@@ -1979,11 +1971,11 @@ char MENU::editKeyframe(char key, keyframeGroup_t *kf, char first)
       else
       {
         if(kf->type == KFT_MOTOR1 && conf.motionUnit1)
-          tmp /= conf.motionUnit1;
+          tmp /= (int32_t)conf.motionUnit1;
         else if(kf->type == KFT_MOTOR2 && conf.motionUnit2)
-          tmp /= conf.motionUnit2;
+          tmp /= (int32_t)conf.motionUnit2;
         else if(kf->type == KFT_MOTOR3 && conf.motionUnit3)
-          tmp /= conf.motionUnit3;
+          tmp /= (int32_t)conf.motionUnit3;
         buf[0] = '+';
         if(tmp < 0)
         {
@@ -2107,7 +2099,32 @@ char MENU::editKeyframe(char key, keyframeGroup_t *kf, char first)
     uint8_t move = 0;
     if(edit)
     {
-      if(kf->selected > 1 && kf->selected < kf->count && cursor > (lx - CHARTBOX_X1 - 1)) move = 1;
+      if(kf->selected > 1 && kf->selected < kf->count && cursor > (lx - CHARTBOX_X1 - 1))
+      {
+        if(conf.keyframeTimeByMinute)
+        {
+          move = 0;
+          if(kf->keyframes[kf->selected - 1].ms > 60000)
+          {
+            if(kf->keyframes[kf->selected - 1].ms % 60000 > 0)
+            {
+              kf->keyframes[kf->selected - 1].ms -= kf->keyframes[kf->selected - 1].ms % 60000;
+            }
+            else
+            {
+              kf->keyframes[kf->selected - 1].ms -= 60000;
+            }
+          }
+          else
+          {
+            kf->keyframes[kf->selected - 1].ms = 0;            
+          }
+        }
+        else
+        {
+          move = 1;
+        }
+      }
     }
     else
     {
@@ -2130,7 +2147,25 @@ char MENU::editKeyframe(char key, keyframeGroup_t *kf, char first)
     uint8_t move = 0;
     if(edit)
     {
-      if(kf->selected > 1 && kf->selected < kf->count && cursor < (nx - CHARTBOX_X1 - 1)) move = 1;
+      if(kf->selected > 1 && kf->selected < kf->count && cursor < (nx - CHARTBOX_X1 - 1))
+      {
+        if(conf.keyframeTimeByMinute)
+        {
+          move = 0;
+          if(kf->keyframes[kf->selected - 1].ms + 60000 < kf->keyframes[kf->count - 1].ms)
+          {
+            kf->keyframes[kf->selected - 1].ms += 60000 - (kf->keyframes[kf->selected - 1].ms % 60000);
+          }
+          else
+          {
+            kf->keyframes[kf->selected - 1].ms = kf->keyframes[kf->count - 1].ms;            
+          }
+        }
+        else
+        {
+          move = 1;
+        }
+      }
     }
     else
     {
@@ -2161,7 +2196,7 @@ char MENU::editKeyframe(char key, keyframeGroup_t *kf, char first)
     {
       if(kf->selected > 0)
       {
-        int16_t steps = kf->steps - (kf->keyframes[kf->selected - 1].value % kf->steps);
+        int32_t steps = kf->steps - (kf->keyframes[kf->selected - 1].value % kf->steps);
         if((kf->keyframes[kf->selected - 1].value + steps < kf->max) || kf->rangeExtendable)
         {
           kf->keyframes[kf->selected - 1].value += steps;
@@ -2188,7 +2223,7 @@ char MENU::editKeyframe(char key, keyframeGroup_t *kf, char first)
     {
       if(kf->selected > 0)
       {
-        int16_t steps = kf->keyframes[kf->selected - 1].value % kf->steps;
+        int32_t steps = kf->keyframes[kf->selected - 1].value % kf->steps;
         if(steps == 0) steps = kf->steps;
         if((kf->keyframes[kf->selected - 1].value - steps > kf->min) || kf->rangeExtendable)
         {

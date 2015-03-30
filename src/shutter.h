@@ -111,7 +111,7 @@ struct keyframeGroup_t {
     uint8_t type;
     int32_t max;
     int32_t min;
-    int16_t steps;
+    int32_t steps;
     uint8_t rangeExtendable;    
     void (*move)(uint32_t ms, int32_t pos, uint8_t type, uint8_t force);
 };
@@ -200,8 +200,10 @@ public:
 
     char cableIsConnected(void);
 
-    void switchToGuided();
-    void switchToAuto();
+    void switchToGuided(void);
+    void switchToAuto(void);
+
+    void resetKeyframes(void);
 
     program current;
     timer_status status; 
@@ -266,6 +268,7 @@ void moveMotor1(int32_t pos);
 void moveMotor2(int32_t pos);
 void moveMotor3(int32_t pos);
 void moveAxes(uint32_t seconds, int32_t pos, uint8_t type, uint8_t force);
+void moveToStart(void);
 
 extern uint8_t lastShutterError;
 #endif

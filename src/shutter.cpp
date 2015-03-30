@@ -132,59 +132,7 @@ void shutter::setDefault()
     current.nightShutter = 31;
     current.nightAperture = 9;
 
-    current.kfExposure.count = 2;
-    current.kfExposure.selected = 0;
-    current.kfExposure.hasEndKeyframe = 0;
-    current.kfExposure.type = KFT_EXPOSURE;
-    current.kfExposure.max = 0;
-    current.kfExposure.min = 0;
-    current.kfExposure.keyframes[0].value = 0;
-    current.kfExposure.keyframes[1].value = 0;
-
-    current.kfInterval.count = 2;
-    current.kfInterval.selected = 0;
-    current.kfInterval.hasEndKeyframe = 0;
-    current.kfInterval.type = KFT_INTERVAL;
-    current.kfInterval.max = 450;
-    current.kfInterval.min = 20;
-    current.kfInterval.keyframes[0].value = 80;
-    current.kfInterval.keyframes[1].value = 80;
-
-    current.kfFocus.count = 2;
-    current.kfFocus.selected = 0;
-    current.kfFocus.hasEndKeyframe = 0;
-    current.kfFocus.type = KFT_FOCUS;
-    current.kfFocus.max = 0;
-    current.kfFocus.min = 0;
-    current.kfFocus.keyframes[0].value = 0;
-    current.kfFocus.keyframes[1].value = 0;
-
-    current.kfMotor1.count = 2;
-    current.kfMotor1.selected = 0;
-    current.kfMotor1.hasEndKeyframe = 0;
-    current.kfMotor1.type = KFT_MOTOR1;
-    current.kfMotor1.max = 0;
-    current.kfMotor1.min = 0;
-    current.kfMotor1.keyframes[0].value = 0;
-    current.kfMotor1.keyframes[1].value = 0;
-
-    current.kfMotor2.count = 2;
-    current.kfMotor2.selected = 0;
-    current.kfMotor2.hasEndKeyframe = 0;
-    current.kfMotor2.type = KFT_MOTOR2;
-    current.kfMotor2.max = 0;
-    current.kfMotor2.min = 0;
-    current.kfMotor2.keyframes[0].value = 0;
-    current.kfMotor2.keyframes[1].value = 0;
-
-    current.kfMotor3.count = 2;
-    current.kfMotor3.selected = 0;
-    current.kfMotor3.hasEndKeyframe = 0;
-    current.kfMotor3.type = KFT_MOTOR3;
-    current.kfMotor3.max = 0;
-    current.kfMotor3.min = 0;
-    current.kfMotor3.keyframes[0].value = 0;
-    current.kfMotor3.keyframes[1].value = 0;
+    resetKeyframes();
 
     save(0);
 
@@ -597,11 +545,15 @@ char shutter::task()
             menu.message(TEXT("Loading"));
             menu.task();
 
-            moveAxes(0, 0, 0, 1);
+            moveToStart();
             if(camera.modeLiveView)
             {
                 camera.liveView(false);
                 _delay_ms(300);
+            }
+            while(remote.nmx && (motor1.running() || motor2.running() || motor3.running())) // wait for move to start
+            {
+              wdt_reset();
             }
 
             if(current.Mode & RAMP)
@@ -1092,17 +1044,16 @@ char shutter::task()
     
     if(run_state == RUN_NEXT)
     {
-        last_photo_end_ms = clock.Ms();
+        if(old_state != run_state)
+        {
+            old_state = run_state;
+            last_photo_end_ms = clock.Ms();
+        }
 
         if((PTP_Connected && PTP_Error) || (usingUSB && !camera.ready))
         {
             run_state = RUN_ERROR;
             return CONTINUE;
-        }
-
-        if(old_state != run_state)
-        {
-            old_state = run_state;
         }
 
         if((exps >= current.Exps && (current.Mode & HDR)) || (current.Mode & HDR) == 0)
@@ -1147,7 +1098,7 @@ char shutter::task()
             movedFocus = 0;
             if(conf.auxPort == AUX_MODE_DOLLY) aux_pulse();
 
-            motionMS += status.interval * 100;
+            motionMS += ((uint32_t)status.interval) * 100UL;
 
             uint32_t motionError = clock.Ms();
             if(motionError > motionMS)
@@ -1187,10 +1138,7 @@ char shutter::task()
                     {
                         movedFocus = 1;
                     }
-                    else
-                    {
-                        return CONTINUE; // do event loop once first
-                    }
+                    return CONTINUE; // do event loop once first
                 }
                 movedFocus = 2;
                 camera.setFocus(true);
@@ -1248,8 +1196,6 @@ char shutter::task()
             strcpy((char *) status.textStatus, TEXT("Error"));
             old_state = run_state;
 
-            DEBUG(PSTR("Resetting Camera"));
-            DEBUG_NL();
             shutter_half();
             _delay_ms(100);
             shutter_off();
@@ -1287,6 +1233,12 @@ char shutter::task()
         clock.awake();
         usbPrimary = 0;
         status.preChecked = 0;
+        if(remote.nmx)
+        {
+          motor1.disable();
+          motor2.disable();
+          motor3.disable();
+        }
 
         return DONE;
     }
@@ -2012,4 +1964,67 @@ void updateKeyframeGroup(keyframeGroup_t *kf)
         kf->keyframes[kf->count - 1].ms = ((uint32_t)timer.current.Photos * (uint32_t)timer.current.Gap) * 100;
     }
     if(kf->keyframes[kf->count - 1].ms < 84) kf->keyframes[kf->count - 1].ms = 84;
+}
+
+void shutter::resetKeyframes()
+{
+  current.kfExposure.count = 2;
+  current.kfExposure.selected = 0;
+  current.kfExposure.hasEndKeyframe = 0;
+  current.kfExposure.type = KFT_EXPOSURE;
+  current.kfExposure.max = 0;
+  current.kfExposure.min = 0;
+  current.kfExposure.keyframes[0].value = 0;
+  current.kfExposure.keyframes[1].value = 0;
+
+  current.kfInterval.count = 2;
+  current.kfInterval.selected = 0;
+  current.kfInterval.hasEndKeyframe = 0;
+  current.kfInterval.type = KFT_INTERVAL;
+  current.kfInterval.max = 450;
+  current.kfInterval.min = 20;
+  current.kfInterval.keyframes[0].value = 80;
+  current.kfInterval.keyframes[1].value = 80;
+
+  current.kfFocus.count = 2;
+  current.kfFocus.selected = 0;
+  current.kfFocus.hasEndKeyframe = 0;
+  current.kfFocus.type = KFT_FOCUS;
+  current.kfFocus.max = 0;
+  current.kfFocus.min = 0;
+  current.kfFocus.keyframes[0].value = 0;
+  current.kfFocus.keyframes[1].value = 0;
+
+  current.kfMotor1.count = 2;
+  current.kfMotor1.selected = 0;
+  current.kfMotor1.hasEndKeyframe = 0;
+  current.kfMotor1.type = KFT_MOTOR1;
+  current.kfMotor1.max = 0;
+  current.kfMotor1.min = 0;
+  current.kfMotor1.keyframes[0].value = 0;
+  current.kfMotor1.keyframes[1].value = 0;
+
+  current.kfMotor2.count = 2;
+  current.kfMotor2.selected = 0;
+  current.kfMotor2.hasEndKeyframe = 0;
+  current.kfMotor2.type = KFT_MOTOR2;
+  current.kfMotor2.max = 0;
+  current.kfMotor2.min = 0;
+  current.kfMotor2.keyframes[0].value = 0;
+  current.kfMotor2.keyframes[1].value = 0;
+
+  current.kfMotor3.count = 2;
+  current.kfMotor3.selected = 0;
+  current.kfMotor3.hasEndKeyframe = 0;
+  current.kfMotor3.type = KFT_MOTOR3;
+  current.kfMotor3.max = 0;
+  current.kfMotor3.min = 0;
+  current.kfMotor3.keyframes[0].value = 0;
+  current.kfMotor3.keyframes[1].value = 0;
+}
+
+void moveToStart()
+{
+  moveAxes(0, 0, 0, 1);
+  menu.cursor = 0;
 }
