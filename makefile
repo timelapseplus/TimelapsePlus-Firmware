@@ -129,13 +129,14 @@ include $(LUFA_PATH)/LUFA/makefile
 
 
 # List C source files here. (C dependencies are automatically generated.)
-SRC = src/Descriptors.c 	\
+SRC = \
 	  $(LUFA_SRC_USB)       \
 	  $(LUFA_SRC_USBCLASS) 	\
 	  $(LUFA_SRC_SERIAL)	\
 	  src/TWI_Master.c      \
 	  src/TWI_Master.c      \
 	  src/PTP_Driver.c      
+#		src/Descriptors.c 	\
 #	  src/VirtualSerial.c
 
 

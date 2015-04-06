@@ -117,7 +117,7 @@ void PTP_Enable(void)
 {
     configured = 0;
     /* Hardware Initialization */
-    USB_Init(USB_MODE_Host);
+    USB_Init();//USB_MODE_Host);
 
     /* Create a stdio stream for the serial port for stdin and stdout */
     #if defined(PTP_DEBUG) || defined(PTP_DEBUG_SELECTIVE)
