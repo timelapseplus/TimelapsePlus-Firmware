@@ -12,7 +12,7 @@
 
 struct propertyDescription_t
 {
-    char name[8];
+    char name[7];
     uint32_t eos;
     uint32_t nikon;
     uint8_t ev; // 1/3 stop increments
@@ -20,7 +20,7 @@ struct propertyDescription_t
 
 struct bulbSettings_t
 {
-    char name[8];
+    char name[7];
     uint32_t ms;
     uint8_t ev;
 };

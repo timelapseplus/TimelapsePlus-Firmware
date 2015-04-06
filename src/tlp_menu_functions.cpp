@@ -944,7 +944,7 @@ volatile char autoConfigureCameraTiming(char key, char first)
 
 			char buf[8];
 			camera.shutterName(buf, conf.camera.bulbMin);
-			lcd.writeString(58, 18, &buf[3]); // Bulb Length
+			lcd.writeString(58, 18, &buf[2]); // Bulb Length
 
 			lcd.writeNumber(58, 8, conf.camera.brampGap, 'U', 'L', false);
 			//lcd.writeNumber(58, 18, conf.camera.bulbMin, 'U', 'L', false);
@@ -3091,14 +3091,14 @@ volatile char bramp_monitor(char key, char first)
         if((conf.brampMode & BRAMP_MODE_ISO) && camera.supports.iso)
 		{
 			camera.isoName(buf, camera.iso());
-			lcd.writeStringTiny(63, 2+12, &buf[2]); // ISO
+			lcd.writeStringTiny(63, 2+12, &buf[1]); // ISO
 		}
 		if(clock.usingSync)
 		{
 			lcd.writeStringTiny(56, 2, STR("S"));
 		}
 		camera.bulbName(buf, timer.status.bulbLength);
-		lcd.writeStringTiny(63, 2+6, &buf[3]); // Bulb Length
+		lcd.writeStringTiny(63, 2+6, &buf[2]); // Bulb Length
 
 		float f = timer.status.rampStops;
 		if(f > 0.0)
@@ -3432,12 +3432,12 @@ volatile char bramp_monitor(char key, char first)
 
 
 			camera.bulbName(buf, bulb_length);
-	        lcd.writeStringTiny(XALIGN + 2, 14, &buf[3]); // shutter
+	        lcd.writeStringTiny(XALIGN + 2, 14, &buf[2]); // shutter
 
             if((conf.brampMode & BRAMP_MODE_ISO) && camera.supports.iso)
             {
 				camera.isoName(buf, nextISO);
-		        lcd.writeStringTiny(XALIGN + 2, 21, &buf[2]); // ISO
+		        lcd.writeStringTiny(XALIGN + 2, 21, &buf[1]); // ISO
             }
             else
             {
