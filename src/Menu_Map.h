@@ -31,6 +31,9 @@ const char STR_AUX_DOLLY[]PROGMEM = "between frames";
 const char STR_AUX_SYNC[]PROGMEM = "PC sync input";
 const char STR_AUX_IR[]PROGMEM = "IR signal out";
 
+const char STR_CAM_DEFAULT[]PROGMEM = "Normal operation"; 
+const char STR_CAM_DOLLY[]PROGMEM = "Use for motion sync"; 
+
 const char STR_CAMERA_FPS[]PROGMEM = "Frames per Second";
 const char STR_DEV_MODE_ON[]PROGMEM = "Shutter lights LED";
 const char STR_DEV_MODE_OFF[]PROGMEM = "LED off during use";
@@ -416,10 +419,16 @@ const settings_item menu_settings_power_off_time[]PROGMEM =
 const settings_item menu_settings_aux_port[]PROGMEM =
 {
     { "Disabled    ", AUX_MODE_DISABLED, (void*)STR_AUX_DISABLED, 0 },
-    { "Dolly Out   ", AUX_MODE_DOLLY, (void*)STR_AUX_DOLLY, 0 },
+    { "Motion Sync ", AUX_MODE_DOLLY, (void*)STR_AUX_DOLLY, 0 },
     { "PC Sync In  ", AUX_MODE_SYNC, (void*)STR_AUX_SYNC, 0 },
     { "IR Out      ", AUX_MODE_IR, (void*)STR_AUX_IR, 1 }
 //    { "2nd Camera  ", 60, (void*)STR_AUX_DOLLY, 1 },
+};
+
+const settings_item menu_settings_camera_port[]PROGMEM =
+{
+    { "Camera      ", 0, (void*)STR_CAM_DEFAULT, 0 },
+    { "Motion Sync ", AUX_CAM_DOLLY, (void*)STR_CAM_DOLLY, 1 }
 };
 
 const settings_item menu_settings_bt_default[]PROGMEM =
@@ -736,9 +745,10 @@ const menu_item menu_settings_timelapse[]PROGMEM =
 const menu_item menu_settings_auxiliary[]PROGMEM =
 {
     { "AUX Port    ", 'S', (void*)menu_settings_aux_port, (void*)&conf.auxPort, (void*)settings_update, 0 },
+    { "Camera Port ", 'S', (void*)menu_settings_camera_port, (void*)&conf.cameraPort, (void*)settings_update, (void*)&pcSyncAux },
     { "PC-Sync Mode", 'S', (void*)menu_settings_pc_sync_mode, (void*)&conf.pcSyncRequired, (void*)settings_update, (void*)&pcSyncAux },
-    { "Dolly Pulse1", 'C', (void*)&conf.dollyPulse, (void*)STR_DOLLY_PULSE, (void*)settings_update, (void*)&dollyAux },
-    { "Dolly Pulse2", 'C', (void*)&conf.dollyPulse2, (void*)STR_DOLLY_PULSE, (void*)settings_update, (void*)&dollyAux },
+    { "MotionPulse1", 'C', (void*)&conf.dollyPulse, (void*)STR_DOLLY_PULSE, (void*)settings_update, (void*)&dollyAux },
+    { "MotionPulse2", 'C', (void*)&conf.dollyPulse2, (void*)STR_DOLLY_PULSE, (void*)settings_update, (void*)&dollyAux },
     { "BT Default  ", 'S', (void*)menu_settings_bt_default, (void*)&conf.btMode, (void*)settings_update, (void*)&bt.present },
     { "\0           ", 'V', 0, 0, 0 }
 };

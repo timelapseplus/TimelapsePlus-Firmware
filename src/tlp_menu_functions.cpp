@@ -129,7 +129,7 @@ void updateConditions()
   cameraMakeCanon = conf.camera.cameraMake == CANON;
 	showFocus = conf.focusEnabled && camera.supports.focus;
   pcSyncAux = (conf.auxPort == AUX_MODE_SYNC);
-  dollyAux = (conf.auxPort == AUX_MODE_DOLLY);
+  dollyAux = (conf.auxPort == AUX_MODE_DOLLY || (conf.auxPort == AUX_MODE_SYNC && conf.cameraPort == AUX_CAM_DOLLY));
 
 	if(modeRamp && timer.current.Gap < BRAMP_INTERVAL_MIN)
 	{

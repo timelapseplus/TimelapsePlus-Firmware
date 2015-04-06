@@ -8,7 +8,7 @@
  *
  */
  
-#define SETTINGS_VERSION 20150324
+#define SETTINGS_VERSION 20150403
 
 #define ALL -1
 #define CANON 0
@@ -48,6 +48,9 @@
 #define AUX_MODE_DOLLY 1
 #define AUX_MODE_IR 2
 #define AUX_MODE_SYNC 3
+
+#define AUX_CAM_DEFAULT 0
+#define AUX_CAM_DOLLY 1
 
 #define ERROR_ALERT_SCREEN 0
 #define ERROR_ALERT_FLASHLIGHT 1
@@ -137,6 +140,7 @@ struct settings_t
     uint16_t motionSpeed2;
     uint16_t motionSpeed3;
     uint8_t keyframeTimeByMinute;
+    uint8_t cameraPort;
     char lastNMXaddress[14];
 };
 

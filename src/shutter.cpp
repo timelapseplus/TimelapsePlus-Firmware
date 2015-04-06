@@ -163,6 +163,8 @@ void shutter_off(void)
     if(conf.devMode) 
         hardware_flashlight(0);
     
+    if((conf.cameraPort == AUX_CAM_DOLLY && conf.auxPort == AUX_MODE_SYNC)) return; // disable if we're using the camera port for MotionSync
+
     SHUTTER_CLOSE;
     MIRROR_DOWN; 
     clock.in(20, &check_cable);
@@ -171,6 +173,8 @@ void shutter_off(void)
 }
 void shutter_off_quick(void)
 {
+    if((conf.cameraPort == AUX_CAM_DOLLY && conf.auxPort == AUX_MODE_SYNC)) return; // disable if we're using the camera port for MotionSync
+
     SHUTTER_CLOSE;
     MIRROR_DOWN;
     ir_shutter_state = 0;
@@ -190,6 +194,8 @@ void shutter::half(void)
 }
 void shutter_half(void)
 {
+    if((conf.cameraPort == AUX_CAM_DOLLY && conf.auxPort == AUX_MODE_SYNC)) return; // disable if we're using the camera port for MotionSync
+
     shutter_off(); // first we completely release the shutter button since some cameras need this to release the bulb
 
     if(conf.camera.halfPress == HALF_PRESS_ENABLED) clock.in(30, &shutter_half_delayed);
@@ -199,6 +205,8 @@ void shutter_half_delayed(void)
     if(conf.devMode) 
         hardware_flashlight(0);
     
+    if((conf.cameraPort == AUX_CAM_DOLLY && conf.auxPort == AUX_MODE_SYNC)) return; // disable if we're using the camera port for MotionSync
+
     SHUTTER_CLOSE;
     MIRROR_UP;
 }
@@ -218,6 +226,8 @@ void shutter_full(void)
 {
     if(conf.devMode) 
         hardware_flashlight(1);
+
+    if((conf.cameraPort == AUX_CAM_DOLLY && conf.auxPort == AUX_MODE_SYNC)) return; // disable if we're using the camera port for MotionSync
 
     MIRROR_UP;
     SHUTTER_OPEN;
@@ -1096,7 +1106,7 @@ char shutter::task()
         if(old_state != run_state)
         {
             movedFocus = 0;
-            if(conf.auxPort == AUX_MODE_DOLLY) aux_pulse();
+            if(conf.auxPort == AUX_MODE_DOLLY || conf.cameraPort == AUX_CAM_DOLLY) aux_pulse();
 
             motionMS += ((uint32_t)status.interval) * 100UL;
 
@@ -1383,34 +1393,66 @@ void check_cable()
 
 void aux_pulse()
 {
-    aux1_on();
-    aux2_on();
-    if(conf.dollyPulse == 65535) conf.dollyPulse = 100;
-    if(conf.dollyPulse2 == 65535) conf.dollyPulse2 = 100;
-    clock.in(conf.dollyPulse, &aux1_off);
-    clock.in(conf.dollyPulse2, &aux2_off);
+  aux1_on();
+  aux2_on();
+  if(conf.dollyPulse == 65535) conf.dollyPulse = 100;
+  if(conf.dollyPulse2 == 65535) conf.dollyPulse2 = 100;
+  clock.in(conf.dollyPulse, &aux1_off);
+  clock.in(conf.dollyPulse2, &aux2_off);
 }
 
 void aux1_on()
 {
+  if(conf.cameraPort == AUX_CAM_DOLLY && conf.auxPort == AUX_MODE_SYNC)
+  {
+    ENABLE_SHUTTER;
+    SHUTTER_OPEN;
+  }
+  else
+  {
     ENABLE_AUX_PORT1;
     AUX_OUT1_ON;
+  }
 }
 
 void aux1_off()
 {
+  if(conf.cameraPort == AUX_CAM_DOLLY && conf.auxPort == AUX_MODE_SYNC)
+  {
+    ENABLE_SHUTTER;
+    SHUTTER_CLOSE;
+  }
+  else
+  {
     ENABLE_AUX_PORT1;
+  }
 }
 
 void aux2_on()
 {
+  if(conf.cameraPort == AUX_CAM_DOLLY && conf.auxPort == AUX_MODE_SYNC)
+  {
+    ENABLE_MIRROR;
+    MIRROR_UP;
+  }
+  else
+  {
     ENABLE_AUX_PORT2;
     AUX_OUT2_ON;
+  }
 }
 
 void aux2_off()
 {
+  if(conf.cameraPort == AUX_CAM_DOLLY && conf.auxPort == AUX_MODE_SYNC)
+  {
+    ENABLE_MIRROR;
+    MIRROR_DOWN;
+  }
+  else
+  {
     ENABLE_AUX_PORT2;
+  }
 }
 
 uint8_t stopName(char name[8], uint8_t stop)

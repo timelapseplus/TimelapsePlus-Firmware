@@ -186,6 +186,7 @@ void settings_default()
     conf.motionSpeed2 = 256;
     conf.motionSpeed3 = 256;
     conf.keyframeTimeByMinute = 0;
+    conf.cameraPort = AUX_CAM_DEFAULT;
     conf.lastNMXaddress[0] = 0;
 
 
