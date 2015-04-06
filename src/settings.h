@@ -137,6 +137,7 @@ struct settings_t
     uint16_t motionSpeed2;
     uint16_t motionSpeed3;
     uint8_t keyframeTimeByMinute;
+    char lastNMXaddress[14];
 };
 
 void settings_load(void);

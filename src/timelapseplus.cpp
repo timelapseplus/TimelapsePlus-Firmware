@@ -260,6 +260,11 @@ int main()
 		menu.spawn((void*)timerStatus);	
 	}
 
+  if(conf.btMode == BT_MODE_DISCOVERABLE && conf.lastNMXaddress[0])
+  {
+    bt.connect(conf.lastNMXaddress);
+  }
+
 	/****************************
 	   Main Loop
 	*****************************/
@@ -475,6 +480,11 @@ void message_notify(uint8_t id)
 		case NOTIFY_NMX:
 			if(remote.nmx)
 			{
+        if(bt.address[0] && strncmp(bt.address, conf.lastNMXaddress, 14))
+        {
+          strncpy(conf.lastNMXaddress, bt.address, 14);
+          settings_save();
+        }
 				menu.message(STR("NMX Connected"));
 				motor1.checkConnected();
 				motor2.checkConnected();

@@ -162,6 +162,7 @@ uint8_t BT::disconnect(void)
 	if(!present)
 		return 1;
 
+  address[0] = '\0';
 	sendCMD(PSTR("ATDH,0\r"));
 
 	return checkOK();
@@ -341,10 +342,12 @@ uint8_t BT::scan(void)
  *
  ******************************************************************/
 
-uint8_t BT::connect(char *address)
+uint8_t BT::connect(char *addr)
 {
 	if(!present)
 		return 1;
+
+  strncpy(address, addr, 14);
 
 	cancel();
 
@@ -353,7 +356,7 @@ uint8_t BT::connect(char *address)
 	//DEBUG_NL();
 
 	sendCMD(PSTR("ATDMLE,"));
-	sendCMD(address);
+	sendCMD(addr);
 	sendCMD(PSTR("\r"));	
 
 	return checkOK();

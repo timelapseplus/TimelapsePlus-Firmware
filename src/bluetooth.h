@@ -79,6 +79,7 @@ public:
 
     uint8_t btVersion;
 
+    char address[14];
     char * data;
     uint8_t dataId;
     uint8_t dataType;
@@ -86,6 +87,7 @@ public:
 
     discovery device[BT_MAX_SCAN];
     uint8_t devices;
+
 
 private:
     char buf[BT_BUF_SIZE];

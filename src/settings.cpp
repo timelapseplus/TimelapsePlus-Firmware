@@ -186,6 +186,7 @@ void settings_default()
     conf.motionSpeed2 = 256;
     conf.motionSpeed3 = 256;
     conf.keyframeTimeByMinute = 0;
+    conf.lastNMXaddress[0] = 0;
 
 
     conf.camera.cameraFPS = 33;
