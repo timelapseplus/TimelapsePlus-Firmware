@@ -59,6 +59,7 @@ const char STR_HDR_EXPOSURES[]PROGMEM = "Exposures in set";
 
 const char STR_BT_SLEEP[]PROGMEM = "Connect menu to enable";
 const char STR_BT_DISCOVERABLE[]PROGMEM = "Uses more power";
+const char STR_BT_NMX[]PROGMEM = "Auto connect NMX";
 const char STR_HALF_PRESS[]PROGMEM = "Shutter half press";
 
 const char STR_BULB_OFFSET[]PROGMEM = "Offset in ms";
@@ -85,6 +86,7 @@ const char STR_NIGHT_APERTURE[]PROGMEM = "Night Aperture";
 
 const char STR_INTERVAL_MODE_FIXED[]PROGMEM = "Fixed Interval";
 const char STR_INTERVAL_MODE_VARIABLE[]PROGMEM = "Variable Interval";
+const char STR_INTERVAL_MODE_EXTERNAL[]PROGMEM = "External Trigger";
 const char STR_INTERVAL_MODE_KEYFRAME[]PROGMEM = "Keyframe Defined";
 
 const char STR_TUNING[]PROGMEM = "PID Multiplier";
@@ -167,7 +169,8 @@ const settings_item settings_interval_mode[]PROGMEM =
 {
     { "      Fixed ", INTERVAL_MODE_FIXED, (void*)STR_INTERVAL_MODE_FIXED, 0 },
     { "       Auto ", INTERVAL_MODE_AUTO, (void*)STR_INTERVAL_MODE_VARIABLE, 0 },
-    { "   Keyframe ", INTERVAL_MODE_KEYFRAME, (void*)STR_INTERVAL_MODE_KEYFRAME, 1 }
+    { "   Keyframe ", INTERVAL_MODE_KEYFRAME, (void*)STR_INTERVAL_MODE_KEYFRAME, 0 },
+    { "   External ", INTERVAL_MODE_EXTERNAL, (void*)STR_INTERVAL_MODE_EXTERNAL, 1 }
 };
 
 const dynamicItem_t dyn_night_iso PROGMEM =
@@ -294,7 +297,7 @@ const menu_item menu_timelapse[]PROGMEM =
     { "Mode       *", 'S', (void*)settings_timer_mode, (void*)&timer.current.Mode, 0, 0 },
     { "Method     *", 'S', (void*)settings_bramp_method, (void*)&timer.current.brampMethod, 0, (void*)&modeRamp },
     { "Delay      T", 'E', (void*)&timer.current.Delay, (void*)STR_TIME, 0, 0 },
-    { "Length     H", 'E', (void*)&timer.current.Duration, (void*)STR_TIME_HOURS, 0, (void*)&modeRamp },
+    { "Length     H", 'E', (void*)&timer.current.Duration, (void*)STR_TIME_HOURS, 0, (void*)&showLength },
     { "Frames     U", 'E', (void*)&timer.current.Photos, (void*)STR_PHOTOS, 0, (void*)&modeNoRamp },
     { "Intrvl Mode ", 'S', (void*)settings_interval_mode, (void*)&timer.current.IntervalMode, 0, (void*)&modeRamp },
     { "Intrvl     F", 'E', (void*)&timer.current.Gap, (void*)STR_TIME_TENTHS, 0, (void*)&showGap },
@@ -434,6 +437,7 @@ const settings_item menu_settings_camera_port[]PROGMEM =
 const settings_item menu_settings_bt_default[]PROGMEM =
 {
     { "Power-Off   ", BT_MODE_SLEEP, (void*)STR_BT_SLEEP, 0 },
+    { "NMX Connect ", BT_MODE_NMX, (void*)STR_BT_NMX, 0 },
     { "Discoverable", BT_MODE_DISCOVERABLE, (void*)STR_BT_DISCOVERABLE, 1 }
 };
 
@@ -668,8 +672,8 @@ const char STR_MICROSTEPS[]PROGMEM = "Substep resolution";
 const settings_item settings_motion_microsteps[]PROGMEM =
 {
     { "Default     ", 0, (void*)STR_MICROSTEPS, 0 },
-    { "Full Steps  ", 1, (void*)STR_MICROSTEPS, 0 },
-    { "Half Steps  ", 2, (void*)STR_MICROSTEPS, 0 },
+//    { "Full Steps  ", 1, (void*)STR_MICROSTEPS, 0 },
+//    { "Half Steps  ", 2, (void*)STR_MICROSTEPS, 0 },
     { "1/4 Steps   ", 4, (void*)STR_MICROSTEPS, 0 },
     { "1/8 Steps   ", 8, (void*)STR_MICROSTEPS, 0 },
     { "1/16 Steps  ", 16, (void*)STR_MICROSTEPS, 1 }

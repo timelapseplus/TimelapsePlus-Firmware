@@ -66,6 +66,7 @@
 #define INTERVAL_MODE_FIXED 0
 #define INTERVAL_MODE_AUTO 1
 #define INTERVAL_MODE_KEYFRAME 2
+#define INTERVAL_MODE_EXTERNAL 3
 
 #define MAX_KEYFRAMES 10
 
@@ -91,7 +92,7 @@
 
 #define MIRROR_IS_DOWN (isHigh(SHUTTER_HALF_PIN))
 
-//#define CHECK_CABLE if(getPin(CHECK_CABLE_PIN) || getPin(SHUTTER_SENSE_PIN)) cable_connected = 1; else cable_connected = 0
+#define CHECK_EXTERNAL (getPin(CHECK_CABLE_PIN) || !getPin(SHUTTER_SENSE_PIN))
 #define CHECK_CABLE if(getPin(CHECK_CABLE_PIN) && (conf.cameraPort == AUX_CAM_DEFAULT || conf.auxPort != AUX_MODE_SYNC)) cable_connected = 1; else cable_connected = 0
 
 #define SHUTTER_VERSION 20141122

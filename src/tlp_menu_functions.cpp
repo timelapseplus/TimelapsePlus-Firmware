@@ -56,6 +56,7 @@ volatile uint8_t showFocus = 0;
 volatile uint8_t pcSyncAux = 0;
 volatile uint8_t dollyAux = 0;
 volatile uint8_t showKfInterval = 0;
+volatile uint8_t showLength = 0;
 
 volatile uint8_t brampNotAuto = 0;
 volatile uint8_t brampNotGuided = 0;
@@ -108,6 +109,7 @@ void updateConditions()
 	modeStandardExpArb = modeStandard && conf.arbitraryBulb;
 
 	modeRamp = (timer.current.Mode & RAMP);
+  showLength = modeRamp && timer.current.IntervalMode != INTERVAL_MODE_EXTERNAL;
 	modeRampNormal = modeRamp && !conf.extendedRamp;
 	modeRampExtended = modeRamp && conf.extendedRamp;
 	modeNoRamp = !modeRamp && modeTimelapse;

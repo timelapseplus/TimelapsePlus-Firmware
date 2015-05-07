@@ -34,6 +34,8 @@
 #define RUN_NEXT 4
 #define RUN_END 5
 #define RUN_ERROR 6
+#define RUN_EXTERNAL_TRIGGER 7
+#define RUN_EXTERNAL_TRIGGER_RELEASE 8
 
 extern IR ir;
 extern PTP camera;
@@ -623,7 +625,7 @@ char shutter::task()
         photos = 0;
         exps = 0;
 
-        current.infinitePhotos = current.Photos == 0 ? 1 : 0;
+        current.infinitePhotos = (current.Mode & RAMP) ? (current.IntervalMode == INTERVAL_MODE_EXTERNAL) : (current.Photos == 0 ? 1 : 0);
         status.infinitePhotos = current.infinitePhotos;
         status.photosRemaining = current.Photos;
         status.photosTaken = 0;
@@ -750,6 +752,7 @@ char shutter::task()
                 // Flash Light //
                 _delay_ms(50);
             }
+            if(current.IntervalMode == INTERVAL_MODE_EXTERNAL) run_state = RUN_EXTERNAL_TRIGGER;
         }
     }
 
@@ -834,7 +837,7 @@ char shutter::task()
                     //#################### AUTO BRAMP ####################
                     if(current.brampMethod == BRAMP_METHOD_AUTO)
                     {
-                        if(light.underThreshold && current.nightMode != BRAMP_TARGET_AUTO)
+                        if(light.underThreshold && current.nightMode != BRAMP_TARGET_AUTO) //  holding night exposure
                         {
                             if(current.nightMode == BRAMP_TARGET_CUSTOM)
                             {
@@ -842,7 +845,6 @@ char shutter::task()
                             }
                             else
                             {
-                                //  holding night exposure
                                 status.rampTarget = status.lightStart - (float)status.nightTarget; // hold at night exposure
                             }
                         }
@@ -872,7 +874,12 @@ char shutter::task()
 
                             if(light.lockedSlope > 0.0 && current.nightMode != BRAMP_TARGET_AUTO)
                             {
-                                if(light.lockedSlope < delta) delta = light.lockedSlope; // hold the last valid slope reading from the light sensor
+                                if(light.lockedSlope < delta)
+                                {
+                                  delta = light.lockedSlope; // hold the last valid slope reading from the light sensor
+                                  float minRate = (status.rampTarget - status.rampStops) / 4.5; // make sure to reach target within 1.5 hours
+                                  if(delta < minRate) delta = minRate;
+                                }
                             }
                             else
                             {
@@ -883,7 +890,7 @@ char shutter::task()
 
                         rampRate = (int8_t) delta;
 
-                        if(rampRate == 0 && light.underThreshold && current.nightMode != BRAMP_TARGET_AUTO)
+                        if(rampRate == 0 && light.underThreshold && current.nightMode != BRAMP_TARGET_AUTO && status.rampStops == status.rampTarget)
                         {
                           // if we've met the night target, switch to guided mode to hold exposure
                           switchToGuided();
@@ -921,7 +928,7 @@ char shutter::task()
                 {
                     status.interval = interpolateKeyframe(&current.kfInterval, clock.Ms());
                 }
-                else // Fixed Interval
+                else if(current.IntervalMode == INTERVAL_MODE_FIXED)// Fixed Interval
                 {
                     status.interval = current.Gap;
                 }
@@ -1096,6 +1103,10 @@ char shutter::task()
                 }
             }
         }
+        else if(current.Mode & RAMP)
+        {
+          current.Duration = (uint16_t)(clock.Seconds() / 60) + 20;
+        }
 
         status.photosRemaining = current.Photos - photos;
         status.photosTaken = photos;
@@ -1190,9 +1201,42 @@ char shutter::task()
                     if(!camera.ready) shutter_half(); // Don't do half-press if the camera is connected by USB
                 }
             }
+            if(current.IntervalMode == INTERVAL_MODE_EXTERNAL)
+            {
+                run_state = RUN_EXTERNAL_TRIGGER;
+            }
         }
     }
     
+    if(run_state == RUN_EXTERNAL_TRIGGER)
+    {
+      // wait for external intervalometer trigger
+      if(CHECK_EXTERNAL)
+      {
+        run_state = RUN_EXTERNAL_TRIGGER_RELEASE;
+      }
+      else if(photos > 2 && (clock.Ms() - last_photo_ms) / 1000 >= (uint32_t)status.interval) // end if it's been 10 times the normal interval length
+      {
+        run_state = RUN_END;
+      }
+    }
+
+    if(run_state == RUN_EXTERNAL_TRIGGER_RELEASE)
+    {
+      // wait for external intervalometer trigger to be released
+      if(!CHECK_EXTERNAL)
+      {
+        if(photos > 1) status.interval = (uint16_t)((clock.Ms() - last_photo_ms) / 100);
+        last_photo_ms = clock.Ms();
+        clock.tare();
+        run_state = RUN_PHOTO;
+      }
+      else if(photos > 2 && (clock.Ms() - last_photo_ms) / 1000 >= (uint32_t)status.interval) // end if it's been 10 times the normal interval length
+      {
+        run_state = RUN_END;
+      }
+    }
+
     if(run_state == RUN_ERROR)
     {
         static uint8_t errorRetryCount = 0;
@@ -1243,12 +1287,12 @@ char shutter::task()
         clock.awake();
         usbPrimary = 0;
         status.preChecked = 0;
-        if(remote.nmx)
-        {
-          motor1.disable();
-          motor2.disable();
-          motor3.disable();
-        }
+        //if(remote.nmx)
+        //{
+        //  motor1.disable();
+        //  motor2.disable();
+        //  motor3.disable();
+        //}
 
         return DONE;
     }

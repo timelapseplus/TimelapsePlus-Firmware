@@ -79,6 +79,7 @@ extern volatile uint8_t pcSyncAux;
 extern volatile uint8_t dollyAux;
 extern volatile uint8_t showKfInterval;
 extern volatile uint8_t cameraMakeCanon;
+extern volatile uint8_t showLength;
 
 volatile uint8_t connectUSBcamera = 0;
 
@@ -194,7 +195,7 @@ void setup()
 		_delay_ms(100);
 		bt.init(); // give it one more try
 	}
-	if(conf.btMode == BT_MODE_SLEEP) bt.sleep(); else bt.advertise();
+	if(conf.btMode == BT_MODE_SLEEP) bt.sleep(); else if(conf.btMode == BT_MODE_DISCOVERABLE) bt.advertise();
     
     _delay_ms(300); // just a little more delay so splash screen can be read
 
@@ -260,8 +261,9 @@ int main()
 		menu.spawn((void*)timerStatus);	
 	}
 
-  if(conf.btMode == BT_MODE_DISCOVERABLE && conf.lastNMXaddress[0])
+  if(conf.btMode == BT_MODE_NMX && conf.lastNMXaddress[0])
   {
+    notify.task();
     bt.connect(conf.lastNMXaddress);
   }
 
@@ -545,7 +547,7 @@ ISR(TIMER2_COMPA_vect)
 {
 	clock.count();
 	button.poll();
-    if(PTP_Run_Task) USB_USBTask();
+  if(PTP_Run_Task) USB_USBTask();
 }
 
 /******************************************************************
