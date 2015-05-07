@@ -45,11 +45,6 @@ extern BT bt;
 extern shutter timer;
 extern settings_t conf;
 
-uint16_t battery_low_charging EEMEM;
-uint16_t battery_high_charging EEMEM;
-uint16_t battery_low EEMEM;
-uint16_t battery_high EEMEM;
-
 char backlightVal;
 
 
@@ -301,36 +296,10 @@ uint8_t battery_read() // Returns 0-100 //
 
     if(status == 0)
     {
-        /*
-        eeprom_read_block((void*)&low, &battery_low, sizeof(uint16_t));
-        
-        if(raw < low) 
-            eeprom_write_block((const void*)&raw, &battery_low, sizeof(uint16_t));
-        
-        eeprom_read_block((void*)&high, &battery_high, sizeof(uint16_t));
-        
-        if(high == 0xFFFF) 
-            high = 0;
-        
-        if(raw > high) 
-            eeprom_write_block((const void*)&raw, &battery_high, sizeof(uint16_t));
-        */
         percent = ((raw - low) * 100) / (high - low);
     } 
     else
     {
-        /*
-        eeprom_read_block((void*)&low, &battery_low_charging, sizeof(uint16_t));
-        
-        if(raw < low) 
-            eeprom_write_block((const void*)&raw, &battery_low, sizeof(uint16_t));
-        
-        eeprom_read_block((void*)&high, &battery_high_charging, sizeof(uint16_t));
-        
-        if(raw > high) 
-            eeprom_write_block((const void*)&raw, &battery_high, sizeof(uint16_t));
-        */
-
         percent = ((raw - low) * 100) / (high - low);
         
         if(status == 1 && percent > 99) 
