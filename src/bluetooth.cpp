@@ -531,18 +531,22 @@ uint8_t BT::waitEvent(char *str, char **retbuf)
 	waitEventString = str;
 	waitEventStatus = 1;
 
+  uint8_t tmpEvent = 0;
+
 	uint16_t count = 0;
 	while(count++ < 1000)
 	{
-		task();
+		if(task()) tmpEvent = event;
 		if(waitEventStatus == 2)
 		{
 			waitEventStatus = 0;
 			*retbuf = buf;
+      eventBuf = tmpEvent;
 			return strlen(buf);
 		}
 	}
 
+  eventBuf = tmpEvent;
 	waitEventStatus = 0;
 	return 0;
 }
@@ -955,10 +959,26 @@ uint8_t BT::read(void)
 
 uint8_t BT::task(void)
 {
-	if(!present)
-		return 1;
-
 	uint8_t pos = 0, len, ret = BT_EVENT_NULL;
+
+  if(!present)
+  {
+    if(state == BT_ST_CONNECTED || state == BT_ST_CONNECTED_NMX)
+    {
+      hardware_flashlight(1);
+      ret = BT_EVENT_DISCONNECT;
+      mode = BT_MODE_CMD;
+      state = BT_ST_IDLE;
+    }
+    return ret;
+  }
+
+  if(eventBuf) // make sure no events are skipped by waitEvent()
+  {
+    event = eventBuf;
+    eventBuf = 0;
+    return event;
+  }
 
 	len = read();
 

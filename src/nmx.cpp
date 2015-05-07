@@ -175,7 +175,14 @@ uint8_t NMX::disable()
 
 uint8_t NMX::running()
 {
-	if(sendQuery(0x6B) != 0) return 1; else return 0;
+  if(connected)
+  {
+    if(sendQuery(0x6B) != 0) return 1; else return 0;
+  }
+  else
+  {
+    return 0;
+  }
 }
 
 uint8_t NMX::checkConnected()

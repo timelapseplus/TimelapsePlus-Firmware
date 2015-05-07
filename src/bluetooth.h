@@ -90,6 +90,7 @@ public:
 
 
 private:
+    uint8_t eventBuf;
     char buf[BT_BUF_SIZE];
     uint8_t wake(void);
     uint8_t btPower;
