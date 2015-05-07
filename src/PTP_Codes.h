@@ -66,8 +66,8 @@
 #define NIKON_DPC_APERTURE 0x5007
 #define NIKON_DPC_SHUTTER 0x500D
 #define NIKON_DPC_ISO 0x500F
-#define NIKON_DPC_AutofocusMode 0xD161
-//#define NIKON_DPC_AutofocusMode 0x500A
+#define NIKON_DPC_AutofocusMode1 0xD161
+#define NIKON_DPC_AutofocusMode2 0x500A
 
 #define NIKON_OC_StartLiveView 0x9201
 #define NIKON_OC_EndLiveView 0x9202

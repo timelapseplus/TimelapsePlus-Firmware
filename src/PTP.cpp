@@ -1891,8 +1891,10 @@ uint8_t PTP::setFocus(uint8_t af)
     }
     else if(PTP_protocol == PROTOCOL_NIKON)
     {
-      //return setPtpParameter(NIKON_DPC_AutofocusMode, (uint16_t)(af ? 32784 : 0));
-      return setPtpParameter(NIKON_DPC_AutofocusMode, (uint8_t)(af ? 0x00 : 0x04));
+      PTP_IgnoreErrorsForNextTransaction = true;
+      return setPtpParameter(NIKON_DPC_AutofocusMode1, (uint8_t)(af ? 0x00 : 0x04));
+//      else
+//        return setPtpParameter(NIKON_DPC_AutofocusMode2, (uint8_t)0x00);
     }
   }
   return 0;
