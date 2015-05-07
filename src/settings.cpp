@@ -159,7 +159,7 @@ void settings_default()
     conf.iFactor = 11;
     conf.dFactor = 11;
     conf.errorAlert = 0;
-    conf.lightThreshold = 20;
+    conf.lightThreshold = 18;
     conf.linearInterpolation = 0;
     conf.motionStep1 = 1000;
     conf.motionStep2 = 250;
