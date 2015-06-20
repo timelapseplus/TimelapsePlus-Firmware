@@ -46,7 +46,7 @@
 #define PTP_FIRST_TIME 255
 
 // was 1280
-#define PTP_BUFFER_SIZE 1024
+#define PTP_BUFFER_SIZE 900
 
 #define NO_RECEIVE_DATA 0
 #define RECEIVE_DATA 1

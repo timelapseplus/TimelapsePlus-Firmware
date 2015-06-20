@@ -14,11 +14,11 @@
 extern settings_t conf;
 extern Clock clock;
 
-uint8_t isoAvail[32];
+uint8_t isoAvail[42];
 uint8_t isoAvailCount;
 uint8_t shutterAvail[64];
 uint8_t shutterAvailCount;
-uint8_t apertureAvail[32];
+uint8_t apertureAvail[30];
 uint8_t apertureAvailCount;
 
 uint8_t PTP_need_update = 1;
@@ -841,9 +841,16 @@ uint8_t PTP::init()
 	    			if(conf.camera.nikonUSB)
 	    			{
 						supports.capture = true;
-	    				supports_nikon_capture = true;
+	    				supports_nikon_capture |= 2;
 	    			}
 	    			break;
+                case NIKON_OC_CAPTURE2:
+                    if(conf.camera.nikonUSB)
+                    {
+                        supports.capture = true;
+                        supports_nikon_capture |= 1;
+                    }
+                    break;
 	    		//case NIKON_OC_BULBSTART:
 				//	supports.bulb = true;
 	    		//	break;
@@ -1647,11 +1654,14 @@ uint8_t PTP::capture()
 	{
 		if(PTP_Transaction(EOS_OC_CAPTURE, 0, 0, NULL, 0, NULL)) return PTP_RETURN_ERROR;
 	}
-	else if(PTP_protocol == PROTOCOL_NIKON && supports_nikon_capture)
+    else if(PTP_protocol == PROTOCOL_NIKON && supports_nikon_capture & 2)
+    {
+        data[0] = 0xffffffff; // no af
+        data[1] = 0x00000000; // capture to card
+        if(PTP_Transaction(NIKON_OC_CAPTURE2, 0, 2, data, 0, NULL)) return PTP_RETURN_ERROR;
+    }
+	else if(PTP_protocol == PROTOCOL_NIKON && supports_nikon_capture & 1)
 	{
-		data[0] = 0xffffffff; // no af
-		data[1] = 0x00000000; // capture to card
-		//if(PTP_Transaction(NIKON_OC_CAPTURE2, 0, 2, data, 0, NULL)) return PTP_RETURN_ERROR;
 		if(PTP_Transaction(NIKON_OC_CAPTURE, 0, 0, NULL, 0, NULL)) return PTP_RETURN_ERROR;
 	}
 	else
@@ -2049,6 +2059,7 @@ uint8_t PTP::updatePtpParameters(void)
 	return 0;
 }
 
+/*
 	// This method still needs work... //
 uint8_t PTP::getPropertyInfo(uint16_t prop_code, uint8_t expected_size, uint16_t *count, uint8_t *current, uint8_t *list)
 {
@@ -2207,7 +2218,7 @@ uint8_t PTP::getPropertyInfo(uint16_t prop_code, uint8_t expected_size, uint16_t
 
       return 0;
 }
-
+*/
 uint8_t PTP::getCurrentThumbStart()
 {
 	if(!currentObject) return 0;
