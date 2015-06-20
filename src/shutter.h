@@ -150,6 +150,7 @@ struct program
     uint8_t  nightISO;
     uint8_t  nightAperture;
     uint8_t  nightShutter;
+    uint16_t nightND;
     uint8_t  infinitePhotos;
 };
 
@@ -170,6 +171,8 @@ struct timer_status
     int8_t nightTarget;
     uint8_t preChecked;
     float lightStart;
+    uint8_t showND;
+    uint8_t hasND;
 };
 
 extern program stored[MAX_STORED+1]EEMEM;
@@ -217,12 +220,14 @@ public:
     float pastErrors[PAST_ERROR_COUNT];
     volatile uint8_t paused, pausing, apertureReady;
     int8_t evShift;
+    float ndShift;
 
 private:
     double test;
     uint8_t iso;
     uint8_t aperture;
     uint8_t movedFocus;
+    uint8_t switchBack;
 };
 
 void check_cable();

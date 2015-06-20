@@ -319,6 +319,36 @@ unsigned char LCD::writeNumber(unsigned char x, unsigned char y, unsigned int n,
             }
             break;
         }
+
+    case 'G': // Fractional  (ss.s) //
+        {
+            char b, p;
+            unsigned int c;
+
+            // seconds //
+            c = n % 600;
+            n -= c; n /= 600;
+            b = c % 10;
+            writeChar(x, y, '0' + b); x -= 6; justification++;
+
+            writeChar(x, y, '.'); x -= 6; justification++;
+            p = justification;
+
+            c -= b; c /= 10;
+            b = c % 10; if(b) p = justification;
+            writeChar(x, y, '0' + b); x -= 6; justification++;
+
+            c -= b; c /= 10;
+            b = c; if(b) p = justification;
+            writeChar(x, y, '0' + b); x -= 6; justification++;
+            
+            if(p)
+            {
+                eraseBox(x, y, x + (justification - p) * 6, y + 7);
+                justification -= p;
+            }
+            break;
+        }
     }
 
     return justification; // number of chars printed //

@@ -92,6 +92,8 @@ const char STR_INTERVAL_MODE_KEYFRAME[]PROGMEM = "Keyframe Defined";
 const char STR_TUNING[]PROGMEM = "PID Multiplier";
 const char STR_THRESHOLD[]PROGMEM = "Dark Value";
 
+const char STR_ND_FILTER[]PROGMEM = "ND Stops";
+
 
 const settings_item settings_timer_mode[]PROGMEM =
 {
@@ -285,11 +287,13 @@ const dynamicItem_t dyn_hdr_exps PROGMEM =
     (void*)STR_HDR_EXPOSURES
 };
 
+
 const menu_item menu_timelapse_night_exp[]PROGMEM =
 {
     { "Shutter    +", 'D', (void*)&dyn_night_shutter, (void*)&timer.current.nightShutter, 0, 0 },
     { "ISO        +", 'D', (void*)&dyn_night_iso, (void*)&timer.current.nightISO, 0, (void*)&rampISO },
     { "Aperture   +", 'D', (void*)&dyn_night_aperture, (void*)&timer.current.nightAperture, 0, (void*)&rampAperture },
+    { "ND Filter  G", 'E', (void*)&timer.current.nightND, (void*)STR_ND_FILTER, 0, 0 },
     { "\0           ", 'V', 0, 0, 0 }
 };
 const menu_item menu_timelapse[]PROGMEM =
@@ -621,9 +625,9 @@ const menu_item menu_settings_timelapse_tuning[]PROGMEM =
 {
     { "Integration ", 'S', (void*)settings_auto_bramp_integration, (void*)&conf.lightIntegrationMinutes, (void*)settings_update, 0 },
     { "Threshold   ", 'C', (void*)&conf.lightThreshold,            (void*)STR_THRESHOLD, (void*)settings_update, 0 },
-    { "P Tune     F", 'E', (void*)&conf.pFactor,                   (void*)STR_TUNING,                    (void*)settings_update, 0 },
-    { "I Tune     F", 'E', (void*)&conf.iFactor,                   (void*)STR_TUNING,                    (void*)settings_update, 0 },
-    { "D Tune     F", 'E', (void*)&conf.dFactor,                   (void*)STR_TUNING,                    (void*)settings_update, 0 },
+    { "P Tune     G", 'E', (void*)&conf.pFactor,                   (void*)STR_TUNING,                    (void*)settings_update, 0 },
+    { "I Tune     G", 'E', (void*)&conf.iFactor,                   (void*)STR_TUNING,                    (void*)settings_update, 0 },
+    { "D Tune     G", 'E', (void*)&conf.dFactor,                   (void*)STR_TUNING,                    (void*)settings_update, 0 },
     { "\0           ", 'V', 0, 0, 0 }
 };
 

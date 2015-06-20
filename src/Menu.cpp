@@ -1013,6 +1013,7 @@ char MENU::editNumber(char key, void *n, char *name, char *unit, char mode, char
                d[3] = c;
                break;              
 
+           case 'G':      //  00.0
            default:
                l = 0;
                
@@ -1026,7 +1027,7 @@ char MENU::editNumber(char key, void *n, char *name, char *unit, char mode, char
                break;
         }
 
-        l = 5; // Number of editable digits //
+        if(mode == 'G') l = 3; else l = 5; // Number of editable digits //
         i = 0;
     }
     
@@ -1041,10 +1042,14 @@ char MENU::editNumber(char key, void *n, char *name, char *unit, char mode, char
         }      
         switch(mode)
         {
-           case 'F': // Float (4.1) //
+           case 'F': // Float (4.1, time) //
                 lcd->drawBox(68 - 2 * 16 - 3, 12, 68 - 2 * 16 - 2, 14); // Colon (:) //
                 lcd->drawBox(68 - 2 * 16 - 3, 20, 68 - 2 * 16 - 2, 22);
     
+                lcd->drawBox(68 - 0 * 16 - 3, 24, 68 - 0 * 16 - 2, 26); // Decimal Point (.) //
+                break;
+                
+           case 'G': // Float (2.1) //
                 lcd->drawBox(68 - 0 * 16 - 3, 24, 68 - 0 * 16 - 2, 26); // Decimal Point (.) //
                 break;
                 
@@ -1168,23 +1173,17 @@ char MENU::editNumber(char key, void *n, char *name, char *unit, char mode, char
            case 'F':
                 m += (d[4] * 10 + d[3]) * 600; // minutes
                 m += d[2] * 100 + d[1] * 10 + d[0]; // seconds
-                DEBUG(m);
-                DEBUG_NL();
                 break;
             
            case 'T':
                m += d[4] * 3600;  // hours
                m += (d[3] * 10 + d[2]) * 60; // minutes
                m += d[1] * 10 + d[0]; // seconds
-               DEBUG(m);
-               DEBUG_NL();
                break;
                
 		       case 'H':		//  Added case for hh:mm
                 m += (d[3] * 10 + d[2]) * 60; // hours
                 m += d[1] * 10 + d[0]; // minutes
-                DEBUG(m);
-                DEBUG_NL();
                 break; 
                 
            case 'B':		//  Added case for Bulb Offset  J.R.

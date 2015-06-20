@@ -3258,13 +3258,14 @@ volatile char bramp_monitor(char key, char first)
 		else 
 		{
 			skip_message = 0;
+            char message_text[13];
 			if(waiting)
 			{
 				menu.setBar(TEXT("CANCEL"), BLANK_STR);
 			}
 			else if(!light.paused)
 			{
-				menu.setBar(TEXT("PRESS ANY KEY"), BLANK_STR);
+                menu.setBar(TEXT("PRESS ANY KEY"), BLANK_STR);
 			}
 			else
 			{
@@ -3274,13 +3275,34 @@ volatile char bramp_monitor(char key, char first)
 				}
 				else
 				{
-					menu.setBar(TEXT("OPTIONS"), TEXT("PAUSE"));
+                    if(timer.status.showND)
+                    {
+    					menu.setBar(TEXT("OPTIONS"), TEXT("REMOVE ND"));
+                    }
+                    else
+                    {
+                        menu.setBar(TEXT("OPTIONS"), TEXT("PAUSE"));
+                    }
 				}
 			}
-			char message_text[13];
+            if(timer.status.showND)
+            {
+                if(timer.status.hasND)
+                {
+                    strcpy(message_text, STR("REMOVE ND"));
+                }
+                else
+                {
+                    strcpy(message_text, STR("ND REMOVED"));
+                }
+                uint8_t l = strlen(message_text) * 6 / 2;
+                lcd.eraseBox(41 - l - 2, 12, 41 + l + 2, 24);
+                lcd.drawBox(41 - l - 1, 13, 41 + l + 1, 23);
+                lcd.writeString(41 - l, 15, message_text);
+            }
 			if(timer.paused)
 			{
-		        if(!timer.apertureReady)
+		        if(!timer.apertureReady && !timer.status.showND)
 		        {
 		        	if(key == UP_KEY)
 		        	{
@@ -3291,16 +3313,16 @@ volatile char bramp_monitor(char key, char first)
 		        		timer.apertureEvShift++;
 		        	}
 		        }
-				if(timer.apertureReady || timer.apertureEvShift)
+				if((timer.apertureReady || timer.apertureEvShift) && !timer.status.showND)
 				{
-              if(timer.apertureReady)
-              {
-                strcpy(message_text, STR("Aperture +/-"));
-              }
-              else
-              {
-                strcpy(message_text, STR("Shift +/-"));
-              }
+                      if(timer.apertureReady)
+                      {
+                        strcpy(message_text, STR("Aperture +/-"));
+                      }
+                      else
+                      {
+                        strcpy(message_text, STR("Shift +/-"));
+                      }
 			        uint8_t l = strlen(message_text) * 6 / 2;
 			        lcd.eraseBox(41 - l - 2, 12, 41 + l + 2, 24 + 10);
 			        lcd.drawBox(41 - l - 1, 13, 41 + l + 1, 23 + 10);
@@ -3392,16 +3414,16 @@ volatile char bramp_monitor(char key, char first)
 	        lcd.writeStringTiny(XALIGN - l, 28, s);
 
 	        uint32_t bulb_length;
-	        float otherEv = 0;
+	        float otherEv = (float)(timer.current.nightND * 3) / 10.0;
 
 	        if(timer.status.rampTarget > timer.status.rampMax)
 	        {
-		        bulb_length = camera.bulbTime((float)timer.current.BulbStart - timer.status.rampMax);
-		        otherEv = timer.status.rampTarget - timer.status.rampMax;
+		        bulb_length = camera.bulbTime((float)timer.current.BulbStart - timer.status.rampMax + otherEv);
+		        otherEv += timer.status.rampTarget - timer.status.rampMax;
 	        }
 	        else
 	        {
-		        bulb_length = camera.bulbTime((float)timer.current.BulbStart - timer.status.rampTarget);
+		        bulb_length = camera.bulbTime((float)((float)timer.current.BulbStart - timer.status.rampTarget + (float)(timer.current.nightND * 3) / 10.0));
 	        }
 
             uint8_t nextAperture = camera.aperture();
