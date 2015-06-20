@@ -86,7 +86,7 @@ volatile uint8_t connectUSBcamera = 0;
 uint8_t battery_percent, charge_status, USBmode = 0;
 
 extern settings_t conf;
-
+extern char lastNMXaddress[14] EEMEM;
 extern uint8_t Camera_Connected;
 
 shutter timer = shutter();
@@ -261,10 +261,12 @@ int main()
 		menu.spawn((void*)timerStatus);	
 	}
 
-  if(conf.btMode == BT_MODE_NMX && conf.lastNMXaddress[0])
+  if(conf.btMode == BT_MODE_NMX && eeprom_read_byte((const uint8_t *)&lastNMXaddress[0]))
   {
     notify.task();
-    bt.connect(conf.lastNMXaddress);
+    char address[14];
+    for(uint8_t i = 0; i < 14; i++) address[i] = eeprom_read_byte((const uint8_t *)&lastNMXaddress[i]);
+    bt.connect(address);
   }
 
 	/****************************
@@ -482,11 +484,10 @@ void message_notify(uint8_t id)
 		case NOTIFY_NMX:
 			if(remote.nmx)
 			{
-        if(bt.address[0] && strncmp(bt.address, conf.lastNMXaddress, 14))
-        {
-          strncpy(conf.lastNMXaddress, bt.address, 14);
-          settings_save();
-        }
+                if(bt.address[0])
+                {
+                    for(uint8_t i = 0; i < 14; i++) eeprom_write_byte((uint8_t *)&lastNMXaddress[i], bt.address[i]);
+                }
 				menu.message(STR("NMX Connected"));
 				motor1.checkConnected();
 				motor2.checkConnected();
@@ -547,7 +548,7 @@ ISR(TIMER2_COMPA_vect)
 {
 	clock.count();
 	button.poll();
-  if(PTP_Run_Task) USB_USBTask();
+    if(PTP_Run_Task) USB_USBTask();
 }
 
 /******************************************************************

@@ -22,7 +22,9 @@
 #include "tlp_menu_functions.h"
 
 settings_t conf_eep EEMEM;
-camera_settings_t camera_settings_eep[MAX_CAMERAS_SETTINGS] EEMEM; 
+camera_settings_t camera_settings_eep[MAX_CAMERAS_SETTINGS] EEMEM;
+char lastNMXaddress[14] EEMEM;
+
 volatile settings_t conf;
 uint8_t settings_reset = 0;
 uint8_t settings_camera_index = 0;
@@ -187,7 +189,8 @@ void settings_default()
     conf.motionSpeed3 = 256;
     conf.keyframeTimeByMinute = 0;
     conf.cameraPort = AUX_CAM_DEFAULT;
-    conf.lastNMXaddress[0] = 0;
+    
+    eeprom_write_byte((uint8_t *)lastNMXaddress, 0);
 
 
     conf.camera.cameraFPS = 33;

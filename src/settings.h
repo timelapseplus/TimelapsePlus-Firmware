@@ -120,7 +120,7 @@ struct settings_t
     uint32_t motionStep2;
     uint32_t motionStep3;
     uint16_t focusStep;
-    uint16_t focusEnabled;
+    uint8_t focusEnabled;
     uint16_t motionBacklash1;
     uint16_t motionBacklash2;
     uint16_t motionBacklash3;
@@ -142,7 +142,6 @@ struct settings_t
     uint16_t motionSpeed3;
     uint8_t keyframeTimeByMinute;
     uint8_t cameraPort;
-    char lastNMXaddress[14];
 };
 
 void settings_load(void);
