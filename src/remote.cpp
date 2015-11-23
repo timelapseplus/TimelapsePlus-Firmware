@@ -97,21 +97,21 @@ uint8_t Remote::send(uint8_t id, uint8_t type)
 			void *ptr = &version;
 			return bt.sendDATA(id, type, ptr, sizeof(version));
 		}
-		case REMOTE_BT_FW_VERSION:
-		{
-			uint8_t btVersion = bt.version();
-			return bt.sendDATA(id, type, (void *) &btVersion, sizeof(btVersion));
-		}
+		//case REMOTE_BT_FW_VERSION:
+		//{
+		//	uint8_t btVersion = bt.version();
+		//	return bt.sendDATA(id, type, (void *) &btVersion, sizeof(btVersion));
+		//}
 		case REMOTE_PROTOCOL_VERSION:
 		{
 			unsigned long remoteVersion = REMOTE_VERSION;
 			void *ptr = &remoteVersion;
 			return bt.sendDATA(id, type, ptr, sizeof(remoteVersion));
 		}
-		case REMOTE_CAMERA_FPS:
-			return bt.sendDATA(id, type, (void *) &conf.camera.cameraFPS, sizeof(conf.camera.cameraFPS));
-		case REMOTE_CAMERA_MAKE:
-			return bt.sendDATA(id, type, (void *) &conf.camera.cameraMake, sizeof(conf.camera.cameraMake));
+		//case REMOTE_CAMERA_FPS:
+		//	return bt.sendDATA(id, type, (void *) &conf.camera.cameraFPS, sizeof(conf.camera.cameraFPS));
+		//case REMOTE_CAMERA_MAKE:
+		//	return bt.sendDATA(id, type, (void *) &conf.camera.cameraMake, sizeof(conf.camera.cameraMake));
 		case REMOTE_ISO:
 		{
 			uint8_t tmp = camera.iso();
@@ -258,20 +258,20 @@ void Remote::event()
 					if(bt.dataType == REMOTE_TYPE_SEND) memcpy(&model, bt.data, bt.dataSize);
 					break;
 				case REMOTE_FIRMWARE:
-				case REMOTE_BT_FW_VERSION:
+				//case REMOTE_BT_FW_VERSION:
 				case REMOTE_PROTOCOL_VERSION:
 					if(bt.dataType == REMOTE_TYPE_REQUEST) send(bt.dataId, REMOTE_TYPE_SEND);
 					break;
-				case REMOTE_CAMERA_FPS:
-					if(bt.dataType == REMOTE_TYPE_REQUEST) send(bt.dataId, REMOTE_TYPE_SEND);
-					if(bt.dataType == REMOTE_TYPE_NOTIFY_WATCH) notify.watch(REMOTE_CAMERA_FPS, (void *)&conf.camera.cameraFPS, sizeof(conf.camera.cameraFPS), &remote_notify);
-					if(bt.dataType == REMOTE_TYPE_NOTIFY_UNWATCH) notify.unWatch(REMOTE_CAMERA_FPS, &remote_notify);
-					break;
-				case REMOTE_CAMERA_MAKE:
-					if(bt.dataType == REMOTE_TYPE_REQUEST) send(bt.dataId, REMOTE_TYPE_SEND);
-					if(bt.dataType == REMOTE_TYPE_NOTIFY_WATCH) notify.watch(REMOTE_CAMERA_MAKE, (void *)&conf.camera.cameraMake, sizeof(conf.camera.cameraMake), &remote_notify);
-					if(bt.dataType == REMOTE_TYPE_NOTIFY_UNWATCH) notify.unWatch(REMOTE_CAMERA_MAKE, &remote_notify);
-					break;
+				//case REMOTE_CAMERA_FPS:
+				//	if(bt.dataType == REMOTE_TYPE_REQUEST) send(bt.dataId, REMOTE_TYPE_SEND);
+				//	if(bt.dataType == REMOTE_TYPE_NOTIFY_WATCH) notify.watch(REMOTE_CAMERA_FPS, (void *)&conf.camera.cameraFPS, sizeof(conf.camera.cameraFPS), &remote_notify);
+				//	if(bt.dataType == REMOTE_TYPE_NOTIFY_UNWATCH) notify.unWatch(REMOTE_CAMERA_FPS, &remote_notify);
+				//	break;
+				//case REMOTE_CAMERA_MAKE:
+				//	if(bt.dataType == REMOTE_TYPE_REQUEST) send(bt.dataId, REMOTE_TYPE_SEND);
+				//	if(bt.dataType == REMOTE_TYPE_NOTIFY_WATCH) notify.watch(REMOTE_CAMERA_MAKE, (void *)&conf.camera.cameraMake, sizeof(conf.camera.cameraMake), &remote_notify);
+				//	if(bt.dataType == REMOTE_TYPE_NOTIFY_UNWATCH) notify.unWatch(REMOTE_CAMERA_MAKE, &remote_notify);
+				//	break;
 #ifdef DEBUG_ENABLED
 				case REMOTE_DEBUG:
 					if(bt.dataType == REMOTE_TYPE_SEND)
@@ -308,9 +308,9 @@ void Remote::event()
 						camera.setShutter(tmp);
 					}
 					break;
-				case REMOTE_THUMBNAIL:
-					if(bt.dataType == REMOTE_TYPE_REQUEST) send(bt.dataId, REMOTE_TYPE_SEND);
-					break;
+				//case REMOTE_THUMBNAIL:
+				//	if(bt.dataType == REMOTE_TYPE_REQUEST) send(bt.dataId, REMOTE_TYPE_SEND);
+				//	break;
 				case REMOTE_VIDEO:
 					if(bt.dataType == REMOTE_TYPE_SET && bt.dataSize == sizeof(uint8_t))
 					{

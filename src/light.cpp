@@ -52,31 +52,32 @@ uint16_t Light::readRaw()
    return result;
 }
 
-void Light::startIR()
-{
-    unsigned char I2C_Buf[3];
-    I2C_Buf[0] = I2C_ADDR_WRITE;
-    I2C_Buf[1] = 0x00;
-    I2C_Buf[2] = 0b11000000;
-    TWI_Start_Read_Write(I2C_Buf, 3);
-    I2C_Buf[0] = I2C_ADDR_WRITE;
-    I2C_Buf[1] = 0x01;
-    I2C_Buf[2] = 0b00000100;
-    TWI_Start_Read_Write(I2C_Buf, 3);
-    uint8_t range;
-    uint16_t reading;
-    _delay_ms(10);
-    for(range = 0; range < 4; range++)
-    {
-        I2C_Buf[0] = I2C_ADDR_WRITE;
-        I2C_Buf[1] = 0x01;
-        I2C_Buf[2] = range & 0b00000011;
-        TWI_Start_Read_Write(I2C_Buf, 3);
-        _delay_ms(10);
-        reading = readRaw();
-        if(reading < 45000) break;
-    }
-}
+// removed to save space
+//void Light::startIR()
+//{
+//    unsigned char I2C_Buf[3];
+//    I2C_Buf[0] = I2C_ADDR_WRITE;
+//    I2C_Buf[1] = 0x00;
+//    I2C_Buf[2] = 0b11000000;
+//    TWI_Start_Read_Write(I2C_Buf, 3);
+//    I2C_Buf[0] = I2C_ADDR_WRITE;
+//    I2C_Buf[1] = 0x01;
+//    I2C_Buf[2] = 0b00000100;
+//    TWI_Start_Read_Write(I2C_Buf, 3);
+//    uint8_t range;
+//    uint16_t reading;
+//    _delay_ms(10);
+//    for(range = 0; range < 4; range++)
+//    {
+//        I2C_Buf[0] = I2C_ADDR_WRITE;
+//        I2C_Buf[1] = 0x01;
+//        I2C_Buf[2] = range & 0b00000011;
+//        TWI_Start_Read_Write(I2C_Buf, 3);
+//        _delay_ms(10);
+//        reading = readRaw();
+//        if(reading < 45000) break;
+//    }
+//}
 
 void Light::start()
 {

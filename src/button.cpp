@@ -234,13 +234,13 @@ char Button::isHeld(char key)
  *
  ******************************************************************/
 
-char Button::waitfor(char key)
-{
-    while (get() != key) 
-        wdt_reset();
-    
-    return key;
-}
+//char Button::waitfor(char key)
+//{
+//    while (get() != key) 
+//        wdt_reset();
+//    
+//    return key;
+//}
 
 /******************************************************************
  *

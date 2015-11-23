@@ -52,41 +52,41 @@ float curve(float p0, float p1, float p2, float p3, float t)
 }
 
 
-uint32_t curve_int(uint32_t p0, uint32_t p1, uint32_t p2, uint32_t p3, float t)
-{
-    if(conf.linearInterpolation)
-    {
-      return (uint32_t)(t * (float)(p2 - p1)) + p1;
-    }
-    else
-    {
-      int64_t z = 1;
-      const int64_t f1 = 1200, f2 = f1*f1, f3 = f2*f1;
-
-      int64_t p0x = p0;
-      int64_t p1x = p1;
-      int64_t p2x = p2;
-      int64_t p3x = p3;
-      int64_t t1 = t > 0 ? (uint64_t)(1200.0 / t) : 0;
-
-      if(t1 == 0) // Divide by zero fix
-      {
-        z = 0;
-        t1 = 1;
-      }
-
-      int64_t t2 = t1 * t1;
-      int64_t t3 = t2 * t1;
-
-      int32_t ret = (int32_t)
-         (((2 * p1x) +
-          (p2x - p0x) * f1 / t1 * z +
-          (2 * p0x - 5 * p1x + 4 * p2x - p3x) * f2 / t2 * z +
-          ((3 * p1x) - p0x - 3 * p2x + p3x) * f3 / t3 * z) / 2);
-
-      return ret;
-    }
-}
+//uint32_t curve_int(uint32_t p0, uint32_t p1, uint32_t p2, uint32_t p3, float t)
+//{
+//    if(conf.linearInterpolation)
+//    {
+//      return (uint32_t)(t * (float)(p2 - p1)) + p1;
+//    }
+//    else
+//    {
+//      int64_t z = 1;
+//      const int64_t f1 = 1200, f2 = f1*f1, f3 = f2*f1;
+//
+//      int64_t p0x = p0;
+//      int64_t p1x = p1;
+//      int64_t p2x = p2;
+//      int64_t p3x = p3;
+//      int64_t t1 = t > 0 ? (uint64_t)(1200.0 / t) : 0;
+//
+//      if(t1 == 0) // Divide by zero fix
+//      {
+//        z = 0;
+//        t1 = 1;
+//      }
+//
+//      int64_t t2 = t1 * t1;
+//      int64_t t3 = t2 * t1;
+//
+//      int32_t ret = (int32_t)
+//         (((2 * p1x) +
+//          (p2x - p0x) * f1 / t1 * z +
+//          (2 * p0x - 5 * p1x + 4 * p2x - p3x) * f2 / t2 * z +
+//          ((3 * p1x) - p0x - 3 * p2x + p3x) * f3 / t3 * z) / 2);
+//
+//      return ret;
+//    }
+//}
 
 void sort(float *array, const uint8_t length)
 {

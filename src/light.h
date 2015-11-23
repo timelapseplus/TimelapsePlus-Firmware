@@ -14,7 +14,7 @@ public:
     Light();
     void task();
 	uint16_t readRaw();
-	void startIR();
+	//void startIR();
 	void start();
 	void stop();
 	void setRange(uint8_t range);
