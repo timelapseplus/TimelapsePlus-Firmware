@@ -129,31 +129,31 @@ void LCD::writeString(unsigned char x, unsigned char y, const char *s)
  *
  ******************************************************************/
 
-void LCD::writeUint(unsigned char x, unsigned char y, unsigned int n)
-{
-
-    if(n > 9) 
-        x += 6;
-    
-    if(n > 99) 
-        x += 6;
-    
-    if(n > 999) 
-        x += 6;
-    
-    if(n > 9999) 
-        x += 6;
-
-    do
-    {
-        writeChar(x, y, '0' + (n % 10));
-        n -= n % 10;
-        n /= 10;
-        x -= 6;
-    }
-    while (n > 0);
-
-}
+//void LCD::writeUint(unsigned char x, unsigned char y, unsigned int n)
+//{
+//
+//    if(n > 9) 
+//        x += 6;
+//    
+//    if(n > 99) 
+//        x += 6;
+//    
+//    if(n > 999) 
+//        x += 6;
+//    
+//    if(n > 9999) 
+//        x += 6;
+//
+//    do
+//    {
+//        writeChar(x, y, '0' + (n % 10));
+//        n -= n % 10;
+//        n /= 10;
+//        x -= 6;
+//    }
+//    while (n > 0);
+//
+//}
 
 /******************************************************************
  *
@@ -361,15 +361,15 @@ unsigned char LCD::writeNumber(unsigned char x, unsigned char y, unsigned int n,
  *
  ******************************************************************/
 
-void LCD::writeStringBig(unsigned char x, unsigned char y, char *s)
-{
-    while (*(s) != 0)
-    {
-        writeCharBig(x, y, *s);
-        x += 16;
-        s++;
-    }
-}
+//void LCD::writeStringBig(unsigned char x, unsigned char y, char *s)
+//{
+//    while (*(s) != 0)
+//    {
+//        writeCharBig(x, y, *s);
+//        x += 16;
+//        s++;
+//    }
+//}
 
 /******************************************************************
  *
@@ -378,17 +378,17 @@ void LCD::writeStringBig(unsigned char x, unsigned char y, char *s)
  *
  ******************************************************************/
 
-void LCD::writeStringBig(unsigned char x, unsigned char y, const char *s)
-{
-    char c = pgm_read_byte(s);
-    while (c)
-    {
-        writeCharBig(x, y, c);
-        x += 16;
-        s++;
-        c = pgm_read_byte(s);
-    }
-}
+//void LCD::writeStringBig(unsigned char x, unsigned char y, const char *s)
+//{
+//    char c = pgm_read_byte(s);
+//    while (c)
+//    {
+//        writeCharBig(x, y, c);
+//        x += 16;
+//        s++;
+//        c = pgm_read_byte(s);
+//    }
+//}
 
 /******************************************************************
  *
