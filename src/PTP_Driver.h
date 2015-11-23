@@ -74,7 +74,10 @@ extern "C"
 /* Function Prototypes: */
 void PTP_Enable(void);
 void PTP_Disable(void);
+void PTP_Shutdown(void);
 void PTP_Task(void);
+
+void USB_ResetInterfaceDown(void);
 
 void EVENT_USB_Host_HostError(const uint8_t ErrorCode);
 void EVENT_USB_Host_DeviceAttached(void);

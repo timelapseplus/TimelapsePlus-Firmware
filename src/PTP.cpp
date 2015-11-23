@@ -14,11 +14,15 @@
 extern settings_t conf;
 extern Clock clock;
 
-uint8_t isoAvail[42];
+#define ISO_COUNT_MAX 38
+#define SHUTTER_COUNT_MAX 64
+#define APERTURE_COUNT_MAX 30
+
+uint8_t isoAvail[ISO_COUNT_MAX];
 uint8_t isoAvailCount;
-uint8_t shutterAvail[64];
+uint8_t shutterAvail[SHUTTER_COUNT_MAX];
 uint8_t shutterAvailCount;
-uint8_t apertureAvail[30];
+uint8_t apertureAvail[APERTURE_COUNT_MAX];
 uint8_t apertureAvailCount;
 
 uint8_t PTP_need_update = 1;
@@ -42,6 +46,7 @@ uint8_t supports_nikon_capture;
 
 PTP::PTP(void)
 {
+    disabled = 0;
 	static_ready = 0;
 	ready = 0;
 	isoAvailCount = 0;
@@ -295,6 +300,10 @@ uint8_t PTP::shutterDown(uint8_t ev)
 		{
 			return shutterAvail[i];
 		}
+        else if(ev == 28 && shutterAvail[i] == BULB_EV_CODE)
+        {
+            return BULB_EV_CODE;
+        }
 	}
 	for(uint8_t i = 0; i < sizeof(Bulb_List) / sizeof(Bulb_List[0]); i++)
 	{
@@ -743,18 +752,19 @@ uint8_t PTP::init()
 	isoAvailCount = 0;
 	apertureAvailCount = 0;
 	shutterAvailCount = 0;
-	supports = (CameraSupports_t)
-	{
-		.capture = false,
-		.bulb = false,
-		.iso = false,
-		.shutter = false,
-		.aperture = false,
-		.focus = false,
-		.video = false,
-		.cameraReady = false,
-		.event = false
-	};
+    memset(&supports, 0, sizeof(CameraSupports_t));
+	//supports = (CameraSupports_t)
+	//{
+	//	.capture = false,
+	//	.bulb = false,
+	//	.iso = false,
+	//	.shutter = false,
+	//	.aperture = false,
+	//	.focus = false,
+	//	.video = false,
+	//	.cameraReady = false,
+	//	.event = false
+	//};
 
 	if(strncmp(PTP_CameraMake, "Canon", 5) == 0) // This should be done with VendorID instead
 	{
@@ -764,6 +774,10 @@ uint8_t PTP::init()
 	{
 		conf.camera.cameraMake = NIKON;
 	}
+    else if(strncmp(PTP_CameraMake, "Sony", 5) == 0)
+    {
+        conf.camera.cameraMake = SONY;
+    }
 
 	if(conf.camera.cameraMake == CANON)
 	{
@@ -783,11 +797,20 @@ uint8_t PTP::init()
 	    //DEBUG(PTP_propertyOffset);
 	    //DEBUG_NL();
 	}
-	else
-	{
-	    PTP_protocol = PROTOCOL_GENERIC;
-	    PTP_propertyOffset = (uint16_t)(((uint8_t*)&PTP_ISO_List[0].nikon) - (uint8_t *)&PTP_ISO_List[0].name[0]);
-	}
+    else if(conf.camera.cameraMake == SONY)
+    {
+        //DEBUG(PSTR("Using Sony PTP Protocol\r\n"));
+        PTP_protocol = PROTOCOL_SONY;
+        PTP_propertyOffset = (uint16_t)(((uint8_t*)&PTP_ISO_List[0].sony) - (uint8_t *)&PTP_ISO_List[0].name[0]);
+        //DEBUG(PSTR("Property Offset (Nikon): "));
+        //DEBUG(PTP_propertyOffset);
+        //DEBUG_NL();
+    }
+	//else
+	//{
+	//    PTP_protocol = PROTOCOL_GENERIC;
+	//    PTP_propertyOffset = (uint16_t)(((uint8_t*)&PTP_ISO_List[0].nikon) - (uint8_t *)&PTP_ISO_List[0].name[0]);
+	//}
 
 	videoMode = true; // overwritten if camera has video mode property
 
@@ -822,9 +845,9 @@ uint8_t PTP::init()
 				case EOS_OC_BULBEND:
 					ptpBulbMode++;
 					break;
-				case EOS_OC_PC_CONNECT:
-					//DEBUG(PSTR("Using PC Connect Mode\r\n"));
-					break;
+				//case EOS_OC_PC_CONNECT:
+				//	//DEBUG(PSTR("Using PC Connect Mode\r\n"));
+				//	break;
 				case EOS_OC_EVENT_GET:
 					supports.event = true;
 					break;
@@ -905,18 +928,30 @@ uint8_t PTP::init()
     	ptpBulbMode = 0;
     }
     
-    //if(supports.capture) DEBUG(PSTR("Supports CAPTURE\r\n"));
-    //if(supports.bulb) DEBUG(PSTR("Supports BULB\r\n"));
-    //if(supports.video) DEBUG(PSTR("Supports VIDEO\r\n"));
-    //if(supports.focus) DEBUG(PSTR("Supports FOCUS\r\n"));
-    //if(supports.event) DEBUG(PSTR("Supports EVENTS\r\n"));
-
     if(PTP_protocol == PROTOCOL_EOS)
     {
 		data[0] = 0x00000001;
 		if(PTP_Transaction(EOS_OC_PC_CONNECT, 0, 1, data, 0, NULL)) return PTP_RETURN_ERROR; // PC Connect Mode //
 		data[0] = 0x00000001;
 		if(PTP_Transaction(EOS_OC_EXTENDED_EVENT_INFO_SET, 0, 1, data, 0, NULL)) return PTP_RETURN_ERROR; // Extended Event Info Mode //
+    }
+    else if(PTP_protocol == PROTOCOL_SONY)
+    {
+        data[0] = 0x00000001;//1
+        data[1] = 0x00000000;
+        data[2] = 0x00000000;
+        if(PTP_Transaction(SONY_OC_CONNECT, RECEIVE_DATA, 3, data, 0, NULL)) return PTP_RETURN_ERROR; // PC Connect Mode //
+        data[0] = 0x00000002;
+        if(PTP_Transaction(SONY_OC_CONNECT, RECEIVE_DATA, 3, data, 0, NULL)) return PTP_RETURN_ERROR; // PC Connect Mode //
+        data[0] = 0xc8;
+        if(PTP_Transaction(SONY_OC_RECEIVE_EVENTS, RECEIVE_DATA, 1, data, 0, NULL)) return PTP_RETURN_ERROR; // PC Connect Mode //
+        data[0] = 0x00000003;
+        //PTP_IgnoreErrorsForNextTransaction = true;
+        if(PTP_Transaction(SONY_OC_CONNECT, RECEIVE_DATA, 3, data, 0, NULL)) return PTP_RETURN_ERROR; // PC Connect Mode //
+        //PTP_need_update = false;
+        
+        //supports.bulb = true;
+        //supports.capture = true;
     }
 
 	isoPTP = 0xFF;
@@ -1176,13 +1211,41 @@ uint8_t PTP::checkEvent()
 		if(PTP_need_update) updatePtpParameters();
 		return ret;
 	}
+    else if(PTP_protocol == PROTOCOL_SONY) // SONY ==================================================================
+    {
+        uint16_t tevent;
+        if((tevent = PTP_GetEvent(&event_value)))
+        {
+            //DEBUG(PSTR("Received Asynchronous Event!\r\n"));
+            switch(tevent)
+            {
+                case SONY_EVENT_CAPTURE:
+                    break;
+                case SONY_EVENT_OBJECT_CREATED:
+                    busy = false;
+                    currentObject = event_value; // Save the object ID for later retrieving the thumbnail
+                    break;
+                case SONY_EVENT_CHANGE:
+                    if(!busy) PTP_need_update = true;
+                    break;
+                default:
+                    break;
+            }
+        }
+        //if(count++ > 10 || PTP_need_update)
+        //{
+        //    PTP_need_update = true;
+        //    count = 0;
+        //}
+        if(PTP_need_update) sonyReadProperties();
+    }
 	if(PTP_protocol != PROTOCOL_EOS) return 0;
 
 	ret = PTP_FIRST_TIME; // CANON ==================================================================
 	do {
 		if(ret == PTP_FIRST_TIME)
 		{
-			ret = PTP_Transaction(EOS_OC_EVENT_GET, 1, 0, NULL, 0, NULL);
+			ret = PTP_Transaction(EOS_OC_EVENT_GET, RECEIVE_DATA, 0, NULL, 0, NULL);
 			i = 0;
 			if(ret == PTP_RETURN_ERROR)
 			{
@@ -1592,18 +1655,19 @@ uint8_t PTP::close()
 	ready = 0;
 	busy = false;
 	bulb_open = false;
-	supports = (CameraSupports_t)
-	{
-		.capture = false,
-		.bulb = false,
-		.iso = false,
-		.shutter = false,
-		.aperture = false,
-		.focus = false,
-		.video = false,
-		.cameraReady = false,
-		.event = false
-	};
+    memset(&supports, 0, sizeof(CameraSupports_t));
+	//supports = (CameraSupports_t)
+	//{
+	//	.capture = false,
+	//	.bulb = false,
+	//	.iso = false,
+	//	.shutter = false,
+	//	.aperture = false,
+	//	.focus = false,
+	//	.video = false,
+	//	.cameraReady = false,
+	//	.event = false
+	//};
 	isoPTP = 0xFF;
 	aperturePTP = 0xFF;
 	shutterPTP = 0xFF;
@@ -1613,36 +1677,76 @@ uint8_t PTP::close()
 	return 0;
 }
 
+void PTP::disable()
+{
+    //hardware_flashlight(1);
+    disabled = 1;
+    //wdt_reset();
+    //USB_ResetInterface();
+    //dt_reset();
+
+    //DEBUG(PSTR("Disabling USB\r\n"));
+    wdt_reset();
+    PTP_Shutdown();
+    wdt_reset();
+    hardware_USB_SetDeviceMode();
+    wdt_reset();
+    hardware_USB_Disable();
+    wdt_reset();
+
+    close();
+    
+    #ifdef USB_ENABLE_PIN
+        setOut(USB_ENABLE_PIN);
+        setHigh(USB_ENABLE_PIN);
+    #endif    
+    //hardware_flashlight(0);
+    wdt_reset();
+    _delay_ms(500);
+    wdt_reset();
+}
+
+void PTP::enable()
+{
+    //DEBUG(PSTR("Enabling USB\r\n"));
+    shutter_off_quick();
+    _delay_ms(500);
+    
+    hardware_USB_Enable();
+    wdt_reset();
+    #ifdef USB_ENABLE_PIN
+        setOut(USB_ENABLE_PIN);
+        setLow(USB_ENABLE_PIN);
+    #endif
+    USB_Detach();
+    USB_Disable();
+
+    hardware_USB_SetHostMode();
+    PTP_Enable();
+    if(disabled)
+    {
+        disabled = 0;
+        for(uint8_t i = 0; i < 200; i++) {
+            wdt_reset();
+            _delay_ms(50);
+            PTP_Task();
+            if(PTP_Ready) {
+                settings_setup_camera_index(PTP_CameraSerial);
+                init();
+                PTP_Task();
+                break;
+            }
+        }
+    }
+}
+
 void PTP::resetConnection()
 {
-	wdt_reset();
-
-	USB_ResetInterface();
-	close();
-
-	//DEBUG(PSTR("Disabling USB\r\n"));
-	PTP_Disable();
-	hardware_USB_SetDeviceMode();
-	hardware_USB_Disable();
-	
-	#ifdef USB_ENABLE_PIN
-	    setOut(USB_ENABLE_PIN);
-	    setHigh(USB_ENABLE_PIN);
-	#endif
-	
-	wdt_reset();
-	_delay_ms(100);
-
-	//DEBUG(PSTR("Enabling USB\r\n"));
-	
-	hardware_USB_Enable();
-	#ifdef USB_ENABLE_PIN
-	    setOut(USB_ENABLE_PIN);
-	    setLow(USB_ENABLE_PIN);
-	#endif
-
-	hardware_USB_SetHostMode();
-	PTP_Enable();
+    wdt_reset();
+    disable();
+    wdt_reset();
+    _delay_ms(100);
+    enable();
 }
 
 uint8_t PTP::capture()
@@ -1664,6 +1768,23 @@ uint8_t PTP::capture()
 	{
 		if(PTP_Transaction(NIKON_OC_CAPTURE, 0, 0, NULL, 0, NULL)) return PTP_RETURN_ERROR;
 	}
+    else if(PTP_protocol == PROTOCOL_SONY)
+    {
+        //uint8_t pd = SONY_PD_RELEASE_PRESSED;
+        //data[0] = SONY_PARAM_FOCUS;
+        //if(PTP_Transaction(SONY_OC_CHANGE_PARAM, NO_RECEIVE_DATA, 1, data, 1, &pd)) return PTP_RETURN_ERROR; // Focus Press
+        //_delay_ms(100);
+        //data[0] = SONY_PARAM_SHUTTER;
+        //if(PTP_Transaction(SONY_OC_CHANGE_PARAM, NO_RECEIVE_DATA, 1, data, 1, &pd)) return PTP_RETURN_ERROR; // Shutter Press
+
+        //_delay_ms(50);
+
+        //pd = SONY_PD_RELEASE_OPEN;
+        //data[0] = SONY_PARAM_SHUTTER;
+        //if(PTP_Transaction(SONY_OC_CHANGE_PARAM, NO_RECEIVE_DATA, 1, data, 1, &pd)) return PTP_RETURN_ERROR; // Shutter Release
+        //data[0] = SONY_PARAM_FOCUS;
+        //if(PTP_Transaction(SONY_OC_CHANGE_PARAM, NO_RECEIVE_DATA, 1, data, 1, &pd)) return PTP_RETURN_ERROR; // Focus Release
+    }
 	else
 	{
 		data[0] = 0x00000000;
@@ -1734,6 +1855,11 @@ uint8_t PTP::bulbMode()
 		preBulbShutter = shutter();
 		setPtpParameter(0xd100, (uint32_t)0xffffffff);
 	}
+    else if(PTP_protocol == PROTOCOL_SONY)
+    {
+        preBulbShutter = shutter();
+        setShutter(BULB_EV_CODE);
+    }
 	if(PTP_Response_Code != PTP_RESPONSE_OK) return 1;
 	return 0;
 }
@@ -1763,7 +1889,7 @@ uint8_t PTP::manualMode()
 			}
 		}
 	}
-	else if(PTP_protocol == PROTOCOL_NIKON)
+	else if(PTP_protocol == PROTOCOL_NIKON || PTP_protocol == PROTOCOL_SONY)
 	{
 		//DEBUG(PSTR("ManualMode: "));
 		//DEBUG(preBulbShutter);
@@ -1802,15 +1928,24 @@ uint8_t PTP::bulbStart()
 		}
 		else
 		{
-			if(PTP_Transaction(EOS_OC_REMOTE_RELEASE_ON, 0, 2, data, 0, NULL)) return PTP_RETURN_ERROR; // Bulb Start
+			if(PTP_Transaction(EOS_OC_REMOTE_RELEASE_ON, NO_RECEIVE_DATA, 2, data, 0, NULL)) return PTP_RETURN_ERROR; // Bulb Start
 		}
 	}
 	else if(PTP_protocol == PROTOCOL_NIKON)
 	{
 		data[0] = 0xFFFFFFFF;
 		data[1] = 0x00000001;
-		if(PTP_Transaction(NIKON_OC_BULBSTART, 0, 2, data, 0, NULL)) return PTP_RETURN_ERROR; // Bulb Start
+		if(PTP_Transaction(NIKON_OC_BULBSTART, NO_RECEIVE_DATA, 2, data, 0, NULL)) return PTP_RETURN_ERROR; // Bulb Start
 	}
+    else if(PTP_protocol == PROTOCOL_SONY)
+    {
+        //uint8_t pd = SONY_PD_RELEASE_PRESSED;
+        //data[0] = SONY_PARAM_FOCUS;
+        //if(PTP_Transaction(SONY_OC_CHANGE_PARAM, NO_RECEIVE_DATA, 1, data, 1, &pd)) return PTP_RETURN_ERROR; // Focus Press
+        //_delay_ms(200);
+        //data[0] = SONY_PARAM_SHUTTER;
+        //if(PTP_Transaction(SONY_OC_CHANGE_PARAM, NO_RECEIVE_DATA, 1, data, 1, &pd)) return PTP_RETURN_ERROR; // Shutter Press
+    }
 	//DEBUG(PSTR("Res: "));
 	//DEBUG(PTP_Response_Code);
 	//DEBUG_NL();
@@ -1843,6 +1978,14 @@ uint8_t PTP::bulbEnd()
 		data[1] = 0x00000001; // This parameter varies (0x01, 0x21) -- I don't know what it means
 		if(PTP_Transaction(NIKON_OC_BULBEND, 0, 2, data, 0, NULL)) return PTP_RETURN_ERROR; // Bulb End
 	}
+    else if(PTP_protocol == PROTOCOL_SONY)
+    {
+        //uint8_t pd = SONY_PD_RELEASE_OPEN;
+        //data[0] = SONY_PARAM_SHUTTER;
+        //if(PTP_Transaction(SONY_OC_CHANGE_PARAM, NO_RECEIVE_DATA, 1, data, 1, &pd)) return PTP_RETURN_ERROR; // Shutter Release
+        //data[0] = SONY_PARAM_FOCUS;
+        //if(PTP_Transaction(SONY_OC_CHANGE_PARAM, NO_RECEIVE_DATA, 1, data, 1, &pd)) return PTP_RETURN_ERROR; // Focus Release
+    }
 	bulb_open = false;
 	if(PTP_Response_Code != PTP_RESPONSE_OK) return PTP_RETURN_ERROR;
 	return 0;
@@ -1850,31 +1993,109 @@ uint8_t PTP::bulbEnd()
 
 uint8_t PTP::setISO(uint8_t ev)
 {
+    uint8_t ret = 0;
 	if(ev == 0xff) return 1;
-	isoPTP = isoEvPTP(ev);
+
+    uint32_t newIsoPTP = isoEvPTP(ev);
+
 	if(PTP_protocol == PROTOCOL_EOS)
 	{
-		return setEosParameter(EOS_DPC_ISO, isoEvPTP(ev));
+		ret = setEosParameter(EOS_DPC_ISO, newIsoPTP);
 	}
-	else
+	else if(PTP_protocol == PROTOCOL_NIKON)
 	{
-		return setPtpParameter(NIKON_DPC_ISO, (uint16_t)isoEvPTP(ev));
+		ret = setPtpParameter(NIKON_DPC_ISO, (uint16_t)newIsoPTP);
 	}
+    else if(PTP_protocol == PROTOCOL_SONY)
+    {
+        for(uint8_t j = 0; j < ISO_COUNT_MAX; j++)
+        {
+            int8_t dir = 0;
+            if(ev == 254)
+            {
+                if(isoPTP != 16777215) dir = -1;
+            }
+            else if(isoPTP == 16777215) // auto iso
+            {
+                dir = 1;
+            }
+            else
+            {
+                if(isoPTP > newIsoPTP)
+                {
+                    dir = -1;
+                }
+                else if(isoPTP < newIsoPTP)
+                {
+                    dir = 1;
+                }
+            }
+            if(dir == 0) break;
+            if(shiftSonyParameter(SONY_DPC_ISO, dir)) return 1;
+            uint32_t tempISOPTP = isoPTP;
+            for(uint8_t i = 0; i < 10; i++)
+            {
+                _delay_ms(150);
+                sonyReadProperties();
+                if(tempISOPTP != isoPTP) break;
+                wdt_reset();
+            }
+            if(tempISOPTP == isoPTP) return 1;
+        }
+    }
+
+    isoPTP = isoEvPTP(ev);
+    return ret;
 }
 
 uint8_t PTP::setShutter(uint8_t ev)
 {
+    uint8_t ret = 1;
 	if(ev == 0xff) return 1;
 	//manualMode();
-	shutterPTP = shutterEvPTP(ev);
-	if(PTP_protocol == PROTOCOL_EOS)
+	
+    if(PTP_protocol == PROTOCOL_EOS)
 	{
-		return setEosParameter(EOS_DPC_SHUTTER, shutterEvPTP(ev));
+		ret = setEosParameter(EOS_DPC_SHUTTER, shutterEvPTP(ev));
 	}
-	else
+	else if(PTP_protocol == PROTOCOL_NIKON)
 	{
-		return setPtpParameter(NIKON_DPC_SHUTTER, (uint32_t)shutterEvPTP(ev));
+		ret = setPtpParameter(NIKON_DPC_SHUTTER, (uint32_t)shutterEvPTP(ev));
 	}
+    else if(PTP_protocol == PROTOCOL_SONY)
+    {
+        ret = 0;
+        for(uint8_t j = 0; j < SHUTTER_COUNT_MAX; j++)
+        {
+            uint8_t sEv = shutter();
+            int8_t dir = 0;
+            if(ev == BULB_EV_CODE && sEv != ev)
+            {
+                dir = -1;
+            }
+            else if(sEv < ev || (sEv == BULB_EV_CODE && sEv != ev)) 
+            {
+                dir = 1;
+            }
+            else if(sEv > ev)
+            {
+                dir = -1;
+            }
+            if(dir == 0) break;
+            if(shiftSonyParameter(SONY_DPC_SHUTTER, dir)) return 1;
+            for(uint8_t i = 0; i < 10; i++)
+            {
+                _delay_ms(150);
+                sonyReadProperties();
+                if(sEv != shutter()) break;
+                wdt_reset();
+            }
+            if(sEv == shutter()) return 1;
+        }
+    }
+
+    shutterPTP = shutterEvPTP(ev);
+    return ret;
 }
 
 uint8_t PTP::setAperture(uint8_t ev)
@@ -1885,10 +2106,11 @@ uint8_t PTP::setAperture(uint8_t ev)
 	{
 		return setEosParameter(EOS_DPC_APERTURE, apertureEvPTP(ev));
 	}
-	else
+    else if(PTP_protocol == PROTOCOL_NIKON)
 	{
 		return setPtpParameter(NIKON_DPC_APERTURE, (uint16_t)apertureEvPTP(ev));
 	}
+    return 1;
 }
 
 uint8_t PTP::setFocus(uint8_t af)
@@ -1897,15 +2119,15 @@ uint8_t PTP::setFocus(uint8_t af)
   {
     if(PTP_protocol == PROTOCOL_EOS)
     {
+      PTP_IgnoreErrorsForNextTransaction = true;
       return setEosParameter(EOS_DPC_AFMode, (af ? 0x0 : 0x03));
     }
-    else if(PTP_protocol == PROTOCOL_NIKON)
-    {
-      PTP_IgnoreErrorsForNextTransaction = true;
-      return setPtpParameter(NIKON_DPC_AutofocusMode1, (uint8_t)(af ? 0x00 : 0x04));
-//      else
-//        return setPtpParameter(NIKON_DPC_AutofocusMode2, (uint8_t)0x00);
-    }
+    //else if(PTP_protocol == PROTOCOL_NIKON) // this was causing errors on the D300
+    //{
+    //  PTP_IgnoreErrorsForNextTransaction = true;
+    //  uint8_t ret = setPtpParameter(NIKON_DPC_AutofocusMode1, (uint8_t)(af ? 0x00 : 0x04));
+    //  return ret;
+    //}
   }
   return 0;
 }
@@ -1933,57 +2155,61 @@ uint8_t PTP::setPtpParameter(uint16_t param, uint16_t value)
 	shutter_off_quick(); // Can't set parameters while half-pressed
 	return PTP_Transaction(PTP_OC_PROPERTY_SET, 1, 1, data, sizeof(value), (uint8_t*) &value);
 }
-uint8_t PTP::setPtpParameter(uint16_t param, uint8_t value)
-{
-	PTP_need_update = 1;
-	data[0] = (uint32_t)param;
-	shutter_off_quick(); // Can't set parameters while half-pressed
-	return PTP_Transaction(PTP_OC_PROPERTY_SET, 1, 1, data, sizeof(value), (uint8_t*) &value);
-}
+// removed for program space
+//uint8_t PTP::setPtpParameter(uint16_t param, uint8_t value)
+//{
+//	PTP_need_update = 1;
+//	data[0] = (uint32_t)param;
+//	shutter_off_quick(); // Can't set parameters while half-pressed
+//	return PTP_Transaction(PTP_OC_PROPERTY_SET, 1, 1, data, sizeof(value), (uint8_t*) &value);
+//}
 
-uint8_t PTP::getPtpParameterList(uint16_t param, uint8_t *count, uint16_t *list, uint16_t *current)
-{
-	uint8_t cnt;
-	data[0] = (uint32_t)param;
-	uint8_t ret = PTP_Transaction(PTP_OC_PROPERTY_LIST, 1, 1, data, 0, NULL);
-	if(!ret && PTP_Bytes_Received > 10)
-	{
-		cnt = (uint8_t)PTP_Buffer[10];
-		memcpy(current, &PTP_Buffer[7], sizeof(uint16_t));
-		for(uint8_t i = 0; i < cnt; i++)
-		{
-			memcpy(&list[i], &PTP_Buffer[12 + i * sizeof(uint16_t)], sizeof(uint16_t));
-		}
-		*count = cnt;
-	}
-	return ret;
-}
+// removed for program space
+//uint8_t PTP::getPtpParameterList(uint16_t param, uint8_t *count, uint16_t *list, uint16_t *current)
+//{
+//	uint8_t cnt;
+//	data[0] = (uint32_t)param;
+//	uint8_t ret = PTP_Transaction(PTP_OC_PROPERTY_LIST, 1, 1, data, 0, NULL);
+//	if(!ret && PTP_Bytes_Received > 10)
+//	{
+//		cnt = (uint8_t)PTP_Buffer[10];
+//		memcpy(current, &PTP_Buffer[7], sizeof(uint16_t));
+//		for(uint8_t i = 0; i < cnt; i++)
+//		{
+//			memcpy(&list[i], &PTP_Buffer[12 + i * sizeof(uint16_t)], sizeof(uint16_t));
+//		}
+//		*count = cnt;
+//	}
+//	return ret;
+//}
+//
+// removed for program space
+//uint8_t PTP::getPtpParameterList(uint16_t param, uint8_t *count, uint32_t *list, uint32_t *current)
+//{
+//	uint8_t cnt;
+//	data[0] = (uint32_t)param;
+//	uint8_t ret = PTP_Transaction(PTP_OC_PROPERTY_LIST, 1, 1, data, 0, NULL);
+//	if(!ret && PTP_Bytes_Received > 10)
+//	{
+//		cnt = (uint8_t)PTP_Buffer[14];
+//		memcpy(current, &PTP_Buffer[9], sizeof(uint32_t));
+//		for(uint8_t i = 0; i < cnt; i++)
+//		{
+//			memcpy(&list[i], &PTP_Buffer[16 + i * sizeof(uint32_t)], sizeof(uint32_t));
+//		}
+//		*count = cnt;
+//	}
+//	return ret;
+//}
 
-uint8_t PTP::getPtpParameterList(uint16_t param, uint8_t *count, uint32_t *list, uint32_t *current)
-{
-	uint8_t cnt;
-	data[0] = (uint32_t)param;
-	uint8_t ret = PTP_Transaction(PTP_OC_PROPERTY_LIST, 1, 1, data, 0, NULL);
-	if(!ret && PTP_Bytes_Received > 10)
-	{
-		cnt = (uint8_t)PTP_Buffer[14];
-		memcpy(current, &PTP_Buffer[9], sizeof(uint32_t));
-		for(uint8_t i = 0; i < cnt; i++)
-		{
-			memcpy(&list[i], &PTP_Buffer[16 + i * sizeof(uint32_t)], sizeof(uint32_t));
-		}
-		*count = cnt;
-	}
-	return ret;
-}
-
-uint8_t PTP::getPtpParameter(uint16_t param, uint16_t *value)
-{
-	data[0] = (uint32_t)param;
-	uint8_t ret = PTP_Transaction(PTP_OC_PROPERTY_GET, 1, 1, data, 0, NULL);
-	if(!ret && PTP_Bytes_Received == sizeof(uint16_t)) *value = (uint16_t)PTP_Buffer;
-	return ret;
-}
+// removed for program space
+//uint8_t PTP::getPtpParameter(uint16_t param, uint16_t *value)
+//{
+//	data[0] = (uint32_t)param;
+//	uint8_t ret = PTP_Transaction(PTP_OC_PROPERTY_GET, 1, 1, data, 0, NULL);
+//	if(!ret && PTP_Bytes_Received == sizeof(uint16_t)) *value = (uint16_t)PTP_Buffer;
+//	return ret;
+//}
 
 uint8_t PTP::updatePtpParameters(void)
 {
@@ -2219,70 +2445,72 @@ uint8_t PTP::getPropertyInfo(uint16_t prop_code, uint8_t expected_size, uint16_t
       return 0;
 }
 */
-uint8_t PTP::getCurrentThumbStart()
-{
-	if(!currentObject) return 0;
-	return getThumb(currentObject);
-}
-uint8_t PTP::getCurrentThumbContinued()
-{
-	uint8_t ret = PTP_FetchData(0);
-	if(ret == PTP_RETURN_ERROR)
-	{
-		//DEBUG(PSTR("Error Retrieving thumbnail (c)!\r\n"));
-		return 0;
-	}
-	return ret;
-}
-uint8_t PTP::getThumb(uint32_t handle)
-{
-	data[0] = handle;
-	uint8_t ret = PTP_Transaction(PTP_OC_GET_THUMB, RECEIVE_DATA, 1, data, 0, NULL);
-	if(ret == PTP_RETURN_ERROR)
-	{
-		//DEBUG(PSTR("Error Retrieving thumbnail!\r\n"));
-		return 0;
-	}
-	else
-	{
-		//DEBUG(PSTR("Obj Size: "));
-		//DEBUG(PTP_Bytes_Total);
-		//DEBUG_NL();
-		return ret;
-	}
-}
 
-uint8_t PTP::writeFile(char *name, uint8_t *data, uint16_t dataSize)
-{
-    ptp_object_info objectinfo;
-    memset(&objectinfo,0,sizeof(objectinfo));
+// removed to save program space
+//uint8_t PTP::getCurrentThumbStart()
+//{
+//	if(!currentObject) return 0;
+//	return getThumb(currentObject);
+//}
+//uint8_t PTP::getCurrentThumbContinued()
+//{
+//	uint8_t ret = PTP_FetchData(0);
+//	if(ret == PTP_RETURN_ERROR)
+//	{
+//		//DEBUG(PSTR("Error Retrieving thumbnail (c)!\r\n"));
+//		return 0;
+//	}
+//	return ret;
+//}
+//uint8_t PTP::getThumb(uint32_t handle)
+//{
+//	data[0] = handle;
+//	uint8_t ret = PTP_Transaction(PTP_OC_GET_THUMB, RECEIVE_DATA, 1, data, 0, NULL);
+//	if(ret == PTP_RETURN_ERROR)
+//	{
+//		//DEBUG(PSTR("Error Retrieving thumbnail!\r\n"));
+//		return 0;
+//	}
+//	else
+//	{
+//		//DEBUG(PSTR("Obj Size: "));
+//		//DEBUG(PTP_Bytes_Total);
+//		//DEBUG_NL();
+//		return ret;
+//	}
+//}
 
-    for(uint8_t i = 0; i < sizeof(objectinfo.filename); i += 2)
-    {
-    	objectinfo.filename[i] = name[i / 2];
-    	if(name[i / 2] == 0) break;
-    }
-
-    objectinfo.storage_id = 0x0;
-    objectinfo.object_format = PTP_OFC_Text;
-	sendObjectInfo(0x0, 0x0, &objectinfo);
-	sendObject(data, dataSize);
-	return 0;
-}
-
-uint8_t PTP::sendObjectInfo(uint32_t storage, uint32_t parent, ptp_object_info *objectinfo)
-{
-	void *payload;
-	payload = objectinfo;
-	data[0] = storage;
-	data[1] = parent;
-	return PTP_Transaction(PTP_OC_SendObjectInfo, NO_RECEIVE_DATA, 2, data, sizeof(ptp_object_info), (uint8_t *)payload);
-}
-
-uint8_t PTP::sendObject(uint8_t *data, uint16_t dataSize)
-{
-	return PTP_Transaction(PTP_OC_SendObject, NO_RECEIVE_DATA, 0, NULL, dataSize, data);
-}
+//uint8_t PTP::writeFile(char *name, uint8_t *bindata, uint16_t dataSize)
+//{
+//    ptp_object_info objectinfo;
+//    memset(&objectinfo,0,sizeof(objectinfo));
+//
+//    for(uint8_t i = 0; i < sizeof(objectinfo.filename); i += 2)
+//    {
+//    	objectinfo.filename[i] = name[i / 2];
+//    	if(name[i / 2] == 0) break;
+//    }
+//
+//    objectinfo.storage_id = 0x0;
+//    objectinfo.object_format = PTP_OFC_Text;
+//	sendObjectInfo(0x0, 0x0, &objectinfo);
+//	sendObject(bindata, dataSize);
+//	return 0;
+//}
+//
+//uint8_t PTP::sendObjectInfo(uint32_t storage, uint32_t parent, ptp_object_info *objectinfo)
+//{
+//	void *payload;
+//	payload = objectinfo;
+//	data[0] = storage;
+//	data[1] = parent;
+//	return PTP_Transaction(PTP_OC_SendObjectInfo, NO_RECEIVE_DATA, 2, data, sizeof(ptp_object_info), (uint8_t *)payload);
+//}
+//
+//uint8_t PTP::sendObject(uint8_t *bindata, uint16_t dataSize)
+//{
+//	return PTP_Transaction(PTP_OC_SendObject, NO_RECEIVE_DATA, 0, NULL, dataSize, bindata);
+//}
 
 uint32_t pgm_read_u32(const void *addr)
 {
@@ -2298,4 +2526,159 @@ uint32_t pgm_read_u32(const void *addr)
 	}
 	return val;
 }
+
+uint8_t PTP::shiftSonyParameter(uint16_t property, int8_t direction)
+{
+    data[0] = (uint32_t)property;
+    uint8_t dir = direction < 0 ? 0xFF : 0x01;
+    PTP_need_update = true;
+    uint8_t ret = PTP_Transaction(SONY_OC_CHANGE_PARAM, NO_RECEIVE_DATA, 1, data, 1, &dir);
+    _delay_ms(25);
+    return ret;
+}
+
+
+#define DATA8 0x0001
+#define DATAU8 0x0002
+#define DATA16 0x0003
+#define DATAU16 0x0004
+#define DATA32 0x0005
+#define DATAU32 0x0006
+
+#define DEFAULT 0
+#define CURRENT 0
+#define OPTION 0
+
+#define RANGE 1
+#define LIST 2
+
+uint8_t PTP::sonyReadProperties()
+{
+    PTP_need_update = 0;
+
+    hardware_flashlight(1);
+
+    uint8_t ret = PTP_Transaction(SONY_OC_GET_CONFIG, RECEIVE_DATA, 0, NULL, 0, NULL);
+
+    if(ret == PTP_RETURN_ERROR)
+    {
+        return 1;
+    }
+
+    uint16_t i = 8;
+
+    uint32_t data_current;//, data_default;
+
+    uint16_t *property_code;
+    uint16_t *data_type;
+    uint16_t count;
+    uint8_t list_type;
+
+    uint8_t data_size;
+    uint8_t err = 0;
+
+    while(i < PTP_Bytes_Received)
+    {
+        if(ret == PTP_RETURN_DATA_REMAINING && i > (PTP_BUFFER_SIZE / 2))
+        {
+            ret = PTP_FetchData(PTP_BUFFER_SIZE - i);
+            if(ret == PTP_RETURN_ERROR) return ret;
+            i = 0;
+            if(PTP_Bytes_Received == 0) break;
+        }
+        property_code = (uint16_t*)&PTP_Buffer[i];
+        i += 2;
+        data_type = (uint16_t*)&PTP_Buffer[i];
+        i += 2;
+        i += 2; // skip an unknown uint16
+        switch(*data_type)
+        {
+            case DATA8:
+            case DATAU8:
+                data_size = 1;
+                break;
+            case DATA16:
+            case DATAU16:
+                data_size = 2;
+                break;
+            case DATA32:
+            case DATAU32:
+                data_size = 4;
+                break;
+            default:
+                //error invalid data type
+                err = 2;
+                goto cleanup;
+                break;
+        }
+        //data_default = 0;
+        //memcpy(&data_default, &PTP_Buffer[i], data_size);
+        i += data_size;
+        data_current = 0;
+        memcpy(&data_current, &PTP_Buffer[i], data_size);
+        i += data_size;
+
+        list_type = PTP_Buffer[i];
+        i++;
+        switch(list_type)
+        {
+            case RANGE:
+                count = 3;
+                break;
+            case LIST:
+                count = *((uint16_t*)&PTP_Buffer[i]);
+                i += 2;
+                if(count > 64) goto cleanup;
+                break;
+            default:
+                // error invalid data mode
+                err = 3;
+                goto cleanup;
+                break;
+        }
+        uint32_t data_list_item;
+        
+        if(*property_code == SONY_DPC_ISO) isoAvailCount = 0;
+        if(*property_code == SONY_DPC_SHUTTER) shutterAvailCount = 0;
+
+        while(count > 0) // walk through data list
+        {
+            data_list_item = 0;
+            memcpy(&data_list_item, &PTP_Buffer[i], data_size);
+            i += data_size;
+    
+            if(*property_code == SONY_DPC_ISO && (data_list_item <= 51200 || data_list_item == 16777215))
+            {
+                isoAvail[isoAvailCount] = PTP::isoEv(data_list_item);
+                if(isoAvail[isoAvailCount]) isoAvailCount++;
+            }
+            count--;
+        }
+
+        if(*property_code == SONY_DPC_ISO)
+        {
+            isoPTP = data_current;
+            supports.iso = isoAvailCount > 0;
+        }
+        else if(*property_code == SONY_DPC_SHUTTER)
+        {
+            shutterPTP = data_current;
+            for(uint8_t j = 1; j < sizeof(PTP_Shutter_List) / sizeof(PTP_Shutter_List[0]); j++)
+            {
+                shutterAvail[shutterAvailCount] = pgm_read_byte(&PTP_Shutter_List[j].ev);
+                shutterAvailCount++;
+            }
+            supports.shutter = shutterAvailCount > 0;
+        }
+        
+    }
+
+    cleanup:
+
+    hardware_flashlight(0);
+
+    return err;
+}
+
+
 

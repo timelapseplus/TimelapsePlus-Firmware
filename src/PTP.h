@@ -15,6 +15,7 @@ struct propertyDescription_t
     char name[7];
     uint32_t eos;
     uint32_t nikon;
+    uint32_t sony;
     uint8_t ev; // 1/3 stop increments
 };
 
@@ -72,6 +73,8 @@ public:
     uint8_t init(void);
     uint8_t checkEvent(void);
     uint8_t close(void);
+    void enable(void);
+    void disable(void);
     void resetConnection(void);
     uint8_t capture(void);
     uint8_t liveView(uint8_t on);
@@ -85,17 +88,20 @@ public:
     uint8_t setPtpParameter(uint16_t param, uint32_t value);
     uint8_t setPtpParameter(uint16_t param, uint16_t value);
     uint8_t setPtpParameter(uint16_t param, uint8_t  value);
-    uint8_t getPtpParameterList(uint16_t param, uint8_t *count, uint16_t *list, uint16_t *current);
-    uint8_t getPtpParameterList(uint16_t param, uint8_t *count, uint32_t *list, uint32_t *current);
-    uint8_t getPtpParameter(uint16_t param, uint16_t *value);
+//    uint8_t getPtpParameterList(uint16_t param, uint8_t *count, uint16_t *list, uint16_t *current);
+//    uint8_t getPtpParameterList(uint16_t param, uint8_t *count, uint32_t *list, uint32_t *current);
+//    uint8_t getPtpParameter(uint16_t param, uint16_t *value);
     uint8_t updatePtpParameters(void);
     uint8_t getPropertyInfo(uint16_t prop_code, uint8_t expected_size, uint16_t *count, uint8_t *current, uint8_t *list);
-    uint8_t getThumb(uint32_t handle);
-    uint8_t getCurrentThumbStart(void);
-    uint8_t getCurrentThumbContinued(void);
-    uint8_t writeFile(char *name, uint8_t *data, uint16_t dataSize);
+//    uint8_t getThumb(uint32_t handle);
+//    uint8_t getCurrentThumbStart(void);
+//    uint8_t getCurrentThumbContinued(void);
+    uint8_t writeFile(char *name, uint8_t *bindata, uint16_t dataSize);
     uint8_t sendObjectInfo(uint32_t storage, uint32_t parent, ptp_object_info *objectinfo);
-    uint8_t sendObject(uint8_t *data, uint16_t dataSize);
+    uint8_t sendObject(uint8_t *bindata, uint16_t dataSize);
+
+    uint8_t shiftSonyParameter(uint16_t property, int8_t direction);
+    uint8_t sonyReadProperties(void);
 
     uint8_t blockWhileBusy(int16_t timeoutMS);
 
@@ -146,7 +152,7 @@ public:
     static uint8_t bulbDown(uint8_t ev);
 
 
-    volatile uint8_t ready, busy, bulb_open, modeLiveView, recording, videoMode, autofocus;
+    volatile uint8_t ready, busy, bulb_open, modeLiveView, recording, videoMode, autofocus, disabled;
 
     uint16_t photosRemaining;
 

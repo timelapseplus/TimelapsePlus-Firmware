@@ -1,7 +1,8 @@
 
 #define PROTOCOL_EOS		1
 #define PROTOCOL_NIKON		2
-#define PROTOCOL_GENERIC	3
+#define PROTOCOL_SONY       3
+#define PROTOCOL_GENERIC	4
 
 #define PIMA_OPERATION_GETDEVICEINFO         0x1001
 #define PIMA_OPERATION_OPENSESSION           0x1002
@@ -84,9 +85,33 @@
 #define PTP_RESPONSE_OK 0x2001
 #define PTP_RESPONSE_BUSY 0x2019
 
-/*#A0
-#50
-#28
-#14
-#0A
-*/
+#define SONY_OC_CONNECT 0x9201
+#define SONY_OC_RECEIVE_EVENTS 0x9202
+#define SONY_OC_GET_CONFIG 0x9209
+#define SONY_OC_CHANGE_PARAM 0x9207
+
+#define SONY_PD_CHANGE_UP 0x01
+#define SONY_PD_CHANGE_DOWN 0xFF
+#define SONY_PD_RELEASE_OPEN 0x01
+#define SONY_PD_RELEASE_PRESSED 0x02
+
+#define SONY_PARAM_FOCUS 0xD2C1
+#define SONY_PARAM_SHUTTER 0xD2C2
+
+#define SONY_DPC_ISO 0xD21E
+#define SONY_DPC_SHUTTER 0xD20D
+
+#define SONY_EVENT_CAPTURE 0xC201
+#define SONY_EVENT_OBJECT_CREATED 0xC202
+#define SONY_EVENT_CHANGE 0xC203
+
+
+/* Sony stuff */
+#define PTP_OC_SONY_SDIOConnect             0x9201
+#define PTP_OC_SONY_GetSDIOGetExtDeviceInfo 0x9202
+#define PTP_OC_SONY_GetDevicePropdesc       0x9203
+#define PTP_OC_SONY_GetDevicePropertyValue  0x9204
+#define PTP_OC_SONY_SetControlDeviceA       0x9205
+#define PTP_OC_SONY_GetControlDeviceDesc    0x9206
+#define PTP_OC_SONY_SetControlDeviceB       0x9207
+#define PTP_OC_SONY_9209                    0x9209  /* gets a 4126 byte blob ?*/

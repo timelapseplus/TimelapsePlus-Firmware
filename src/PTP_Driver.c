@@ -112,7 +112,6 @@ void PTP_Task(void)
     }
 }
 
-/** Configures the board hardware and chip peripherals for the demo's functionality. */
 void PTP_Enable(void)
 {
     configured = 0;
@@ -149,6 +148,19 @@ void PTP_Disable(void)
     return;
 }
 
+void PTP_Shutdown(void)
+{
+    //PTP_Disable();
+    PTP_CloseSession();
+    USB_Detach();
+    configured = 0;
+    PTP_Ready = 0;
+    PTP_Connected = 0;
+    PTP_Bytes_Remaining = 0;
+    PTP_Run_Task = 1;
+    USB_HostState = 0;
+    return;
+}
 
 uint8_t PTP_Transaction(uint16_t opCode, uint8_t receive_data, uint8_t paramCount, uint32_t *params, uint8_t dataBytes, uint8_t *data)
 {
@@ -317,7 +329,7 @@ uint16_t PTP_GetEvent(uint32_t *event_value)
 uint8_t SI_Host_ReceiveEventHeaderTLP(USB_ClassInfo_SI_Host_t* const SIInterfaceInfo,
                                    PIMA_Container_t* const PIMAHeader)
 {
-    uint8_t ErrorCode;
+    uint8_t ErrorCode = 0;
     uint8_t EventReceived = 0;
 //    uint8_t buf[8];
 
@@ -473,7 +485,7 @@ uint8_t PTP_GetDeviceInfo()
     {
         if(strncmp(&PTP_CameraModel[c], "Mark", 4) == 0) // Shorten "Mark" to "Mk"
         {
-            for(uint8_t c2 = c + 1; c2 < 22; c2++)
+            for(uint8_t c2 = c + 1; c2 < 21; c2++)
             {
                 PTP_CameraModel[c2] = PTP_CameraModel[c2 + 2];
             }
@@ -632,5 +644,33 @@ void UnicodeToASCII(char *UnicodeString,
     /* Null terminate the string */
     *Buffer = 0;
 }
+
+//void USB_ResetInterfaceDown(void)
+//{
+//    USB_INT_DisableAllInterrupts();
+//    USB_INT_ClearAllInterrupts();
+//
+//    USB_Controller_Reset();
+//
+//    USB_CLK_Unfreeze();
+//
+//    
+//    if (USB_CurrentMode == USB_MODE_Host)
+//    {
+//        UHWCON &= ~(1 << UIMOD);
+//
+//        if (!(USB_Options & USB_OPT_MANUAL_PLL))
+//        {
+//            USB_PLL_On();
+//            while (!(USB_PLL_IsReady()));
+//        }
+//
+//        USB_Init();
+//    }
+//
+//    #if (defined(USB_SERIES_4_AVR) || defined(USB_SERIES_6_AVR) || defined(USB_SERIES_7_AVR))
+//    USB_OTGPAD_On();
+//    #endif
+//}
 
 
