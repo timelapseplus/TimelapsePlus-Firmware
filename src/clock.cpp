@@ -107,7 +107,7 @@ volatile void Clock::count()
         {
             bulbDurationPCsync = 0;
         }
-        shutter_bulbStart();
+        shutter_bulbStartQuick();
         newBulb = 0;
         bulbRunning = 1;
         if(conf.camera.negBulbOffset)
@@ -126,7 +126,7 @@ volatile void Clock::count()
         bulbDuration--;
         if(bulbDuration <= 0)
         {
-            shutter_bulbEnd();
+            shutter_bulbEndQuick();
             bulbRunning = 0;
             light.skipTask = 0;
             if(bulbDurationPCsync) usingSync = 0;
