@@ -396,7 +396,7 @@ int main()
 		notify.task();
 		light.task();
 
-		if(USBmode == 1)
+		if(USBmode == 1 && !camera.disabled)
 			PTP_Task();
 #ifdef USB_SERIAL_COMMANDS_ENABLED
 		else
@@ -408,12 +408,16 @@ int main()
 		*****************************/
 		
 		count++;
-		if(count > 5)
+		if(count % 5)
 		{
-			count = 0;
 			charge_status = battery_status();
 			camera.checkEvent();
 		}
+        else if(count > 50)
+        {
+            battery_percent = battery_read();
+            count = 0;
+        }
 
 		if(bt.event) remote.event();
 
@@ -421,24 +425,22 @@ int main()
 			hardware_flashlight_toggle();
 
 
-		static uint32_t startTime = 0;
+		//static uint32_t startTime = 0;
 
-		if(clock.Ms() > startTime + 60000)
-		{
-			startTime = clock.Ms();
-			battery_percent = battery_read();
-		}
+		//if(clock.Ms() > startTime + 60000)
+		//{
+		//	startTime = clock.Ms();
+		//	battery_percent = battery_read();
+		//}
 
-		if((hardware_USB_HostConnected || connectUSBcamera) && (USBmode == 0))
+		if((hardware_USB_HostConnected || connectUSBcamera) && (USBmode == 0) && !camera.disabled)
 		{
 			USBmode = 1;
-			USB_Detach();
-			USB_Disable();
-			hardware_USB_SetHostMode();
-			PTP_Enable();
+            camera.enable();
 		}
-		else if((!hardware_USB_HostConnected && !connectUSBcamera) && (USBmode == 1))
+		else if((!hardware_USB_HostConnected && !connectUSBcamera) && (USBmode == 1) && !camera.disabled)
 		{
+            hardware_flashlight(1);
 			USBmode = 0;
 			PTP_Disable();
 			hardware_USB_SetDeviceMode();
@@ -505,16 +507,19 @@ void message_notify(uint8_t id)
 		case NOTIFY_CAMERA:
 			if(PTP_Ready)
 			{
-				settings_setup_camera_index(PTP_CameraSerial);
-				menu.message(STR("USB Camera"));
-				menu.refresh();
-				camera.init();
-				if(!conf.camera.autoConfigured && conf.auxPort == AUX_MODE_SYNC)
-				{
-			        menu.spawn((void*)autoConfigureCameraTiming);
-				}
+                if(!camera.ready)
+                {
+    				settings_setup_camera_index(PTP_CameraSerial);
+    				menu.message(STR("USB Camera"));
+    				menu.refresh();
+    				camera.init();
+    				if(!conf.camera.autoConfigured && conf.auxPort == AUX_MODE_SYNC)
+    				{
+    			        menu.spawn((void*)autoConfigureCameraTiming);
+    				}
+                }
 			}
-			else
+			else if(!camera.disabled)
 			{
 				settings_load_camera_default();
 				if(PTP_Error && timer.running)

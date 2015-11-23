@@ -73,12 +73,12 @@ void settings_load()
     {
         eeprom_read_block((void*)&conf.camera, &camera_settings_eep[settings_camera_index - 1], sizeof(camera_settings_t));
     }
-    if(conf.lcdContrast > 0xf || conf.lcdContrast < 0x1) conf.lcdContrast = 0x8;
-    if(conf.lcdCoefficent > 0x7 || conf.lcdCoefficent < 0x3) conf.lcdCoefficent = 0x7;
-    if(conf.lcdBias > 0x4 || conf.lcdBias < 0x3) conf.lcdBias = 0x4;
+    //if(conf.lcdContrast > 0xf || conf.lcdContrast < 0x1) conf.lcdContrast = 0x8;
+    //if(conf.lcdCoefficent > 0x7 || conf.lcdCoefficent < 0x3) conf.lcdCoefficent = 0x7;
+    //if(conf.lcdBias > 0x4 || conf.lcdBias < 0x3) conf.lcdBias = 0x4;
     if(conf.camera.brampGap > 20 || conf.camera.brampGap == 0) conf.camera.brampGap = 6;
-    if(conf.camera.canonLVOC > 0) conf.camera.canonLVOC = 0;
-    lcd.color(conf.lcdColor);
+    //if(conf.camera.canonLVOC > 0) conf.camera.canonLVOC = 0;
+    if(!timer.running) lcd.color(conf.lcdColor);
     ir.init();
     ir.make = conf.camera.cameraMake;
     if(conf.auxPort != AUX_MODE_DISABLED)
@@ -130,16 +130,17 @@ void settings_update()
 void settings_default()
 {
     timer.setDefault();
+    memset((void*)&conf, 0, sizeof(settings_t));
     strcpy((char*)conf.sysName, "           ");
     conf.warnTime = 2;
     conf.mirrorTime = 2;
-    conf.lcdColor = 0;
+    //conf.lcdColor = 0;
     conf.settingsVersion = SETTINGS_VERSION;
     conf.shutterVersion = SHUTTER_VERSION;
     conf.lcdBacklightTime = 3;
     conf.sysOffTime = 12;
     conf.flashlightOffTime = 3;
-    conf.devMode = 0;
+    //conf.devMode = 0;
     conf.auxPort = AUX_MODE_DISABLED;
     conf.btMode = BT_MODE_SLEEP;
     conf.brampMode = BRAMP_MODE_BULB_ISO;
@@ -152,60 +153,60 @@ void settings_default()
     conf.isoMax = 10;
     conf.apertureMax = 31;
     conf.apertureMin = 2;
-    conf.debugEnabled = 0;
-    conf.arbitraryBulb = 0;
+    //conf.debugEnabled = 0;
+    //conf.arbitraryBulb = 0;
     conf.menuWrap = 1;
-    conf.extendedRamp = 0;
+    //conf.extendedRamp = 0;
     conf.lightIntegrationMinutes = 5;
     conf.pFactor = 10;
     conf.iFactor = 11;
     conf.dFactor = 11;
-    conf.errorAlert = 0;
+    //conf.errorAlert = 0;
     conf.lightThreshold = 18;
-    conf.linearInterpolation = 0;
+    //conf.linearInterpolation = 0;
     conf.motionStep1 = 1000;
     conf.motionStep2 = 250;
     conf.motionStep3 = 250;
     conf.focusStep = 10;
     conf.focusEnabled = 1;
-    conf.pcSyncRequired = 0;
-    conf.motionBacklash1 = 0;
-    conf.motionBacklash2 = 0;
-    conf.motionBacklash3 = 0;
-    conf.motionPowerSave1 = 0;
-    conf.motionPowerSave2 = 0;
-    conf.motionPowerSave3 = 0;
+    //conf.pcSyncRequired = 0;
+    //conf.motionBacklash1 = 0;
+    //conf.motionBacklash2 = 0;
+    //conf.motionBacklash3 = 0;
+    //conf.motionPowerSave1 = 0;
+    //conf.motionPowerSave2 = 0;
+    //conf.motionPowerSave3 = 0;
     conf.motionSetupMove1 = 1;
     conf.motionSetupMove2 = 1;
     conf.motionSetupMove3 = 1;
-    conf.motionUnit1 = 0;
-    conf.motionUnit2 = 0;
-    conf.motionUnit3 = 0;
-    conf.motionMicroSteps1 = 0;
-    conf.motionMicroSteps2 = 0;
-    conf.motionMicroSteps3 = 0;
+    //conf.motionUnit1 = 0;
+    //conf.motionUnit2 = 0;
+    //conf.motionUnit3 = 0;
+    //conf.motionMicroSteps1 = 0;
+    //conf.motionMicroSteps2 = 0;
+    //conf.motionMicroSteps3 = 0;
     conf.motionSpeed1 = 256;
     conf.motionSpeed2 = 256;
     conf.motionSpeed3 = 256;
-    conf.keyframeTimeByMinute = 0;
+    //conf.keyframeTimeByMinute = 0;
     conf.cameraPort = AUX_CAM_DEFAULT;
     
     eeprom_write_byte((uint8_t *)lastNMXaddress, 0);
 
 
     conf.camera.cameraFPS = 33;
-    conf.camera.nikonUSB = 0;
+    //conf.camera.nikonUSB = 0;
     conf.camera.bulbEndOffset = 8;
     conf.camera.bulbMin = 56;
     conf.camera.bulbOffset = 75;
     conf.camera.negBulbOffset = 0;
     conf.camera.interface = INTERFACE_AUTO;
     conf.camera.cameraMake = CANON;
-    conf.camera.bulbMode = 0;
+    //conf.camera.bulbMode = 0;
     conf.camera.halfPress = HALF_PRESS_ENABLED;
     conf.camera.modeSwitch = USB_CHANGE_MODE_DISABLED;
     conf.camera.brampGap = 6;
-    conf.camera.canonLVOC = 0;
+    //conf.camera.canonLVOC = 0;
 
     for(uint8_t i = 0; i < MAX_CAMERAS_SETTINGS; i++)
     {
