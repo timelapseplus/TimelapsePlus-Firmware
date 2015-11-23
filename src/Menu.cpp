@@ -1592,7 +1592,7 @@ char MENU::editDynamic(char key, uint8_t *var, void *ditem, char *name, char fir
  *
  ******************************************************************/
 
-char MENU::editText(char key, char text[MENU_NAME_LEN], char *name, char first)
+char MENU::editText(char key, char text[MENU_NAME_LEN - 1], char *name, char first)
 {
     static uint8_t i;
     uint8_t c;
@@ -1780,24 +1780,15 @@ void MENU::blink()
   if(conf.errorAlert != ERROR_ALERT_DISABLED)
   {
     uint8_t bl = lcd->getBacklight();
-    lcd->backlight(255);
-    if(conf.errorAlert == ERROR_ALERT_FLASHLIGHT) hardware_flashlight(1);
-    _delay_ms(100);
-    lcd->backlight(0);
-    if(conf.errorAlert == ERROR_ALERT_FLASHLIGHT) hardware_flashlight(0);
-    _delay_ms(100);
-    lcd->backlight(255);
-    if(conf.errorAlert == ERROR_ALERT_FLASHLIGHT) hardware_flashlight(1);
-    _delay_ms(100);
-    lcd->backlight(0);
-    if(conf.errorAlert == ERROR_ALERT_FLASHLIGHT) hardware_flashlight(0);
-    _delay_ms(100);
-    lcd->backlight(255);
-    if(conf.errorAlert == ERROR_ALERT_FLASHLIGHT) hardware_flashlight(1);
-    _delay_ms(100);
-    lcd->backlight(0);
-    if(conf.errorAlert == ERROR_ALERT_FLASHLIGHT) hardware_flashlight(0);
-    _delay_ms(100);
+    for(uint8_t i = 0; i < 3; i++)
+    {
+        lcd->backlight(255);
+        if(conf.errorAlert == ERROR_ALERT_FLASHLIGHT) hardware_flashlight(1);
+        _delay_ms(100);
+        lcd->backlight(0);
+        if(conf.errorAlert == ERROR_ALERT_FLASHLIGHT) hardware_flashlight(0);
+        _delay_ms(100);
+    }
     lcd->backlight(bl);
   }
 

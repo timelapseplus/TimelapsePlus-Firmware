@@ -95,7 +95,7 @@ public:
     char editNumber(char key, void *n, char *name, char *unit, char mode, char first);
     char editSelect(char key, char *n, void *settingslist, char *name, char first);
     char editDynamic(char key, uint8_t *var, void *ditem, char *name, char first);
-    char editText(char key, char text[MENU_NAME_LEN], char *name, char first);
+    char editText(char key, char text[MENU_NAME_LEN - 1], char *name, char first);
     char editKeyframe(char key, keyframeGroup_t *kf, char first);
     char alertTask(char key, char first);
     void alert(const char *progmem_string);

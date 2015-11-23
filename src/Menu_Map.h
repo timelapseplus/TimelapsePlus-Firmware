@@ -789,6 +789,7 @@ const menu_item menu_main[]PROGMEM =
     { "Trigger     ", 'M', (void*)menu_trigger, 0, 0, (void*)&timerNotRunning },
     { "Timelapse   ", 'M', (void*)menu_timelapse, 0, 0, (void*)&timerNotRunning },
     { "Timelapse   ", 'F', (void*)timerStatus, 0, 0, (void*)&timer.running },
+//    { "Load Preset ", 'F', (void*)&shutter_load, 0, 0, (void*)&timerNotRunning },
     { "Connect     ", 'M', (void*)menu_connect, 0, 0, 0 },
     { "Settings    ", 'M', (void*)menu_settings, 0, 0, 0 },
     { "Power Off   ", 'F', (void*)hardware_off, 0, 0, (void*)&timerNotRunning },
