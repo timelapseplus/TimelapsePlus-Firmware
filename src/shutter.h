@@ -97,7 +97,7 @@
 
 #define SHUTTER_VERSION 20141122
 
-#define CHECK_ALERT(string, test) if(test) { if(status.preChecked == 0) menu.alert(string); } else { if(status.preChecked == 1) menu.clearAlert(string); }
+#define CHECK_ALERT(string, test) if(test) { if(status.preChecked_u8 == 0) menu.alert(string); } else { if(status.preChecked_u8 == 1) menu.clearAlert(string); }
 
 struct keyframe_t {
     int32_t value;
@@ -157,22 +157,22 @@ struct program
 struct timer_status
 {
     char textStatus[12];
-    uint8_t mode;
-    unsigned int photosTaken;
-    unsigned int photosRemaining;
-    unsigned int nextPhoto;
-    uint8_t infinitePhotos;
-    float rampStops;
-    uint16_t bulbLength;
-    int8_t rampMax;
-    int8_t rampMin;
-    unsigned int interval;
-    float rampTarget;
-    int8_t nightTarget;
-    uint8_t preChecked;
-    float lightStart;
-    uint8_t showND;
-    uint8_t hasND;
+    uint8_t mode_u8;
+    uint16_t photosTaken_u16;
+    uint16_t photosRemaining_u16;
+    uint16_t nextPhoto_u16;
+    uint8_t infinitePhotos_u8;
+    float rampStops_f;
+    uint16_t bulbLength_u16;
+    int8_t rampMax_i8;
+    int8_t rampMin_i8;
+    uint16_t interval_u16;
+    float rampTarget_f;
+    int8_t nightTarget_i8;
+    uint8_t preChecked_u8;
+    float lightStart_f;
+    uint8_t showND_u8;
+    uint8_t hasND_u8;
 };
 
 extern program stored[MAX_STORED+1]EEMEM;
@@ -237,7 +237,11 @@ void shutter_half(void);
 void shutter_half_delayed(void);
 void shutter_full(void);
 void shutter_bulbEnd(void);
+void shutter_bulbEndQuick(void);
+void shutter_bulbEndFinish(void);
 void shutter_bulbStart(void);
+void shutter_bulbStartQuick(void);
+void shutter_bulbStartPrepare(void);
 void shutter_capture(void);
 void aux1_on(void);
 void aux1_off(void);
