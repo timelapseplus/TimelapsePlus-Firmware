@@ -217,6 +217,10 @@ public:
     int8_t rampRate, apertureEvShift;
     uint32_t last_photo_ms;
     float lightReading;
+	//This variable is the precise median/average EV value for the darkest part of the night 
+	float nightLight;																		//J.R. 11-30-15
+	//This flag maintains night2day bulb ramping once the light reaches a certain point		
+	bool Night2Day;																			//J.R. 10-11-15
     float pastErrors[PAST_ERROR_COUNT];
     volatile uint8_t paused, pausing, apertureReady;
     int8_t evShift;
