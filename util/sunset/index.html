@@ -1,0 +1,357 @@
+<html>
+	<head>
+		<title>Sunset Simulator</title>
+		<script src="http://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+		<script src="http://cdnjs.cloudflare.com/ajax/libs/Chart.js/0.2.0/Chart.min.js"></script>
+		<link rel="stylesheet" href="lib/codemirror.css">
+		<link rel="stylesheet" href="addon/fold/foldgutter.css">
+		<link rel="stylesheet" href="addon/dialog/dialog.css">
+		<link rel="stylesheet" href="theme/monokai.css">
+		<script src="lib/codemirror.js"></script>
+		<script src="addon/search/searchcursor.js"></script>
+		<script src="addon/search/search.js"></script>
+		<script src="addon/dialog/dialog.js"></script>
+		<script src="addon/edit/matchbrackets.js"></script>
+		<script src="addon/edit/closebrackets.js"></script>
+		<script src="addon/comment/comment.js"></script>
+		<script src="addon/wrap/hardwrap.js"></script>
+		<script src="addon/fold/foldcode.js"></script>
+		<script src="addon/fold/brace-fold.js"></script>
+		<script src="mode/javascript/javascript.js"></script>
+		<script src="keymap/sublime.js"></script>
+		<style type="text/css">
+		  .CodeMirror {border-top: 1px solid #eee; border-bottom: 1px solid #eee; line-height: 1.3; height: 1200px; text-align:left; width: 1200px; max-width: 1200px; margin: auto;}
+		  .CodeMirror-linenumbers { padding: 0 8px; }
+		  body {
+		  	font-family: sans-serif;
+		  	font-weight: 300;
+			font-size: 11pt;
+			width:100%;
+			text-align:center;
+			background-color: #eee;
+		  }
+		  h1, h2, h3 {
+		  	font-family: sans-serif;
+		  	font-weight: 200;
+		  }
+		  div.block {
+		  	margin: auto;
+		  	padding-bottom: 20px;
+		  	width: 1200px;
+		  	text-align: left;
+		  }
+		  pre {
+		  	display: inline;
+		  }
+		</style>
+	</head>
+	<body>
+		<h1>Timelapse+ Auto Sunset Bramp Simulator</h1>
+		<hr>
+		<div class="block">
+			<h2>Chart showing values (y) over time (x)</h2>
+			Adjust the PID values below and press "update" to observe changes
+		</div>
+		<canvas id="chart" width="1200" height="900"></canvas>
+		<br>
+		<span style="position: relative; padding:3px 11px; margin: 5px; background-color:rgb(128,128,255);"></span> Light Sensor Reading
+		&nbsp;&nbsp;&nbsp;
+		<span style="position: relative; padding:3px 11px; margin: 5px; background-color:rgb(0,255,0);"></span> Target Exposure
+		&nbsp;&nbsp;&nbsp;
+		<span style="position: relative; padding:3px 11px; margin: 5px; background-color:rgb(255,0,0);"></span> Calculated Exposure
+		&nbsp;&nbsp;&nbsp;
+		P:<input type="text" size="5" id="p-val">
+		I:<input type="text" size="5" id="i-val">
+		D:<input type="text" size="5" id="d-val">
+		&nbsp;<button id="update">Update</button>
+		<br>
+		<br>
+		<hr>
+		<div class="block">
+			<h2>Tuning concepts</h2>
+			The chart is created with real-world data from the <a href="http://www.timelapseplus.com">Timelapse+</a>, and uses the same algorithm for determining exposure.  This makes for an easy way to test changes to the algorithm tuning without a several hour actual test.  Higher values on the chart represent a brighter exposure/darker sky.  The y scale is in stops, relative to the start of the bulb ramp.
+			<h3>Chart Values</h3>
+			<ul>
+				<h4>Light sensor reading</h4>
+				This is the (filtered and averaged) value read from the light sensor on board the Timelapse+.  It has a limit of how little light it can detect, so part way through the chart it levels off even though the target exposure continues.  At a preset threshold, the algorithm stops basing the values off of the current reading but instead locks on the the last rate of change before the threshold was reached. (This can be adjusted in <pre>Settings->Time-lapse->Bramp Tuning->Threshold</pre>)
+				<h4>Target Exposure</h4>
+				This value is an estimate of the actual brightness change of the sky and was calculated from the in-camera exposure senquence and the averaged luminance value of the photos (to correct for exposure inaccuracies).  This line on the chart is for tuning reference and is not a value accessible in the field.
+				<h4>Calculated Exposure</h4>
+				The is the exposure value as calculated by the Timelapse+, as based on light sensor reading and the tuning values.
+			</ul>
+
+			<h3>Tuning Parameters</h3>
+			<p>
+				The Timelapse+ auto bramp algorithm is based on the PID controller.  More info on the PID controller can be found here: <a href="http://en.wikipedia.org/wiki/PID_controller">http://en.wikipedia.org/wiki/PID_controller</a>
+			</p>
+			The Timelapse+ controls the exposure value <i>rate</i>, not the exposure directly.  This makes for smooth transitions and minimizes flicker in response to momentary changes in light.  The Timelapse+ continuously "steers" the exposure to keep it on track.  The following parameters determine how it controls the rate.
+			<ul>
+				<h4>(P) Proportional [response to PRESENT]</h4>
+				This represents the response to the immediate error (error as define as the delta between the current exposure and the current light reading). <pre>Settings->Time-lapse->Bramp Tuning->P Tune</pre>
+				<h4>(I) Integral [response to PAST]</h4>
+				This determines the response to the average of the immediate error over the last 10 readings.  The represents the accumulated error and can help keep the value close to the target but can cause oscillation if set too high. <pre>Settings->Time-lapse->Bramp Tuning->I Tune</pre>
+				<h4>(D) Derivative [response to FUTURE]</h4>
+				This is rate of change of the current light reading and can help respond to changes before they happen (rather than responding after the change like the other two values).  Setting this value too high can cause instability. <pre>Settings->Time-lapse->Bramp Tuning->D Tune</pre>
+			</ul>
+		</div>
+		<hr>
+		<div class="block">
+			<h2>Code snippet from auto bulb ramp portion of shutter.cpp</h2>
+			This code can be edited for testing -- press update below the chart above to test changes to the algorithm.
+		</div>
+		<textarea id="brampCode">
+if(current.brampMethod == BRAMP_METHOD_AUTO)
+{
+    if(light.underThreshold && current.nightMode != BRAMP_TARGET_AUTO)
+    {
+        if(current.nightMode == BRAMP_TARGET_CUSTOM)
+        {
+            status.rampTarget = parseFloat(status.nightTarget);
+        }
+        else
+        {
+            //if(light.slope <= 1 && status.lightStart == status.nightTarget && lightReading - light.integrated >= 3) // respond quickly during night-to-day once we see light
+            //{
+            //    DEBUG(STR(" -----> ramping toward sunrise\r\n"));
+            //    status.rampTarget = -BRAMP_RATE_MAX; //status.lightStart - (float)(NIGHT_THRESHOLD - status.nightTarget);
+            //}
+            //else
+            //{
+                DEBUG(STR(" -----> holding night exposure\r\n"));
+                status.rampTarget = status.lightStart - parseFloat(status.nightTarget); // hold at night exposure
+            //}
+        }
+    }
+    else
+    {
+        DEBUG(STR(" -----> using light sensor target\r\n"));
+        status.rampTarget = (status.lightStart - lightReading);
+    }
+
+    if(status.rampTarget > status.rampMax) status.rampTarget = status.rampMax;
+    if(status.rampTarget < status.rampMin) status.rampTarget = status.rampMin;
+    var delta = status.rampTarget - status.rampStops;
+
+    var pastError = 0.0;
+    for(var i = 0; i < PAST_ERROR_COUNT; i++)
+    {
+        pastError += pastErrors[i];
+        if(i < PAST_ERROR_COUNT - 1) pastErrors[i] = pastErrors[i + 1];
+    }
+    pastError /= PAST_ERROR_COUNT;
+    pastErrors[PAST_ERROR_COUNT - 1] = delta;
+
+    if(delta != 0)
+    {
+        delta *= P_FACTOR;
+        if(!light.underThreshold) delta += pastError * I_FACTOR;
+
+        if(light.lockedSlope > 0.0 && current.nightMode != BRAMP_TARGET_AUTO)
+        {
+            if(light.lockedSlope < delta) delta = light.lockedSlope; // hold the last valid slope reading from the light sensor
+        }
+        else
+        {
+            delta += light.slope * D_FACTOR;
+        }
+
+    }
+
+    rampRate = parseInt(delta);
+}
+   		</textarea>
+
+		<script language="javascript">
+			var editor = CodeMirror.fromTextArea(document.getElementById('brampCode'), {
+			    lineNumbers: true,
+			    mode: "javascript",
+			    keyMap: "sublime",
+			    autoCloseBrackets: true,
+			    matchBrackets: true,
+			    showCursorWhenSelecting: true,
+			    theme: "default"
+   			  });
+
+			$.get('sunsetdata.csv', function(csv){
+				
+
+				var data = {
+					labels: ['',''],
+				    datasets: [
+				        {
+				            label: "LIGHT",
+				            strokeColor: "rgba(128,128,255,1)",
+				            data:[1,2]
+				        },
+				        {
+				            label: "TLP-EV",
+				            strokeColor: "rgba(255,255,0,1)",
+				            data:[1,2]
+				        },
+				        {
+				            label: "CORRECTED-EV",
+				            strokeColor: "rgba(0,255,0,1)",
+				            data:[1,2]
+				        },
+				        {
+				            label: "EV",
+						    strokeWidth : 2,
+				            strokeColor: "rgba(255,0,0,1)",
+				            data:[1,2]
+				        },
+				        {
+				            label: "LIGHT-SLOPE",
+						    strokeWidth : 2,
+				            strokeColor: "rgba(128,128,128,1)",
+				            data:[1,2]
+				        }
+				    ]
+				};
+
+				function update(P_FACTOR, I_FACTOR, D_FACTOR)
+				{
+					var brampCode = editor.getValue();
+					var sourceLines = csv.split('\n');
+					var lightData = [];
+					var evData = [];
+					var labels = [];
+					var tlpEv = [];
+					var correctedEv = [];
+					var lightSlopeData = [];
+
+					var BRAMP_METHOD_AUTO = 0;
+					var BRAMP_TARGET_CUSTOM = 255;
+					var BRAMP_TARGET_AUTO = 0;
+
+					var status = {};
+					var light = {};
+					var current = {
+						brampMethod: BRAMP_METHOD_AUTO,
+						nightMode: 100
+					}
+
+					status.rampMax = 56;
+					status.rampMin = 0;
+					status.rampStops = 0;
+					status.lightStart;
+					var pastErrors = [];
+					var PAST_ERROR_COUNT = 10;
+
+					for(var i = 0; i < PAST_ERROR_COUNT; i++) pastErrors.push(0);
+
+					for(var n = 1; n < sourceLines.length; n++)
+					{
+						var row = sourceLines[n].split(',');
+						labels.push('');
+
+						var rampRate;
+						var lightReading = parseFloat(row[7]);
+						if(n == 1) status.lightStart = lightReading;
+						status.interval = parseInt(row[11]);
+						light.lockedSlope = parseInt(row[8]);
+						if(lightReading < 23) light.lockedSlope = 6;
+						if(light.lockedSlope == 6) light.lockedSlope = 11;
+						light.underThreshold = (light.lockedSlope != 0);
+						light.slope = parseFloat(row[9]);
+						//if(light.lockedSlope > 0) light.slope = light.lockedSlope;
+						status.nightTarget = parseInt(row[12]) - 2;
+						
+						tlpEv.push(parseFloat(row[13]) / 3);
+						correctedEv.push(parseFloat(row[14]) / 3);
+						lightData.push((status.lightStart - lightReading) / 3);
+						lightSlopeData.push(light.slope / 3);
+
+						var DEBUG = function(str){console.log(str);}; 
+						var STR = function(str){return str;};
+
+/////////////////////
+					eval(brampCode);
+
+/////////////////////
+		                status.rampStops += (rampRate / (3600.0 / 3)) * (status.interval / 10.0);
+
+						evData.push(status.rampStops / 3);
+
+					}
+
+					data.labels = labels;
+					data.datasets[0].data = lightData;
+					//data.datasets[1].data = tlpEv;
+					data.datasets[2].data = correctedEv;
+					data.datasets[3].data = evData;
+					//data.datasets[4].data = lightSlopeData;
+
+				}
+
+				var options = {
+
+					animation: false,
+
+				    ///Boolean - Whether grid lines are shown across the chart
+				    scaleShowGridLines : true,
+
+				    //String - Colour of the grid lines
+				    scaleGridLineColor : "rgba(0,0,0,.05)",
+
+				    //Number - Width of the grid lines
+				    scaleGridLineWidth : 0.5,
+
+				    //Boolean - Whether the line is curved between points
+				    bezierCurve : false,
+
+				    //Number - Tension of the bezier curve between points
+				    bezierCurveTension : 0.4,
+
+				    //Boolean - Whether to show a dot for each point
+				    pointDot : false,
+
+				    //Number - Radius of each point dot in pixels
+				    pointDotRadius : 2,
+
+				    //Number - Pixel width of point dot stroke
+				    pointDotStrokeWidth : 1,
+
+				    //Number - amount extra to add to the radius to cater for hit detection outside the drawn point
+				    pointHitDetectionRadius : 20,
+
+				    //Boolean - Whether to show a stroke for datasets
+				    datasetStroke : true,
+
+				    //Number - Pixel width of dataset stroke
+				    datasetStrokeWidth : 1,
+
+				    //Boolean - Whether to fill the dataset with a colour
+				    datasetFill : false,
+
+				    //String - A legend template
+				    legendTemplate : "<ul class=\"<%=name.toLowerCase()%>-legend\"><% for (var i=0; i<datasets.length; i++){%><li><span style=\"background-color:<%=datasets[i].lineColor%>\"></span><%if(datasets[i].label){%><%=datasets[i].label%><%}%></li><%}%></ul>"
+
+				};
+
+				var p = 1.0;
+				var i = 1.2;
+				var d = 1.2;
+
+				$('#p-val').val(p);
+				$('#i-val').val(i);
+				$('#d-val').val(d);
+
+				update(p, i, d);
+				var ctx = document.getElementById("chart").getContext("2d");
+				var chart = new Chart(ctx);
+				chart.Line(data, options);
+
+				$("#update").click(function(){refresh()});
+
+				function refresh()
+				{
+					p = parseFloat($('#p-val').val());
+					i = parseFloat($('#i-val').val());
+					d = parseFloat($('#d-val').val());
+					update(p, i, d);
+					chart.Line(data, options);
+				}
+			});
+		</script>
+	</body>
+</html>
