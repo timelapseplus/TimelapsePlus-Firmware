@@ -202,6 +202,11 @@ void Remote::event()
 				DEBUG(PSTR("NMX CONNECTED"));
 				nmx = 1;
 			}
+            else if(bt.state == BT_ST_CONNECTED_GM)
+            {
+                DEBUG(PSTR("GM CONNECTED"));
+                nmx = 1;
+            }
 			break;
 
 		case BT_EVENT_DATA:

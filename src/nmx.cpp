@@ -21,6 +21,8 @@ extern Clock clock;
 
 uint8_t connectedResponse = 0;
 uint32_t lastCommandMs = 0;
+uint8_t genieMoving;
+
 
 void uint8tohex(char str[3], uint8_t b)
 {
@@ -92,37 +94,88 @@ uint8_t NMX::moveSteps(uint8_t dir, uint32_t steps)
 	return move(dir, steps, 1);
 }
 
+uint8_t NMX::moveConstant(uint8_t dir)
+{
+    if(bt.state == BT_ST_CONNECTED_GM)
+    {
+        if(dir)
+            return genieMoveConstant(1);
+        else
+            return genieMoveConstant(-1);
+    }
+    else
+    {
+        return move(dir, 100000, 0);
+    }
+}
+
 uint8_t NMX::move(uint8_t dir, uint32_t steps, uint8_t update)
 {
-  while(running())
-  {
-    wdt_reset();
-  }
+    if(bt.state == BT_ST_CONNECTED_GM)
+    {   
+        int32_t gmSteps = steps;
+        if(dir != 0) gmSteps = 0 - gmSteps;
+        bt.sendCMD(PSTR("ATGW,0,37,0,015E00"));
 
-  uint8_t buf[5], buf2[4];
-  memcpy(buf2, &steps, sizeof(uint32_t));
-  buf[1] = buf2[3];
-  buf[2] = buf2[2];
-  buf[3] = buf2[1];
-  buf[4] = buf2[0];
-  buf[0] = dir;
+        char hexbuf[3];
+        uint8_t buf[5];
+        memcpy(buf, &gmSteps, sizeof(uint32_t));
+        buf[4] = dir;
+        for(uint8_t i = 0; i < 5; i++)
+        {
+            uint8tohex(hexbuf, buf[i]);
+            bt.sendCMD((char*)hexbuf);
+        }
 
-  if(update)
-  {
-    if(dir == 0) currentPos += steps; else currentPos -= steps;
-  }
+        bt.sendCMD(PSTR("\r"));
 
-  return sendCommand(0xF, 5, buf);  
+        if(update)
+        {
+            if(dir == 0) currentPos += steps; else currentPos -= steps;
+        }
+
+        return bt.checkOK();
+    }
+    else
+    {
+        while(running())
+        {
+            wdt_reset();
+        }
+
+        uint8_t buf[5], buf2[4];
+        memcpy(buf2, &steps, sizeof(uint32_t));
+        buf[1] = buf2[3];
+        buf[2] = buf2[2];
+        buf[3] = buf2[1];
+        buf[4] = buf2[0];
+        buf[0] = dir;
+
+        if(update)
+        {
+            if(dir == 0) currentPos += steps; else currentPos -= steps;
+        }
+
+        return sendCommand(0xF, 5, buf);  
+    }
 }
 
 uint8_t NMX::stop()
 {
-  return sendCommand(0x4, 0, 0);  
+    if(bt.state == BT_ST_CONNECTED_GM)
+    {
+        return genieMoveConstant(0);
+    }
+    else
+    {
+        return sendCommand(0x4, 0, 0);
+    }
 }
 
 
 uint8_t NMX::enable()
 {
+    if(bt.state == BT_ST_CONNECTED_GM) return 0;
 	if(!enabled)
 	{
 		enabled = true;
@@ -169,7 +222,7 @@ uint8_t NMX::disable()
 	enabled = false;
 	uint8_t buf = 1;
 	sendCommand(0x2, 1, &buf);	
-  buf = 0;
+    buf = 0;
 	return sendCommand(0x3, 1, &buf);	
 }
 
@@ -177,7 +230,14 @@ uint8_t NMX::running()
 {
   if(connected)
   {
-    if(sendQuery(0x6B) != 0) return 1; else return 0;
+    if(bt.state == BT_ST_CONNECTED_GM)
+    {
+        return genieMoving;
+    }
+    else
+    {
+        if(sendQuery(0x6B) != 0) return 1; else return 0;
+    }
   }
   else
   {
@@ -196,7 +256,14 @@ uint8_t NMX::checkConnected()
 	{
 		if(connectedResponse == 0)
 		{
-			connectedResponse = (uint8_t)sendQueryGeneral(3, 0, 0x7C, 10) | 0b10000000;
+            if(bt.state == BT_ST_CONNECTED_GM)
+            {
+                connectedResponse = 0b10000001;
+            }
+            else
+            {
+                connectedResponse = (uint8_t)sendQueryGeneral(3, 0, 0x7C, 10) | 0b10000000; // MSD as flag to verify checked
+            }
 		}
 		if(connectedResponse & (1 << (motorAddress - 1)))
 		{
@@ -274,6 +341,26 @@ uint32_t NMX::sendQueryGeneral(uint8_t node, uint8_t motor, uint8_t command, uin
 	return 0;
 }
 
+uint8_t NMX::genieMoveConstant(int8_t dir)
+{
+    if(dir == 0) genieMoving = 0; else genieMoving = 1;
+    
+    if(dir > 0)
+    {
+        bt.sendCMD(PSTR("ATGW,0,37,0,013F00640100\r"));
+    }
+    else if(dir < 0)
+    {
+        bt.sendCMD(PSTR("ATGW,0,37,0,013F009C0100\r"));
+    }
+    else
+    {
+        bt.sendCMD(PSTR("ATGW,0,37,0,013F00000100\r"));
+    }
+    return bt.checkOK();
+}
+
+
 // returns response as uint32 (max 4)
 uint32_t NMX::sendQuery(uint8_t command)
 {
@@ -282,7 +369,7 @@ uint32_t NMX::sendQuery(uint8_t command)
 
 uint8_t NMX::sendCommandGeneral(uint8_t node, uint8_t motor, uint8_t command, uint8_t dataLength, uint8_t *data)
 {
-	if(!remote.nmx) return 0;
+	if(!remote.nmx || bt.state != BT_ST_CONNECTED_NMX) return 0;
 
 	if(clock.Ms() < lastCommandMs) lastCommandMs = clock.Ms();
 	while(clock.Ms() - lastCommandMs < NMX_COMMAND_SPACING_MS);

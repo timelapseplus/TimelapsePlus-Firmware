@@ -486,14 +486,22 @@ void message_notify(uint8_t id)
 		case NOTIFY_NMX:
 			if(remote.nmx)
 			{
-                if(bt.address[0])
+                if(bt.state == BT_ST_CONNECTED_GM)
                 {
-                    for(uint8_t i = 0; i < 14; i++) eeprom_write_byte((uint8_t *)&lastNMXaddress[i], bt.address[i]);
+                    menu.message(STR("GM Connected"));
+                    motor1.checkConnected();
                 }
-				menu.message(STR("NMX Connected"));
-				motor1.checkConnected();
-				motor2.checkConnected();
-				motor3.checkConnected();
+                else
+                {
+                    if(bt.address[0])
+                    {
+                        for(uint8_t i = 0; i < 14; i++) eeprom_write_byte((uint8_t *)&lastNMXaddress[i], bt.address[i]);
+                    }
+                    menu.message(STR("NMX Connected"));
+                    motor1.checkConnected();
+                    motor2.checkConnected();
+                    motor3.checkConnected();
+                }
 			}
 			else
 			{

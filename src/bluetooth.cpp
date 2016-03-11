@@ -180,7 +180,7 @@ uint8_t BT::cancel(void)
 	if(!present)
 		return 1;
 
-  if(state == BT_ST_CONNECTED || state == BT_ST_CONNECTED_NMX)
+  if(state == BT_ST_CONNECTED || state == BT_ST_CONNECTED_NMX || state == BT_ST_CONNECTED_GM)
   {
     return 0;
   }
@@ -206,7 +206,7 @@ uint8_t BT::advertise(void)
 	if(!present)
 		return 1;
 
-  if(state == BT_ST_CONNECTED || state == BT_ST_CONNECTED_NMX)
+  if(state == BT_ST_CONNECTED || state == BT_ST_CONNECTED_NMX || state == BT_ST_CONNECTED_GM)
   {
     return 0;
   }
@@ -229,7 +229,7 @@ uint8_t BT::cancelScan(void)
 	if(!present)
 		return 1;
 
-  if(state == BT_ST_CONNECTED || state == BT_ST_CONNECTED_NMX)
+  if(state == BT_ST_CONNECTED || state == BT_ST_CONNECTED_NMX || state == BT_ST_CONNECTED_GM)
   {
     return 0;
   }
@@ -318,7 +318,7 @@ uint8_t BT::scan(void)
 	if(!present)
 		return 1;
 
-	if(state == BT_ST_CONNECTED || state == BT_ST_CONNECTED_NMX)
+	if(state == BT_ST_CONNECTED || state == BT_ST_CONNECTED_NMX || state == BT_ST_CONNECTED_GM)
   {
     return 0;
   }
@@ -374,7 +374,7 @@ uint8_t BT::sleep(void)
 	if(!present)
 		return 1;
 
-  if(state == BT_ST_CONNECTED || state == BT_ST_CONNECTED_NMX)
+  if(state == BT_ST_CONNECTED || state == BT_ST_CONNECTED_NMX || state == BT_ST_CONNECTED_GM)
   {
     return 0;
   }
@@ -963,7 +963,7 @@ uint8_t BT::task(void)
 
   if(!present)
   {
-    if(state == BT_ST_CONNECTED || state == BT_ST_CONNECTED_NMX)
+    if(state == BT_ST_CONNECTED || state == BT_ST_CONNECTED_NMX || state == BT_ST_CONNECTED_GM)
     {
       hardware_flashlight(1);
       ret = BT_EVENT_DISCONNECT;
@@ -1031,20 +1031,46 @@ uint8_t BT::task(void)
 				{
 					mode = BT_MODE_CMD;
 					//DEBUG(PSTR("Checking for NMX"));
+                    state = BT_ST_CHECKING_NMX;
 					sendCMD(PSTR("ATGDCU,0,BF45E40ADE2A4BC8BBA0E5D6065F1B4B\r"));
 				}
 			}
+
 			if(strncmp(buf, STR("GATT_DC"), 7) == 0)
 			{
-				if(strncmp(&buf[19], STR("BF45E40ADE2A4BC8BBA0E5D6065F1B4B"), 32) == 0)
+				if(state == BT_ST_CHECKING_NMX && strncmp(&buf[19], STR("BF45E40ADE2A4BC8BBA0E5D6065F1B4B"), 32) == 0)
 				{
 					ret = BT_EVENT_CONNECT;
 					mode = BT_MODE_CMD;
 					state = BT_ST_CONNECTED_NMX;
 					//DEBUG(PSTR("NMX FOUND!"));
 				}
-
+                else if(state == BT_ST_CHECKING_GM && strncmp(&buf[10], STR("00037"), 5) == 0)
+                {
+                    state = BT_ST_AUTHORIZING_GM;
+                    //DEBUG(PSTR("GM FOUND!"));
+                }
 			}
+            if(strncmp(buf, STR("GATT_DONE"), 9) == 0)
+            {
+                if(state == BT_ST_CHECKING_NMX)
+                {
+                    state = BT_ST_CHECKING_GM;
+                    sendCMD(PSTR("ATGDCU,0,0000000200001000800000805F9B34FB\r"));
+                }
+                else if(state == BT_ST_CHECKING_GM)
+                {
+                    state = BT_ST_CONNECTED;
+                    disconnect();
+                }
+                else if(state == BT_ST_AUTHORIZING_GM)
+                {
+                    ret = BT_EVENT_CONNECT;
+                    mode = BT_MODE_CMD;
+                    state = BT_ST_CONNECTED_GM;
+                    sendCMD(PSTR("ATGW,0,00037,0,012600\r")); // authorize
+                }
+            }
 			if(strncmp(buf, STR("DISCONNECT"), 10) == 0)
 			{
 				ret = BT_EVENT_DISCONNECT;

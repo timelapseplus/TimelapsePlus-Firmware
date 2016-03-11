@@ -20,6 +20,7 @@ public:
     uint8_t setSpeed(float rate);
     uint8_t setAccel(float rate);
     uint8_t move(uint8_t dir, uint32_t steps, uint8_t update);
+    uint8_t moveConstant(uint8_t dir);
     uint8_t stop();
 
     int32_t currentPos;
@@ -33,4 +34,6 @@ private:
     uint32_t sendQuery(uint8_t command);
     uint8_t nodeAddress;
     uint8_t motorAddress;
+
+    static uint8_t genieMoveConstant(int8_t speed);
 };

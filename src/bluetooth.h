@@ -24,6 +24,10 @@
 #define BT_ST_SCAN 2
 #define BT_ST_CONNECTED 3
 #define BT_ST_CONNECTED_NMX 4
+#define BT_ST_CONNECTED_GM 5
+#define BT_ST_CHECKING_NMX 6
+#define BT_ST_CHECKING_GM 7
+#define BT_ST_AUTHORIZING_GM 8
 
 #define BT_MODE_CMD 0
 #define BT_MODE_DATA 1
