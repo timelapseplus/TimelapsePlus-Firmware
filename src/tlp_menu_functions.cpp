@@ -712,12 +712,14 @@ volatile char autoConfigureCameraTiming(char key, char first)
 			_delay_ms(1000);
 		}
 		
-		#define SHUTTER_TEST_COUNT 8
+		#define SHUTTER_TEST_COUNT 5
 		int16_t bOffsetArray[SHUTTER_TEST_COUNT];
 		uint16_t eLagArray[SHUTTER_TEST_COUNT];
 
+        uint8_t test_loops = conf.camera.cameraMake == SONY ? 3 : SHUTTER_TEST_COUNT; 
+
 		if(AUX_INPUT1) pass = 0;
-		for(uint8_t i = 0; i < SHUTTER_TEST_COUNT && pass; i++)
+		for(uint8_t i = 0; i < test_loops && pass; i++)
 		{
 			while(AUX_INPUT1)
 			{
@@ -2133,7 +2135,7 @@ volatile char btConnect(char key, char first)
 		sfirst = 0;
 
 		update = 1;
-		if(bt.state != BT_ST_CONNECTED && bt.state != BT_ST_CONNECTED_NMX)
+		if(bt.state != BT_ST_CONNECTED && bt.state != BT_ST_CONNECTED_NMX && bt.state != BT_ST_CONNECTED_GM)
 		{
 			DEBUG(STR("BT Advertising!\r\n"));
 			bt.advertise();
@@ -2145,7 +2147,7 @@ volatile char btConnect(char key, char first)
 	{
 		case FL_KEY:
 			sfirst = 1;
-			if(bt.state != BT_ST_CONNECTED && bt.state != BT_ST_CONNECTED_NMX)
+			if(bt.state != BT_ST_CONNECTED && bt.state != BT_ST_CONNECTED_NMX && bt.state != BT_ST_CONNECTED_GM)
 			{
 				if(conf.btMode == BT_MODE_SLEEP) bt.sleep(); else bt.advertise();
 			}
@@ -2157,7 +2159,7 @@ volatile char btConnect(char key, char first)
       }
 			return FN_CANCEL;
 		case FR_KEY:
-			if(bt.state == BT_ST_CONNECTED || bt.state == BT_ST_CONNECTED_NMX)
+			if(bt.state == BT_ST_CONNECTED || bt.state == BT_ST_CONNECTED_NMX || bt.state == BT_ST_CONNECTED_GM)
 			{
         if(remote.nmx)
         {
@@ -2183,7 +2185,7 @@ volatile char btConnect(char key, char first)
 			break;
 		case BT_EVENT_SCAN_COMPLETE:
 			DEBUG(STR("done!\r\n"));
-			if(bt.state != BT_ST_CONNECTED && bt.state != BT_ST_CONNECTED_NMX)
+			if(bt.state != BT_ST_CONNECTED && bt.state != BT_ST_CONNECTED_NMX && bt.state != BT_ST_CONNECTED_GM)
 			{
 				bt.advertise();
 				bt.scan();
@@ -2202,7 +2204,7 @@ volatile char btConnect(char key, char first)
 		update = 1;
 	}
 
-  if(remote.nmx && bt.state == BT_ST_CONNECTED_NMX)
+  if(remote.nmx)
   {
     if(menuSelected > 2) menuSelected = 0;
     if(key == UP_KEY && menuSelected > 0)
@@ -2221,17 +2223,17 @@ volatile char btConnect(char key, char first)
       if(motor1.connected && !motor1.running() && menuSelected == 0)
       {
         motor1.enable();
-        motor1.move(0, 100000, 0);
+        motor1.moveConstant(0);
       }
       if(motor2.connected && !motor2.running() && menuSelected == 1)
       {
         motor2.enable();
-        motor2.move(0, 100000, 0);
+        motor2.moveConstant(0);
       }
       if(motor3.connected && !motor3.running() && menuSelected == 2)
       {
         motor3.enable();
-        motor3.move(0, 100000, 0);
+        motor3.moveConstant(0);
       }
       menuSize = 1;
     }
@@ -2240,17 +2242,17 @@ volatile char btConnect(char key, char first)
       if(motor1.connected && !motor1.running() && menuSelected == 0)
       {
         motor1.enable();
-        motor1.move(1, 100000, 0);
+        motor1.moveConstant(1);
       }
       if(motor2.connected && !motor2.running() && menuSelected == 1)
       {
         motor2.enable();
-        motor2.move(1, 100000, 0);
+        motor2.moveConstant(1);
       }
       if(motor3.connected && !motor3.running() && menuSelected == 2)
       {
         motor3.enable();
-        motor3.move(1, 100000, 0);
+        motor3.moveConstant(1);
       }
       menuSize = 1;
     }
@@ -2280,57 +2282,64 @@ volatile char btConnect(char key, char first)
 	{
 		lcd.cls();
 
-		if(bt.state == BT_ST_CONNECTED || bt.state == BT_ST_CONNECTED_NMX)
+		if(bt.state == BT_ST_CONNECTED || bt.state == BT_ST_CONNECTED_NMX || bt.state == BT_ST_CONNECTED_GM)
 		{
 			menu.setTitle(TEXT("Connect"));
-      if(remote.nmx)
-      {
-        lcd.writeStringTiny(10, 8, PTEXT("NMX Connected!"));
-        if(motor1.connected)
-        {
-          lcd.writeStringTiny(28, 18, PTEXT("Axis 1"));
-        }
-        else if(menuSelected == 0)
-        {
-          menuSelected++;
-        }
-        if(motor2.connected)
-        {
-          lcd.writeStringTiny(28, 25, PTEXT("Axis 2"));
-        }
-        else if(menuSelected == 1)
-        {
-          menuSelected++;
-        }
-        if(motor3.connected)
-        {
-          lcd.writeStringTiny(28, 32, PTEXT("Axis 3"));
-        }
-        else if(menuSelected == 2)
-        {
-          if(motor1.connected)
-            menuSelected = 0;
-          else if(motor2.connected)
-            menuSelected = 1;
+          if(remote.nmx)
+          {
+            if(bt.state == BT_ST_CONNECTED_GM)
+            {
+                lcd.writeStringTiny(10, 8, PTEXT("Genie Connected!"));
+            }
+            else
+            {
+                lcd.writeStringTiny(10, 8, PTEXT("NMX Connected!"));
+            }
+            if(motor1.connected)
+            {
+              lcd.writeStringTiny(28, 18, PTEXT("Axis 1"));
+            }
+            else if(menuSelected == 0)
+            {
+              menuSelected++;
+            }
+            if(motor2.connected)
+            {
+              lcd.writeStringTiny(28, 25, PTEXT("Axis 2"));
+            }
+            else if(menuSelected == 1)
+            {
+              menuSelected++;
+            }
+            if(motor3.connected)
+            {
+              lcd.writeStringTiny(28, 32, PTEXT("Axis 3"));
+            }
+            else if(menuSelected == 2)
+            {
+              if(motor1.connected)
+                menuSelected = 0;
+              else if(motor2.connected)
+                menuSelected = 1;
+              else
+                menuSelected = 3;
+            }
+
+            if(menuSelected < 3)
+            {
+              lcd.drawLine(25, 18 + menuSelected * 7, 25, 22 + menuSelected * 7);
+              lcd.drawLine(24, 19 + menuSelected * 7, 24, 21 + menuSelected * 7);
+              lcd.setPixel(23, 20 + menuSelected * 7);
+
+              lcd.drawLine(55, 18 + menuSelected * 7, 55, 22 + menuSelected * 7);
+              lcd.drawLine(56, 19 + menuSelected * 7, 56, 21 + menuSelected * 7);
+              lcd.setPixel(57, 20 + menuSelected * 7);
+            }
+          }
           else
-            menuSelected = 3;
-        }
-
-        if(menuSelected < 3)
-        {
-          lcd.drawLine(25, 18 + menuSelected * 7, 25, 22 + menuSelected * 7);
-          lcd.drawLine(24, 19 + menuSelected * 7, 24, 21 + menuSelected * 7);
-          lcd.setPixel(23, 20 + menuSelected * 7);
-
-          lcd.drawLine(55, 18 + menuSelected * 7, 55, 22 + menuSelected * 7);
-          lcd.drawLine(56, 19 + menuSelected * 7, 56, 21 + menuSelected * 7);
-          lcd.setPixel(57, 20 + menuSelected * 7);
-        }
-      }
-      else
-      {
-        lcd.writeStringTiny(18, 20, PTEXT("Connected!"));
-      }
+          {
+            lcd.writeStringTiny(18, 20, PTEXT("Connected!"));
+          }
 			menu.setBar(TEXT("RETURN"), TEXT("DISCONNECT"));
 		}
 		else
@@ -2353,7 +2362,13 @@ volatile char btConnect(char key, char first)
 				menuSize++;
 			}
 
-			if(bt.devices)
+            if(bt.state == BT_ST_CHECKING_NMX || bt.state == BT_ST_CHECKING_GM || bt.state == BT_ST_AUTHORIZING_GM)
+            {
+                menuSelected = 0;
+                lcd.writeStringTiny(6, 20, PTEXT("Connecting..."));
+                menu.setBar(TEXT("RETURN"), BLANK_STR);
+            }
+			else if(bt.devices)
 			{
 				lcd.drawHighlight(2, 7 + 9 * (menuSelected - menuScroll), 81, 7 + 9 * (menuSelected - menuScroll) + 8);
 				menu.setBar(TEXT("RETURN"), TEXT("CONNECT"));

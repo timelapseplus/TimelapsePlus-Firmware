@@ -774,7 +774,7 @@ uint8_t PTP::init()
 	{
 		conf.camera.cameraMake = NIKON;
 	}
-    else if(strncmp(PTP_CameraMake, "Sony", 5) == 0)
+    else if(strncmp(PTP_CameraMake, "Sony", 4) == 0)
     {
         conf.camera.cameraMake = SONY;
     }
