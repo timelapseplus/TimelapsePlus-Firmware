@@ -668,6 +668,8 @@ char shutter::task()
                 status.rampStops_f = 0.0;
                 light.integrationStart(conf.lightIntegrationMinutes);
                 lightReading = status.lightStart_f = light.readIntegratedEv();
+                //"nightLight" is set in a similar way as for "lightReading"
+                nightLight = light.readNightEv();								// J.R. 10-13-15
 
                 if(current.nightMode == BRAMP_TARGET_AUTO)
                 {
@@ -694,6 +696,17 @@ char shutter::task()
                     status.nightTarget_i8 = ((int8_t)current.nightMode) - BRAMP_TARGET_OFFSET;
                     status.rampTarget_f = status.lightStart_f - (float)status.nightTarget_i8;
                 }
+                
+                //When starting the bulb-ramping in the dark, change lightReading and status.lightStart
+                //to status.nightTarget instead of light.readIntegratedEv().
+				if(light.underThreshold && current.nightMode != BRAMP_TARGET_AUTO)						//J.R. 10-11-15
+				{
+				//DEBUG(STR(" -----> starting at night target\r\n"));									//J.R. 10-11-15
+				lightReading = status.lightStart_f = status.nightTarget_i8;
+				status.rampTarget_f = 0;																//J.R. 12-03-15
+				//This flag maintains night2day bulb ramping once the light reaches a certain point		//J.R. 10-11-15
+				Night2Day = false;																		//J.R. 10-11-15
+				}
                 
                 status.preChecked_u8 = 2;
             }
@@ -972,7 +985,14 @@ char shutter::task()
                     {
                         if(light.underThreshold && current.nightMode != BRAMP_TARGET_AUTO) //  holding night exposure
                         {
-                            if(current.nightMode == BRAMP_TARGET_CUSTOM)
+							//respond during night-to-day once we see light	or continue once it's started
+							if(Night2Day == true || (rampRate ==0 && status.rampStops_f == status.rampTarget_f && lightReading > (nightLight + (conf.lightThreshold/(4 * P_FACTOR))))) 	//&& lightStart == status.nightTarget) 	//J.R. 10-1-15
+                            {
+                                status.rampTarget_f = status.lightStart_f - lightReading;			//J.R. 10-1-15
+                                //This flag maintains night to day algorithm once it starts
+								Night2Day = true;													//J.R. 11-16-15				
+                            }                                   
+                            else if(current.nightMode == BRAMP_TARGET_CUSTOM)
                             {
                                 status.rampTarget_f = (float)status.nightTarget_i8 + ((float)current.nightND * 3) / 10.0;
                             }
@@ -985,6 +1005,8 @@ char shutter::task()
                         {
                             // using light sensor target
                             status.rampTarget_f = (status.lightStart_f - lightReading);
+                            //No need to maintain night to day algorithm at this point
+                            Night2Day = false;													//J.R. 10-16-15
                         }
 
                         if(status.rampTarget_f > status.rampMax_i8) status.rampTarget_f = status.rampMax_i8;
@@ -1022,12 +1044,15 @@ char shutter::task()
                         }
 
                         rampRate = (int8_t) delta;
+                        
+                   //Delete the 'switchToGuided' function:
+                   //This is taken care of in the two "if" statements above under "BRAMP_METHOD_AUTO"
 
-                        if(rampRate == 0 && light.underThreshold && current.nightMode != BRAMP_TARGET_AUTO && status.rampStops_f == status.rampTarget_f)
-                        {
-                          // if we've met the night target, switch to guided mode to hold exposure
-                          switchToGuided();
-                        }
+							//if(rampRate == 0 && light.underThreshold && current.nightMode != BRAMP_TARGET_AUTO && status.rampStops_f == status.rampTarget_f)
+							//{
+							//  // if we've met the night target, switch to guided mode to hold exposure
+							//  switchToGuided();
+							//}
                     }
                     //####################################################
 
@@ -1179,6 +1204,8 @@ char shutter::task()
         {
             exps++;
             lightReading = light.readIntegratedEv();
+            //"nightLight" is set in a similar way as for "lightReading"
+			nightLight = light.readNightEv();								// J.R. 10-13-15
 
             shutter_bulbEndFinish();
 
@@ -1562,6 +1589,8 @@ void shutter::switchToAuto()
 {
     light.integrationStart(conf.lightIntegrationMinutes);
     lightReading = status.lightStart_f = light.readIntegratedEv();
+    //"nightLight" is set in a similar way as for "lightReading"
+	nightLight = light.readNightEv();								// J.R. 10-13-15
     current.brampMethod = BRAMP_METHOD_AUTO;
     current.nightMode = BRAMP_TARGET_AUTO;
 }

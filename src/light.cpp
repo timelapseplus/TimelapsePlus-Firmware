@@ -30,6 +30,8 @@ Light::Light()
 	// Configure I2C //
 	TWI_Master_Initialise();
 	lastSeconds = 0;
+	//Timer for nightEv() updates
+	nightSeconds = 0;						//J.R. 9-30-15
   initialized = 0;
   integrationActive = false;
   lockedSlope = 0.0;
@@ -102,6 +104,8 @@ void Light::stop()
    TWI_Start_Read_Write(I2C_Buf, 3);
    lcd.backlight(255);
    lastSeconds = 0;
+   //Timer for nightEv() updates
+   nightSeconds = 0;						//J.R. 9-30-15
    paused = 0;
    lockedSlope = 0.0;
    integrationActive = false;
@@ -202,6 +206,16 @@ float Light::readIntegratedSlopeMedian()
     return value;
 }
 
+//This function is similar to "light.readIntegratedEv()" except that it calculates the 
+//midpoint-median light value for the last 3 hours. 
+//So "nightLight" is set wherever "lightReading" is set in shutter.cpp
+float Light::readNightEv()														//J.R. 10-11-15
+{
+	if(!integrationActive) return 0.0;											//J.R. 10-11-15
+	float value = arrayMedian50(nightEv, NIGHT_INTEGRATION_COUNT - 1);			//J.R. 10-11-15
+	return value;																//J.R. 10-11-15
+}
+
 void Light::task()
 {
 	if(!initialized || !integrationActive) return;
@@ -232,23 +246,34 @@ void Light::task()
     }
     iev[LIGHT_INTEGRATION_COUNT - 1] = readEv();
     slope = readIntegratedSlopeMedian();
+    
+    //The following 4 instructions were moved up so the "integrated" variable wold be available
+	//for the lightThreshold (or NIGHT_THRESHOLD) comparison.
+	median = arrayMedian50(iev, LIGHT_INTEGRATION_COUNT);						//J.R. 10-13-15
 
-    if(iev[LIGHT_INTEGRATION_COUNT - 1] <= NIGHT_THRESHOLD)
+	float sum = 0.0;															//J.R. 10-13-15
+	for(uint8_t i = 0; i < LIGHT_INTEGRATION_COUNT; i++) sum += iev[i];			//J.R. 10-13-15
+	integrated = sum / (float)(LIGHT_INTEGRATION_COUNT);						//J.R. 10-13-15
+
+    //No need to based the comparison on a single value of iev[LIGHT_INTEGRATION_COUNT]
+	//since all light readings in the TL+ are based on the average of iev[], which is "integrated".
+	//
+	//Instead of comparing "integrated" to "NIGHT_THRESHOLD", "conf.lightThreshold" should be used,
+	//which is the settable threshold value, rather than fixed.
+	//
+    //if(iev[LIGHT_INTEGRATION_COUNT - 1] <= NIGHT_THRESHOLD)
+    if(integrated <= conf.lightThreshold)										//J.R. 10-13-15
     {
       underThreshold = true;
       if(lockedSlope == 0.0 && slope) lockedSlope = slope;
     }
-    else if(iev[LIGHT_INTEGRATION_COUNT - 1] > NIGHT_THRESHOLD + NIGHT_THRESHOLD_HYSTERESIS)
+    //else if(iev[LIGHT_INTEGRATION_COUNT - 1] > NIGHT_THRESHOLD + NIGHT_THRESHOLD_HYSTERESIS)
+    else if(integrated > conf.lightThreshold + NIGHT_THRESHOLD_HYSTERESIS)	//J.R. 10-13-15
     {
       underThreshold = false;
       lockedSlope = 0.0;
     }
 
-    median = arrayMedian50(iev, LIGHT_INTEGRATION_COUNT);
-
-    float sum = 0.0;
-    for(uint8_t i = 0; i < LIGHT_INTEGRATION_COUNT; i++) sum += iev[i];
-    integrated = sum / (float)(LIGHT_INTEGRATION_COUNT);
 
     if(conf.debugEnabled)
     {
@@ -282,6 +307,19 @@ void Light::task()
       //DEBUG(STR(" #######\r\n"));
     }
   }
+	//The same kind of loop is used here to update nightEv[] that was used for updating iev[].
+	//Of course the time between updates is much longer. 
+	if(nightSeconds == 0 || (clock.Seconds() > (nightSeconds + NIGHT_COUNT_DELAY)))	//J.R. 9-30-15
+	{
+		nightSeconds = clock.Seconds();  
+			  
+		for(uint8_t i = 0; i < NIGHT_INTEGRATION_COUNT - 1; i++)					//J.R. 9-30-15
+		{
+			nightEv[i] = nightEv[i + 1];//J.R. 9-30-15
+		}
+		//No need to do a readEv() all over again, as for iev[] above.
+		nightEv[NIGHT_INTEGRATION_COUNT - 1] = iev[LIGHT_INTEGRATION_COUNT - 1];	//J.R. 9-30-15 
+	} 
 }
 
 void Light::integrationStart(uint8_t integration_minutes)
@@ -290,15 +328,25 @@ void Light::integrationStart(uint8_t integration_minutes)
     //DEBUG(STR(" ####### LIGHT INTEGRATION START #######\r\n"));
     integration = (uint16_t)integration_minutes;
     lastSeconds = 0;
+    //Timer for nightEv() updates
+    nightSeconds = 0;						//J.R. 9-30-15
     for(uint8_t i = 0; i < LIGHT_INTEGRATION_COUNT; i++)
     {
     	iev[i] = readEv(); // initialize array with readings //
     	wdt_reset();
     }
+    median = arrayMedian50(iev, LIGHT_INTEGRATION_COUNT);					//J.R. 9-30-15
+	//This is where nightEv() is loaded with the current darkness level at the start:
+	for(uint8_t i = 0; i < NIGHT_INTEGRATION_COUNT; i++)					//J.R. 9-30-15
+	{
+		nightEv[i] = median; // initialize night array with readings 		//J.R. 9-30-15;														//J.R. 9-30-15
+	}
     integrationActive = true;
     slope = 0.0;
-    median = iev[0];
-    integrated = iev[0];
+	//No need to set median and integrated to iev[0], since better values were obtained.
+	//median = iev[0];														//J.R. 10-13-15
+	//integrated = iev[0];													//J.R. 10-13-15
+	integrated = median;													//J.R. 9-30-15
     lockedSlope = 0.0;
     task();
 }
